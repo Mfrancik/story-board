@@ -18,9 +18,7 @@ use Livewire\Component;
  * cards of what is waiting on the owner — then the In flight figures, one tile per
  * project, and the collapsible Not on main, Built and Parked drafts sections (SB-3,
  * SB-5). Reads the stored snapshot only; a row opens the story modal (SB-8), which
- * does its own git read.
- * Also serves `/p/{project}` (SB-7), pinned to that project until SB-10 gives
- * the single-project page its own dashboard.
+ * does its own git read. One project's page is ProjectPage (SB-10).
  */
 #[Layout('layouts.board')]
 class Home extends Component
@@ -58,14 +56,6 @@ class Home extends Component
     #[Locked]
     public array $openSections = [];
 
-    /**
-     * The project this page is fixed to on `/p/{project}`, null on `/`. Locked, so
-     * neither the browser nor Clear filters can move the project page off its
-     * project. (SB-9 removed the `project` filter: the sidebar switches project.)
-     */
-    #[Locked]
-    public ?string $pinned = null;
-
     /** Confirmation after Refresh, in the button's own verb (design-standards §Four states). */
     #[Locked]
     public ?string $notice = null;
@@ -74,18 +64,10 @@ class Home extends Component
      * Log the view and queue a refresh for any project whose snapshot is stale.
      * Queued, not after-response: `artisan serve` cannot flush a response early,
      * so after-response work held the page open for the whole refresh (8–50 s).
-     *
-     * @param  string|null  $project  the `/p/{project}` route's name, already checked
-     *                                by EnsureProjectIsShown; null on `/`
      */
-    public function mount(?string $project = null): void
+    public function mount(): void
     {
-        if ($project !== null) {
-            $this->pinned = $project;
-            Log::info('board.project_viewed', ['project' => $project]);
-        } else {
-            Log::info('board.home_viewed', ['initiative' => $this->initiative, 'q' => $this->q]);
-        }
+        Log::info('board.home_viewed', ['initiative' => $this->initiative, 'q' => $this->q]);
 
         Project::enabled()->get()
             ->filter(fn (Project $p) => $p->needsRefresh())
@@ -140,8 +122,8 @@ class Home extends Component
      */
     public function render(ListWhatNeedsMe $list): View
     {
-        $project = $this->pinned;
-        $filters = [$project, $this->initiative ?: null, $this->q ?: null];
+        // Every enabled project: the project filter is the sidebar now (SB-9), and one project has its own page (SB-10).
+        $filters = [null, $this->initiative ?: null, $this->q ?: null];
         $data = $list->handle(...$filters);
 
         $sections = [];
@@ -157,7 +139,7 @@ class Home extends Component
             $inGroups = $inGroups->merge($rows->pluck('story_id'));
         }
         $goto = $this->q !== ''
-            ? $list->withId($this->q, $project)->reject(fn (Story $s) => $inGroups->contains($s->story_id))
+            ? $list->withId($this->q)->reject(fn (Story $s) => $inGroups->contains($s->story_id))
             : collect();
 
         return view('livewire.board.home', [
@@ -167,9 +149,9 @@ class Home extends Component
             // The header's "Refreshed N min ago": the stalest snapshot, since the page is only as fresh as that.
             'refreshedAt' => collect($data['projects'])->pluck('indexed_at')->filter()->min(),
             'initiatives' => Story::onRef()->whereNotNull('initiative')
-                ->whereHas('project', fn ($q) => $q->where('is_enabled', true)->when($project, fn ($q) => $q->where('name', $project)))
+                ->whereHas('project', fn ($q) => $q->where('is_enabled', true))
                 ->distinct()->orderBy('initiative')->pluck('initiative'),
             'filtered' => $this->initiative !== '' || $this->q !== '',
-        ])->title($this->pinned ?? 'What needs me');
+        ])->title('What needs me');
     }
 }

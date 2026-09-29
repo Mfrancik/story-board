@@ -181,12 +181,13 @@ class ListWhatNeedsMe
     }
 
     /**
-     * Counts keyed by status, in STATUS_ORDER and then alphabetically.
+     * Counts keyed by status, in STATUS_ORDER and then alphabetically. Public so the
+     * project page's initiative rows (SB-10) order their bar segments the same way.
      *
      * @param  array<string, int>  $counts
      * @return array<string, int>
      */
-    private function ordered(array $counts): array
+    public function ordered(array $counts): array
     {
         $rank = fn (string $s) => [array_search($s, self::STATUS_ORDER, true) === false ? 1 : 0, (int) array_search($s, self::STATUS_ORDER, true), $s];
         uksort($counts, fn ($a, $b) => $rank((string) $a) <=> $rank((string) $b));

@@ -8,14 +8,6 @@
 @props(['card'])
 @php
     $total = array_sum($card['counts']);
-    // State → dot token, label and label tone; the same token map as the sidebar's dots (SB-7).
-    $state = match ($card['state']) {
-        'ok' => ['bg-ok', null, null],
-        'pending' => ['bg-pending', 'Not read yet', 'text-zinc-500 dark:text-zinc-400'],
-        'stale' => ['bg-warning', 'Stale', 'text-warning'],
-        'unreachable' => ['bg-danger', 'Unreachable', 'text-danger'],
-        default => ['bg-danger', $card['state'], 'text-danger'],
-    };
     // Only the first line: a git error runs to several, and the tile is a summary.
     $error = $card['last_error'] !== null && $card['state'] !== 'ok' ? Str::before($card['last_error'], "\n") : null;
 @endphp
@@ -24,12 +16,10 @@
     class="block rounded-xl border border-zinc-200 bg-white p-5 hover:border-zinc-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700">
     <span class="flex items-center justify-between gap-2">
         <span class="flex min-w-0 items-center gap-2 font-medium">
-            <span class="size-2 shrink-0 rounded-full {{ $state[0] }}" aria-hidden="true"></span>
+            <x-board.state :state="$card['state']" />
             <span class="truncate">{{ $card['name'] }}</span>
         </span>
-        @if ($state[1])
-            <span data-state="{{ $card['state'] }}" class="shrink-0 text-xs font-medium {{ $state[2] }}">{{ $state[1] }}</span>
-        @endif
+        <x-board.state :state="$card['state']" part="label" />
     </span>
 
     @if ($total > 0)

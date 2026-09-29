@@ -4,6 +4,7 @@ use App\Http\Controllers\MockupFileController;
 use App\Http\Middleware\EnsureProjectIsShown;
 use App\Http\Middleware\RedirectProjectFilter;
 use App\Livewire\Board\Home;
+use App\Livewire\Board\ProjectPage;
 use App\Livewire\Board\StoryPage;
 use App\Models\Story;
 use Illuminate\Support\Facades\Route;
@@ -11,9 +12,9 @@ use Illuminate\Support\Facades\Route;
 // The pre-SB-7 `/?project=x` filter URL now lives at /p/x.
 Route::livewire('/', Home::class)->middleware(RedirectProjectFilter::class)->name('home');
 
-// One project (SB-7): the home content pinned to that project until SB-10 replaces it.
-// EnsureProjectIsShown is the one place an unknown or disabled project is refused.
-Route::livewire('/p/{project:name}', Home::class)
+// One project's dashboard (SB-10; the route is SB-7's). EnsureProjectIsShown is the one
+// place an unknown or disabled project is refused, before binding (ADR-013).
+Route::livewire('/p/{project:name}', ProjectPage::class)
     ->middleware(EnsureProjectIsShown::class)
     ->name('projects.show');
 

@@ -1,16 +1,8 @@
 {{-- SB-9 all-projects dashboard, design A (docs/mockups/SB-7/option-a.html, view 1). Order is the owner's
      ruling: What needs me first (three cards), then In flight, the project tiles, and the collapsible
      Not on main / Built / Parked drafts sections from SB-3 and SB-5. A row opens the SB-8 story modal.
-     On /p/{project} (SB-7, interim until SB-10) the same page is pinned to one project: its name heads
-     the page, and every figure, card and tile is that project's. --}}
+     One project's page is its own component since SB-10 (livewire/board/project-page). --}}
 @php
-    $cards = [
-        'pick' => ['title' => 'Awaiting a pick', 'hint' => 'Mockups on main with no Chosen option', 'empty' => 'No mockups waiting on a pick.', 'dot' => 'bg-pick'],
-        'approval' => ['title' => 'Drafts to approve', 'hint' => $parked
-            ? $parked.' '.Str::plural('draft', $parked).' in parked groups '.($parked === 1 ? 'is' : 'are').' hidden'
-            : 'Draft stories, by project', 'empty' => 'Nothing to approve.', 'dot' => 'bg-draft'],
-        'build' => ['title' => 'Ready to build', 'hint' => 'Approved, oldest first', 'empty' => 'Nothing approved and unbuilt.', 'dot' => 'bg-approved'],
-    ];
     $stories = array_sum(array_map(fn ($p) => array_sum($p['counts']), $projects));
     $notOk = $in_flight['not_ok'];
     $select = 'rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900';
@@ -18,23 +10,13 @@
 @endphp
 <main class="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
     <header class="flex flex-wrap items-end justify-between gap-3">
-        @if ($pinned)
-            <div>
-                <p class="text-xs text-zinc-500 dark:text-zinc-400">
-                    <a href="{{ route('home') }}" wire:navigate class="hover:underline">All projects</a> <span aria-hidden="true">/</span> {{ $pinned }}
-                </p>
-                <h1 class="mt-1 text-2xl font-semibold tracking-tight">{{ $pinned }}</h1>
-                <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">What needs me in this project · read from its ref</p>
-            </div>
-        @else
-            <div>
-                {{-- The first heading in <main> (owner ruling, SB-9): the page leads with what needs a decision. --}}
-                <h1 class="text-2xl font-semibold tracking-tight">What needs me</h1>
-                <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                    All projects · {{ count($projects) }} {{ Str::plural('project', count($projects)) }} · {{ number_format($stories) }} {{ Str::plural('story', $stories) }} on each project's ref
-                </p>
-            </div>
-        @endif
+        <div>
+            {{-- The first heading in <main> (owner ruling, SB-9): the page leads with what needs a decision. --}}
+            <h1 class="text-2xl font-semibold tracking-tight">What needs me</h1>
+            <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                All projects · {{ count($projects) }} {{ Str::plural('project', count($projects)) }} · {{ number_format($stories) }} {{ Str::plural('story', $stories) }} on each project's ref
+            </p>
+        </div>
         <div class="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
             <span data-refreshed>{{ $refreshedAt ? 'Refreshed '.$refreshedAt->diffForHumans() : 'Not read yet' }}</span>
             <span aria-hidden="true">·</span>
@@ -52,7 +34,7 @@
         <p role="status" class="mt-3 rounded-md border border-built/50 bg-built/10 px-3 py-2 text-sm">{{ $notice }}</p>
     @endif
 
-    {{-- SB-8: `?story=<project>/<ID>` opens here, on / and on /p/{project}. --}}
+    {{-- SB-8: `?story=<project>/<ID>` opens here (and on the project page, SB-10). --}}
     <livewire:board.story-modal />
 
     {{-- The project filter is gone (SB-9): the sidebar switches project. These narrow the cards and sections. --}}
@@ -79,38 +61,8 @@
     @endforeach
 
     {{-- 1. What needs me: three cards, stacked below 768px. --}}
-    <div class="mt-4 grid items-start gap-4 md:grid-cols-3" wire:loading.class="opacity-60" wire:target="initiative,q" data-cards>
-        @foreach ($cards as $key => $c)
-            @php $rows = $$key; $all = in_array($key, $expandedGroups, true); @endphp
-            <section data-card="{{ $key }}" data-group="{{ $key }}" aria-labelledby="card-{{ $key }}"
-                class="flex flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-                <div class="flex items-center justify-between gap-2 px-4 pt-4">
-                    <h2 id="card-{{ $key }}" class="flex items-center gap-2 font-medium">
-                        <span class="size-2 rounded-full {{ $c['dot'] }}" aria-hidden="true"></span>{{ $c['title'] }}
-                    </h2>
-                    <span data-count="{{ $rows->count() }}" class="text-2xl font-semibold tabular-nums">{{ $rows->count() }}</span>
-                </div>
-                <p class="px-4 text-xs text-zinc-500 dark:text-zinc-400">{{ $c['hint'] }}</p>
-                @if ($rows->isEmpty())
-                    <p class="m-4 rounded-lg border border-dashed border-zinc-200 px-3 py-4 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-                        {{ $c['empty'] }}@if ($filtered) <span class="block text-xs">None match the filters.</span>@endif
-                    </p>
-                @else
-                    <div class="mt-3 divide-y divide-zinc-100 border-t border-zinc-100 dark:divide-zinc-800 dark:border-zinc-800">
-                        @foreach ($all ? $rows : $rows->take(\App\Livewire\Board\Home::PAGE) as $story)
-                            <x-board.story-row :story="$story" :group="$key" variant="card" />
-                        @endforeach
-                    </div>
-                    @if (! $all && $rows->count() > \App\Livewire\Board\Home::PAGE)
-                        <button type="button" data-show-all="{{ $key }}" wire:click="showAll('{{ $key }}')" wire:loading.attr="disabled" wire:target="showAll('{{ $key }}')"
-                            class="m-3 mt-1 rounded-lg px-3 py-2 text-left text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-60 dark:text-zinc-300 dark:hover:bg-zinc-800">
-                            Show all {{ $rows->count() }} →
-                        </button>
-                    @endif
-                @endif
-            </section>
-        @endforeach
-    </div>
+    <x-board.needs-me-cards :pick="$pick" :approval="$approval" :build="$build" :parked="$parked" :expanded="$expandedGroups"
+        :filtered="$filtered" :page="\App\Livewire\Board\Home::PAGE" class="mt-4" wire:loading.class="opacity-60" wire:target="initiative,q" />
 
     {{-- 2. Live now: SB-11 renders its slot here. Not rendered until then. --}}
 

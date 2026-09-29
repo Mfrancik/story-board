@@ -1,5 +1,5 @@
 # SB-10 — Single-project dashboard
-Status: approved         Journey: none
+Status: built            Journey: none
 Source: owner 2026-09-29 (/story): *"id like to be able to see a view like this of all projects, but also
 a view of a sepcific single project."*
 

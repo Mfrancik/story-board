@@ -1,10 +1,8 @@
 <?php
 
-use App\Livewire\Board\Home;
 use App\Models\Project;
 use App\Models\Story;
 use Illuminate\Support\Facades\Log;
-use Livewire\Livewire;
 use Tests\Support\GitFixture;
 
 /**
@@ -135,16 +133,12 @@ it('gives a stale project a warning-tone dot with a screen-reader label', functi
         ->and($html)->toMatch('/data-sidebar-project="rent-track".*?<span class="sr-only">stale<\/span>/s');
 });
 
-it('keeps /p/coins pinned to coins whatever the query string or Clear filters says', function () {
+it('keeps /p/coins on coins whatever the query string says, with no project dropdown', function () {
     Story::factory()->for($this->coins)->create(['story_id' => 'AUC-17', 'status' => 'draft']);
     Story::factory()->for($this->cd)->create(['story_id' => 'SS-15', 'status' => 'draft']);
 
-    $this->get('/p/coins?project=client-dashboard')->assertSee('AUC-17')->assertDontSee('SS-15');
-
-    Livewire::test(Home::class, ['project' => 'coins'])
-        ->call('clearFilters')
-        ->assertSee('AUC-17')
-        ->assertDontSee('SS-15')
+    // SB-10: the page is its own ProjectPage, which has no project filter to move.
+    $this->get('/p/coins?project=client-dashboard')->assertSee('AUC-17')->assertDontSee('SS-15')
         ->assertDontSeeHtml('id="f-project"');
 });
 

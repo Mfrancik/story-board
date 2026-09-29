@@ -244,12 +244,11 @@ it('does not render the Live now slot until SB-11 ships', function () {
     $this->get('/')->assertDontSee('Live now');
 });
 
-it('keeps /p/{project} working as the dashboard pinned to that project', function () {
+it('scopes the What needs me cards on /p/{project} to that project (SB-10 page)', function () {
     $html = $this->get('/p/coins')->assertOk()->getContent();
 
     expect(card($html, 'build'))->toContain('data-count="29"')
         ->and(rowIds(card($html, 'build')))->not->toContain('SS-12')
-        ->and(figure($html, 'approved'))->toBe('29')
-        ->and($html)->toContain('data-project-card="coins"')
-        ->and($html)->not->toContain('data-project-card="rent-track"');
+        // The project page has no portfolio tiles: that is the all-projects view.
+        ->and($html)->not->toContain('data-project-card=');
 });
