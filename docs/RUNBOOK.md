@@ -10,6 +10,24 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-09-29 — A production metric using SLEEP() "succeeded" instead of timing out
+Symptom: while writing SB-17's timeout test, `SELECT SLEEP(10)` on a session with `max_execution_time = 5000` came back after about 5 s with value `1` and no error. The metric looked fine.
+Root cause: MySQL interrupts `SLEEP()` at the limit and returns 1. It does not raise error 3024 the way a real long-running SELECT does. A three-way cross join of `information_schema.COLLATIONS` finishes in about 2.5 s, so it does not trip the limit either.
+Fix: `ProductionReader::read()` treats error 3024 **and** any result that took at least 5 s minus 50 ms as `timed_out`. The test uses a four-way `COLLATIONS` cross join, which does raise 3024 (SB-17, `c8bcfbe`). Test time limits with a genuinely heavy query, never with `SLEEP()`.
+Log trail: `board.prod_metric_tested` with `result=timed_out`, `reason=timed_out` and `duration_ms` of about 5000.
+
+## 2026-09-29 — Test fixture's MySQL users and database were never dropped
+Symptom: after an SB-17 test run, `sb17_prod_*` databases and `sb17ro_/rw_/al_` users were still on the local server. The only sign was `"errors":1` in the agent reporter's summary. No test failed.
+Root cause: `ProductionFixture::drop()` runs in `afterAll`, after the Laravel app is torn down. It read the root login with `config()`, which throws at that point, and the error was swallowed outside any test.
+Fix: the fixture stores the board test DB's host, port and root login in its constructor while the app is up, and `drop()` uses those (`tests/Support/ProductionFixture.php`; SB-17, `c8bcfbe`). Any `afterAll` cleanup must hold what it needs itself, never call `config()`, `app()` or facades.
+Log trail: none. `"errors":1` in the reporter, or `SELECT user FROM mysql.user WHERE user LIKE 'sb17%'` showing leftovers.
+
+## 2026-09-29 — Production Test result vanished right after saving
+Symptom: on `/projects`, saving a Production connection showed the check result for a moment, then the panel reloaded showing "Loading production settings…" and the result was gone. The panel could also show a connection as missing just after a save.
+Root cause: to update the row's "Read-only · N metrics" summary, the parent `ManageProjects` was re-rendered. That re-mounted the lazy `ProductionSettings` child and reset its state. Separately, the parent's `Project` instance carried a cached `prodConnection` relation, so a freshly mounted child could read stale data.
+Fix: the panel dispatches a `prod-summary` browser event that the row's Alpine applies, so the parent never re-renders. `ProductionSettings::mount()` takes `$project->withoutRelations()` (SB-17, `c8bcfbe`). Never refresh a parent to update a lazy child's surroundings. Use a browser event.
+Log trail: none; `board.prod_connection_saved` is logged normally, the loss is client render state only.
+
 ## 2026-09-29 — Handbook lesson counts were one too high (17/6/3, not 16/5/2)
 Symptom: SB-14's first real-data counts of `## L-<n>` entries (coins 17, client-dashboard 6, rent-track 3) were each one more than the ledgers actually hold.
 Root cause: the kit's `docs/LESSONS.md` carries its entry format as a commented-out `## L-<n>` template inside `<!-- -->`. A line-based `^## L-` match counts it as an entry. A heading inside a code fence would be miscounted the same way.

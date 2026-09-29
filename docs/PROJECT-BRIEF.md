@@ -1,11 +1,11 @@
 # Project brief — story-board
-Last refreshed: 2026-09-29 (SB-14)
+Last refreshed: 2026-09-29 (SB-17)
 
 ## What it is, and for whom
 A localhost Laravel app for one owner. It reads the `stories/` folder of every project that uses
 the dev-standards kit and shows, in one place, what state each project's stories are in. It reads
-from git only, at each project's ref (default `origin/main`), and never writes to a project (owner
-ruling). Work not on the ref yet (unmerged branches, worktrees, untracked files) is shown beside it,
+from git, at each project's ref (default `origin/main`), and never writes to a project (owner
+ruling). It can also read a project's production MySQL database, read-only, for headline numbers. Work not on the ref yet (unmerged branches, worktrees, untracked files) is shown beside it,
 labelled with where it lives, and never counts as status. Live Claude Code sessions are shown from
 their transcript metadata (never their messages). Each project's handbook shows how it has drifted
 from the kit.
@@ -25,6 +25,11 @@ from the kit.
   times, matched to a project by path and to stories by branch name.
 - **Kit** (not stored, not a project): the dev-standards checkout at `board.kit_path` / `kit_ref`, read
   through `GitReader` to badge each project's standards and skills.
+- **ProdConnection**: a project's one read-only production MySQL connection (credentials encrypted with
+  APP_KEY, `use_ssl`, `verified_at`). **ProdMetric**: a preset (table/column in `config`) or custom single
+  `SELECT`, `key` stable across saves, `position`, `is_enabled`.
+- **ProductionReader**: the only code that opens a production connection. It uses runtime PDO, a
+  read-only 5 s session and a `SHOW GRANTS` proof on every open.
 - **GitReader**: the only code that runs git. Read-only subcommands only, plus `worktree list` and
   `status --porcelain` in those forms only.
 
@@ -41,6 +46,7 @@ from the kit.
 | Manage projects: `/projects` switch on/off, add by folder, remove behind a confirmation | active (SB-12) | [doc](features/manage-projects.md) |
 | Live sessions: Live now panel on both dashboards (30 s poll) and sidebar live badge | active (SB-11) | [doc](features/live-sessions.md) |
 | Project handbook: `/p/{project}/handbook` rules, lessons, standards, runbook, decisions, skills; kit badges | active (SB-14) | [doc](features/project-handbook.md) |
+| Production connection and metrics: read-only prod MySQL per project on `/projects`, presets and custom SQL | active (SB-17) | [doc](features/production-connection.md) |
 
 ## Journeys
 None yet. Every SB story so far is `Journey: none`.
@@ -48,8 +54,9 @@ None yet. Every SB story so far is `Journey: none`.
 ## Stories
 - **built**: SB-2 registry and reader · SB-3 what needs me · SB-4 story and mockups · SB-5 not on main ·
   SB-7 app shell · SB-8 story modal · SB-9 all-projects dashboard · SB-10 single-project dashboard ·
-  SB-11 live sessions · SB-12 manage projects · SB-14 project handbook
-- **approved**: SB-13 pick a mockup
+  SB-11 live sessions · SB-12 manage projects · SB-14 project handbook · SB-17 production connection
+- **approved**: SB-13 pick a mockup · SB-15 stories by initiative · SB-16 preflight history ·
+  SB-18 production dashboard
 - **draft (parked)**: SB-6 the board on an always-live domain
 
 SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this repo.
@@ -79,12 +86,16 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
   [ADR-023](decisions/ADR-023-live-sessions-read-transcript-metadata-defensively.md)
 - Handbook sections load on first open via renderless calls and stay in Alpine; no re-render →
   [ADR-024](decisions/ADR-024-handbook-sections-load-lazily-and-stay-client-side.md)
+- Production is read only through `ProductionReader`: raw PDO outside `config/`, a read-only session,
+  `SHOW GRANTS` proof on every open and an SQL guard. This amends "git only" →
+  [ADR-025](decisions/ADR-025-production-reads-go-through-one-read-only-gateway.md)
 - The board never writes to a project (owner ruling); its only writes are its own database.
 - Preflight audit scope, audit cost record, build-artifact disposal (kit) → ADR-001 to ADR-003
 
 ## Current phase and what's next
 Phase 2: UI organisation (SB-7 to SB-14). Phase 1 (SB-2 to SB-5) is built and retro'd. SB-7 to SB-12
-and SB-14 have shipped. Next: SB-13 (pick a mockup, reuses `board/confirm-modal`), then the phase-2
+and SB-14 have shipped, and SB-17 (production connection) with them. Next: SB-18 (production dashboard
+and daily snapshots, on `ProductionReader::readEnabledMetrics()`), SB-13, SB-15, SB-16, then the phase-2
 retro and full preflight sweep. SB-6 (hosted) stays parked. F-2 (a timeline of what was built) is in
 the backlog.
 
@@ -98,9 +109,12 @@ the backlog.
   malformed IDs cannot open the modal (owner decision pending). `?v=` links break at the next refresh.
 - Layout classes still use the raw `zinc-*` palette; only status and state colours are theme tokens.
 - Initiative rows on the project page open nothing; the project page has no initiative or search filter.
-- `/projects` has no auth and can add and delete projects; safe only while localhost-only. A project's
+- `/projects` has no auth, can add and delete projects and now holds production credentials. It is safe
+  only while localhost-only, and SB-6 must add auth first. A project's
   path and ref cannot be edited (remove and re-add).
 - Live sessions rely on an undocumented format and file mtime (10 min); the sidebar badge does not poll.
 - The handbook has no tab counts or drift summary, renders the runbook whole, and compares against the
   kit checkout's last-fetched ref. Its real-data browser check is pending on the owner's side.
+- Production SSL is encrypted but not certificate-verified. Rotating APP_KEY breaks stored credentials.
+  The real coins production check awaits the owner's read-only user.
 - Dev server runs on port 8010 (coins holds 8000/8001). No git remote for this repo, by owner ruling.

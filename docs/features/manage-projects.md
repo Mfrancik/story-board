@@ -1,5 +1,5 @@
 # Manage projects
-Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-12
+Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-12, SB-17
 
 ## Overview
 `/projects` ("Manage projects") is where the owner adds a project by its folder, switches any project off
@@ -78,6 +78,10 @@ because the layout now wraps `<flux:toast.group>` in `@persist('toast')`
   caller variable named in `show` (null closes it). Escape, the backdrop and Cancel close it. Focus is
   trapped (`x-trap`) and starts on Cancel, so Enter never destroys by accident. The red button runs
   `action` and disables while `target` runs. SB-13 is expected to reuse it.
+
+**Production column (SB-17).** Each row also shows a Production summary that opens a lazy
+`ProductionSettings` panel under it. See [Production connection and metrics](production-connection.md).
+`render()` adds only `withExists('prodConnection')` and an enabled-metrics count, so no credential is decrypted.
 
 ## Data model
 No migration. Writes `projects.is_enabled`; inserts `projects` rows through `RegisterProject`; deletes
@@ -173,3 +177,4 @@ page showed. A `*_refused` with `reason: unknown` means a stale tab or a hand-ma
 
 ## Change history
 2026-09-29 — Manage projects page: switch on/off, add by folder, remove behind a confirmation modal; `board:project enable`; shared `board/switch` and `board/confirm-modal`; persisted toasts (SB-12, `617f555`)
+2026-09-29 — Production column and panel per row (SB-17, `c8bcfbe`); see production-connection.md
