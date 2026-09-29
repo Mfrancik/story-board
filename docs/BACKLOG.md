@@ -47,4 +47,10 @@ Scope: PROMOTE
 
 Kit parser (bin/story-index, SB-1) reads `Chosen option: **B** (owner, 2026-09-25) — …` as no pick: parse_chosen strips the leading `**` but CHOSEN_RE then rejects the `*` after the letter. On 2026-09-29 this put 6 already-picked stories (coins MOB-44, MOB-65; asset-track CV-1, TS-3; rent-track MT-4b, MT-4c) into the board's "Awaiting a mockup pick", which should hold 3 (coins AUC-17, AUC-21; client-dashboard SS-17), and 42 built stories carry the same shape. Fix belongs in the kit (SB-1 follow-up), not in story-board.
 
+### F-2 — 2026-09-29 — Timeline of what was built, in order
+Area: home page (SB-3)
+Scope: PROJECT
+
+id like to see a timeline view of whats been built in what order too.  ew can also build this later
+
 ## Cut
