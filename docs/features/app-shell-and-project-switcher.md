@@ -46,9 +46,10 @@ switched off under `prefers-reduced-motion`.
 **`/p/{project}`, the single-project page (interim).** `routes/web.php` mounts
 `App\Livewire\Board\Home` a second time as `projects.show`. `Home::mount(?string $project)` stores
 the name in `#[Locked] public ?string $pinned` and logs `board.project_viewed` rather than
-`board.home_viewed`. `render()` uses `pinned` in place of the `project` filter for every list, for
-the ID search and for the initiative dropdown. `clearFilters()` leaves `project` alone while pinned.
-The view shows an "All projects / name" breadcrumb, a project heading, and no project `<select>`.
+`board.home_viewed`. `render()` narrows every card, figure, tile and section, the ID search and the
+initiative dropdown by `pinned`. SB-9 removed the `project` filter altogether, so on `/` nothing is
+pinned and the sidebar is the only project switcher. The view shows an "All projects / name"
+breadcrumb and a project heading.
 The page title is the project name. When SB-10 ships its own dashboard, `projects.show` will point at
 that component instead
 ([ADR-014](../decisions/ADR-014-project-page-reuses-home-pinned.md)).
@@ -128,10 +129,8 @@ disabled project now logs `project_page_refused`, not `board.story_not_found`.
   so that every refusing branch logs.
 
 ## Known limitations & gotchas
-- The home page's project `<select>` is still there on `/`, alongside the sidebar. It is hidden only
-  on project pages. SB-9 removes it.
-- `/p/{project}` is the home content filtered to one project, not a real project dashboard. That is
-  SB-10.
+- `/p/{project}` is the all-projects dashboard pinned to one project, not a real project dashboard.
+  That is SB-10.
 - The sidebar re-queries projects and counts on every full page load, `wire:navigate` included.
   Counts are live as of the last refresh, not the moment.
 - ⌘K / Ctrl+K is captured window-wide on every board page, so the browser's own shortcut for that
