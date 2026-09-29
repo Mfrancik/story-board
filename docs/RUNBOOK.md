@@ -10,6 +10,12 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-09-29 — Escape then Back left the board for about:blank
+Symptom: with the story modal open, pressing Escape (sometimes followed by Back) navigated off the board to `about:blank`. Intermittent; the browser test failed on some runs only.
+Root cause: the modal relied on Livewire's `#[Url(history: true)]`, which pushes the history entry only after the server round trip. Escape pressed before the response landed stepped back one entry more than had been pushed.
+Fix: the modal view pushes history itself, before calling the server, and counts the entries (`depth`). Close steps back through exactly those, and a modal opened straight from a URL closes with `$wire.close()` without navigating ([ADR-015](decisions/ADR-015-story-modal-history-is-driven-by-alpine.md), SB-8, `f601c01`). Pinned by `tests/Browser/StoryModalTest.php` "closes on Escape, drops ?story from the URL and returns focus to the row".
+Log trail: none; client-side. `board.story_modal_opened` looks normal. The symptom is the browser URL.
+
 ## 2026-09-29 — An unknown project's page 404'd with no log line
 Symptom: `/p/nope` returned 404, but no `board.project_page_refused` was logged, so the refusal could not be explained from the log.
 Root cause: Livewire 4 binds `{project:name}` inside `SubstituteBindings`. That runs before route middleware, so an unknown name 404'd in the binding before the guard ran.
