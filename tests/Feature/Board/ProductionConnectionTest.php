@@ -269,8 +269,8 @@ it('redacts the password from a production error message in the log and on the p
     expect(strtolower($message))->not->toContain(strtolower($this->fx->password))
         ->and($html)->not->toContain(strtolower($this->fx->password))
         ->and($logged)->not->toContain(strtolower($this->fx->password))
-        ->and(logsNamed($this->logs, 'board.prod_metric_tested')->last()->context)->toMatchArray(['result' => 'failed'])
-        ->and(logsNamed($this->logs, 'board.prod_metric_tested')->last()->context['error'])->toContain('[redacted]');
+        ->and(logsNamed($this->logs, 'board.prod_metric_tested')->last()->context)->toMatchArray(['result' => 'failed', 'reason' => 'query_failed'])
+        ->and(logsNamed($this->logs, 'board.prod_metric_tested')->last()->context)->not->toHaveKey('error');
 });
 
 it('deletes the credentials and metrics from the board DB when the connection is removed', function () {

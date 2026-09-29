@@ -7,7 +7,7 @@ of metrics to read from it: four presets (Total users, New today, Active today, 
 single-`SELECT` metrics. This story makes the connection safe to hold and lets the owner test each number;
 SB-18 shows the numbers on a dashboard and keeps daily snapshots. It is the board's first read of anything
 that is not git, so it goes through one gateway, `ProductionReader`, that proves the user read-only every
-time it connects ([ADR-025](../decisions/ADR-025-production-reads-go-through-one-read-only-gateway.md)).
+time it connects ([ADR-029](../decisions/ADR-029-production-reads-go-through-one-read-only-gateway.md)).
 
 > **Localhost only.** `/projects` has no auth. Stored production credentials are one more reason SB-6
 > (hosted board) must put auth in front of this page before the board runs anywhere but localhost.
@@ -137,7 +137,8 @@ CREATE USER 'board_ro'@'%' IDENTIFIED BY '<strong-password>' REQUIRE SSL; GRANT 
 - Prefer the board's address to `'%'` where you can, e.g. `'board_ro'@'203.0.113.7'`.
 - Grant nothing else. `SHOW GRANTS` must show only `USAGE ON *.*` plus `SELECT` (or `SHOW VIEW`). Any other
   privilege on any database, or any granted role, is refused.
-- The panel shows a shorter version (no `REQUIRE SSL`) filled in with the typed database name.
+- The panel shows the same line filled in with the typed database name; it includes `REQUIRE SSL` while
+  **Use SSL** is on.
 
 ## Configuration
 - `board.timezone` = `env('BOARD_TIMEZONE', 'America/New_York')` in `config/board.php`. This is the owner's
@@ -155,7 +156,7 @@ CREATE USER 'board_ro'@'%' IDENTIFIED BY '<strong-password>' REQUIRE SSL; GRANT 
 | `board.prod_connection_refused` | warning | `ProductionReader::refuse()`, `PrepareProdConnection` | `project`, `reason`, `privilege`, `during` (`check\|metric\|read\|schema`) |
 | `board.prod_connection_removed` | warning | `RemoveProdConnection` | `project`, `metrics` |
 | `board.prod_connection_remove_refused` | info | `ProductionSettings::remove()` | `project`, `reason: none` |
-| `board.prod_metric_tested` | info | `TestProdMetric`, `ProductionSettings` | `project`, `metric` (key), `kind`, `result`, `reason`, `error` (only `query_failed`, redacted), `duration_ms` |
+| `board.prod_metric_tested` | info | `TestProdMetric`, `ProductionSettings` | `project`, `metric` (key), `kind`, `result`, `reason`, `duration_ms` |
 | `board.prod_metrics_saved` | info | `SaveProdMetrics` | `project`, `enabled`, `custom` |
 | `board.prod_metrics_refused` | warning | `SaveProdMetrics` | `project`, `reason`, `field` |
 
@@ -185,7 +186,7 @@ with no production connection.
 
 ## Key decisions & tradeoffs
 - One read-only gateway for production, built on raw PDO with the session locked down. This amends
-  "reads from git only" → [ADR-025](../decisions/ADR-025-production-reads-go-through-one-read-only-gateway.md).
+  "reads from git only" → [ADR-029](../decisions/ADR-029-production-reads-go-through-one-read-only-gateway.md).
 - The grants check is stricter than the story asked. It covers every grant line and refuses roles and
   unparseable lines. False refusals are cheap (make a narrower user). A false pass is not.
 - Custom SQL is guarded twice: by `refuseSql()` before connecting, and by a read-only session with
@@ -206,8 +207,8 @@ with no production connection.
 - "Today" presets assume production stores UTC timestamps. `DATE` columns are listed as timestamps too and
   compare against a UTC datetime range.
 - A slow but legitimate query that finishes in about 4.95 s or more is reported as timed out.
-- A failed custom query's own error text is logged in `error` (redacted of the password). MySQL errors can
-  quote table and column names.
+- A failed custom query's error text is shown in the panel only, never logged: MySQL errors can quote
+  production values, and results are never logged. The log carries `reason=query_failed`.
 - `mount()` uses `$project->withoutRelations()`. The parent's instance can carry a stale `prodConnection`.
 - Rotating `APP_KEY` breaks stored credentials (see Configuration).
 

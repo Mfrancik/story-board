@@ -255,7 +255,7 @@ class ProductionSettings extends Component
             'connection' => $connection,
             'today' => ProductionReader::today(),
             'presetSql' => $sql,
-            'oneLiner' => "CREATE USER 'board_ro'@'%' IDENTIFIED BY '…'; GRANT SELECT ON "
+            'oneLiner' => "CREATE USER 'board_ro'@'%' IDENTIFIED BY '…'".($this->useSsl ? ' REQUIRE SSL' : '').'; GRANT SELECT ON '
                 .($this->database !== '' ? $this->database : $this->project->name).".* TO 'board_ro'@'%';",
         ]);
     }

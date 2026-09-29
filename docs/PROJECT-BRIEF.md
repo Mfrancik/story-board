@@ -88,7 +88,7 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
   [ADR-024](decisions/ADR-024-handbook-sections-load-lazily-and-stay-client-side.md)
 - Production is read only through `ProductionReader`: raw PDO outside `config/`, a read-only session,
   `SHOW GRANTS` proof on every open and an SQL guard. This amends "git only" →
-  [ADR-025](decisions/ADR-025-production-reads-go-through-one-read-only-gateway.md)
+  [ADR-029](decisions/ADR-029-production-reads-go-through-one-read-only-gateway.md)
 - The board never writes to a project (owner ruling); its only writes are its own database.
 - Preflight audit scope, audit cost record, build-artifact disposal (kit) → ADR-001 to ADR-003
 

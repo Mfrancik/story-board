@@ -1,4 +1,4 @@
-# ADR-025 — Production reads go through one read-only gateway (amends "reads from git only")
+# ADR-029 — Production reads go through one read-only gateway (amends "reads from git only")
 
 Date: 2026-09-29 · Status: accepted · Amends: ADR-004
 

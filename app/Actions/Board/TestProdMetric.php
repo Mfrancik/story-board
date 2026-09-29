@@ -20,7 +20,7 @@ class TestProdMetric
      * Read the metric's value once.
      *
      * Side effects: at most one production connection; logs board.prod_metric_tested
-     * with the result, and for a failed query its redacted error. Never the value.
+     * with the result and reason. Never the value or MySQL's error text.
      */
     public function handle(Project $project, ProdMetric $metric): MetricReading
     {
@@ -35,8 +35,8 @@ class TestProdMetric
             'kind' => $metric->kind,
             'result' => $reading->status,
             'reason' => $reading->reason,
-            // Only a query's own error: connection messages name the host, which is never logged.
-            'error' => $reading->reason === 'query_failed' ? $reading->message : null,
+            // No error text: MySQL errors can quote production values ("Truncated incorrect … value: 'x'"),
+            // and SB-17 never logs results. The message is shown to the owner only.
             'duration_ms' => $reading->ms,
         ], fn ($v) => $v !== null));
 
