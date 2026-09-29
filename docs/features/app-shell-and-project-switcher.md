@@ -29,8 +29,9 @@ from the route, so no page has to pass it in:
   with the total count, one link per project, the empty state and the Manage slot.
 
 Each project link shows a state dot, its name, a screen-reader-only state word and the story count.
-The dot classes map `ok|pending|stale|unreachable` to `bg-ok|bg-pending|bg-warning|bg-danger`, and
-any unknown state falls back to danger. The current link gets `aria-current="page"`. Every link uses
+The dot is `<x-board.state>` (since SB-10), the one map from `ok|pending|stale|unreachable` to
+`bg-ok|bg-pending|bg-warning|bg-danger`, shared with the tiles and the project header; any unknown
+state falls back to danger. The current link gets `aria-current="page"`. Every link uses
 `wire:navigate`.
 
 **All toggling is Alpine.** The filter text `q` is local to the `<aside>`. Each `<li>` is
@@ -133,3 +134,4 @@ disabled project now logs `project_page_refused`, not `board.story_not_found`.
 ## Change history
 2026-09-29 — Sidebar shell, `/p/{project}`, `/?project=` redirect, one project refusal before binding (SB-7, `d5867f6`)
 2026-09-29 — `projects.show` points at the new `ProjectPage`; `Home`'s pinned mode removed (SB-10, `a062331`)
+2026-09-29 — Sidebar dots render through `board/state`; its own dot map removed (SB-10, `e9a2f6e`)

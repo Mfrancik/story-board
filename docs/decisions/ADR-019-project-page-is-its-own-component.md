@@ -39,3 +39,12 @@ Alternatives rejected:
 - Only `refresh()` re-checks the project. Other actions after a mid-visit removal fail at
   `render()`'s `firstOrFail()` (a 404 on the Livewire request), which is acceptable for a
   single-owner localhost board.
+
+## Amendment — 2026-09-29 (SB-10 fix, `fix(SB-10): project page re-checks its project on every request`)
+
+- The last consequence above no longer holds. `ProjectPage::hydrate()` runs `CheckProjectShown` on
+  every Livewire request after the first: a project switched off or removed mid-visit logs
+  `board.project_page_refused` (`request: update`), redirects home and renders nothing of the project.
+- Why `hydrate()`, not `render()`: route middleware (ADR-013) guards only the initial GET, and the
+  check has to run before any action touches the project. Holding the name rather than the model is
+  what lets it refuse and log instead of failing inside hydration.

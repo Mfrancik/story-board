@@ -37,7 +37,8 @@ filters applied:
 - **parked** and **built**: counts only. `section()` loads their rows only while the section is open,
   because coins alone has hundreds of built stories.
 - **projects** (`projects()`): one summary per enabled project, feeding its tile. It holds on-ref
-  counts by *raw* status (so an out-of-vocabulary value stays visible), ordered
+  counts by *raw* status (so an out-of-vocabulary value stays visible), summed per status rather
+  than keyed, since a null status and a literal `(none)` share one key (SB-10), ordered
   draft/approved/built/cancelled and then A–Z, the number of on-ref stories with parse errors, and
   (SB-9) `offmain`, the number of versions not on main. Two grouped queries cover every project. The
   first sums `location_kind is null` and `location_kind is not null` side by side per status, so the
@@ -109,7 +110,7 @@ The Blade components are in `resources/views/components/board/`:
   plus "picked X". The `wire:key` includes variant and group, because one story can sit in a card
   and in an open section at once.
 - `project-card`: the dashboard tile (SB-9, extended from SB-3's health card). The whole tile is an
-  `<a wire:navigate>` to `/p/{project}`. It shows a state dot (the sidebar's token map) and, when not `ok`,
+  `<a wire:navigate>` to `/p/{project}`. It shows a state dot (`board/state`, the one state→token map) and, when not `ok`,
   a state label, both from `board/state` since SB-10; then the on-ref story total, a `status-bar`, a count chip per status, "N not on main",
   "Refreshed N ago", a parse-error warning, **only the first line** of `last_error` when not `ok`, and
   ref @ SHA. A project with no stories gets a dashed empty state with a next step.
@@ -269,3 +270,4 @@ outlive a killed process until its TTL runs out, and that is expected.
 2026-09-29 — Rows open the story modal; `expand()` and `bodies` removed (SB-8, `f601c01`)
 2026-09-29 — All-projects dashboard: What needs me cards (top 5), In flight, project tiles with `status-bar`, header refresh age; project filter removed; query-count test (SB-9, `a26153b`)
 2026-09-29 — `/p/{project}` moved to `ProjectPage`; `$pinned` removed; cards extracted to `board/needs-me-cards` (SB-10, `a062331`)
+2026-09-29 — `projects()` sums per-status counts instead of `mapWithKeys`, so null and `(none)` no longer overwrite each other (SB-10, `e9a2f6e`)

@@ -30,6 +30,12 @@ before binding ([ADR-013](../decisions/ADR-013-project-refusal-runs-before-route
   opens or closes one location kind's off-main rows. Either one with a value outside `Home::GROUPS` /
   `ProjectPage::KINDS` logs `board.project_action_refused` and changes nothing; only a hand-made
   request can send one.
+- `hydrate(CheckProjectShown)` runs on every Livewire request after the first and re-checks the
+  name. The route's `EnsureProjectIsShown` only guards the initial GET; Livewire update requests
+  skip route middleware. A project switched off or removed mid-visit logs
+  `board.project_page_refused` with `request: update`, sets the private `$gone` flag and redirects
+  home (`wire:navigate`). `render()` then returns an empty `<div>`, so the project's rollup is never
+  read.
 - `render()` loads the project by name, then takes `ListWhatNeedsMe::handle($name)` for the cards
   and the header's status counts and parse-error count, and `ReadProjectProgress::handle($id)` for
   the initiative rows and off-main counts. Only while a kind is open does it add one
@@ -41,7 +47,9 @@ whatever the number of initiatives:
   so a missing status shows in the danger tone instead of being dropped, and `max(is_parked)`
   (`RefreshProject` sets `is_parked` on every story of a parked initiative, so max is that value). It
   uses `toBase()`, because the rows are aggregates rather than `Story` models. PHP folds them into one
-  row per initiative: `counts` (ordered by `ListWhatNeedsMe::ordered()`, now public so bar segments
+  row per initiative: `counts` (summed per status with `groupBy('status')`, not keyed with
+  `mapWithKeys`: a null status and a literal `(none)` both coalesce to `(none)` and would overwrite
+  each other; ordered by `ListWhatNeedsMe::ordered()`, now public so bar segments
   match the tiles), `total`, `built`, `open` (draft plus approved, `ReadProjectProgress::OPEN`) and
   `parked`. Stories with no initiative (sitting directly in `stories/`) become a row named `null`,
   shown as "No initiative". Order: most open work first, ties A–Z with the unnamed row after the
@@ -98,12 +106,14 @@ None. Refresh needs a queue worker, as everywhere on the board (`composer run de
 | `board.project_viewed` | info | `ProjectPage::mount()` | `project` |
 | `board.refresh_requested` | info | `ProjectPage::refresh()` | `project` (one name; `/` logs `projects`) |
 | `board.refresh_refused` | warning | `ProjectPage::refresh()` | `project`, `reason` (`unknown` / `disabled`) |
+| `board.project_page_refused` | info | `ProjectPage::hydrate()` | `project`, `reason` (`unknown` / `disabled`), `request: update` |
 | `board.project_action_refused` | warning | `showAll()` / `toggleKind()` | `project`, `action`, `value` |
 | `board.refresh_*` | see [registry doc](project-registry-and-reader.md#observability) | `RefreshProjectJob` | `request_id` |
 
 Every line carries `request_id`. A healthy "Refresh this project" is `board.refresh_requested` for the
 project, then on the worker `board.refresh_started` and `board.refresh_finished` for that project only,
-same `request_id`. A `refresh_finished` for another project from the same `request_id` means the
+same `request_id`. A `project_page_refused` with `request: update` is the page catching a project
+switched off or removed mid-visit (the route's own refusal has no `request` key). A `refresh_finished` for another project from the same `request_id` means the
 refresh was not scoped. A `project_action_refused` line means something hand-crafted a Livewire call.
 
 ## Testing & verification
@@ -114,7 +124,8 @@ refresh was not scoped. A `project_action_refused` line means something hand-cra
   that adds initiatives and asserts the count does not move. Extra `it()`s cover the header, a stale
   state, scoped cards opening the modal, card Show all, the "No initiative" row, empty states, the
   absent Live now slot, the query string not moving the project, the stale-load refresh, the refused
-  refresh and the refused actions.
+  refresh and the refused actions, the mid-visit disable and removal (redirect home, logged, rollup
+  not read), and a null status plus a literal `(none)` summing instead of one dropping the other.
 - `tests/Browser/ProjectPageTest.php`: 8 rows then Show all, the branch rows expanding, a card row
   opening the modal, the refresh notice, and asset-track at 375px with no sideways scroll.
 - `AllProjectsDashboardTest` and `AppShellTest` were updated: `/p/{project}` now has no project tiles
@@ -130,6 +141,9 @@ refresh was not scoped. A `project_action_refused` line means something hand-cra
   [ADR-019](../decisions/ADR-019-project-page-is-its-own-component.md) (supersedes ADR-014).
 - The initiative rollup is one grouped aggregate query and off-main rows load only on demand →
   [ADR-020](../decisions/ADR-020-initiative-rollup-is-one-grouped-query.md).
+- The mid-visit re-check lives in `hydrate()`, not `render()`: it must run before any action or
+  render touches the project, and route middleware never sees Livewire update requests (ADR-019
+  amendment).
 - Initiative "Show all" is Alpine (rows already rendered, pure UI per CLAUDE.md); the cards' Show all
   stays a Livewire call, for parity with `/`.
 - Deliberate deviations: "every row opens the modal" applies to story rows only; initiative rows are
@@ -139,12 +153,15 @@ refresh was not scoped. A `project_action_refused` line means something hand-cra
 
 ## Known limitations & gotchas
 - Initiative rows are not clickable. There is no drill-down from an initiative to its stories yet.
-- Only `refresh()` re-checks that the project is still shown. `render()` loads it with
-  `firstOrFail()`, so any other action on a page whose project was **removed** mid-visit 404s the
-  Livewire request, and one that was **disabled** keeps rendering until reload.
+- A mid-visit refusal is caught on the owner's *next request*, not pushed: a page left open after the
+  project is switched off still shows the old render until the owner clicks something.
+- Livewire keeps the previous HTML after a redirect, so a test that asserts `assertDontSee` after
+  `assertRedirect` checks stale markup. The mid-visit tests prove "not read" by mocking
+  `ReadProjectProgress` with `shouldNotReceive('handle')` (see RUNBOOK).
 - An open kind's rows are re-read on every render. If a refresh emptied that kind since it was opened,
   its section reads "None left: the last refresh moved them" rather than disappearing.
 - Browser tests click "Refresh this project" by `data-refresh-project`, not by text (see RUNBOOK).
 
 ## Change history
 2026-09-29 — Single-project dashboard at `/p/{project}`: header refresh, scoped cards, Progress by initiative, Not on main by kind; replaces `Home` pinned (SB-10, `a062331`)
+2026-09-29 — `hydrate()` sends the owner home (logged) when the project leaves the board mid-visit, replacing a stale render or unlogged 404; status counts summed so null and `(none)` no longer collide (SB-10, `e9a2f6e`)

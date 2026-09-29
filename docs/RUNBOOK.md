@@ -10,6 +10,12 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-09-29 — A project switched off mid-visit kept rendering its rollup
+Symptom: with `/p/coins` open, switching coins off and then clicking a kind button still re-rendered its initiatives; a removed project 404'd the Livewire request with no log line (L-5).
+Root cause: `EnsureProjectIsShown` is route middleware, and Livewire update requests (`/livewire/update`) never pass through the page's route middleware, so only the initial GET was guarded. Test trap: after `assertRedirect()`, Livewire's test harness still holds the previous HTML, so `assertDontSee('secret-rollup')` passes against stale markup and proves nothing.
+Fix: `ProjectPage::hydrate()` re-runs `CheckProjectShown` on every update request, logs `board.project_page_refused` (`request: update`), redirects home, and `render()` returns an empty `<div>` (SB-10, `e9a2f6e`). The test proves the rollup is not read by mocking `ReadProjectProgress` with `shouldNotReceive('handle')`. Any Livewire page guarded by route middleware needs the same `hydrate()` re-check.
+Log trail: `board.project_page_refused` with `request: update` and `reason` `disabled` / `unknown`; before the fix, nothing after `board.project_viewed`.
+
 ## 2026-09-29 — A query-count test failed (15 vs 17) with no growth in the page
 Symptom: SB-10's "same number of queries whatever the number of initiatives" test counted 15 queries before adding initiatives and 17 after.
 Root cause: the fixture's What needs me cards started empty. An empty card skips its eager-load query, so the "after" run (which added open work) paid two queries the "before" run never made. Empty vs filled looked like growth.
