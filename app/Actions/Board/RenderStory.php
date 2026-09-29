@@ -38,6 +38,11 @@ class RenderStory
      */
     public function read(Story $story): ?string
     {
+        // An untracked file is not in git, and the board reads projects only through git.
+        if ($story->location_kind === Story::KIND_UNTRACKED) {
+            return null;
+        }
+
         try {
             return $this->git->show($story->project->path, $story->sha, $story->path);
         } catch (GitReaderException $e) {

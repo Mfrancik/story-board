@@ -24,13 +24,14 @@ class ReadMockupFile
 
     /**
      * The bytes of `$file` inside `$storyId`'s mockup directory, read at the
-     * commit the story was indexed from.
+     * commit the story was indexed from — the ref's, or with `$version` (an
+     * off-main row id, SB-5) that branch's commit. Untracked versions are refused.
      *
      * Side effects: logs board.mockup_path_rejected (warning) or board.mockup_served (debug).
      *
      * @throws MockupNotFoundException when the story, its mockup directory, the path, or the file is not servable.
      */
-    public function handle(Project $project, string $storyId, string $file): string
+    public function handle(Project $project, string $storyId, string $file, ?int $version = null): string
     {
         // Checked here, not only by the database lookup below, so the guarantee is local to this file.
         if (! preg_match('/^[A-Z]{2,}-[0-9]+[a-z]?$/D', $storyId) || ! $this->isPlainRelativePath($file)) {
@@ -38,7 +39,11 @@ class ReadMockupFile
             throw new MockupNotFoundException("Rejected mockup path: {$file}");
         }
 
-        $story = Story::onRef()->where('project_id', $project->id)->where('story_id', $storyId)->first();
+        $story = $version === null
+            ? Story::onRef()->where('project_id', $project->id)->where('story_id', $storyId)->first()
+            // The version must be this project's, this story's, and in git (a branch commit).
+            : Story::offMain()->where('project_id', $project->id)->where('story_id', $storyId)
+                ->whereIn('location_kind', [Story::KIND_BRANCH, Story::KIND_WORKTREE])->find($version);
         $dir = $story?->mockups['dir'] ?? null;
         // The directory comes from the snapshot, never the URL, so a story can only serve its own folder.
         if ($story === null || $dir !== "docs/mockups/{$storyId}") {

@@ -21,7 +21,7 @@ Every reusable component. Consult BEFORE building any new UI (design-standards
 | settings/layout | Blade | Starter kit: settings page shell with sub-nav | settings pages |
 | Home | Livewire (Board) | SB-3 home: what needs me, Built / Parked drafts, project cards; URL filters | `/` |
 | board/section | Blade | Boxed list with heading, count, hint; `collapsible` for closed-by-default sections | Home |
-| board/story-row | Blade | One story row that expands in place (Alpine) to chips, story text and mockup thumbnails | Home |
+| board/story-row | Blade | One story row that expands in place (Alpine) to chips, story text and mockup thumbnails; shows where an off-main version lives | Home |
 | board/project-card | Blade | One project's counts by raw status, parse-error warning, snapshot state | Home |
 | board/status-chip | Blade | A story's raw status with parse-error marker; danger tone for out-of-vocabulary values | Home, story-row |
 | layouts/board | Blade layout | The board's shell: no sidebar or auth, Flux appearance for light/dark | Home |

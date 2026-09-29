@@ -5,9 +5,10 @@
 @props(['story', 'body' => null, 'group' => null])
 @php
     $options = $story->mockups['options'] ?? [];
-    $servable = ($story->mockups['dir'] ?? null) === "docs/mockups/{$story->story_id}" && $options !== [];
+    $servable = ($story->mockups['dir'] ?? null) === "docs/mockups/{$story->story_id}" && $options !== [] && $story->isInGit();
     $errors = count($story->parse_errors);
-    $showStatus = $errors > 0 || ! in_array($story->status, ['draft', 'approved', 'built'], true);
+    // Mockup-only off-main rows have no status of their own; that is not an error.
+    $showStatus = ! str_starts_with($story->path, 'docs/mockups/') && ($errors > 0 || ! in_array($story->status, ['draft', 'approved', 'built'], true));
 @endphp
 <div wire:key="row-{{ $story->id }}" data-row="{{ $story->story_id }}" @if ($group === 'pick') data-pick-row="{{ $story->story_id }}" @endif
     x-data="{ open: false }">
@@ -24,11 +25,23 @@
             @if ($showStatus)<x-board.status-chip :status="$story->status" :errors="$errors" class="ml-1" />@endif
         </span>
         <span class="hidden text-xs text-zinc-500 sm:order-4 sm:inline dark:text-zinc-400">{{ $story->initiative }}</span>
+        @if ($story->location)
+            {{-- SB-5: where this version lives, and what it says there. --}}
+            <span data-offmain-row="{{ $story->story_id }}" class="col-span-2 flex flex-wrap items-center gap-1.5 text-xs text-warning sm:order-5 sm:col-span-4">
+                <span class="break-all font-mono">{{ $story->location }}</span>
+                @if (str_starts_with($story->path, 'docs/mockups/'))
+                    <span class="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">mockups only</span>
+                @elseif ($story->status)
+                    <x-board.status-chip :status="$story->status" :errors="$errors" />
+                @endif
+                @if ($story->mockups['chosen'] ?? null)<span class="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">picked {{ strtoupper($story->mockups['chosen']) }}</span>@endif
+            </span>
+        @endif
     </button>
 
     <div x-show="open" x-cloak class="space-y-3 border-t border-zinc-100 bg-zinc-50/60 px-3 py-3 dark:border-zinc-800 dark:bg-zinc-950/40">
         <div class="flex flex-wrap items-center gap-1.5 text-xs">
-            <x-board.status-chip :status="$story->status" :errors="$errors" />
+            @if ($story->status !== null || ! str_starts_with($story->path, 'docs/mockups/'))<x-board.status-chip :status="$story->status" :errors="$errors" />@endif
             @if ($story->initiative)<span class="rounded bg-zinc-100 px-1.5 py-0.5 dark:bg-zinc-800">initiative: {{ $story->initiative }}</span>@endif
             @if ($story->journey)<span class="rounded bg-zinc-100 px-1.5 py-0.5 dark:bg-zinc-800">journey: {{ $story->journey }}</span>@endif
             @if ($story->depends_on !== [])<span class="rounded bg-zinc-100 px-1.5 py-0.5 dark:bg-zinc-800">depends on {{ implode(', ', $story->depends_on) }}</span>@endif
@@ -41,7 +54,9 @@
             </ul>
         @endif
 
-        @if ($body === null)
+        @if (! $story->isInGit())
+            <p class="text-sm text-zinc-500 dark:text-zinc-400">An untracked file, {{ $story->location }} — not in git, so the board does not read it. Open it in that checkout.</p>
+        @elseif ($body === null)
             <p class="text-sm text-zinc-500" wire:loading.remove wire:target="expand({{ $story->id }})">Opening story…</p>
             <p class="text-sm text-zinc-500" wire:loading wire:target="expand({{ $story->id }})">Reading the story from git…</p>
         @elseif ($body === '')
@@ -55,7 +70,7 @@
                 <p class="text-xs font-medium text-zinc-500 dark:text-zinc-400">Mockups{{ $story->mockups['chosen'] ? ' · chosen '.strtoupper($story->mockups['chosen']) : '' }}</p>
                 <div class="mt-1 flex gap-3 overflow-x-auto pb-1">
                     @foreach ($options as $option)
-                        @php $src = route('mockups.file', ['project' => $story->project->name, 'storyId' => $story->story_id, 'file' => "option-{$option}.html"]); @endphp
+                        @php $src = $story->mockupUrl("option-{$option}.html"); @endphp
                         <a href="{{ $src }}" target="_blank" rel="noopener" class="group shrink-0" aria-label="Open option {{ $option }} in a new tab">
                             <div class="relative h-28 w-44 overflow-hidden rounded border bg-white {{ $story->mockups['chosen'] === $option ? 'border-built ring-2 ring-built' : 'border-zinc-200 dark:border-zinc-700' }}">
                                 {{-- Scaled-down live render; the frame is inert here (pointer-events off) and sandboxed like every mockup. --}}
@@ -71,8 +86,8 @@
             </div>
         @endif
 
-        @if (Route::has('stories.show'))
-            <a href="{{ route('stories.show', ['project' => $story->project->name, 'storyId' => $story->story_id]) }}" wire:navigate
+        @if ($story->story_id && preg_match('/^[A-Z]{2,}-[0-9]+[a-z]?$/', $story->story_id))
+            <a href="{{ route('stories.show', ['project' => $story->project->name, 'storyId' => $story->story_id, ...($story->location_kind ? ['v' => $story->id] : [])]) }}" wire:navigate
                 class="inline-block text-sm font-medium underline">Open full page →</a>
         @endif
     </div>

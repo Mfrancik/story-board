@@ -1,5 +1,5 @@
 # SB-5 — Show work that isn't on main yet
-Status: approved         Journey: none
+Status: built            Journey: none
 Source: owner 2026-09-29 (coins /story). Found at /story: 67 mockup directories sit untracked in coins'
 primary checkout, 12 more `coins-*` checkouts hold their own, and approved decisions live on unpushed
 branches (e.g. MOB-56's pick on `docs/MOB-56-pick`).

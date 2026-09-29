@@ -33,6 +33,7 @@ class ListWhatNeedsMe
      *     build: Collection<int, Story>,
      *     parked: int,
      *     built: int,
+     *     offmain: int,
      *     projects: list<array{name: string, ref: string, state: string, sha: string|null, indexed_at: Carbon|null, last_error: string|null, counts: array<string, int>, parse_errors: int}>
      * }
      */
@@ -55,6 +56,7 @@ class ListWhatNeedsMe
                 ->orderBy('projects.name')->orderBy('stories.path')->get(),
             'parked' => $scoped()->where('stories.status', 'draft')->where('stories.is_parked', true)->count(),
             'built' => $scoped()->where('stories.status', 'built')->count(),
+            'offmain' => $this->scoped($project, $initiative, $search, offMain: true)->count(),
             'projects' => $this->projects($project),
         ];
     }
@@ -63,14 +65,17 @@ class ListWhatNeedsMe
      * The rows of a collapsible section (owner ruling at SB-3's gate), loaded only
      * when it is opened — coins alone has 828 built stories.
      *
-     * @param  'built'|'parked'  $section
+     * @param  'built'|'parked'|'offmain'  $section
      * @return Collection<int, Story>
      */
     public function section(string $section, ?string $project = null, ?string $initiative = null, ?string $search = null): Collection
     {
-        $query = $this->scoped($project, $initiative, $search);
+        $query = $this->scoped($project, $initiative, $search, offMain: $section === 'offmain');
 
         return match ($section) {
+            // SB-5: grouped by where the work lives, then by story.
+            'offmain' => $query->orderBy('projects.name')->orderBy('stories.location_kind')->orderBy('stories.branch')
+                ->orderBy('stories.path')->get(),
             'built' => $query->where('stories.status', 'built')->orderBy('projects.name')->orderBy('stories.path')->get(),
             'parked' => $query->where('stories.status', 'draft')->where('stories.is_parked', true)
                 ->orderBy('projects.name')->orderBy('stories.path')->get(),
@@ -97,7 +102,7 @@ class ListWhatNeedsMe
      *
      * @return Builder<Story>
      */
-    private function scoped(?string $project, ?string $initiative, ?string $search): Builder
+    private function scoped(?string $project, ?string $initiative, ?string $search, bool $offMain = false): Builder
     {
         $search = trim((string) $search);
 
@@ -106,7 +111,7 @@ class ListWhatNeedsMe
             ->join('projects', 'projects.id', '=', 'stories.project_id')
             ->where('projects.is_enabled', true)
             // Off-main rows (SB-5) have their own section; the groups count the ref only.
-            ->whereNull('stories.location_kind')
+            ->when($offMain, fn ($q) => $q->whereNotNull('stories.location_kind'), fn ($q) => $q->whereNull('stories.location_kind'))
             ->with('project')
             ->when($project, fn ($q) => $q->where('projects.name', $project))
             ->when($initiative, fn ($q) => $q->where('stories.initiative', $initiative))

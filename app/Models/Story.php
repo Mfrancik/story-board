@@ -94,4 +94,38 @@ class Story extends Model
     {
         $query->whereNotNull('location_kind');
     }
+
+    /**
+     * Whether this row's files can be read from git: the ref's snapshot, or a
+     * branch commit. Untracked files are not in git, so the board cannot serve them.
+     */
+    public function isInGit(): bool
+    {
+        return $this->location_kind !== self::KIND_UNTRACKED;
+    }
+
+    /**
+     * Where this version lives, as a phrase: "on branch x", "in worktree /p",
+     * "untracked in /p" — null for the ref's own row.
+     */
+    public function placePhrase(): ?string
+    {
+        return match ($this->location_kind) {
+            self::KIND_BRANCH => "on {$this->location}",
+            self::KIND_WORKTREE => "in {$this->location}",
+            self::KIND_UNTRACKED => $this->location,
+            default => null,
+        };
+    }
+
+    /**
+     * URL of one of this row's mockup files. Off-main rows name their version
+     * (`v`), so the file is read from that branch's commit, not the ref.
+     */
+    public function mockupUrl(string $file): string
+    {
+        $params = ['project' => $this->project->name, 'storyId' => (string) $this->story_id, 'file' => $file];
+
+        return route('mockups.file', $this->location_kind === null ? $params : [...$params, 'v' => $this->id]);
+    }
 }

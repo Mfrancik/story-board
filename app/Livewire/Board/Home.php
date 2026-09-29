@@ -31,7 +31,7 @@ class Home extends Component
     public const SECTION_PAGE = 50;
 
     /** The collapsible sections the owner asked for at the gate. */
-    public const SECTIONS = ['built', 'parked'];
+    public const SECTIONS = ['offmain', 'built', 'parked'];
 
     /** The three action groups, in page order. */
     public const GROUPS = ['approval', 'pick', 'build'];

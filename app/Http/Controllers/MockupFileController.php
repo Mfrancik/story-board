@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\Board\ReadMockupFile;
 use App\Exceptions\MockupNotFoundException;
 use App\Models\Project;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 /**
@@ -30,14 +31,17 @@ class MockupFileController extends Controller
     private const CSP = "sandbox allow-scripts allow-popups; default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https:; frame-ancestors 'self'";
 
     /**
-     * Return `$file` from `$storyId`'s mockup directory, or 404.
+     * Return `$file` from `$storyId`'s mockup directory (at the ref, or at `?v=`'s branch), or 404.
      */
-    public function __invoke(Project $project, string $storyId, string $file, ReadMockupFile $read): Response
+    public function __invoke(Request $request, Project $project, string $storyId, string $file, ReadMockupFile $read): Response
     {
         abort_unless($project->is_enabled, 404);
+        // `v` names an off-main version (SB-5); anything but a positive integer is not one.
+        $version = $request->query('v');
+        abort_if($version !== null && ! ctype_digit((string) $version), 404);
 
         try {
-            $bytes = $read->handle($project, $storyId, $file);
+            $bytes = $read->handle($project, $storyId, $file, $version === null ? null : (int) $version);
         } catch (MockupNotFoundException) {
             abort(404);
         }

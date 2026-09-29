@@ -52,9 +52,7 @@
         <p data-goto="{{ $story->story_id }}" class="mt-3 rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-800 dark:bg-zinc-900">
             <span class="font-mono font-medium">{{ $story->story_id }}</span> in {{ $story->project->name }} is
             <x-board.status-chip :status="$story->status" :errors="count($story->parse_errors)" />, so it is in none of the groups below.
-            @if (Route::has('stories.show'))
-                <a href="{{ route('stories.show', ['project' => $story->project->name, 'storyId' => $story->story_id]) }}" wire:navigate class="font-medium underline">Go to {{ $story->story_id }} →</a>
-            @endif
+            <a href="{{ route('stories.show', ['project' => $story->project->name, 'storyId' => $story->story_id]) }}" wire:navigate class="font-medium underline">Go to {{ $story->story_id }} →</a>
         </p>
     @endforeach
 
@@ -75,7 +73,11 @@
             </x-board.section>
         @endforeach
 
-        @foreach (['built' => ['Built', $built, 'border-l-built', 'on origin/main'], 'parked' => ['Parked drafts', $parked, 'border-l-cancelled', 'in a draft group, not in the build queue']] as $key => [$title, $count, $accent, $hint])
+        @foreach ([
+            'offmain' => ['Not on main', $offmain, 'border-l-warning', 'on unmerged branches, in worktrees, or untracked — each labelled with where it lives'],
+            'built' => ['Built', $built, 'border-l-built', "on each project's ref"],
+            'parked' => ['Parked drafts', $parked, 'border-l-cancelled', 'in a draft group, not in the build queue'],
+        ] as $key => [$title, $count, $accent, $hint])
             @php $open = in_array($key, $openSections, true); $rows = $sections[$key] ?? collect(); $all = in_array($key, $expandedGroups, true); @endphp
             <x-board.section :key="$key" :title="$title" :count="$count" :hint="$hint" :accent="$accent" collapsible :open="$open">
                 @forelse ($all ? $rows : $rows->take(\App\Livewire\Board\Home::SECTION_PAGE) as $story)

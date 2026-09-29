@@ -1,11 +1,12 @@
 {{-- SB-4 story page — mockup B (story above the mockups) plus the owner's full-screen compare. All UI state is Alpine. --}}
 @php
     $options = $story->mockups['options'] ?? [];
-    $servable = ($story->mockups['dir'] ?? null) === "docs/mockups/{$story->story_id}" && $options !== [];
+    $servable = ($story->mockups['dir'] ?? null) === "docs/mockups/{$story->story_id}" && $options !== [] && $story->isInGit();
     $chosen = $story->mockups['chosen'] ?? null;
     $first = $chosen && in_array($chosen, $options, true) ? $chosen : ($options[0] ?? null);
     $other = collect($options)->first(fn ($o) => $o !== $first) ?? $first;
-    $src = fn (string $o) => route('mockups.file', ['project' => $project->name, 'storyId' => $story->story_id, 'file' => "option-{$o}.html"]);
+    $src = fn (string $o) => $story->mockupUrl("option-{$o}.html");
+    $page = fn (int $id, bool $onRef) => route('stories.show', ['project' => $project->name, 'storyId' => $story->story_id, ...($onRef ? [] : ['v' => $id])]);
     $toggle = 'rounded-md border border-zinc-300 px-2 py-1 text-xs aria-pressed:bg-zinc-900 aria-pressed:text-white dark:border-zinc-700 dark:aria-pressed:bg-white dark:aria-pressed:text-zinc-900';
     $chip = 'rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800';
 @endphp
@@ -31,6 +32,19 @@
     </header>
 
     <main class="mx-auto max-w-6xl px-4 py-6">
+        @if ($story->location)
+            <p data-offmain-shown class="mb-3 rounded-lg border border-warning/50 bg-warning/10 px-3 py-2 text-sm">
+                <b>{{ ucfirst($story->placePhrase()) }} — not on main.</b>
+                @if ($onRef)<a href="{{ $page($onRef->id, true) }}" wire:navigate class="underline">See the version on main</a>@else It is not on main at all yet.@endif
+            </p>
+        @endif
+        @if ($versions !== [])
+            <ul data-offmain-banner class="mb-3 space-y-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-800 dark:bg-zinc-900">
+                @foreach ($versions as $v)
+                    <li><a href="{{ $page($v['id'], $v['onRef']) }}" wire:navigate class="{{ $v['onRef'] ? '' : 'text-warning' }} hover:underline">{{ $v['text'] }}</a></li>
+                @endforeach
+            </ul>
+        @endif
         <article class="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
             <div class="flex flex-wrap items-center gap-1.5">
                 <x-board.status-chip :status="$story->status" :errors="count($story->parse_errors)" />
@@ -51,7 +65,7 @@
             @if ($story->source)
                 <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Source: {{ $story->source }}</p>
             @endif
-            <p class="mt-1 font-mono text-xs text-zinc-500 dark:text-zinc-400">{{ $project->name }} · {{ $story->path }} @ {{ $project->ref }} {{ substr($story->sha, 0, 8) }}</p>
+            <p class="mt-1 font-mono text-xs text-zinc-500 dark:text-zinc-400">{{ $project->name }} · {{ $story->path }} @ {{ $story->location_kind === null ? $project->ref.' '.substr($story->sha, 0, 8) : ($story->isInGit() ? $story->branch.' '.substr($story->sha, 0, 8) : $story->location) }}</p>
 
             @if ($story->parse_errors !== [])
                 <ul class="mt-3 rounded border border-danger/30 bg-danger/5 px-3 py-2 text-xs text-danger">
@@ -61,7 +75,9 @@
 
             <details open class="mt-3">
                 <summary class="cursor-pointer text-sm text-zinc-500 dark:text-zinc-400">Story text</summary>
-                @if ($body === null)
+                @if (! $story->isInGit())
+                    <p class="mt-3 text-sm text-zinc-500 dark:text-zinc-400">An untracked file, {{ $story->location }} — not in git, so the board does not read its text. Open {{ $story->path }} in that checkout.</p>
+                @elseif ($body === null)
                     <p class="mt-3 text-sm text-danger">This story could not be read from git at {{ substr($story->sha, 0, 8) }}.</p>
                 @else
                     <div class="prose prose-zinc prose-code:before:content-none prose-code:after:content-none mt-3 max-w-3xl dark:prose-invert">{!! $body !!}</div>
@@ -99,7 +115,7 @@
                 </div>
 
                 @if (! $servable)
-                    <p class="mt-3 rounded-lg border border-dashed border-zinc-300 px-3 py-4 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">No mockups at {{ $project->ref }} for {{ $story->story_id }}.</p>
+                    <p class="mt-3 rounded-lg border border-dashed border-zinc-300 px-3 py-4 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">No mockups {{ $story->location ? $story->placePhrase() : 'at '.$project->ref }} for {{ $story->story_id }}{{ $story->isInGit() ? '' : ' that the board can serve (untracked files are not in git)' }}.</p>
                 @else
                     @if ($chosen)
                         <div class="mt-3 rounded-lg border border-built/50 bg-built/10 p-3 text-sm">
@@ -165,7 +181,7 @@
                                     <div class="flex min-h-0 flex-col">
                                         <p class="mb-1 font-mono text-xs"><span x-text="'option-' + side"></span><span x-show="side === @js($chosen)" class="ml-1 rounded bg-built px-1 text-white">chosen</span></p>
                                         <div class="min-h-0 flex-1 overflow-auto rounded-lg bg-white ring-1 ring-zinc-200 dark:ring-zinc-800">
-                                            <iframe x-bind:src="@js(route('mockups.file', ['project' => $project->name, 'storyId' => $story->story_id, 'file' => '__FILE__'])).replace('__FILE__', 'option-' + side + '.html')"
+                                            <iframe x-bind:src="@js($story->mockupUrl('__FILE__')).replace('__FILE__', 'option-' + side + '.html')"
                                                 sandbox="allow-scripts" title="Compared option" class="h-full border-0" x-bind:style="`width: ${width}px`"></iframe>
                                         </div>
                                     </div>
