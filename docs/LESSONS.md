@@ -31,3 +31,16 @@ Symptom: 586 worktrees (218.7 GB) and 3,491 leftover test databases (43 GB) on a
 Root cause: a provisioning step with no inverse. `bin/provision-worktree.sh` created a worktree and a database per agent; no merge step, gate, hook or test bootstrap ever removed either, and nothing reported the growth — so it was discovered at the disk, not before. The obvious fix (delete by age) was itself destructive: 58 branches were unmerged AND unpushed, their commits existing only inside a worktree.
 Enforced at: check → `preflight.sh` `workspace growth` (warn-only, permanently — thresholds `PF_DB_WARN`/`PF_WT_WARN`/`PF_LOG_WARN_MB`); script → `bin/dispose-worktree.sh` (the four-condition conjunction, skip-and-report, `remove` without `--force`, `branch -d` never `-D`, 3b reading `--ignored` because `worktree remove` does not) and `bin/disposal-fixture.sh` (one asserted worktree per classification — the harness that must pass before these scripts change) and `bin/workspace-sweep.sh` (frozen `SHOW DATABASES` snapshot, prefix allow-list, kept droplist); rule → `docs/standards/disposal-standards.md`; process → `/build` merge step ("a merge that leaves its worktree behind is an incomplete merge"). Decision: docs/decisions/ADR-003.
 Scope: PROMOTE TO CENTRAL
+
+## L-5 — 2026-09-29 — Guards shipped without a test or a log line
+Symptom: four preflight audits in one phase (SB-2..SB-5) flagged rejection paths — a bad stored ref, mockup 404s, disabled-project and malformed-ID 404s, a non-integer `?v=` — that had no test, no log line, or neither; each became a post-GO fix commit.
+Root cause: stories enumerate the happy path and one or two failures; the builder never lists the guards the diff adds, so each guard's test and log is left to the audit to notice.
+Enforced at: rule → codebase-standards.md §Testing "Every guard gets a test and a log line" (read by the audit's standards pillar on every run, so no new gate or audit bullet — owner asked for nothing that slows the loop).
+Scope: PROMOTE TO CENTRAL
+
+## L-6 — 2026-09-29 — Story checks and data rules never run against the real repo
+Symptom: four story assertions were wrong on real data and found only while building — SB-2's `git grep` oracle (918 vs 916, it counted READMEs), SB-3's "any initiative README = parked" (coins has release/unstatused READMEs), SB-5's example mockup dir `X-1` (not a valid ID), SB-4's "D marked chosen" (the parser cannot read `**D**`).
+Root cause: /story writes counts, rules and examples as facts without executing them — the L-2 class (an unverified assertion) applied to story authoring.
+Enforced at: process → .claude/skills/story/SKILL.md step 7 "Run every fact the stories assert against the real project" + Test plan template line "Checked against real data".
+Scope: PROMOTE TO CENTRAL
+

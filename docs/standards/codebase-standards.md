@@ -76,6 +76,11 @@ standards, story files).
   they read as the criteria: `it('blocks guests from the dashboard')`.
 - Feature tests hit real routes and the MySQL test DB (`RefreshDatabase`).
   Unit tests cover Actions with logic worth isolating.
+- **Every guard gets a test and a log line.** Any early exit on rejected input —
+  `abort*`, a thrown domain exception, a `continue`/`return` that skips work —
+  ships in the same commit with a test that triggers it and a log line saying why
+  (logging-standards §What must be logged). List the guards in the diff before
+  calling the story done; the happy path is not the whole contract.
 - Factories for all models; states for meaningful variants (`suspended()`).
 - A skipped test needs a comment with a story ID and a reason.
 - **Journey tests** live in `tests/Browser/Journeys/` using Pest's browser
