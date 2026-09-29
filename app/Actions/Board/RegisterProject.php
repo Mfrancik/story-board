@@ -23,10 +23,14 @@ class RegisterProject
      *
      * Side effects: inserts a `projects` row and logs board.project_registered.
      *
-     * @throws ProjectRegistrationException when the path is missing, not a repo, or taken.
+     * @throws ProjectRegistrationException when the ref is invalid, or the path is missing, not a repo, or taken.
      */
     public function handle(string $path, ?string $name = null, string $ref = 'origin/main'): Project
     {
+        if (! GitReader::isValidRef($ref)) {
+            throw new ProjectRegistrationException("Invalid ref: {$ref}");
+        }
+
         $real = realpath($path);
         if ($real === false || ! $this->git->isRepository($real)) {
             throw new ProjectRegistrationException("Not a git repository: {$path}");

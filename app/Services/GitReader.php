@@ -22,6 +22,13 @@ class GitReader
     private const ALLOWED = ['fetch', 'ls-tree', 'show', 'rev-parse', 'cat-file', 'remote'];
 
     /**
+     * What a ref may look like: branch/remote names and SHAs. A leading `-` is
+     * refused because git would parse the ref as an option — `show --output=…`
+     * writes a file. Stricter than git-check-ref-format on purpose.
+     */
+    private const REF_PATTERN = '#^(?!-)(?!.*\.\.)[A-Za-z0-9._/-]+$#';
+
+    /**
      * Keep git from ever waiting on a human: a passphrase or host-key prompt
      * would otherwise hang a page-load refresh until the timeout.
      */
@@ -57,6 +64,7 @@ class GitReader
      */
     public function fetch(string $path, string $ref): void
     {
+        $this->assertRef($ref);
         $remotes = preg_split('/\s+/', trim($this->run($path, ['remote']))) ?: [];
         $remote = explode('/', $ref, 2)[0];
         $args = in_array($remote, $remotes, true) ? [$remote] : [];
@@ -74,6 +82,8 @@ class GitReader
      */
     public function resolve(string $path, string $ref): string
     {
+        $this->assertRef($ref);
+
         return trim($this->run($path, ['rev-parse', '--verify', '--quiet', "{$ref}^{commit}"]));
     }
 
@@ -84,6 +94,8 @@ class GitReader
      */
     public function show(string $path, string $ref, string $file): string
     {
+        $this->assertRef($ref);
+
         return $this->run($path, ['show', "{$ref}:{$file}"]);
     }
 
@@ -98,6 +110,8 @@ class GitReader
      */
     public function storyIndex(string $path, string $ref): array
     {
+        $this->assertRef($ref);
+
         $result = Process::env(self::ENV)->timeout(60)
             ->run([base_path('bin/story-index'), $path, $ref]);
 
@@ -114,6 +128,24 @@ class GitReader
     }
 
     /**
+     * Whether `$ref` is safe to hand to git as a revision (never an option).
+     */
+    public static function isValidRef(string $ref): bool
+    {
+        return preg_match(self::REF_PATTERN, $ref) === 1;
+    }
+
+    /**
+     * @throws GitReaderException when `$ref` could be read by git as an option or a range.
+     */
+    private function assertRef(string $ref): void
+    {
+        if (! self::isValidRef($ref)) {
+            throw new GitReaderException("invalid ref: {$ref}");
+        }
+    }
+
+    /**
      * Run one allow-listed git subcommand in `$path` and return its stdout.
      *
      * @param  list<string>  $args  the subcommand first, then its arguments
@@ -126,6 +158,16 @@ class GitReader
         $subcommand = $args[0] ?? '';
         if (! in_array($subcommand, self::ALLOWED, true)) {
             throw new GitReaderException("git {$subcommand} is not allowed: the board is read-only");
+        }
+        // An allowed subcommand can still write through its arguments: `remote add|set-url`
+        // rewrites .git/config and `--output` writes a file, so both are refused outright.
+        if ($subcommand === 'remote' && count($args) > 1) {
+            throw new GitReaderException('git remote is not allowed with arguments: the board only lists remotes');
+        }
+        foreach ($args as $arg) {
+            if (str_starts_with($arg, '--output') || str_starts_with($arg, '-o')) {
+                throw new GitReaderException("git option {$arg} is not allowed: the board is read-only");
+            }
         }
 
         $command = ['git', '-C', $path];

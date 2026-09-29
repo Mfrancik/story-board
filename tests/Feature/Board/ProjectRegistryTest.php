@@ -86,3 +86,14 @@ it('refreshes a project on page load once its snapshot is older than five minute
     Bus::assertDispatchedAfterResponse(RefreshProjectJob::class, fn ($job) => $job->project->is($stale));
     Bus::assertDispatchedAfterResponse(RefreshProjectJob::class, fn ($job) => $job->project->is($never));
 });
+
+it('refuses to register a project with a ref git would read as an option', function () {
+    $fixture = new GitFixture;
+
+    $this->artisan('board:project', ['action' => 'add', 'path' => $fixture->project, '--ref' => '--output=/tmp/x'])
+        ->expectsOutputToContain('Invalid ref')
+        ->assertFailed();
+
+    expect(Project::count())->toBe(0);
+    $fixture->destroy();
+});
