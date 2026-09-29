@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Board\ParseVersion;
 use App\Actions\Board\ReadMockupFile;
 use App\Exceptions\MockupNotFoundException;
 use App\Models\Project;
@@ -34,19 +35,18 @@ class MockupFileController extends Controller
     /**
      * Return `$file` from `$storyId`'s mockup directory (at the ref, or at `?v=`'s branch), or 404.
      */
-    public function __invoke(Request $request, Project $project, string $storyId, string $file, ReadMockupFile $read): Response
+    public function __invoke(Request $request, Project $project, string $storyId, string $file, ReadMockupFile $read, ParseVersion $parse): Response
     {
-        abort_unless($project->is_enabled, 404);
-        // `v` names an off-main version (SB-5); anything but a positive integer is not one.
-        $version = $request->query('v');
-        if ($version !== null && ! ctype_digit((string) $version)) {
-            Log::warning('board.version_rejected', ['project' => $project->name, 'story' => $storyId, 'v' => $version]);
+        if (! $project->is_enabled) {
+            Log::info('board.mockup_not_found', ['project' => $project->name, 'story' => $storyId, 'reason' => 'project disabled']);
             abort(404);
         }
+        $version = $parse->handle($request->query('v'), ['project' => $project->name, 'story' => $storyId, 'file' => $file]);
 
         try {
-            $bytes = $read->handle($project, $storyId, $file, $version === null ? null : (int) $version);
+            $bytes = $read->handle($project, $storyId, $file, $version);
         } catch (MockupNotFoundException) {
+            // ReadMockupFile has already logged why (mockup_path_rejected / mockup_not_found).
             abort(404);
         }
 

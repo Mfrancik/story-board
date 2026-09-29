@@ -28,22 +28,32 @@ class RegisterProject
     public function handle(string $path, ?string $name = null, string $ref = 'origin/main'): Project
     {
         if (! GitReader::isValidRef($ref)) {
-            throw new ProjectRegistrationException("Invalid ref: {$ref}");
+            throw $this->refuse("Invalid ref: {$ref}");
         }
 
         $real = realpath($path);
         if ($real === false || ! $this->git->isRepository($real)) {
-            throw new ProjectRegistrationException("Not a git repository: {$path}");
+            throw $this->refuse("Not a git repository: {$path}");
         }
 
         $name = $name ?: basename($real);
         if (Project::where('path', $real)->orWhere('name', $name)->exists()) {
-            throw new ProjectRegistrationException("Already registered: {$name} ({$real})");
+            throw $this->refuse("Already registered: {$name} ({$real})");
         }
 
         $project = Project::create(['name' => $name, 'path' => $real, 'ref' => $ref]);
         Log::info('board.project_registered', ['project' => $name, 'path' => $real, 'ref' => $ref]);
 
         return $project;
+    }
+
+    /**
+     * Log why a registration was refused (codebase-standards: every guard logs), then hand back the exception.
+     */
+    private function refuse(string $reason): ProjectRegistrationException
+    {
+        Log::warning('board.project_registration_refused', ['reason' => $reason]);
+
+        return new ProjectRegistrationException($reason);
     }
 }

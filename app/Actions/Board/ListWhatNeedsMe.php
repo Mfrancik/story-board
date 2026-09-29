@@ -15,7 +15,6 @@ use Illuminate\Support\Carbon;
  */
 class ListWhatNeedsMe
 {
-
     /** Card order for the kit's vocabulary; anything else (a project's own or a typo) follows, A–Z. */
     private const STATUS_ORDER = ['draft', 'approved', 'built', 'cancelled'];
 

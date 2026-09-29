@@ -129,6 +129,9 @@ class Home extends Component
         }
 
         $story = Story::onRef()->with('project')->whereHas('project', fn ($q) => $q->where('is_enabled', true))->find($storyId);
+        if ($story === null) {
+            Log::info('board.story_not_found', ['row' => $storyId, 'reason' => 'no such row on an enabled project']);
+        }
         $this->bodies[$storyId] = $story ? ($render->handle($story) ?? '') : '';
     }
 

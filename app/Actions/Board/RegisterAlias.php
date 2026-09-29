@@ -31,20 +31,30 @@ class RegisterAlias
     {
         $project = Project::where('name', $projectName)->first();
         if (! $project) {
-            throw new ProjectRegistrationException("No project named {$projectName}");
+            throw $this->refuse("No project named {$projectName}");
         }
 
         $real = realpath($path);
         if ($real === false || ! $this->git->isRepository($real)) {
-            throw new ProjectRegistrationException("Not a git repository: {$path}");
+            throw $this->refuse("Not a git repository: {$path}");
         }
         if ($project->locations()->where('kind', ProjectLocation::KIND_ALIAS)->where('path', $real)->exists()) {
-            throw new ProjectRegistrationException("Already an alias of {$projectName}: {$real}");
+            throw $this->refuse("Already an alias of {$projectName}: {$real}");
         }
 
         $alias = $project->locations()->create(['kind' => ProjectLocation::KIND_ALIAS, 'path' => $real]);
         Log::info('board.alias_registered', ['project' => $projectName, 'path' => $real]);
 
         return $alias;
+    }
+
+    /**
+     * Log why a registration was refused (codebase-standards: every guard logs), then hand back the exception.
+     */
+    private function refuse(string $reason): ProjectRegistrationException
+    {
+        Log::warning('board.alias_registration_refused', ['reason' => $reason]);
+
+        return new ProjectRegistrationException($reason);
     }
 }

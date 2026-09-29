@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Board;
 
+use App\Actions\Board\ParseVersion;
 use App\Actions\Board\ReadMockupGate;
 use App\Actions\Board\RenderStory;
 use App\Models\Project;
@@ -48,16 +49,15 @@ class StoryPage extends Component
     /**
      * Resolve which version to show, load its text from git, or 404.
      */
-    public function mount(Project $project, string $storyId, RenderStory $render, ReadMockupGate $gate): void
+    public function mount(Project $project, string $storyId, RenderStory $render, ReadMockupGate $gate, ParseVersion $parse): void
     {
-        abort_unless($project->is_enabled, 404);
-        $version = request()->query('v');
-        if ($version !== null && ! ctype_digit((string) $version)) {
-            Log::warning('board.version_rejected', ['project' => $project->name, 'story' => $storyId, 'v' => $version]);
+        if (! $project->is_enabled) {
+            Log::info('board.story_not_found', ['project' => $project->name, 'story' => $storyId, 'reason' => 'project disabled']);
             abort(404);
         }
+        $version = $parse->handle(request()->query('v'), ['project' => $project->name, 'story' => $storyId]);
 
-        $story = $this->resolve($project, $storyId, $version === null ? null : (int) $version);
+        $story = $this->resolve($project, $storyId, $version);
         $this->project = $project;
         $this->storyId = $storyId;
         $this->rowId = $story->id;
@@ -104,7 +104,10 @@ class StoryPage extends Component
             default => (clone $query)->onRef()->first()
                 ?? (clone $query)->offMain()->get()->sortBy(fn (Story $s) => array_search($s->location_kind, self::KIND_ORDER, true))->first(),
         };
-        abort_if($story === null, 404);
+        if ($story === null) {
+            Log::info('board.story_not_found', ['project' => $project->name, 'story' => $storyId, 'v' => $version, 'reason' => 'no such story or version']);
+            abort(404);
+        }
 
         return $story;
     }

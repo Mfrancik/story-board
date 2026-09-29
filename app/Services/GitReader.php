@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Exceptions\GitReaderException;
 use Illuminate\Process\Exceptions\ProcessTimedOutException;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
 use JsonException;
 
@@ -279,8 +280,24 @@ class GitReader
     private function assertRef(string $ref): void
     {
         if (! self::isValidRef($ref)) {
-            throw new GitReaderException("invalid ref: {$ref}");
+            throw $this->refuse("invalid ref: {$ref}", []);
         }
+    }
+
+    /**
+     * A refused command is the read-only rule doing its job — worth a warning,
+     * since nothing in the board should ever ask for one.
+     *
+     * @param  list<string>  $args
+     */
+    private function refuse(string $reason, array $args): GitReaderException
+    {
+        // Facade may be unbound in a bare unit test; the refusal must still throw.
+        if (function_exists('app') && app()->bound('log')) {
+            Log::warning('board.git_refused', ['reason' => $reason, 'subcommand' => $args[0] ?? null]);
+        }
+
+        return new GitReaderException($reason);
     }
 
     /**
@@ -295,23 +312,23 @@ class GitReader
     {
         $subcommand = $args[0] ?? '';
         if (! in_array($subcommand, self::ALLOWED, true)) {
-            throw new GitReaderException("git {$subcommand} is not allowed: the board is read-only");
+            throw $this->refuse("git {$subcommand} is not allowed: the board is read-only", $args);
         }
         // An allowed subcommand can still write through its arguments: `remote add|set-url`
         // rewrites .git/config and `--output` writes a file, so both are refused outright.
         if ($subcommand === 'remote' && count($args) > 1) {
-            throw new GitReaderException('git remote is not allowed with arguments: the board only lists remotes');
+            throw $this->refuse('git remote is not allowed with arguments: the board only lists remotes', $args);
         }
         // `worktree add|remove|prune` and `status` without --porcelain are not reads the board needs.
         if ($subcommand === 'worktree' && ($args[1] ?? '') !== 'list') {
-            throw new GitReaderException('git worktree is not allowed except `worktree list`: the board is read-only');
+            throw $this->refuse('git worktree is not allowed except `worktree list`: the board is read-only', $args);
         }
         if ($subcommand === 'status' && ! in_array('--porcelain', $args, true)) {
-            throw new GitReaderException('git status is not allowed without --porcelain: the board is read-only');
+            throw $this->refuse('git status is not allowed without --porcelain: the board is read-only', $args);
         }
         foreach ($args as $arg) {
             if (str_starts_with($arg, '--output') || str_starts_with($arg, '-o')) {
-                throw new GitReaderException("git option {$arg} is not allowed: the board is read-only");
+                throw $this->refuse("git option {$arg} is not allowed: the board is read-only", $args);
             }
         }
 
