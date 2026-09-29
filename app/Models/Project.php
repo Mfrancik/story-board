@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /**
@@ -76,6 +77,26 @@ class Project extends Model
     public function locations(): HasMany
     {
         return $this->hasMany(ProjectLocation::class);
+    }
+
+    /**
+     * Its read-only production database connection, if one is set up (SB-17).
+     *
+     * @return HasOne<ProdConnection, $this>
+     */
+    public function prodConnection(): HasOne
+    {
+        return $this->hasOne(ProdConnection::class);
+    }
+
+    /**
+     * The numbers the board reads from its production database (SB-17).
+     *
+     * @return HasMany<ProdMetric, $this>
+     */
+    public function prodMetrics(): HasMany
+    {
+        return $this->hasMany(ProdMetric::class);
     }
 
     /**

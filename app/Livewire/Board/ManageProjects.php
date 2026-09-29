@@ -19,6 +19,7 @@ use Livewire\Component;
  * registered project, enabled or not, with an on/off switch and Remove, and an
  * inline Add project form. Writes go through the SwitchProject, AddProject and
  * RemoveProject actions; the remove confirmation itself is Alpine (pure UI).
+ * Each row also opens its Production panel (SB-17), a lazy ProductionSettings.
  */
 #[Layout('layouts.board')]
 #[Title('Manage projects')]
@@ -99,12 +100,17 @@ class ManageProjects extends Component
     }
 
     /**
-     * Every registered project, enabled or not, with its on-ref story count.
+     * Every registered project, enabled or not, with its on-ref story count and production summary.
      */
     public function render(): View
     {
         return view('livewire.board.manage-projects', [
-            'projects' => Project::withCount(['stories' => fn ($q) => $q->onRef()])->orderBy('name')->get(),
+            // Production (SB-17): whether a connection exists and how many metrics are on — not the
+            // connection itself, so no credential is decrypted to draw the list.
+            'projects' => Project::withCount([
+                'stories' => fn ($q) => $q->onRef(),
+                'prodMetrics as enabled_metrics_count' => fn ($q) => $q->where('is_enabled', true),
+            ])->withExists('prodConnection')->orderBy('name')->get(),
             'home' => AddProject::home(),
         ]);
     }

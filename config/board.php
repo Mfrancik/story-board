@@ -7,7 +7,8 @@
 |
 | Paths outside the board's own database that the board reads (never writes):
 | Claude Code's session transcripts (SB-11) and the dev-standards kit that the
-| project handbook compares each project with (SB-14).
+| project handbook compares each project with (SB-14); and the owner's timezone
+| for production metrics (SB-17).
 |
 */
 
@@ -29,5 +30,12 @@ return [
     'kit_path' => env('BOARD_KIT_PATH', rtrim((string) env('HOME', ''), '/').'/Code/dev-standards'),
 
     'kit_ref' => env('BOARD_KIT_REF', 'origin/main'),
+
+    /*
+     * The owner's timezone (SB-17, Production metrics). "Today" in a metric means
+     * since midnight here; the board converts that midnight to UTC before it
+     * reaches a production database, whose timestamps are UTC.
+     */
+    'timezone' => env('BOARD_TIMEZONE', 'America/New_York'),
 
 ];

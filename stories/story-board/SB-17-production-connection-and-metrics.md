@@ -1,5 +1,5 @@
 # SB-17 — Production connection and metrics
-Status: approved       Journey: none
+Status: built          Journey: none
 Source: owner 2026-09-29 (/story): *"id also like to have a dashboard report that connects to production (i can
 create a user), ideally a read only db user that can query things like number of users, users logged in today,
 etc.. so i have a centralized place to see all of that."* Owner answers: credentials encrypted in the board DB;

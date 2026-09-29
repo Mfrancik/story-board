@@ -17,8 +17,8 @@
     </header>
 
     <div class="mt-6 rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-        <div class="hidden grid-cols-[4rem_1.4fr_1fr_5rem_5rem_7rem_6rem] gap-4 border-b border-zinc-200 px-5 py-3 text-xs font-medium text-zinc-500 md:grid dark:border-zinc-800 dark:text-zinc-400">
-            <span>Shown</span><span>Project</span><span>Ref</span><span>State</span><span class="text-right">Stories</span><span>Refreshed</span><span class="sr-only">Actions</span>
+        <div class="hidden grid-cols-[4rem_1.3fr_0.8fr_5rem_4rem_7rem_10rem_6rem] gap-4 border-b border-zinc-200 px-5 py-3 text-xs font-medium text-zinc-500 md:grid dark:border-zinc-800 dark:text-zinc-400">
+            <span>Shown</span><span>Project</span><span>Ref</span><span>State</span><span class="text-right">Stories</span><span>Refreshed</span><span>Production</span><span class="sr-only">Actions</span>
         </div>
         @if ($projects->isEmpty())
             <p class="px-5 py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">No projects yet. Add one below.</p>
@@ -26,8 +26,13 @@
             <ul class="divide-y divide-zinc-100 dark:divide-zinc-800">
                 @foreach ($projects as $p)
                     @php $call = 'setEnabled('.$p->id.', '.($p->is_enabled ? 'false' : 'true').')'; @endphp
-                    <li wire:key="project-{{ $p->id }}" data-project-row="{{ $p->name }}" @class([
-                        'grid grid-cols-[auto_1fr_auto] items-center gap-x-4 gap-y-1 px-5 py-4 md:grid-cols-[4rem_1.4fr_1fr_5rem_5rem_7rem_6rem]',
+                    {{-- `open` is the Production panel under the row (SB-17): Alpine, no round trip; the panel's
+                         component is lazy, so nothing reads production until it is first opened. --}}
+                    @php $prod = ['connected' => (bool) $p->prod_connection_exists, 'metrics' => (int) $p->enabled_metrics_count]; @endphp
+                    <li wire:key="project-{{ $p->id }}" data-project-row="{{ $p->name }}"
+                        x-data="{ open: false, prod: @js($prod) }" x-on:prod-summary.window="$event.detail.project === {{ $p->id }} && (prod = $event.detail)">
+                    <div @class([
+                        'grid grid-cols-[auto_1fr_auto] items-center gap-x-4 gap-y-1 px-5 py-4 md:grid-cols-[4rem_1.3fr_0.8fr_5rem_4rem_7rem_10rem_6rem]',
                         'bg-zinc-50 dark:bg-zinc-950/40' => ! $p->is_enabled,
                     ])>
                         <x-board.switch :on="$p->is_enabled" label="Show {{ $p->name }}" :target="$call"
@@ -59,6 +64,25 @@
                                 Not read yet
                             @endif
                         </span>
+                        <div class="col-start-2 min-w-0 md:col-start-auto">
+                            <button type="button" x-on:click="open = ! open" :aria-expanded="open" aria-controls="prod-{{ $p->id }}"
+                                data-prod-toggle="{{ $p->name }}" data-prod-state="{{ $prod['connected'] ? 'connected' : 'none' }}" :data-prod-state="prod.connected ? 'connected' : 'none'"
+                                class="-mx-2 flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                                {{-- Server-rendered first, then kept current by the panel's prod-summary event (no page reload). --}}
+                                <span x-show="prod.connected" @unless ($prod['connected']) style="display: none" @endunless class="inline-flex items-center gap-1.5 text-xs whitespace-nowrap">
+                                    <span class="size-1.5 rounded-full bg-ok" aria-hidden="true"></span>Read-only · <span x-text="prod.metrics + (prod.metrics === 1 ? ' metric' : ' metrics')">{{ $prod['metrics'] }} {{ Str::plural('metric', $prod['metrics']) }}</span>
+                                </span>
+                                <span x-show="! prod.connected" @if ($prod['connected']) style="display: none" @endif class="inline-flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+                                    <span class="size-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600" aria-hidden="true"></span>Not set up
+                                </span>
+                                <svg class="size-4 shrink-0 transition-transform" :class="open && 'rotate-180'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                                <span class="sr-only">Production settings for {{ $p->name }}</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="prod-{{ $p->id }}" x-show="open" x-cloak class="border-t border-zinc-200 bg-zinc-50/70 dark:border-zinc-800 dark:bg-zinc-950/40">
+                        <livewire:board.production-settings :project="$p" :key="'prod-'.$p->id" lazy />
+                    </div>
                     </li>
                 @endforeach
             </ul>
