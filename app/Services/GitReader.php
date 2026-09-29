@@ -221,7 +221,11 @@ class GitReader
      */
     public function untrackedStoryFiles(string $path): array
     {
-        $out = $this->run($path, ['status', '--porcelain', '-z', '--untracked-files=all', '--', 'stories/', 'docs/mockups/'], timeout: 60);
+        // A checkout's own config could name an fsmonitor program that status would run;
+        // the board runs git, never a project's configured helpers.
+        $out = $this->run($path, ['status', '--porcelain', '-z', '--untracked-files=all', '--', 'stories/', 'docs/mockups/'], timeout: 60, config: [
+            'core.fsmonitor=false', 'core.untrackedCache=false',
+        ]);
 
         $files = [];
         foreach (explode("\0", $out) as $entry) {

@@ -32,7 +32,8 @@ class ReadMockupFile
      */
     public function handle(Project $project, string $storyId, string $file): string
     {
-        if (! $this->isPlainRelativePath($file)) {
+        // Checked here, not only by the database lookup below, so the guarantee is local to this file.
+        if (! preg_match('/^[A-Z]{2,}-[0-9]+[a-z]?$/D', $storyId) || ! $this->isPlainRelativePath($file)) {
             Log::warning('board.mockup_path_rejected', ['project' => $project->name, 'story' => $storyId, 'file' => $file]);
             throw new MockupNotFoundException("Rejected mockup path: {$file}");
         }
@@ -41,12 +42,14 @@ class ReadMockupFile
         $dir = $story?->mockups['dir'] ?? null;
         // The directory comes from the snapshot, never the URL, so a story can only serve its own folder.
         if ($story === null || $dir !== "docs/mockups/{$storyId}") {
+            Log::info('board.mockup_not_found', ['project' => $project->name, 'story' => $storyId, 'reason' => $story ? 'no mockup directory' : 'unknown story']);
             throw new MockupNotFoundException("No mockups for {$storyId}");
         }
 
         try {
             $bytes = $this->git->show($project->path, $story->sha, "{$dir}/{$file}");
         } catch (GitReaderException $e) {
+            Log::info('board.mockup_not_found', ['project' => $project->name, 'story' => $storyId, 'file' => $file, 'reason' => 'not at the ref']);
             throw new MockupNotFoundException("Not at the ref: {$dir}/{$file}", previous: $e);
         }
 

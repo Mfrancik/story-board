@@ -43,11 +43,12 @@ class ListWhatNeedsMe
             'approval' => $scoped()->where('stories.status', 'draft')->where('stories.is_parked', false)
                 ->orderBy('projects.name')->orderBy('stories.path')->get(),
             // Only open stories: a built or cancelled story with no parseable pick is history, not a decision.
+            // Raw SQL: the query builder has no JSON length/type predicates. Constant expressions, no input.
             'pick' => $scoped()->whereIn('stories.status', ['draft', 'approved'])
                 ->whereRaw("json_length(json_extract(stories.mockups, '$.options')) > 0")
                 ->whereRaw("json_type(json_extract(stories.mockups, '$.chosen')) = 'NULL'")
                 ->orderBy('projects.name')->orderBy('stories.path')->get(),
-            // Oldest first by the date the story was asked for; undated ones last.
+            // Oldest first by the date the story was asked for; undated ones last (raw: MySQL has no NULLS LAST).
             'build' => $scoped()->where('stories.status', 'approved')
                 ->orderByRaw('stories.dated_on is null')->orderBy('stories.dated_on')
                 ->orderBy('projects.name')->orderBy('stories.path')->get(),
@@ -95,6 +96,7 @@ class ListWhatNeedsMe
         $counts = Story::onRef()->whereIn('project_id', $projects->modelKeys())
             ->selectRaw('project_id, coalesce(status, ?) as status, count(*) as n', ['(none)'])
             ->groupBy('project_id', 'status')->get()->groupBy('project_id');
+        // Raw SQL: JSON array length has no query-builder form. Constant expression, no input.
         $errors = Story::onRef()->whereIn('project_id', $projects->modelKeys())
             ->whereRaw('json_length(parse_errors) > 0')
             ->selectRaw('project_id, count(*) as n')->groupBy('project_id')->pluck('n', 'project_id');

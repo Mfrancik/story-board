@@ -383,6 +383,8 @@ class IndexOffMain
     {
         $real = realpath("{$root}/{$file}");
         if ($real === false || ! str_starts_with($real, $root.'/') || ! is_file($real)) {
+            Log::warning('board.offmain_file_skipped', ['checkout' => $root, 'file' => $file, 'reason' => 'resolves outside the checkout or is not a file']);
+
             return null;
         }
 
