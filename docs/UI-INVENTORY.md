@@ -26,7 +26,7 @@ Every reusable component. Consult BEFORE building any new UI (design-standards
 | board/status-chip | Blade | A story's raw status with parse-error marker; danger tone for out-of-vocabulary values; `count` prop makes a tally chip | Home, story-row, project-card |
 | board/status-bar | Blade | Stacked bar of counts by raw status; out-of-vocabulary values get a danger-toned segment | project-card, ProjectPage initiative rows |
 | layouts/board | Blade layout | The board's shell: board/sidebar beside the page, persisted Flux toasts, no auth, Flux appearance for light/dark | Home, ProjectPage, StoryPage, ManageProjects |
-| board/sidebar | Blade (class) | Project switcher: filter box (⌘K), All projects, enabled projects with state dot and count; drawer below 768px; Manage slot | layouts/board |
+| board/sidebar | Blade (class) | Project switcher: filter box (⌘K), All projects, enabled projects with state dot, count and live badge (`data-live-count`); drawer below 768px; Manage slot | layouts/board |
 | StoryPage | Livewire (Board) | Story above its mockups (side-by-side / one-at-a-time, 375/768/1280), full-screen compare; `?v=` versions banner for off-main copies | `/p/{project}/s/{id}` |
 | StoryModal | Livewire (Board) | Design-A story modal at `?story=<project>/<ID>`: text, details, dependency chips, mockup thumbnails, versions off main; opened by the `board-story` event | Home, ProjectPage |
 | ProjectPage | Livewire (Board) | One project's dashboard (SB-10): header with Refresh this project, scoped What needs me cards, Progress by initiative, Not on main by kind; embeds StoryModal | `/p/{project}` |
@@ -40,3 +40,4 @@ Every reusable component. Consult BEFORE building any new UI (design-standards
 | board/kit-badge | Blade | How a file compares with the kit: Same as kit, Changed in this project, Missing, Project only; `dot` for a sub-tab | ProjectHandbook (standards, skills) |
 | board/handbook-empty | Blade | Empty state naming the project and the missing file, with a one-line hint slot | ProjectHandbook sections |
 | board/prose | Blade | Rendered markdown (from RenderStory::toHtml) in the reading width | ProjectHandbook sections, decision modal |
+| LiveSessions | Livewire (Board) | Live now (SB-11): a card per active Claude Code session with checkout, branch, age and linked stories; `wire:poll.30s` on the panel only | Home, ProjectPage |

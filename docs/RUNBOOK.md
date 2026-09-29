@@ -10,6 +10,12 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-09-29 — Board tests read the developer's real `~/.claude/projects`
+Symptom: once SB-11 added the Live now panel and the sidebar badge, every board page scanned the transcripts root. Existing suites that never mention sessions (home, project page, app shell) would have read the developer's real session files, so results depended on which terminals were open.
+Root cause: `board.sessions_path` defaults to `$HOME/.claude/projects`, and the panel and badge render on every board page. Any test that renders a page reads the configured root.
+Fix: `tests/TestCase.php:setUp()` sets `board.sessions_path` to an empty temp folder (`<tmp>/story-board-sessions/empty`) for every test. Tests that need sessions point it at a `Tests\Support\SessionFixture` root (SB-11, `76ec1eb`). Any future feature that reads outside the repo by default needs the same base-class override.
+Log trail: `board.sessions_read` in a test run with a `files` count the fixtures did not create, or `board.session_ignored` lines naming real `cwd`s.
+
 ## 2026-09-29 — A blank Add project path would register the board itself
 Symptom: submitting Add project with an empty Path would have registered story-board's own checkout as a project instead of refusing.
 Root cause: `RegisterProject` resolves the path with `realpath()`, and PHP's `realpath('')` returns the current working directory. For the web app that is the board's own checkout, which is a git repository, so every check passed.
