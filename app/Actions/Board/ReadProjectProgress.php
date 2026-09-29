@@ -54,7 +54,9 @@ class ReadProjectProgress
             ->get();
 
         $initiatives = $rows->groupBy(fn ($row) => (string) $row->initiative)->map(function ($group) {
-            $counts = $group->mapWithKeys(fn ($row) => [$row->status => (int) $row->n])->all();
+            // Summed, not keyed: a null status and a literal "(none)" are two SQL rows
+            // with one key, and mapWithKeys would drop one of them.
+            $counts = $group->groupBy('status')->map(fn ($rows) => $rows->sum(fn ($row) => (int) $row->n))->all();
 
             return [
                 'name' => $group->first()->initiative,

@@ -1,11 +1,11 @@
 {{--
-    A project's snapshot state (SB-9 tile, SB-10 project header): `part="dot"` is the coloured dot,
+    A project's snapshot state (SB-7 sidebar, SB-9 tile, SB-10 project header) — the one state→token map: `part="dot"` is the coloured dot,
     `part="label"` the word beside it. An `ok` snapshot has no label — the dot says enough — and any
     state outside the four known ones is shown in the danger tone, never hidden.
 --}}
 @props(['state', 'part' => 'dot'])
 @php
-    // State → dot token, label and label tone; the same token map as the sidebar's dots (SB-7).
+    // State → dot token, label and label tone. The sidebar renders its dots through here too, so the map cannot drift.
     [$dot, $label, $tone] = match ($state) {
         'ok' => ['bg-ok', null, null],
         'pending' => ['bg-pending', 'Not read yet', 'text-zinc-500 dark:text-zinc-400'],

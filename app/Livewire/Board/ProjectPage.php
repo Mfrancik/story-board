@@ -52,6 +52,9 @@ class ProjectPage extends Component
     #[Locked]
     public ?string $notice = null;
 
+    /** Set by hydrate() when the project left the board mid-visit: render nothing, the redirect is on its way. */
+    private bool $gone = false;
+
     /**
      * Log the view and queue a refresh of this project if its snapshot is stale —
      * only this one: the others refresh when `/` or their own page loads.
@@ -64,6 +67,24 @@ class ProjectPage extends Component
         if ($project->needsRefresh()) {
             RefreshProjectJob::dispatch($project);
         }
+    }
+
+    /**
+     * Re-check, on every request after the first, that the project is still on
+     * the board. The route middleware only guards the initial GET (ADR-013), so a
+     * project switched off or removed mid-visit would otherwise keep rendering its
+     * rollup, or 404 with no log line (L-5). The owner is sent home instead.
+     */
+    public function hydrate(CheckProjectShown $check): void
+    {
+        $refusal = $check->refusal($this->project);
+        if ($refusal === null) {
+            return;
+        }
+
+        Log::info('board.project_page_refused', ['project' => $this->project, 'reason' => $refusal, 'request' => 'update']);
+        $this->gone = true;
+        $this->redirectRoute('home', navigate: true);
     }
 
     /**
@@ -125,8 +146,13 @@ class ProjectPage extends Component
      * grouped initiative query, one grouped off-main count, and the off-main rows
      * (one query) only while a kind is open.
      */
-    public function render(ListWhatNeedsMe $list, ReadProjectProgress $progress): View
+    public function render(ListWhatNeedsMe $list, ReadProjectProgress $progress): View|string
     {
+        if ($this->gone) {
+            // Nothing of a project that is off the board may render, not even its rollup.
+            return '<div></div>';
+        }
+
         $project = Project::where('name', $this->project)->firstOrFail();
         $data = $list->handle($project->name);
         $summary = $data['projects'][0] ?? null;

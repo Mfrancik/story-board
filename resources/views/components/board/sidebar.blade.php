@@ -1,7 +1,6 @@
 {{-- SB-7 shell, design A: mobile top bar, drawer backdrop and the project sidebar. `open` (the drawer)
      lives in layouts/board's x-data; the filter text `q` is local. Pure UI, so all of it is Alpine. --}}
 @php
-    $dot = ['ok' => 'bg-ok', 'pending' => 'bg-pending', 'stale' => 'bg-warning', 'unreachable' => 'bg-danger'];
     $item = 'flex w-full items-center gap-3 rounded-lg px-3 py-2';
     $state = fn (bool $on) => $on ? 'bg-zinc-100 font-medium dark:bg-zinc-800' : 'hover:bg-zinc-100/60 dark:hover:bg-zinc-800/50';
     $names = $projects->pluck('name')->map(fn ($n) => Str::lower($n))->values();
@@ -67,7 +66,7 @@
                     <li x-show="! q.trim() || @js(Str::lower($p->name)).includes(q.trim().toLowerCase())">
                         <a href="{{ route('projects.show', ['project' => $p->name]) }}" wire:navigate data-sidebar-project="{{ $p->name }}" data-story-count="{{ $p->stories_count }}"
                             @if ($on) aria-current="page" @endif class="{{ $item }} {{ $state($on) }}">
-                            <span data-state-dot="{{ $p->state }}" class="size-2 shrink-0 rounded-full {{ $dot[$p->state] ?? 'bg-danger' }}" title="State: {{ $p->state }}" aria-hidden="true"></span>
+                            <x-board.state :state="$p->state" title="State: {{ $p->state }}" />
                             <span class="flex-1 truncate">{{ $p->name }}</span>
                             <span class="sr-only">{{ $p->state }}</span>
                             <span class="text-xs tabular-nums text-zinc-500 dark:text-zinc-400">{{ number_format($p->stories_count) }}<span class="sr-only"> stories</span></span>

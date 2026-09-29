@@ -1,5 +1,7 @@
 <?php
 
+use App\Actions\Board\ListWhatNeedsMe;
+use App\Actions\Board\ReadProjectProgress;
 use App\Jobs\RefreshProjectJob;
 use App\Livewire\Board\ProjectPage;
 use App\Models\Project;
@@ -342,3 +344,40 @@ it('ignores and logs a Show all or expand request for something the page does no
     'showAll' => ['showAll', 'built'],
     'toggleKind' => ['toggleKind', 'mainline'],
 ]);
+
+it('sends the owner home and logs why when the project is switched off mid-visit, without rendering its rollup', function () {
+    Log::spy();
+    openWork($this->coins, 'secret-rollup', 2);
+    $component = Livewire::test(ProjectPage::class, ['project' => $this->coins]);
+    $this->coins->update(['is_enabled' => false]);
+    // The rollup of a project off the board must not even be read on the next request.
+    $this->mock(ReadProjectProgress::class, fn ($mock) => $mock->shouldNotReceive('handle'));
+
+    $component->call('toggleKind', Story::KIND_BRANCH)->assertRedirect(route('home'));
+
+    Log::shouldHaveReceived('info')->withArgs(fn ($event, $ctx = []) => $event === 'board.project_page_refused'
+        && $ctx['project'] === 'coins' && $ctx['reason'] === 'disabled' && $ctx['request'] === 'update')->once();
+});
+
+it('sends the owner home and logs why when the project is removed mid-visit, instead of an unlogged 404', function () {
+    Log::spy();
+    $component = Livewire::test(ProjectPage::class, ['project' => $this->coins]);
+    $this->coins->delete();
+
+    $component->call('showAll', 'build')->assertRedirect(route('home'));
+
+    Log::shouldHaveReceived('info')->withArgs(fn ($event, $ctx = []) => $event === 'board.project_page_refused'
+        && $ctx['project'] === 'coins' && $ctx['reason'] === 'unknown' && $ctx['request'] === 'update')->once();
+});
+
+it('sums a null status and a literal "(none)" status instead of dropping one', function () {
+    Story::factory()->for($this->rent)->create(['status' => null, 'initiative' => 'mixed']);
+    Story::factory()->for($this->rent)->create(['status' => '(none)', 'initiative' => 'mixed']);
+
+    $progress = app(ReadProjectProgress::class)->handle($this->rent->id);
+    $row = collect($progress['initiatives'])->firstWhere('name', 'mixed');
+    $tile = app(ListWhatNeedsMe::class)->handle('rent-track')['projects'][0];
+
+    expect(array_sum($row['counts']))->toBe(2)
+        ->and($tile['counts']['(none)'] ?? 0)->toBe(2);
+});

@@ -156,8 +156,9 @@ class ListWhatNeedsMe
             'indexed_at' => $p->indexed_at,
             'last_error' => $p->last_error,
             // A status seen only off main (a mockup-only row's null, say) is not on the ref: no segment.
+            // Summed, not keyed: a null status and a literal "(none)" share one key.
             'counts' => $this->ordered($counts->get($p->id, collect())->filter(fn ($row) => (int) $row->n > 0)
-                ->mapWithKeys(fn ($row) => [$row->status => (int) $row->n])->all()),
+                ->groupBy('status')->map(fn ($rows) => $rows->sum(fn ($row) => (int) $row->n))->all()),
             'parse_errors' => (int) ($errors[$p->id] ?? 0),
             'offmain' => (int) $counts->get($p->id, collect())->sum(fn ($row) => (int) $row->off),
         ])->all());
