@@ -1,0 +1,361 @@
+<!-- SB-18 option B — Production dashboard (Comparison table). Static mockup inside the SB-7 design-A shell.
+     Every number is an EXAMPLE VALUE generated in this file, sized for small apps; nothing was read from a database.
+     Series colours are the dataviz reference palette's first three slots (validated all-pairs, light and dark). -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SB-18 option B — Comparison table</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'media',
+    theme: { extend: { fontFamily: { sans: ['"Instrument Sans"', 'system-ui', 'sans-serif'] } } }
+  };
+</script>
+<style>
+  /* Series slots 1-3 = coins, client-dashboard, asset-track: a project keeps its colour everywhere. Dark steps are selected, not flipped. */
+  :root { --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --stale: #a3a3a3; --axis: #d4d4d4; --grid: #ececec; --surface: #ffffff; --ink2: #737373; }
+  @media (prefers-color-scheme: dark) {
+    :root { --s1: #3987e5; --s2: #d95926; --s3: #199e70; --stale: #6b6b6b; --axis: #404040; --grid: #262626; --surface: #171717; --ink2: #a3a3a3; }
+  }
+  html, body { overflow-x: hidden; }
+  button:focus-visible, a:focus-visible, [tabindex]:focus-visible { outline: 2px solid #0ea5e9; outline-offset: 2px; }
+  .no-scrollbar { scrollbar-width: none; } .no-scrollbar::-webkit-scrollbar { display: none; }
+  .spark { touch-action: pan-y; cursor: crosshair; }
+</style>
+</head>
+<body class="font-sans bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100 antialiased">
+
+<!-- Mockup state switcher (not part of the design) -->
+<div class="fixed inset-x-0 top-0 z-[60] h-10 bg-neutral-900 text-neutral-100 dark:bg-white dark:text-neutral-900 flex items-center gap-2 px-3 text-xs overflow-x-auto no-scrollbar">
+  <span class="shrink-0 font-semibold">Option B · state:</span>
+  <div role="tablist" aria-label="Mockup state" class="flex shrink-0 gap-1">
+    <button role="tab" type="button" data-mode="loaded" aria-selected="true" onclick="setMode('loaded')" class="shrink-0 rounded-md px-2 py-1 opacity-70 hover:opacity-100 aria-selected:opacity-100 aria-selected:font-medium aria-selected:bg-white aria-selected:text-neutral-900 dark:aria-selected:bg-neutral-900 dark:aria-selected:text-white">all read</button>
+    <button role="tab" type="button" data-mode="loading" aria-selected="false" onclick="setMode('loading')" class="shrink-0 rounded-md px-2 py-1 opacity-70 hover:opacity-100 aria-selected:opacity-100 aria-selected:font-medium aria-selected:bg-white aria-selected:text-neutral-900 dark:aria-selected:bg-neutral-900 dark:aria-selected:text-white">client-dashboard still loading</button>
+    <button role="tab" type="button" data-mode="empty" aria-selected="false" onclick="setMode('empty')" class="shrink-0 rounded-md px-2 py-1 opacity-70 hover:opacity-100 aria-selected:opacity-100 aria-selected:font-medium aria-selected:bg-white aria-selected:text-neutral-900 dark:aria-selected:bg-neutral-900 dark:aria-selected:text-white">no project connected</button>
+  </div>
+  <span class="shrink-0 opacity-80">· Refresh works · hover a trend line</span>
+  <a href="index.html" class="hidden sm:inline ml-auto shrink-0 underline underline-offset-4 opacity-80 hover:opacity-100">All options</a>
+</div>
+
+<!-- Mobile top bar -->
+<div class="lg:hidden sticky top-10 z-30 flex items-center gap-3 border-b border-neutral-200 dark:border-neutral-800 bg-white/90 dark:bg-neutral-900/90 backdrop-blur px-4 h-14 mt-10">
+  <button id="menu-btn" type="button" onclick="drawer(true)" aria-label="Open project menu" aria-controls="sidebar" aria-expanded="false" class="rounded-lg p-2 -ml-2 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+    <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+  <span class="font-semibold">Story board</span>
+  <span class="text-sm text-neutral-500 truncate">· Production</span>
+</div>
+
+<div id="scrim" hidden onclick="drawer(false)" class="fixed inset-0 top-10 z-40 bg-neutral-950/40 lg:hidden"></div>
+
+<!-- Sidebar (design A shell, from SB-7 option A) — gains a Production link, active on this page -->
+<aside id="sidebar" aria-label="Projects" class="-translate-x-full fixed top-10 bottom-0 left-0 z-50 w-72 lg:w-64 lg:translate-x-0 transition-transform bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-800 flex flex-col">
+  <div class="flex items-center justify-between px-5 pt-5 pb-3">
+    <div class="flex items-center gap-2">
+      <span class="grid place-items-center size-7 rounded-lg bg-neutral-800 text-white dark:bg-white dark:text-neutral-900 text-xs font-bold">SB</span>
+      <span class="font-semibold">Story board</span>
+    </div>
+    <button type="button" onclick="drawer(false)" aria-label="Close project menu" class="lg:hidden rounded-lg p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+      <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="px-4 pb-3">
+    <button type="button" class="w-full flex items-center gap-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 px-3 py-2 text-sm text-neutral-500 hover:border-neutral-300 dark:hover:border-neutral-700">
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <span class="flex-1 text-left">Find a story</span>
+      <kbd class="rounded border border-neutral-200 dark:border-neutral-700 px-1.5 text-[11px] font-sans">⌘K</kbd>
+    </button>
+  </div>
+  <nav class="flex-1 overflow-y-auto px-3 pb-3 text-sm" aria-label="Project switcher">
+    <a href="#" class="w-full flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      <span class="flex-1 text-left font-medium">All projects</span>
+      <span class="text-xs text-neutral-500 tabular-nums">1,069</span>
+    </a>
+    <a href="#" aria-current="page" class="mt-0.5 w-full flex items-center gap-3 rounded-lg px-3 py-2 bg-neutral-100 dark:bg-neutral-800 font-medium">
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 20h18M5 16l4-5 4 3 6-8"/></svg>
+      <span class="flex-1 text-left">Production</span>
+      <span class="text-xs text-neutral-500 tabular-nums"><span id="connected-count">3</span>/4</span>
+    </a>
+    <p class="mt-5 mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-neutral-400">Projects</p>
+    <ul class="space-y-0.5">
+      <li><a href="#" class="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800/50"><span class="size-2 rounded-full bg-emerald-500" title="State ok"></span><span class="flex-1 text-left truncate">coins</span><span class="text-xs text-neutral-500 tabular-nums">946</span></a></li>
+      <li><a href="#" class="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800/50"><span class="size-2 rounded-full bg-emerald-500" title="State ok"></span><span class="flex-1 text-left truncate">client-dashboard</span><span class="text-xs text-neutral-500 tabular-nums">97</span></a></li>
+      <li><a href="#" class="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800/50"><span class="size-2 rounded-full bg-emerald-500" title="State ok"></span><span class="flex-1 text-left truncate">asset-track</span><span class="text-xs text-neutral-500 tabular-nums">11</span></a></li>
+      <li><a href="#" class="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800/50"><span class="size-2 rounded-full bg-emerald-500" title="State ok"></span><span class="flex-1 text-left truncate">rent-track</span><span class="text-xs text-neutral-500 tabular-nums">15</span></a></li>
+    </ul>
+  </nav>
+  <div class="border-t border-neutral-200 dark:border-neutral-800 p-3">
+    <a href="#" class="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/></svg>
+      <span class="flex-1 text-left font-medium">Manage projects</span>
+    </a>
+  </div>
+</aside>
+
+<main class="lg:pl-64 lg:pt-10 min-h-screen">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-10 py-6 lg:py-10">
+    <header class="flex flex-wrap items-end justify-between gap-3">
+      <div class="min-w-0">
+        <h1 class="text-2xl font-semibold tracking-tight">Production</h1>
+        <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Read live when the page opens · a snapshot every day at 23:55 · changes compare with those snapshots</p>
+      </div>
+      <span class="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">Example values</span>
+    </header>
+    <div id="app"></div>
+  </div>
+</main>
+
+<div id="tip" hidden role="status" class="pointer-events-none fixed z-[70] max-w-xs rounded-md bg-neutral-900 px-2 py-1 text-xs text-white shadow-lg dark:bg-white dark:text-neutral-900"></div>
+
+<script>
+// ---- Example values (illustrative, not read from any database). "Now" is Tue 29 Sep 2026, 14:10 local. ----
+// Each metric holds 30 daily snapshots, oldest first; index 29 is today (the latest read), 28 yesterday, 22 seven days ago.
+const N = 30;
+const dateOf = i => new Date(2026, 8, 29 - (N - 1 - i));
+const dayLabel = i => dateOf(i).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+const shortDay = i => dateOf(i).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+function rng(seed) { let s = seed >>> 0; return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; }; }
+const weekend = i => [0, 6].includes(dateOf(i).getDay());
+/** A daily count: weekday / weekend base, a little growth, some jitter; today's (partial-day) value set explicitly. */
+function daily(seed, wk, we, jitter, today, growth = 0) {
+  const r = rng(seed);
+  const a = Array.from({ length: N }, (_, i) => Math.max(0, Math.round((weekend(i) ? we : wk) * (1 - growth + growth * i / (N - 1)) + (r() - 0.5) * 2 * jitter)));
+  a[N - 1] = today; return a;
+}
+/** A running total that ends at `end`, stepping back by each day's additions. */
+function cumulative(adds, end) { const a = new Array(N); a[N - 1] = end; for (let i = N - 2; i >= 0; i--) a[i] = a[i + 1] - adds[i + 1]; return a; }
+const since = (a, days) => a.map((v, i) => (i < N - days ? null : v));
+
+const cNew = daily(11, 2.4, 1.1, 2, 2);
+const cListAdds = daily(14, 5, 2, 4, 3);
+const dNew = daily(21, 0.7, 0.2, 1, 1);
+const aNew = daily(31, 0.25, 0, 0.7, 0);
+
+window.PROJECTS = [
+  { key: 'coins', slot: 1, status: 'ok', read: '2 min ago', metrics: [
+    { key: 'total', label: 'Total users', s: cumulative(cNew, 412) },
+    { key: 'new', label: 'New today', s: cNew },
+    { key: 'active', label: 'Active today', s: daily(12, 62, 44, 6, 58, 0.15) },
+    { key: 'login', label: 'Logged in today', s: daily(13, 40, 27, 5, 37, 0.15) },
+    { key: 'listings', label: 'Listings live', s: cumulative(cListAdds, 1284), custom: true },
+  ] },
+  { key: 'client-dashboard', slot: 2, status: 'ok', read: '2 min ago', firstDay: 'Sep 25', metrics: [
+    { key: 'total', label: 'Total users', s: since(cumulative(dNew, 86), 5) },
+    { key: 'active', label: 'Active today', s: since(daily(22, 13, 4, 3, 12), 5) },
+    { key: 'login', label: 'Logged in today', s: since(daily(23, 9, 3, 2, 9), 5) },
+  ] },
+  { key: 'asset-track', slot: 3, status: 'error', read: '3 h ago', error: 'Unreachable: the host did not answer within 5 s.', metrics: [
+    { key: 'total', label: 'Total users', s: cumulative(aNew, 23) },
+    { key: 'active', label: 'Active today', s: daily(32, 5, 1, 2, 4) },
+    { key: 'login', label: 'Logged in today', s: daily(33, 3, 1, 1.5, 3) },
+  ] },
+];
+window.NOT_CONNECTED = ['rent-track'];
+window.METRICS = [['total', 'Total users'], ['new', 'New today'], ['active', 'Active today'], ['login', 'Logged in today'], ['listings', 'Listings live']];
+
+// ---- Mockup state: the dark strip switches it; Refresh re-reads one project. ----
+window.S = { mode: 'loaded', busy: {}, fresh: {} };
+const byKey = k => PROJECTS.find(p => p.key === k);
+const metric = (p, k) => p.metrics.find(m => m.key === k);
+const loading = p => !!S.busy[p.key] || (S.mode === 'loading' && p.key === 'client-dashboard');
+const stale = p => p.status === 'error';
+const readText = p => (S.fresh[p.key] && !stale(p) ? 'just now' : p.read);
+const connected = () => (S.mode === 'empty' ? [] : PROJECTS);
+const notConnected = () => (S.mode === 'empty' ? ['coins', 'client-dashboard', 'asset-track', 'rent-track'] : NOT_CONNECTED);
+const val = m => m.s[N - 1], yday = m => m.s[N - 2], wkago = m => m.s[N - 8];
+const fmt = n => (n == null ? '—' : n.toLocaleString('en-US'));
+const color = p => (stale(p) ? 'var(--stale)' : `var(--s${p.slot})`);
+
+/** A signed change with an arrow, so direction never rides on colour alone. Missing history shows "—". */
+function delta(v, ref, isStale, suffix = '') {
+  const tail = suffix ? ` <span class="text-neutral-500 dark:text-neutral-400 font-normal">${suffix}</span>` : '';
+  if (v == null || ref == null) return `<span class="text-neutral-400" title="no snapshot that day">—</span>${tail}`;
+  const d = v - ref;
+  if (d === 0) return `<span class="text-neutral-500 dark:text-neutral-400 tabular-nums">±0</span>${tail}`;
+  const up = d > 0;
+  const tone = isStale ? 'text-neutral-400 dark:text-neutral-500' : up ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400';
+  return `<span class="${tone} font-medium tabular-nums whitespace-nowrap"><span aria-hidden="true">${up ? '▲' : '▼'}</span> ${up ? '+' : '−'}${fmt(Math.abs(d))}</span>${tail}`;
+}
+
+function refresh(key) {
+  S.busy[key] = true; render();
+  setTimeout(() => { S.busy[key] = false; S.fresh[key] = true; render(); }, 1300);
+}
+function setMode(m) { S.mode = m; S.busy = {}; render(); document.querySelectorAll('[data-mode]').forEach(b => b.setAttribute('aria-selected', b.dataset.mode === m)); }
+function drawer(open) { document.getElementById('sidebar').classList.toggle('-translate-x-full', !open); document.getElementById('scrim').hidden = !open; document.getElementById('menu-btn').setAttribute('aria-expanded', open); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') drawer(false); });
+
+// ---- Shared pieces ----
+const btn = 'inline-flex items-center gap-1.5 rounded-md border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-2.5 py-1 text-sm font-medium hover:bg-neutral-50 dark:hover:bg-neutral-800 disabled:opacity-60';
+function refreshBtn(p, compact = false) {
+  const b = !!S.busy[p.key];
+  return `<button type="button" onclick="refresh('${p.key}')" ${b ? 'disabled' : ''} aria-label="Refresh ${p.key}" class="${btn}">
+    <svg class="size-3.5 ${b ? 'animate-spin' : ''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>${compact ? '' : `<span>${b ? 'Reading…' : 'Refresh'}</span>`}</button>`;
+}
+const dot = p => `<span class="size-2.5 shrink-0 rounded-full" style="background:${`var(--s${p.slot})`}" aria-hidden="true"></span>`;
+const errBadge = p => `<span class="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700 ring-1 ring-inset ring-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-900">
+  <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>Unreachable</span>`;
+const errLine = p => `<p class="text-sm text-rose-700 dark:text-rose-300">${p.error} Showing the last good values, read ${p.read}.</p>`;
+const sk = (cls) => `<span class="block animate-pulse rounded bg-neutral-200 dark:bg-neutral-800 ${cls}"></span>`;
+const customTag = '<span class="rounded border border-neutral-300 dark:border-neutral-700 px-1 text-[10px] font-medium uppercase tracking-wide text-neutral-500">custom</span>';
+
+function emptyPanel() {
+  return `<div class="mt-6 max-w-lg rounded-xl border border-dashed border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-5 py-8 text-center sm:mx-auto">
+    <svg class="mx-auto size-8 text-neutral-300 dark:text-neutral-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>
+    <p class="mt-3 font-medium">No project is connected to production</p>
+    <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Give a project a read-only database user and pick its metrics. Its numbers then show here, with a daily history.</p>
+    <a href="#" class="mt-4 inline-flex rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white dark:bg-white dark:text-neutral-900">Set up on /projects</a>
+  </div>`;
+}
+function notConnectedList() {
+  const list = notConnected(); if (S.mode === 'empty') return '';
+  return `<section class="mt-10" aria-labelledby="nc">
+    <h2 id="nc" class="text-sm font-semibold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Not connected</h2>
+    <ul class="mt-3 divide-y divide-neutral-200 dark:divide-neutral-800 rounded-xl border border-dashed border-neutral-300 dark:border-neutral-700">
+      ${list.map(k => `<li class="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm"><span class="font-medium">${k}</span>
+        <span class="text-neutral-500 dark:text-neutral-400">not connected — <a href="#" class="font-medium text-neutral-800 dark:text-white underline underline-offset-4">set up on /projects</a></span></li>`).join('')}
+    </ul></section>`;
+}
+
+// ---- Tooltip ----
+function showTip(html, x, y) {
+  const t = document.getElementById('tip'); t.innerHTML = html; t.hidden = false;
+  const r = t.getBoundingClientRect();
+  const left = Math.min(Math.max(8, x - r.width / 2), innerWidth - r.width - 8);
+  let top = y - r.height - 12; if (top < 48) top = y + 16;
+  t.style.left = left + 'px'; t.style.top = top + 'px';
+}
+const hideTip = () => { document.getElementById('tip').hidden = true; };
+
+/** Every `.spark[data-p][data-m]` becomes an inline-SVG trend line at its own pixel size, with a hover readout. */
+function fillSparks() {
+  document.querySelectorAll('.spark').forEach(el => {
+    const w = el.clientWidth, h = el.clientHeight; if (!w) return;
+    const p = byKey(el.dataset.p), m = metric(p, el.dataset.m), s = m.s, col = color(p);
+    const pts = s.map((v, i) => (v == null ? null : [i, v])).filter(Boolean);
+    const vs = pts.map(q => q[1]); let lo = Math.min(...vs), hi = Math.max(...vs); if (hi === lo) { hi += 1; lo -= 1; }
+    const px = 6, py = 7, step = (w - 2 * px) / (N - 1);
+    const X = i => px + i * step, Y = v => py + (h - 2 * py) * (1 - (v - lo) / (hi - lo));
+    const d = pts.map((q, j) => (j ? 'L' : 'M') + X(q[0]).toFixed(1) + ' ' + Y(q[1]).toFixed(1)).join(' ');
+    const last = pts[pts.length - 1], first = pts[0];
+    const area = `${d} L${X(last[0]).toFixed(1)} ${h} L${X(first[0]).toFixed(1)} ${h} Z`;
+    el.innerHTML = `<svg width="${w}" height="${h}" class="block max-w-full overflow-visible" role="img" aria-label="${p.key} ${m.label}, ${pts.length} days: ${fmt(first[1])} on ${shortDay(first[0])} to ${fmt(last[1])} today">
+      <path d="${area}" fill="${col}" fill-opacity=".1"/>
+      <path d="${d}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      <line class="hx" y1="0" y2="${h}" stroke="var(--axis)" visibility="hidden"/>
+      <circle class="hd" r="4" fill="${col}" stroke="var(--surface)" stroke-width="2" visibility="hidden"/>
+      <circle cx="${X(last[0]).toFixed(1)}" cy="${Y(last[1]).toFixed(1)}" r="4" fill="${col}" stroke="var(--surface)" stroke-width="2"/></svg>`;
+    const hx = el.querySelector('.hx'), hd = el.querySelector('.hd');
+    el.onpointermove = e => {
+      const r = el.getBoundingClientRect();
+      const i = Math.max(first[0], Math.min(N - 1, Math.round((e.clientX - r.left - px) / step)));
+      hx.setAttribute('x1', X(i)); hx.setAttribute('x2', X(i)); hx.setAttribute('visibility', 'visible');
+      hd.setAttribute('cx', X(i)); hd.setAttribute('cy', Y(s[i])); hd.setAttribute('visibility', 'visible');
+      showTip(`${dayLabel(i)}${i === N - 1 ? ' (today)' : ''} · <b>${fmt(s[i])}</b>`, r.left + X(i), r.top + Y(s[i]));
+    };
+    el.onpointerleave = () => { hx.setAttribute('visibility', 'hidden'); hd.setAttribute('visibility', 'hidden'); hideTip(); };
+  });
+}
+
+function render() {
+  document.getElementById('app').innerHTML = renderMain();
+  const c = document.getElementById('connected-count'); if (c) c.textContent = connected().length;
+  fillSparks(); if (window.afterRender) afterRender();
+}
+// Redraw at the real pixel size whenever the layout settles or changes (the Tailwind CDN styles the page after first paint).
+let rt; const redraw = () => { clearTimeout(rt); rt = setTimeout(() => { fillSparks(); if (window.afterRender) afterRender(); }, 60); };
+addEventListener('resize', redraw); addEventListener('load', redraw);
+new ResizeObserver(redraw).observe(document.getElementById('app'));
+
+</script>
+<script>
+/** Option B: one comparison table, projects as rows and metrics as columns; each cell holds value, changes and a sparkline.
+    Below 768px each row becomes a card with one line per metric, so the page never scrolls sideways. */
+const COLS = [['total', 'Total users'], ['new', 'New today'], ['active', 'Active today'], ['login', 'Logged in today'], ['custom', 'Custom']];
+const cellMetric = (p, k) => (k === 'custom' ? p.metrics.find(m => m.custom) : metric(p, k));
+const muted = 'text-neutral-500 dark:text-neutral-400';
+
+function cell(p, k) {
+  const m = cellMetric(p, k), st = stale(p);
+  if (!m) return `<td class="px-3 py-3 align-top text-sm text-neutral-400 dark:text-neutral-500">not tracked</td>`;
+  if (loading(p)) return `<td class="px-3 py-3 align-top" aria-hidden="true">${sk('h-6 w-14')}${sk('mt-2 h-3 w-20')}${sk('mt-2 h-3 w-24')}${sk('mt-2 h-8 w-full')}${sk('mt-2 h-3 w-20')}</td>`;
+  const v = val(m);
+  return `<td class="px-3 py-3 align-top">
+    ${m.custom ? `<p class="flex items-center gap-1 text-xs ${muted}"><span class="truncate">${m.label}</span></p>` : ''}
+    <p class="text-xl font-semibold tabular-nums ${st ? 'text-neutral-400 dark:text-neutral-500' : ''}">${fmt(v)}</p>
+    <p class="mt-0.5 text-xs leading-5">${delta(v, yday(m), st, 'vs yest.')}</p><p class="text-xs leading-5">${delta(v, wkago(m), st, 'vs 7 d ago')}</p>
+    <div class="spark mt-1.5 h-8 w-full" data-p="${p.key}" data-m="${m.key}"></div>
+    <p class="mt-1 text-[11px] ${muted}">read ${readText(p)}</p>
+  </td>`;
+}
+function rowHead(p) {
+  const l = loading(p), st = stale(p);
+  return `<th scope="row" class="px-4 py-3 text-left align-top font-normal">
+    <div class="flex items-center gap-2">${dot(p)}<a href="#" class="font-semibold hover:underline underline-offset-4">${p.key}</a></div>
+    <p class="mt-1 text-xs ${muted}">${l ? 'Reading…' : st ? `last good read ${p.read}` : `read ${readText(p)}`}</p>
+    ${st && !l ? `<div class="mt-2">${errBadge(p)}</div><p class="mt-1 text-xs text-rose-700 dark:text-rose-300">${p.error}</p>` : ''}
+    ${p.firstDay && !l ? `<p class="mt-1 text-xs ${muted}">history since ${p.firstDay}</p>` : ''}
+    <div class="mt-2">${refreshBtn(p)}</div>
+  </th>`;
+}
+function table() {
+  const rows = connected().map(p => `<tr class="${stale(p) ? 'bg-neutral-50/70 dark:bg-neutral-950/40' : ''}" aria-busy="${loading(p)}">${rowHead(p)}${COLS.map(c => cell(p, c[0])).join('')}</tr>`).join('');
+  const nc = notConnected().map(k => `<tr><th scope="row" class="px-4 py-3 text-left font-medium">${k}</th>
+      <td colspan="${COLS.length}" class="px-3 py-3 text-sm ${muted}">not connected — <a href="#" class="font-medium text-neutral-800 dark:text-white underline underline-offset-4">set up on /projects</a></td></tr>`).join('');
+  return `<div class="mt-6 hidden overflow-hidden rounded-xl border border-neutral-200 bg-white md:block dark:border-neutral-800 dark:bg-neutral-900">
+    <table class="w-full table-fixed text-sm">
+      <caption class="sr-only">Production metrics by project. Changes are against the snapshot 1 day and 7 days ago.</caption>
+      <colgroup><col class="w-48 xl:w-56">${COLS.map(() => '<col>').join('')}</colgroup>
+      <thead class="border-b border-neutral-200 dark:border-neutral-800 text-left text-xs ${muted}">
+        <tr><th scope="col" class="px-4 py-2.5 font-medium">Project</th>${COLS.map(c => `<th scope="col" class="px-3 py-2.5 font-medium">${c[1]}</th>`).join('')}</tr>
+      </thead>
+      <tbody class="divide-y divide-neutral-200 dark:divide-neutral-800">${rows}
+        <tr><th colspan="${COLS.length + 1}" scope="rowgroup" class="bg-neutral-50 px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider ${muted} dark:bg-neutral-950/50">Not connected</th></tr>
+        ${nc}
+      </tbody>
+    </table>
+    <p class="border-t border-neutral-200 px-4 py-2 text-xs ${muted} dark:border-neutral-800">Changes compare with the daily snapshot for yesterday and for 7 days ago · — = no snapshot that day · each line is the last 30 days · hover a line for a day's value</p>
+  </div>`;
+}
+function card(p) {
+  const l = loading(p), st = stale(p);
+  const lines = p.metrics.map(m => {
+    if (l) return `<li class="grid grid-cols-[minmax(0,1fr)_6rem] items-center gap-3 py-3" aria-hidden="true"><div>${sk('h-3 w-20')}${sk('mt-2 h-6 w-14')}${sk('mt-2 h-3 w-28')}</div>${sk('h-8 w-full')}</li>`;
+    const v = val(m);
+    return `<li class="grid grid-cols-[minmax(0,1fr)_6rem] items-center gap-3 py-3">
+      <div class="min-w-0">
+        <p class="flex items-center gap-1.5 text-xs ${muted}"><span class="truncate">${m.label}</span>${m.custom ? customTag : ''}</p>
+        <p class="text-xl font-semibold tabular-nums ${st ? 'text-neutral-400 dark:text-neutral-500' : ''}">${fmt(v)}</p>
+        <p class="text-xs leading-5">${delta(v, yday(m), st, 'vs yest.')} <span class="text-neutral-300 dark:text-neutral-600" aria-hidden="true">·</span> ${delta(v, wkago(m), st, 'vs 7 d ago')}</p>
+        <p class="text-[11px] ${muted}">read ${readText(p)}</p>
+      </div>
+      <div class="spark h-8 w-full" data-p="${p.key}" data-m="${m.key}"></div>
+    </li>`;
+  }).join('');
+  return `<section class="rounded-xl border border-neutral-200 px-4 pt-3 dark:border-neutral-800 ${st ? 'bg-neutral-50 dark:bg-neutral-900/60' : 'bg-white dark:bg-neutral-900'}" aria-busy="${l}">
+    <div class="flex items-center justify-between gap-2">
+      <div class="flex min-w-0 items-center gap-2">${dot(p)}<h2 class="truncate font-semibold">${p.key}</h2></div>${refreshBtn(p)}
+    </div>
+    <p class="mt-0.5 text-xs ${muted}">${l ? 'Reading…' : st ? `last good read ${p.read}` : `read ${readText(p)}`}${p.firstDay && !l ? ` · history since ${p.firstDay}` : ''}</p>
+    ${st && !l ? `<div class="mt-2 flex flex-wrap items-center gap-2">${errBadge(p)}<span class="text-xs text-rose-700 dark:text-rose-300">${p.error}</span></div>` : ''}
+    <ul class="mt-1 divide-y divide-neutral-200 dark:divide-neutral-800">${lines}</ul>
+  </section>`;
+}
+function renderMain() {
+  if (S.mode === 'empty') return emptyPanel();
+  return table() + `<div class="mt-6 space-y-4 md:hidden">${connected().map(card).join('')}</div>
+    <div class="md:hidden">${notConnectedList()}</div>
+    <p class="mt-4 text-xs ${muted} md:hidden">— = no snapshot that day · each line is the last 30 days</p>`;
+}
+
+</script>
+<script>render(); /* #loading or #empty in the URL opens that state */ if (['#loading', '#empty'].includes(location.hash)) setMode(location.hash.slice(1)); if (location.hash === '#apart' && window.C) view('apart');</script>
+</body>
+</html>

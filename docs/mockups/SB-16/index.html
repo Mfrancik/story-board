@@ -1,0 +1,92 @@
+<!-- SB-16 mockups — landing page for the three options. -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SB-16 preflight history mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { darkMode: 'media', theme: { extend: { fontFamily: { sans: ['"Instrument Sans"', 'system-ui', 'sans-serif'] } } } };
+</script>
+<style>html, body { overflow-x: hidden; } a:focus-visible { outline: 2px solid #0ea5e9; outline-offset: 2px; }</style>
+</head>
+<body class="font-sans bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100 antialiased">
+<main class="mx-auto max-w-6xl px-4 sm:px-6 py-10">
+  <p class="font-mono text-xs text-neutral-500">SB-16 · design mockup gate</p>
+  <h1 class="mt-1 text-2xl font-semibold tracking-tight">Preflight history: three layouts</h1>
+  <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400 max-w-3xl">All three sit inside the design-A shell, under the tab bar Dashboard | Handbook | Stories | <strong>Preflight</strong>. They show <span class="font-mono text-xs">/p/coins/preflight</span> with real data: all 36 rows of coins' <span class="font-mono text-xs">preflight-cost.csv</span> (the old shape, with no project column), read by header name and listed newest first. Blank cells show "—", wall time is m:ss, tokens are in + out in compact form, and any audit tier other than sonnet (11 of the 36) carries a "check the tier" flag. Each page has working filters (mode, branch contains, where), a trend strip drawn as inline SVG with hover read-outs, and the empty state and "2 rows could not be read" note shown small at the bottom.</p>
+  <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400 max-w-3xl">The trend figures tell a clear story. In the last 30 days there were 25 runs with a median of 13:46 and 3.0M tokens. In the 30 days before, there were 11 runs with a median of 24:52 and 12.8M tokens. <strong>Test counts and failures are not in the CSV yet</strong>, so no option can show them; they arrive with backlog F-5. Things to try: choose Scoped (15 runs), type <span class="font-mono text-xs">gs-</span> into the branch box, set Where to Worktrees (coins has none), and hover a chart.</p>
+
+  <div class="mt-8 grid gap-4 lg:grid-cols-3">
+    <!-- A -->
+    <a href="option-a.html" class="group flex flex-col rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 hover:border-neutral-300 dark:hover:border-neutral-700">
+      <div class="aspect-[16/10] rounded-lg bg-neutral-100 dark:bg-neutral-800 p-3 flex gap-2" aria-hidden="true">
+        <div class="w-1/5 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+        <div class="flex-1 rounded bg-white dark:bg-neutral-900 p-1.5 space-y-1.5">
+          <div class="grid grid-cols-2 gap-1.5"><svg viewBox="0 0 40 14" class="h-5 w-full"><polyline fill="none" stroke="#0284c7" stroke-width="1" points="0,8 5,11 10,2 15,4 20,9 25,6 30,10 35,11 40,9"/></svg><svg viewBox="0 0 40 14" class="h-5 w-full"><polyline fill="none" stroke="#0284c7" stroke-width="1" points="0,11 5,6 10,1 15,9 20,5 25,10 30,12 35,12 40,13"/></svg></div>
+          <div class="space-y-0.5"><div class="h-1 rounded bg-neutral-300 dark:bg-neutral-600"></div><div class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></div></div>
+        </div>
+      </div>
+      <h2 class="mt-4 font-semibold">Option A: dense ledger</h2>
+      <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">The filters come first, then a trend strip with the three figures and the two line charts side by side, then one wide table with all twelve columns: every column in the story plus a greyed, hatched <span class="font-medium">Tests · needs F-5</span> placeholder. The header stays in view as you scroll the table, and hovering a row marks that run on both charts.</p>
+      <p class="mt-2 text-sm"><span class="font-medium">Good:</span> <span class="text-neutral-600 dark:text-neutral-400">the most literal match for "a table I can go down". Every figure is visible at once and easy to compare down a column. When F-5 lands, it fills a column that is already there.</span></p>
+      <p class="mt-1 text-sm"><span class="font-medium">Costs:</span> <span class="text-neutral-600 dark:text-neutral-400">at 36 rows it is a wall of numbers, so how fast things are moving has to come from the charts. On a phone, the table scrolls sideways inside its box.</span></p>
+      <p class="mt-auto pt-3 text-sm font-medium group-hover:underline underline-offset-4">Open option A →</p>
+    </a>
+    <!-- B -->
+    <a href="option-b.html" class="group flex flex-col rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 hover:border-neutral-300 dark:hover:border-neutral-700">
+      <div class="aspect-[16/10] rounded-lg bg-neutral-100 dark:bg-neutral-800 p-3 flex gap-2" aria-hidden="true">
+        <div class="w-1/5 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+        <div class="flex-1 space-y-1.5">
+          <div class="h-2 w-12 rounded bg-neutral-400 dark:bg-neutral-500"></div>
+          <div class="rounded bg-white dark:bg-neutral-900 p-1 flex gap-2 items-center"><div class="h-1 w-10 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="flex-1 space-y-0.5"><div class="h-1 w-1/3 rounded bg-sky-500"></div><div class="h-1 w-1/5 rounded bg-sky-500"></div></div></div>
+          <div class="rounded bg-white dark:bg-neutral-900 p-1 flex gap-2 items-center"><div class="h-1 w-10 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="flex-1 space-y-0.5"><div class="h-1 w-1/4 rounded bg-sky-500"></div><div class="h-1 w-1/6 rounded bg-sky-500"></div></div></div>
+          <div class="h-2 w-12 rounded bg-neutral-400 dark:bg-neutral-500"></div>
+          <div class="rounded bg-white dark:bg-neutral-900 p-1 flex gap-2 items-center"><div class="h-1 w-10 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="flex-1 space-y-0.5"><div class="h-1 w-4/5 rounded bg-sky-500"></div><div class="h-1 w-3/5 rounded bg-sky-500"></div></div></div>
+        </div>
+      </div>
+      <h2 class="mt-4 font-semibold">Option B: timeline</h2>
+      <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">Runs are grouped by week (or by day, with a toggle) along a vertical rule, and each week's header gives its run count and medians. Each run is a card with its date, branch, mode, where and tier chips, the smaller figures in one line, and two bars for wall time and tokens. The bars share one scale across the page, and each has a tick at the median. A compact trend strip sits on top.</p>
+      <p class="mt-2 text-sm"><span class="font-medium">Good:</span> <span class="text-neutral-600 dark:text-neutral-400">progression reads straight down the page. Bars get shorter from August to September and nothing needs to be compared by eye. It works on a phone without any sideways scroll.</span></p>
+      <p class="mt-1 text-sm"><span class="font-medium">Costs:</span> <span class="text-neutral-600 dark:text-neutral-400">it is the tallest of the three at about 36 cards, and turns, tool calls and pack sit in small text, not in columns you can scan. This layout is least like a "table", and test data would need a new line on each card.</span></p>
+      <p class="mt-auto pt-3 text-sm font-medium group-hover:underline underline-offset-4">Open option B →</p>
+    </a>
+    <!-- C -->
+    <a href="option-c.html" class="group flex flex-col rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 hover:border-neutral-300 dark:hover:border-neutral-700">
+      <div class="aspect-[16/10] rounded-lg bg-neutral-100 dark:bg-neutral-800 p-3 flex gap-2" aria-hidden="true">
+        <div class="w-1/6 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+        <div class="w-1/3 rounded bg-white dark:bg-neutral-900 p-1 space-y-1">
+          <div class="h-1 rounded bg-neutral-300 dark:bg-neutral-600"></div><div class="h-1 w-2/3 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+          <svg viewBox="0 0 40 14" class="h-4 w-full"><polyline fill="none" stroke="#0284c7" stroke-width="1" points="0,8 5,11 10,2 15,4 20,9 25,6 30,10 35,11 40,9"/></svg>
+          <svg viewBox="0 0 40 14" class="h-4 w-full"><polyline fill="none" stroke="#0284c7" stroke-width="1" points="0,11 5,6 10,1 15,9 20,5 25,10 30,12 35,12 40,13"/></svg>
+        </div>
+        <div class="flex-1 rounded bg-white dark:bg-neutral-900 p-1.5 space-y-1">
+          <div class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1 rounded bg-neutral-400 dark:bg-neutral-500"></div>
+          <div class="rounded border border-neutral-300 dark:border-neutral-600 p-1 grid grid-cols-2 gap-0.5"><div class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1 rounded border border-dashed border-neutral-300 dark:border-neutral-600"></div></div>
+          <div class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+        </div>
+      </div>
+      <h2 class="mt-4 font-semibold">Option C: split view</h2>
+      <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">The left panel stays in place and holds the three figures (now, before and the change), the two charts stacked, and counts by audit tier and by mode. The right side is a short table showing when, branch, mode, wall time, tokens and tier. Click a run and it opens in place, with every field, how it compares to the median ("1.5× median"), a subagent-share bar, a note on the tier, and a dashed "tests · failures — needs F-5" box. The open run stays marked on the charts.</p>
+      <p class="mt-2 text-sm"><span class="font-medium">Good:</span> <span class="text-neutral-600 dark:text-neutral-400">the charts stay in view while you go down the table, and the table is narrow enough to fit a phone without sideways scroll. Details are there when you want them. The tier counts (sonnet 9, blank 16, opus+sonnet 8…) show the F-3 problem at a glance.</span></p>
+      <p class="mt-1 text-sm"><span class="font-medium">Costs:</span> <span class="text-neutral-600 dark:text-neutral-400">turns, tool calls, subagent share and pack are one click away, not in a column, so you cannot scan them down the page. On a phone, the panel stacks above the table and pushes the runs down.</span></p>
+      <p class="mt-auto pt-3 text-sm font-medium group-hover:underline underline-offset-4">Open option C →</p>
+    </a>
+  </div>
+
+  <section class="mt-8 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5">
+    <h2 class="font-medium">The same in every option</h2>
+    <ul class="mt-2 list-disc pl-5 text-sm text-neutral-600 dark:text-neutral-400 space-y-1">
+      <li>Filters sit in one row above everything, and the figures, charts and runs all follow them. They are Alpine only, with no server call.</li>
+      <li>Wall time and tokens are two charts, one series each, never one chart with two y-axes. A dashed line marks the start of the last 30 days, which the figures compare across.</li>
+      <li>"check the tier" uses the amber warning tone with its words, so it never relies on colour alone. The flag says check, not wrong, because of F-3. A blank tier shows "—" and gets no flag.</li>
+      <li>Every coins run is in the main checkout, so Where reads "main checkout" on each row, and choosing Worktrees shows "No runs match". story-board's sb-10 and sb-15 worktree rows would show their worktree name there.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>
