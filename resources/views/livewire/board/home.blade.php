@@ -12,7 +12,7 @@
     <header class="flex flex-wrap items-center justify-between gap-3">
         <div>
             <h1 class="text-xl font-semibold tracking-tight">What needs me</h1>
-            <p class="text-sm text-zinc-500 dark:text-zinc-400">Across {{ count($projects) }} {{ Str::plural('project', count($projects)) }} · read from origin/main</p>
+            <p class="text-sm text-zinc-500 dark:text-zinc-400">Across {{ count($projects) }} {{ Str::plural('project', count($projects)) }} · read from each project's ref</p>
         </div>
         <div class="flex items-center gap-2">
             <button type="button" x-data x-on:click="$flux.dark = ! $flux.dark" aria-label="Toggle dark mode"
@@ -24,6 +24,10 @@
             </button>
         </div>
     </header>
+
+    @if ($notice)
+        <p role="status" class="mt-3 rounded-md border border-built/50 bg-built/10 px-3 py-2 text-sm">{{ $notice }}</p>
+    @endif
 
     <div class="mt-4 flex flex-wrap items-center gap-2" role="search">
         <label class="sr-only" for="f-project">Project</label>
@@ -74,14 +78,14 @@
         @foreach (['built' => ['Built', $built, 'border-l-built', 'on origin/main'], 'parked' => ['Parked drafts', $parked, 'border-l-cancelled', 'in a draft group, not in the build queue']] as $key => [$title, $count, $accent, $hint])
             @php $open = in_array($key, $openSections, true); $rows = $sections[$key] ?? collect(); $all = in_array($key, $expandedGroups, true); @endphp
             <x-board.section :key="$key" :title="$title" :count="$count" :hint="$hint" :accent="$accent" collapsible :open="$open">
-                @forelse ($all ? $rows : $rows->take(50) as $story)
+                @forelse ($all ? $rows : $rows->take(\App\Livewire\Board\Home::SECTION_PAGE) as $story)
                     <x-board.story-row :story="$story" :body="$bodies[$story->id] ?? null" :group="$key" />
                 @empty
                     <p class="px-3 py-3 text-sm text-zinc-500 dark:text-zinc-400">None{{ $filtered ? ' match the filters' : '' }}.</p>
                 @endforelse
-                @if (! $all && $rows->count() > 50)
+                @if (! $all && $rows->count() > \App\Livewire\Board\Home::SECTION_PAGE)
                     <button type="button" wire:click="showAll('{{ $key }}')" class="w-full px-3 py-2 text-left text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-white">
-                        Show {{ $rows->count() - 50 }} more
+                        Show {{ $rows->count() - \App\Livewire\Board\Home::SECTION_PAGE }} more
                     </button>
                 @endif
             </x-board.section>

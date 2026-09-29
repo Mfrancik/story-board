@@ -33,7 +33,7 @@ class ListWhatNeedsMe
      *     build: Collection<int, Story>,
      *     parked: int,
      *     built: int,
-     *     projects: list<array{name: string, state: string, sha: string|null, indexed_at: Carbon|null, last_error: string|null, counts: array<string, int>, parse_errors: int}>
+     *     projects: list<array{name: string, ref: string, state: string, sha: string|null, indexed_at: Carbon|null, last_error: string|null, counts: array<string, int>, parse_errors: int}>
      * }
      */
     public function handle(?string $project = null, ?string $initiative = null, ?string $search = null): array
@@ -121,7 +121,7 @@ class ListWhatNeedsMe
      * One summary per enabled project: counts by raw status (so an out-of-vocabulary
      * status stays visible) and how many stories carry parse errors.
      *
-     * @return list<array{name: string, state: string, sha: string|null, indexed_at: Carbon|null, last_error: string|null, counts: array<string, int>, parse_errors: int}>
+     * @return list<array{name: string, ref: string, state: string, sha: string|null, indexed_at: Carbon|null, last_error: string|null, counts: array<string, int>, parse_errors: int}>
      */
     private function projects(?string $only): array
     {
@@ -138,6 +138,7 @@ class ListWhatNeedsMe
 
         return array_values($projects->map(fn (Project $p) => [
             'name' => $p->name,
+            'ref' => $p->ref,
             'state' => $p->state,
             'sha' => $p->sha,
             'indexed_at' => $p->indexed_at,

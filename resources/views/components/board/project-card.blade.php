@@ -39,7 +39,7 @@
     @endif
 
     <p class="mt-2 font-mono text-xs text-zinc-500 dark:text-zinc-400">
-        {{ $card['sha'] ? 'origin/main @ '.substr($card['sha'], 0, 8) : 'no snapshot' }}
+        {{ $card['sha'] ? $card['ref'].' @ '.substr($card['sha'], 0, 8) : 'no snapshot' }}
         · {{ $card['indexed_at']?->diffForHumans() ?? 'never read' }}
     </p>
 </div>

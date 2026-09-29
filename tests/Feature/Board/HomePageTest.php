@@ -208,3 +208,22 @@ it('queues one refresh per project however many times the page loads', function 
 it('refuses browser edits to the expanded bodies and open sections', function () {
     Livewire::test(Home::class)->set('bodies', [1 => '<script>alert(1)</script>']);
 })->throws(CannotUpdateLockedPropertyException::class);
+
+it('confirms a refresh in the button\'s own verb', function () {
+    Bus::fake();
+
+    Livewire::test(Home::class)->call('refresh')->assertSee('Refresh queued for 2 projects');
+});
+
+it('does not expand a story from a disabled project', function () {
+    $off = Project::factory()->disabled()->create();
+    $story = Story::factory()->for($off)->create();
+
+    Livewire::test(Home::class)->call('expand', $story->id)->assertSet("bodies.{$story->id}", '');
+});
+
+it('labels each project card with its own ref', function () {
+    $this->cd->update(['ref' => 'origin/develop']);
+
+    Livewire::test(Home::class)->assertSee('origin/develop @ bbbbbbbb');
+});

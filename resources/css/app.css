@@ -93,3 +93,11 @@ select:focus[data-flux-control] {
     pointer-events: none;
     border: 0;
 }
+
+/* A mockup option on the story page (SB-4): tall enough to judge a screen, width set by the 375/768/1280 toggle. */
+.mockup-frame {
+    display: block;
+    height: 70vh;
+    max-width: none;
+    border: 0;
+}

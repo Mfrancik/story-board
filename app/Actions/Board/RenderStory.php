@@ -28,14 +28,30 @@ class RenderStory
      */
     public function handle(Story $story): ?string
     {
+        $markdown = $this->read($story);
+
+        return $markdown === null ? null : $this->toHtml($markdown);
+    }
+
+    /**
+     * The story's raw markdown at its row's SHA, or null (logged) when git cannot read it.
+     */
+    public function read(Story $story): ?string
+    {
         try {
-            $markdown = $this->git->show($story->project->path, $story->sha, $story->path);
+            return $this->git->show($story->project->path, $story->sha, $story->path);
         } catch (GitReaderException $e) {
             Log::warning('board.story_read_failed', ['project' => $story->project->name, 'story' => $story->story_id, 'error' => $e->getMessage()]);
 
             return null;
         }
+    }
 
+    /**
+     * Markdown to safe HTML: raw HTML escaped, unsafe links dropped.
+     */
+    public function toHtml(string $markdown): string
+    {
         return Str::markdown($markdown, [
             'html_input' => 'escape',
             'allow_unsafe_links' => false,

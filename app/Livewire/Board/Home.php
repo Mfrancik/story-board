@@ -27,6 +27,9 @@ class Home extends Component
     /** Rows a group shows before "Show N more". */
     public const PAGE = 10;
 
+    /** Rows an open collapsible section shows before "Show N more" — Built runs to hundreds. */
+    public const SECTION_PAGE = 50;
+
     /** The collapsible sections the owner asked for at the gate. */
     public const SECTIONS = ['built', 'parked'];
 
@@ -62,6 +65,10 @@ class Home extends Component
     #[Locked]
     public array $bodies = [];
 
+    /** Confirmation after Refresh, in the button's own verb (design-standards §Four states). */
+    #[Locked]
+    public ?string $notice = null;
+
     /**
      * Log the view and queue a refresh for any project whose snapshot is stale.
      * Queued, not after-response: `artisan serve` cannot flush a response early,
@@ -84,6 +91,7 @@ class Home extends Component
         $projects = Project::enabled()->get();
         Log::info('board.refresh_requested', ['projects' => $projects->pluck('name')->all()]);
         $projects->each(fn (Project $p) => RefreshProjectJob::dispatch($p));
+        $this->notice = 'Refresh queued for '.$projects->count().' '.str('project')->plural($projects->count()).'. Reload in a minute to see it.';
     }
 
     /**
@@ -120,7 +128,7 @@ class Home extends Component
             return;
         }
 
-        $story = Story::onRef()->with('project')->find($storyId);
+        $story = Story::onRef()->with('project')->whereHas('project', fn ($q) => $q->where('is_enabled', true))->find($storyId);
         $this->bodies[$storyId] = $story ? ($render->handle($story) ?? '') : '';
     }
 
@@ -161,7 +169,9 @@ class Home extends Component
             'sections' => $sections,
             'goto' => $goto,
             'projectNames' => Project::enabled()->orderBy('name')->pluck('name'),
-            'initiatives' => Story::onRef()->whereNotNull('initiative')->distinct()->orderBy('initiative')->pluck('initiative'),
+            'initiatives' => Story::onRef()->whereNotNull('initiative')
+                ->whereHas('project', fn ($q) => $q->where('is_enabled', true))
+                ->distinct()->orderBy('initiative')->pluck('initiative'),
             'filtered' => $this->project !== '' || $this->initiative !== '' || $this->q !== '',
         ]);
     }

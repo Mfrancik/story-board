@@ -25,3 +25,4 @@ Every reusable component. Consult BEFORE building any new UI (design-standards
 | board/project-card | Blade | One project's counts by raw status, parse-error warning, snapshot state | Home |
 | board/status-chip | Blade | A story's raw status with parse-error marker; danger tone for out-of-vocabulary values | Home, story-row |
 | layouts/board | Blade layout | The board's shell: no sidebar or auth, Flux appearance for light/dark | Home |
+| StoryPage | Livewire (Board) | SB-4 story page: story above its mockups, side-by-side / one-at-a-time, 375/768/1280, full-screen compare | `/p/{project}/s/{id}` |
