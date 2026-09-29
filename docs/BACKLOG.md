@@ -41,4 +41,10 @@ cut or shipped.
 
 ## Open
 
+### F-1 — 2026-09-29 — Kit parser misses bold Chosen option picks
+Area: story-index parser (kit, SB-1) · home "Awaiting a mockup pick"
+Scope: PROMOTE
+
+Kit parser (bin/story-index, SB-1) reads `Chosen option: **B** (owner, 2026-09-25) — …` as no pick: parse_chosen strips the leading `**` but CHOSEN_RE then rejects the `*` after the letter. On 2026-09-29 this put 6 already-picked stories (coins MOB-44, MOB-65; asset-track CV-1, TS-3; rent-track MT-4b, MT-4c) into the board's "Awaiting a mockup pick", which should hold 3 (coins AUC-17, AUC-21; client-dashboard SS-17), and 42 built stories carry the same shape. Fix belongs in the kit (SB-1 follow-up), not in story-board.
+
 ## Cut
