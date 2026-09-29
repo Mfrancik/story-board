@@ -10,6 +10,18 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-09-29 — A project tile 500'd with "ViewErrorBag could not be converted to int"
+Symptom: `/` returned 500 once the SB-9 tiles rendered `<x-board.status-chip :status :count />`, with `Object of class Illuminate\Support\ViewErrorBag could not be converted to int`.
+Root cause: the chip's prop is named `errors`. When a caller does not pass it, the `@props` default of 0 does not apply: the name resolves to the `$errors` `ViewErrorBag` that Laravel shares with every view, and `$errors > 0` then fails.
+Fix: `status-chip.blade.php` coerces it, `$errors = is_int($errors) ? $errors : 0` (SB-9, `a26153b`). Never name a Blade prop `errors`, or any other variable Laravel shares with views. Pinned by every tile render in `tests/Feature/Board/AllProjectsDashboardTest.php`.
+Log trail: none; a Blade render exception in `storage/logs/laravel.log` with the request's `request_id`.
+
+## 2026-09-29 — `@endif@if` back to back did not compile
+Symptom: a view with `@endif@if (...)` written with nothing between them failed to compile.
+Root cause: Blade only treats `@word` as a directive when the character before `@` is not a word character. In `@endif@if`, the `f` before the second `@` stops `@if` from being matched.
+Fix: put each directive on its own line or after whitespace. `status-chip.blade.php` now splits them over lines, with a comment on why that whitespace does not show (the chip is `inline-flex`, spaced by `gap`) (SB-9).
+Log trail: none; a compile or render error.
+
 ## 2026-09-29 — Escape then Back left the board for about:blank
 Symptom: with the story modal open, pressing Escape (sometimes followed by Back) navigated off the board to `about:blank`. Intermittent; the browser test failed on some runs only.
 Root cause: the modal relied on Livewire's `#[Url(history: true)]`, which pushes the history entry only after the server round trip. Escape pressed before the response landed stepped back one entry more than had been pushed.
