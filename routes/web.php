@@ -1,10 +1,10 @@
 <?php
 
-use App\Http\Controllers\BoardController;
 use App\Http\Controllers\MockupFileController;
+use App\Livewire\Board\Home;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', BoardController::class)->name('home');
+Route::livewire('/', Home::class)->name('home');
 
 // Raw mockup bytes from a project's ref (SB-4). `file` may contain slashes (shots/01.png);
 // ReadMockupFile, not this pattern, decides what is allowed.

@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import '../../vendor/livewire/flux/dist/flux.css';
+@plugin '@tailwindcss/typography';
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -22,6 +23,16 @@
     --color-zinc-800: #262626;
     --color-zinc-900: #171717;
     --color-zinc-950: #0a0a0a;
+
+    /* Story-board semantic tokens (SB-3). One colour per status, used for chips, bars and group
+       accents, so re-theming the board is a change here, not in the views. */
+    --color-draft: var(--color-amber-500);
+    --color-approved: var(--color-sky-500);
+    --color-built: var(--color-emerald-500);
+    --color-cancelled: var(--color-zinc-400);
+    --color-pick: var(--color-violet-500);
+    --color-danger: var(--color-red-600);
+    --color-warning: var(--color-amber-600);
 
     --color-accent: var(--color-neutral-800);
     --color-accent-content: var(--color-neutral-800);
@@ -64,3 +75,21 @@ select:focus[data-flux-control] {
 /* \[:where(&)\]:size-4 {
     @apply size-4;
 } */
+
+[x-cloak] {
+    display: none !important;
+}
+
+/* A mockup thumbnail (SB-3 expanded row): the option renders at a desktop viewport, 1280×800,
+   then scales down to fit its 11rem-wide box. The render size is a viewport, not a layout
+   value, so it lives here once rather than as arbitrary values in a view. */
+.mockup-thumb {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 1280px;
+    height: 800px;
+    transform: scale(0.1375);
+    transform-origin: top left;
+    pointer-events: none;
+    border: 0;
+}

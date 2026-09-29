@@ -9,6 +9,6 @@ it('shows each registered project with its story count', function () {
 
     visit('/')
         ->assertSee('coins')
-        ->assertSeeIn('[data-project="coins"] [data-story-count]', '4')
+        ->assertAttribute('[data-project-card="coins"]', 'data-story-count', '4')
         ->assertNoJavaScriptErrors();
 });

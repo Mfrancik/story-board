@@ -32,6 +32,7 @@ class ListWhatNeedsMe
      *     pick: Collection<int, Story>,
      *     build: Collection<int, Story>,
      *     parked: int,
+     *     built: int,
      *     projects: list<array{name: string, state: string, sha: string|null, indexed_at: Carbon|null, last_error: string|null, counts: array<string, int>, parse_errors: int}>
      * }
      */
@@ -53,8 +54,42 @@ class ListWhatNeedsMe
                 ->orderByRaw('stories.dated_on is null')->orderBy('stories.dated_on')
                 ->orderBy('projects.name')->orderBy('stories.path')->get(),
             'parked' => $scoped()->where('stories.status', 'draft')->where('stories.is_parked', true)->count(),
+            'built' => $scoped()->where('stories.status', 'built')->count(),
             'projects' => $this->projects($project),
         ];
+    }
+
+    /**
+     * The rows of a collapsible section (owner ruling at SB-3's gate), loaded only
+     * when it is opened — coins alone has 828 built stories.
+     *
+     * @param  'built'|'parked'  $section
+     * @return Collection<int, Story>
+     */
+    public function section(string $section, ?string $project = null, ?string $initiative = null, ?string $search = null): Collection
+    {
+        $query = $this->scoped($project, $initiative, $search);
+
+        return match ($section) {
+            'built' => $query->where('stories.status', 'built')->orderBy('projects.name')->orderBy('stories.path')->get(),
+            'parked' => $query->where('stories.status', 'draft')->where('stories.is_parked', true)
+                ->orderBy('projects.name')->orderBy('stories.path')->get(),
+        };
+    }
+
+    /**
+     * Every story on a ref with exactly this ID (any status), for an ID search
+     * that no visible group answers — a cancelled story, say.
+     *
+     * @return Collection<int, Story>
+     */
+    public function withId(string $storyId, ?string $project = null): Collection
+    {
+        if (! preg_match(self::ID_PATTERN, trim($storyId))) {
+            return new Collection;
+        }
+
+        return $this->scoped($project, null, $storyId)->orderBy('projects.name')->get();
     }
 
     /**

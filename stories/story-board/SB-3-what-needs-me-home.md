@@ -1,5 +1,5 @@
 # SB-3 — The home page shows what needs me
-Status: approved         Journey: none
+Status: built            Journey: none
 Source: owner 2026-09-29 (coins /story). Ruling on the main screen: **"What needs me"**, ahead of
 per-project counts or a kanban.
 

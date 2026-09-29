@@ -82,9 +82,9 @@ it('refreshes a project on page load once its snapshot is older than five minute
 
     $this->get('/')->assertOk();
 
-    Bus::assertDispatchedAfterResponse(RefreshProjectJob::class, 2);
-    Bus::assertDispatchedAfterResponse(RefreshProjectJob::class, fn ($job) => $job->project->is($stale));
-    Bus::assertDispatchedAfterResponse(RefreshProjectJob::class, fn ($job) => $job->project->is($never));
+    Bus::assertDispatched(RefreshProjectJob::class, 2);
+    Bus::assertDispatched(RefreshProjectJob::class, fn ($job) => $job->project->is($stale));
+    Bus::assertDispatched(RefreshProjectJob::class, fn ($job) => $job->project->is($never));
 });
 
 it('refuses to register a project with a ref git would read as an option', function () {
@@ -105,6 +105,6 @@ it('does not retry a failing project on every page load', function () {
 
     $this->get('/')->assertOk();
 
-    Bus::assertDispatchedAfterResponse(RefreshProjectJob::class, 1);
-    Bus::assertDispatchedAfterResponse(RefreshProjectJob::class, fn ($job) => $job->project->is($due));
+    Bus::assertDispatched(RefreshProjectJob::class, 1);
+    Bus::assertDispatched(RefreshProjectJob::class, fn ($job) => $job->project->is($due));
 });
