@@ -1,5 +1,5 @@
 # SB-4 — Read a story and see its mockups side by side
-Status: draft          Journey: none
+Status: approved         Journey: none
 Source: owner 2026-09-29 (coins /story): *"see all of the stories … mockups, etc"*.
 
 ## Story
