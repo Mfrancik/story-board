@@ -1,10 +1,10 @@
 # What needs me (home page)
-Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-3, SB-4
+Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-3, SB-4, SB-5
 
 ## Overview
 `/` answers one question across every registered project: what is waiting on the owner? It lists
 drafts to approve, mockups to pick and approved stories to build. Below those it has collapsible
-Built and Parked drafts sections and a health card per project. The owner chose this over
+Not on main, Built and Parked drafts sections and a health card per project. The owner chose this over
 per-project counts or a kanban (mockup A, "Inbox"), because the board exists to make decisions, not to
 report. The lists read only the stored snapshot (see
 [Project registry and story reader](project-registry-and-reader.md)). Git is touched only when a row
@@ -23,13 +23,16 @@ the page never works them out:
 
 **The query.** `app/Actions/Board/ListWhatNeedsMe.php:handle()` builds every group from the same
 `scoped()` query. That query covers stories of enabled projects on the ref only
-(`location_kind IS NULL`; SB-5's off-main rows are excluded), with the project, initiative and search
+(`location_kind IS NULL`; SB-5's off-main rows are excluded, except from `offmain`), with the project, initiative and search
 filters applied:
 - **approval**: `status = draft` and not parked.
 - **pick**: `status` in `draft|approved`, `mockups.options` non-empty, `mockups.chosen` JSON null.
   Built and cancelled stories are history, not decisions, so they are left out.
 - **build**: `status = approved`, ordered by `dated_on` with undated stories last
   (`orderByRaw('dated_on is null')`, because MySQL has no `NULLS LAST`), then project, then path.
+- **offmain** (SB-5): the same query with `offMain: true` (`location_kind IS NOT NULL`). It is a count
+  only, and `section('offmain')` orders rows by project, location kind, branch and path. See
+  [Not on main](not-on-main.md).
 - **parked** and **built**: counts only. `section()` loads their rows only while the section is open,
   because coins alone has hundreds of built stories.
 - **projects**: one card per enabled project. It holds counts by *raw* status (so an
@@ -52,7 +55,7 @@ story. The page then says which status the story has and links to its
   `role="status"` line.
 - `project`, `initiative` and `q` are `#[Url]` properties, so filters survive a reload and can be
   shared as a link.
-- `toggleSection()` opens Built or Parked drafts. `showAll()` lifts a group's row cap: `Home::PAGE`
+- `toggleSection()` opens Not on main, Built or Parked drafts (`Home::SECTIONS`). `showAll()` lifts a group's row cap: `Home::PAGE`
   for the three groups and `Home::SECTION_PAGE` for the sections.
 - `expand($id)` renders a story's text on the first open of its row, only for a story whose project
   is enabled, through
@@ -65,13 +68,16 @@ story. The page then says which status the story has and links to its
   otherwise be set from the browser, and `bodies` is printed raw (`{!! !!}`).
 
 **The view.** `resources/views/livewire/board/home.blade.php` uses the `layouts/board` shell (no
-sidebar, no auth, Flux appearance for light/dark). It has a filter bar, the three groups, the two
-collapsible sections and the project cards. The Blade components are in
+sidebar, no auth, Flux appearance for light/dark). It has a filter bar, the three groups, the three
+collapsible sections (Not on main, Built, Parked drafts) and the project cards. The Blade components are in
 `resources/views/components/board/`:
 - `section`: a boxed list with a heading, count and hint. Optionally collapsible.
 - `story-row`: one row that expands in place to chips, the story text and mockup thumbnails. A
   thumbnail is a sandboxed `<iframe>` of the SB-4 route `mockups.file`, created only while the row is
-  open (`<template x-if="open">`). "Open full page →" links to the story page. The `.mockup-thumb` class in `resources/css/app.css` renders it at
+  open (`<template x-if="open">`). "Open full page →" links to the story page (with `?v=` for an
+  off-main row, and only when `Story::hasPage()`). For an off-main row (SB-5), the row also shows its
+  `location` and either a status chip or a "mockups only" tag, plus "picked X". The row's thumbnails
+  come from `Story::mockupUrl()`. An untracked row shows no text or thumbnails and says where the file is. The `.mockup-thumb` class in `resources/css/app.css` renders it at
   1280×800 and scales it down.
 - `project-card`: status bar and counts, a parse-error warning, stale/unreachable/pending state,
   `last_error`, the project's own ref @ SHA, and "indexed ago".
@@ -93,12 +99,13 @@ refresh's log lines on the worker trace back to the page load or button press th
 
 ## Interfaces
 - `GET /` (route `home`) → `App\Livewire\Board\Home`. Query string: `?project=<name>&initiative=<name>&q=<text>`.
-- Livewire actions: `refresh`, `toggleSection('built'|'parked')`, `showAll(<group>)`,
+- Livewire actions: `refresh`, `toggleSection('offmain'|'built'|'parked')`, `showAll(<group>)`,
   `expand(<stories.id>)`, `clearFilters`.
 - `ListWhatNeedsMe::handle(?project, ?initiative, ?search)` returns
-  `{approval, pick, build, parked, built, projects}`. `section('built'|'parked', …)` and
+  `{approval, pick, build, parked, built, offmain, projects}`. `section('offmain'|'built'|'parked', …)` and
   `withId($id, ?project)` are also public.
-- `RenderStory::handle(Story): ?string` returns safe HTML, or `null` when git cannot read the file.
+- `RenderStory::handle(Story): ?string` returns safe HTML, or `null` when git cannot read the file or
+  the row is untracked.
   The view then says the story could not be read at that SHA.
 - `GitReader::listFiles($path, $ref, $prefix): list<string>`.
 - Every response carries an `X-Request-Id` header.
@@ -158,6 +165,8 @@ outlive a killed process until its TTL runs out, and that is expected.
   indexed query.
 - **Awaiting a mockup pick** covers draft and approved only. Its accuracy depends on the kit parser
   (F-1). The board is deliberately not patched to work around it (owner ruling).
+- **Not on main** reuses the collapsible section, is closed by default, and never counts in the three
+  groups, because the ref stays the truth for status (SB-5).
 - Rows expand in place with several open at once, per the owner's pick of mockup A. Built and Parked
   drafts are closed by default and load their rows only when opened. Cancelled stories show up only
   through an ID search.
@@ -169,8 +178,6 @@ outlive a killed process until its TTL runs out, and that is expected.
 - **No worker, no refresh.** See Configuration.
 - **A migrated but unrefreshed row** reads `is_parked=false` and `dated_on=null`, so a parked draft
   shows under Awaiting approval until the next refresh.
-- The Built section's hint still reads "on origin/main" as a literal in `home.blade.php`. The
-  subtitle and project cards now use each project's ref.
 - Layout classes still use the raw `zinc-*` palette. Only the status colours are tokens (preflight
   WARN, deferred).
 
@@ -178,3 +185,4 @@ outlive a killed process until its TTL runs out, and that is expected.
 2026-09-29 — Snapshot facts `is_parked` and `dated_on`, `ListWhatNeedsMe`, `GitReader::listFiles` (SB-3, data layer, `a1874aa`)
 2026-09-29 — Livewire home replaces SB-2's bare list. Expand in place, Built/Parked sections, project cards, URL filters, queued refresh, request IDs (SB-3)
 2026-09-29 — Refresh confirmation, `SECTION_PAGE`, `expand()` and the initiative list limited to enabled projects, cards show the project's ref, story links resolve (SB-4)
+2026-09-29 — Not on main section (off-main rows, location labels, mockups-only tag, `?v=` links); Built hint now says "on each project's ref" (SB-5)

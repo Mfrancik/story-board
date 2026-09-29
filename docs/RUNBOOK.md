@@ -10,6 +10,30 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-09-29 — The story page for a branch version said "@ origin/main"
+Symptom: a story page opened with `?v=` for a branch version showed its path as `@ origin/main <sha>`, so it looked like the ref's copy.
+Root cause: the metadata line printed `$project->ref` for every row. Off-main rows carry their own `branch` and commit `sha`.
+Fix: the line prints the project ref for ref rows, `<branch> <sha>` for branch and worktree rows, and the `location` for untracked rows (`resources/views/livewire/board/story-page.blade.php`; SB-5). Pinned by `NotOnMainPageTest` "labels a branch version with its branch and commit, not the project ref".
+Log trail: none; visual. `board.story_viewed` carries `version` (the row's `location`) to confirm which row was shown.
+
+## 2026-09-29 — client-dashboard's whole off-main scan failed
+Symptom: client-dashboard had no Not on main rows at all, and each refresh logged `board.offmain_failed`.
+Root cause: one branch (`standards/feat/feature-skill`) shares no history with main. `git merge-base` exits non-zero, `GitReader` throws, and the exception ended the whole scan.
+Fix: `IndexOffMain::branchRows()` catches `GitReaderException` per branch, logs `board.offmain_branch_skipped` and continues (SB-5). Pinned by `NotOnMainTest` "skips a branch with no shared history and still indexes the others".
+Log trail: `board.offmain_failed` with a merge-base error for `project=client-dashboard`. Now it is one `board.offmain_branch_skipped` naming the branch, followed by `board.offmain_indexed`.
+
+## 2026-09-29 — The off-main scan found 0 untracked files in tests
+Symptom: the fixture test with an untracked `docs/mockups/X-1/option-a.html` produced no untracked row.
+Root cause: the mockup path pattern required a kit-style ID (two or more capital letters), but the story's own acceptance criterion uses `X-1`. The same filter would also have hidden oddly named real folders.
+Fix: `IndexOffMain::MOCKUP_FILE` accepts any directory name under `docs/mockups/` (SB-5). Serving still requires a well-formed ID (`ReadMockupFile`, the `stories.show` route).
+Log trail: `board.offmain_indexed` with `untracked: 0`.
+
+## 2026-09-29 — "Not on main" flooded with hundreds of rows
+Symptom: coins' Not on main listed 903 branch rows, mostly stories that main had built long ago, shown as draft or new on old branches.
+Root cause: each branch tip was compared with today's main. A branch that forked before main built a story "differs" on that story even though the branch never touched it.
+Fix: a file counts only if the branch changed it since its merge-base with the ref and it still differs from the ref. Stacked branches are deduplicated by `path@blob`. Coins went to 148 branch rows (132 stories); see [ADR-010](decisions/ADR-010-off-main-is-what-a-branch-changed-since-its-merge-base.md) (SB-5). Pinned by `NotOnMainTest` "does not report what main changed after an old branch forked".
+Log trail: `board.offmain_indexed` `branch` count for `project=coins`.
+
 ## 2026-09-29 — Every story page view made two extra mockup requests
 Symptom: opening a story page served two more mockup files than it had option frames, even though the compare overlay was never opened.
 Root cause: the compare overlay's two iframes were inside an `x-show` container. `x-show` renders the element and only hides it with CSS, so both frames loaded their `src` (two requests, two `git show`s) on every view.

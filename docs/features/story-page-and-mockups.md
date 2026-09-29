@@ -1,5 +1,5 @@
 # Story page and mockups
-Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-4
+Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-4, SB-5
 
 ## Overview
 `/p/{project}/s/{storyId}` shows one story's full text, read from its project's ref, above its mockup
@@ -17,8 +17,10 @@ The compare overlay was added by owner ruling at the gate.
   `.*` so that relative assets like `shots/01.png` match. `ReadMockupFile` decides what is allowed,
   not the route pattern.
 
-**The page.** `app/Livewire/Board/StoryPage.php:mount()` 404s a disabled project, then loads the
-story's on-ref row (`Story::onRef()`, by `project_id` and `story_id`) or 404s. It reads the raw
+**The page.** `app/Livewire/Board/StoryPage.php:mount()` 404s a disabled project and a `?v=` that
+is not all digits (`board.version_rejected`). `resolve()` then picks the row: the requested off-main
+version, else the on-ref row, else the story's first off-main version (see
+[Versions](#versions-sb-5)), or 404s. The row ID is stored as `rowId`. It reads the raw
 markdown once with `RenderStory::read()` (`GitReader::show()` at the row's `sha`) and uses that one
 read for two things:
 - `RenderStory::toHtml()` makes the body: `Str::markdown` with raw HTML escaped and unsafe links
@@ -29,7 +31,7 @@ read for two things:
   **It never decides which option is chosen.** The marked frame comes only from the kit parser's
   `stories.mockups.chosen` ([ADR-009](../decisions/ADR-009-unparsed-choice-is-quoted-not-guessed.md)).
 
-`render()` re-reads the row and looks up which `depends_on` IDs exist in the same project. Those
+`render()` re-reads the row by `rowId`, loads every version of the story, and looks up which `depends_on` IDs exist in the same project. Those
 become `stories.show` links and the others stay plain text. Every public property is `#[Locked]`.
 The component has no actions: all interaction is Alpine.
 
@@ -57,15 +59,38 @@ The component has no actions: all interaction is Alpine.
   closes it. Because of `x-if`, the two compare frames (two git reads) exist only while the overlay
   is open (see RUNBOOK). Nothing about a comparison is recorded.
 
+### Versions (SB-5)
+A story can also exist off main: on an unmerged branch, in a worktree, or untracked (see
+[Not on main](not-on-main.md)). Each version is its own `stories` row.
+- `?v=<row id>` shows that version. The lookup is scoped to this project and story ID, so a row from
+  another story or project is a 404.
+- When the shown row is off main, an amber line (`data-offmain-shown`) says where it lives
+  (`Story::placePhrase()`) and links to the version on main, or says there is none.
+- `StoryPage::versions()` lists every *other* version in a banner (`data-offmain-banner`), one link
+  each. The ref's row reads "The version on main: <status>". An off-main row reads
+  "<what> <where> — not on main", where *what* is `Exists only` (no ref row), `Picked X` (a different
+  `chosen`), the capitalised status (a different status), or `Changed`. For example: "Picked D on
+  branch docs/MOB-56-pick — not on main".
+- The metadata line names the version's `branch` and commit for branch/worktree rows, and the
+  `location` for untracked rows, instead of `@ <ref>`.
+- An untracked version has no text or mockups on the board (`Story::isInGit()` is false). The page
+  says to open the file in that checkout.
+- Mockup URLs come from `Story::mockupUrl()`, which adds `v` for off-main rows, so frames, thumbnails
+  and the compare overlay all read the branch's commit.
+
 **Serving a mockup file.** `app/Http/Controllers/MockupFileController.php:__invoke()` 404s a disabled
 project and calls `app/Actions/Board/ReadMockupFile.php:handle()`:
 1. Rejects a `storyId` not shaped like an ID, and any `file` that is not plain segments
    (`isPlainRelativePath()`: each segment `[A-Za-z0-9_-][A-Za-z0-9._-]*`, so no `.`, `..`, hidden
    files, empty segments from `//`, backslashes, NULs, or anything over 255 bytes). Encoded dots arrive
    decoded and fail the same check. A rejected path logs `board.mockup_path_rejected`.
-2. Takes the **directory from the snapshot**, not the URL. The row's `mockups.dir` must equal
+2. Takes the **directory from the snapshot**, not the URL. Without `?v=` the row is the on-ref row.
+   With `?v=` (digits only; anything else is refused by the controller and logs
+   `board.version_rejected`) it is that off-main row, which must belong to this project and story and
+   be a `branch` or `worktree` row. Untracked rows are never served. The row's `mockups.dir` must equal
    `docs/mockups/<storyId>`, so a URL can only ever reach its own story's folder.
-3. Reads `<dir>/<file>` with `GitReader::show()` at the row's `sha`. It never reads the working tree.
+3. Reads `<dir>/<file>` with `GitReader::show()` at the row's `sha` (the ref's commit, or the branch's
+   commit). It never reads the working tree.
 Any failure throws `MockupNotFoundException`, which the controller turns into a 404. The response
 carries the content type from an extension allow-list (otherwise `application/octet-stream`) and a
 CSP whose `sandbox` directive gives it an opaque origin even when opened directly in a tab. It also
@@ -73,22 +98,24 @@ sends `nosniff`, `no-referrer` and `private, max-age=60`. See
 [ADR-008](../decisions/ADR-008-mockups-served-from-git-in-a-sandbox.md).
 
 ## Data model
-Reads only. Uses `projects` and the on-ref `stories` rows (`mockups` JSON: `dir`, `options`,
-`chosen`; `depends_on`; `parse_errors`; `sha`). No migrations. Story text and mockup bytes are read
+Reads only. Uses `projects` and the `stories` rows for the story, both on the ref and off main
+(`mockups` JSON: `dir`, `options`, `chosen`; `depends_on`; `parse_errors`; `sha`; SB-5's
+`location_kind`, `location`, `branch`). No migrations. Story text and mockup bytes are read
 from git on request and never stored.
 
 ## Interfaces
-- `GET /p/{project}/s/{storyId}` (`stories.show`) → `App\Livewire\Board\StoryPage`. Returns 404 for
-  an unknown or disabled project, an unknown story, or a malformed ID.
-- `GET /p/{project}/m/{storyId}/{file}` (`mockups.file`) → raw bytes or 404. The home page's
+- `GET /p/{project}/s/{storyId}[?v=<row id>]` (`stories.show`) → `App\Livewire\Board\StoryPage`.
+  Returns 404 for an unknown or disabled project, an unknown story, a malformed ID, or a `v` that is
+  not a version of this story.
+- `GET /p/{project}/m/{storyId}/{file}[?v=<row id>]` (`mockups.file`) → raw bytes or 404. The home page's
   `story-row` thumbnails use it too.
 - `RenderStory::read(Story): ?string` (raw markdown, or null and logged) and
   `RenderStory::toHtml(string): string`. `handle()` still composes the two for the home page.
 - `ReadMockupGate::handle(string $markdown): array{visual: bool, chosen: ?string, why: ?string}`.
-- `ReadMockupFile::handle(Project, string $storyId, string $file): string`, which throws
+- `ReadMockupFile::handle(Project, string $storyId, string $file, ?int $version = null): string`, which throws
   `App\Exceptions\MockupNotFoundException`.
 - Test hooks: `data-mockups`, `data-mockup-frame="<letter>"`, `data-chosen`, `data-chosen-text`,
-  `data-compare`.
+  `data-compare`, `data-offmain-shown`, `data-offmain-banner`.
 
 ## Configuration
 None of its own. Relies on `PHP_CLI_SERVER_WORKERS` (see the
@@ -98,7 +125,8 @@ page. `@tailwindcss/typography` styles the story text.
 ## Observability
 | Event | Level | Where | Context |
 |---|---|---|---|
-| `board.story_viewed` | info | `StoryPage::mount()` | `project`, `story` |
+| `board.story_viewed` | info | `StoryPage::mount()` | `project`, `story`, `version` (row `location`; null on the ref) |
+| `board.version_rejected` | warning | `StoryPage::mount()`, `MockupFileController` | `project`, `story`, `v` |
 | `board.story_read_failed` | warning | `RenderStory::read()` | `project`, `story`, `error` |
 | `board.mockup_served` | debug | `ReadMockupFile` | `project`, `story`, `file`, `bytes` |
 | `board.mockup_not_found` | info | `ReadMockupFile` | `project`, `story`, `file`?, `reason` (`unknown story` / `no mockup directory` / `not at the ref`) |
@@ -116,6 +144,9 @@ Any `mockup_path_rejected` means a URL the board never builds, so someone is pro
   non-visual; 404s. It also covers depends-on links, the approved-only `/build` button, compare
   defaults, `story_viewed` logging, a quoted unparsed choice, disabled project and malformed ID, an
   unreadable story, and compare frames behind `x-if`.
+- `tests/Feature/Board/NotOnMainPageTest.php` covers versions: the pick banner, a branch-only story
+  and its branch-served mockups, `?v=` refusals, branch/commit labelling, and untracked text not being
+  read.
 - `tests/Feature/Board/MockupFileTest.php`: serving HTML and a relative `shots/01.png` from the ref;
   CSP and `nosniff`; ref rather than working tree; a traversal dataset (`..`, encoded, `./`, `//`,
   hidden); missing file; unknown story, project or mockup dir; no cross-story reach.
@@ -137,6 +168,8 @@ Any `mockup_path_rejected` means a URL the board never builds, so someone is pro
   to "Compare two…" on close.
 - The page is a Livewire component with no server actions. Livewire provides the layout, title and
   `wire:navigate`. All props are `#[Locked]` because `body` is printed raw.
+- Versions are separate rows selected with `?v=`. The page does not merge them. Off-main versions are
+  shown and never ranked (see [Not on main](not-on-main.md#key-decisions--tradeoffs)).
 - One git read of the story feeds both the body and the gate quote (`RenderStory::read()` split out
   of `handle()`).
 
@@ -147,8 +180,9 @@ Any `mockup_path_rejected` means a URL the board never builds, so someone is pro
 - The mockup CSP is `sandbox allow-scripts allow-popups`. Popups are allowed, so a mockup's
   `target=_blank` link can open a tab, but that tab inherits the opaque origin. There is no
   `allow-same-origin` or top navigation.
-- Only `docs/mockups/<ID>/` at the ref is served. Mockups in any other directory, or not yet on the
-  ref, read "No mockups" (off-ref mockups are SB-5).
+- Only `docs/mockups/<ID>/` is served, at the ref or at a branch version's commit (`?v=`). Mockups in
+  any other directory, or untracked, read "No mockups". Untracked mockups are never served (ADR-012).
+- `?v=` IDs are rewritten on every refresh, so an old `?v=` link returns 404.
 - The sandbox gives the frame an opaque origin, so a mockup cannot use `localStorage` or cookies. A
   mockup that depends on them will throw inside its frame.
 - Every frame is a separate PHP request and a `git show`. Side-by-side with many options leans on
@@ -160,3 +194,4 @@ Any `mockup_path_rejected` means a URL the board never builds, so someone is pro
 2026-09-29 — Sandboxed raw-mockup route `mockups.file`, landed ahead of the mockup pick (SB-4, `817e411`; storyId shape check and `mockup_not_found` logging in `7f4d864`)
 2026-09-29 — Story page (layout B), mockup panel, full-screen compare. Also fixed SB-3's carried WARNs (SB-4, `c7d383c`)
 2026-09-29 — Compare frames load only while open; focus trapped in the dialog (SB-4, `e4c2d9e`)
+2026-09-29 — Versions: `?v=` row selection, the off-main line and versions banner, branch/commit metadata, `mockups.file` `?v=` for branch versions, a story that exists only off main opens instead of returning 404 (SB-5, `7165b18`, `f83e02e`)

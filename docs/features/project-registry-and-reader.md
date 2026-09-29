@@ -1,5 +1,5 @@
 # Project registry and story reader
-Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-2, SB-3
+Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-2, SB-3, SB-5
 
 ## Overview
 The board keeps a list of local project checkouts and a snapshot of every story file at each
@@ -27,9 +27,13 @@ before touching git, then:
 3. `GitReader::resolve()` gets the ref's commit SHA; `GitReader::storyIndex()` runs the kit's
    `bin/story-index <path> <ref>` (contract: `docs/KIT-REFERENCE.md` §story-index) and decodes its
    JSON. Either fails → state `stale`, log `board.index_failed`, stop.
-4. `replaceSnapshot()` deletes the project's `stories` rows and bulk-inserts the new ones in
+4. `replaceSnapshot()` deletes the project's on-ref `stories` rows (`Story::onRef()`) and bulk-inserts the new ones in
    500-row chunks, then sets `state=ok`, `sha`, `indexed_at`, clears `last_error` — all in one
    transaction, so a reader never sees half a snapshot.
+
+5. `IndexOffMain` then scans branches, worktrees and untracked files
+   ([Not on main](not-on-main.md)). Its failure logs `board.offmain_failed` and never marks the
+   project stale.
 
 A failure in one project never stops the others: `board:refresh`
 (`app/Console/Commands/BoardRefresh.php`) loops enabled projects and prints one line each.
@@ -45,7 +49,9 @@ dispatch). Staleness keys on the last *attempt*, not on `indexed_at` (which only
 
 **The git gateway.** `app/Services/GitReader.php` is the only app code that runs git. `run()`
 refuses any subcommand not in `ALLOWED` (`fetch`, `ls-tree`, `show`, `rev-parse`, `cat-file`,
-`remote`), refuses `remote` with arguments, and refuses any `--output`/`-o` argument. Every ref goes
+`remote`, and since SB-5 `for-each-ref`, `merge-base`, `worktree`, `status`), refuses `remote` with
+arguments, allows `worktree` only as `worktree list` and `status` only with `--porcelain`
+([ADR-012](../decisions/ADR-012-off-main-reads-stay-read-only-and-in-git.md)), and refuses any `--output`/`-o` argument. Every ref goes
 through `assertRef()` (`REF_PATTERN`: no leading `-`, no `..`; `D` flag so `$` cannot match
 before a trailing newline). git runs with
 `GIT_TERMINAL_PROMPT=0`, ssh `BatchMode=yes`, `GIT_OPTIONAL_LOCKS=0`, and fetch adds
@@ -68,19 +74,23 @@ with the same env.
 - `stories` (`database/migrations/2026_09_29_000002_create_stories_table.php`, `app/Models/Story.php`):
   one row per story file at the ref. `story_id`, `title`, `status` are nullable, so a file that fails
   to parse is still stored with its `parse_errors`. `status` holds the raw first word, even outside
-  the vocabulary. `depends_on`, `mockups`, `parse_errors` are JSON (cast to arrays). Unique on
-  `(project_id, path)`; cascades on project delete. The rows are a snapshot, replaced wholesale on
+  the vocabulary. `depends_on`, `mockups`, `parse_errors` are JSON (cast to arrays). Indexed on
+  `(project_id, path)` (SB-2's unique key was dropped by SB-5, which stores off-main versions of the
+  same path with `location_kind` set); cascades on project delete. The rows are a snapshot, replaced wholesale on
   each successful refresh; they have no identity across refreshes.
 
 ## Interfaces
 - `php artisan board:project add <path> [--name=] [--ref=origin/main]` — register; fails on bad
   ref, non-repo path, or a duplicate name/path.
+- `php artisan board:project alias <path> --name=<project>` registers a sibling clone as another
+  checkout of the project (SB-5, [Not on main](not-on-main.md)).
 - `php artisan board:project list` — table of every project and its last refresh.
 - `php artisan board:project disable <name>` — sets `is_enabled=false`; the row and snapshot stay.
 - `php artisan board:refresh [project]` — refresh all enabled projects, or one by name. Exits
   non-zero only when the named project does not exist or is disabled.
 - `GET /` — the home page ([What needs me](what-needs-me-home.md)).
 - `GitReader` public methods: `isRepository()`, `fetch()`, `resolve()`, `show()`, `listFiles()`, `storyIndex()`,
+  `storyBlobs()`, `mergeBase()`, `unmergedBranches()`, `worktrees()`, `untrackedStoryFiles()` (SB-5),
   `run()`, static `isValidRef()`. All failures throw `App\Exceptions\GitReaderException`.
 
 ## Configuration
@@ -170,3 +180,4 @@ the first line of git's stderr.
 `REF_PATTERN` `D` flag, tests for stored bad ref and `refresh_crashed`, `.env.example` on MySQL (SB-2)
 2026-09-29 — Refresh lock TTL (`RefreshProject::LOCK_SECONDS`) raised above the git timeout sum (SB-2)
 2026-09-29 — Page-load refresh moved to the Livewire home and the queue; bare list removed; request IDs on refresh logs (SB-3)
+2026-09-29 — GitReader allow-list gains four read-only forms; `(project_id, path)` no longer unique; `board:project alias`; off-main scan after each refresh (SB-5)
