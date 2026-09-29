@@ -1,5 +1,5 @@
 # What needs me (home page)
-Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-3, SB-4, SB-5, SB-7
+Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-3, SB-4, SB-5, SB-7, SB-8
 
 ## Overview
 `/` answers one question across every registered project: what is waiting on the owner? It lists
@@ -7,8 +7,8 @@ drafts to approve, mockups to pick and approved stories to build. Below those it
 Not on main, Built and Parked drafts sections and a health card per project. The owner chose this over
 per-project counts or a kanban (mockup A, "Inbox"), because the board exists to make decisions, not to
 report. The lists read only the stored snapshot (see
-[Project registry and story reader](project-registry-and-reader.md)). Git is touched only when a row
-is expanded to show the story text.
+[Project registry and story reader](project-registry-and-reader.md)). A row opens the
+[story modal](story-modal.md) (SB-8), which does its own git read; the page itself never touches git.
 
 ## How it works
 **Snapshot facts, computed at refresh.** Two of the groups need facts that `bin/story-index` does not
@@ -57,15 +57,10 @@ story. The page then says which status the story has and links to its
   shared as a link.
 - `toggleSection()` opens Not on main, Built or Parked drafts (`Home::SECTIONS`). `showAll()` lifts a group's row cap: `Home::PAGE`
   for the three groups and `Home::SECTION_PAGE` for the sections.
-- `expand($id)` renders a story's text on the first open of its row, only for a story whose project
-  is enabled, through
-  `app/Actions/Board/RenderStory.php`. That class reads the file with `GitReader::show()` at the
-  row's `sha` and converts it with `Str::markdown` (`html_input=escape`,
-  `allow_unsafe_links=false`). Opening and closing a row is Alpine state (`x-data="{ open }"` in
-  `story-row`), so it costs no round trip after the first open. See
-  [ADR-007](../decisions/ADR-007-story-text-read-on-expand.md).
-- `bodies`, `openSections`, `expandedGroups` and `notice` are `#[Locked]`. Livewire public properties can
-  otherwise be set from the browser, and `bodies` is printed raw (`{!! !!}`).
+- `openSections`, `expandedGroups` and `notice` are `#[Locked]`, because Livewire public properties can
+  otherwise be set from the browser.
+- SB-3's `expand()` and `bodies` were removed in SB-8. Story text now lives in the modal
+  (`StoryModal`, embedded once in the view).
 
 **The view.** `resources/views/livewire/board/home.blade.php` uses the `layouts/board` shell (the SB-7 project
 sidebar, no auth, Flux appearance for light/dark). The same component also serves `/p/{project}`,
@@ -73,13 +68,10 @@ pinned to one project; see [App shell and project switcher](app-shell-and-projec
 collapsible sections (Not on main, Built, Parked drafts) and the project cards. The Blade components are in
 `resources/views/components/board/`:
 - `section`: a boxed list with a heading, count and hint. Optionally collapsible.
-- `story-row`: one row that expands in place to chips, the story text and mockup thumbnails. A
-  thumbnail is a sandboxed `<iframe>` of the SB-4 route `mockups.file`, created only while the row is
-  open (`<template x-if="open">`). "Open full page →" links to the story page (with `?v=` for an
-  off-main row, and only when `Story::hasPage()`). For an off-main row (SB-5), the row also shows its
-  `location` and either a status chip or a "mockups only" tag, plus "picked X". The row's thumbnails
-  come from `Story::mockupUrl()`. An untracked row shows no text or thumbnails and says where the file is. The `.mockup-thumb` class in `resources/css/app.css` renders it at
-  1280×800 and scales it down.
+- `story-row`: one row. When `Story::hasPage()` it is a `<button>` that dispatches `board-story`
+  with `<project>/<ID>` to open the [story modal](story-modal.md); otherwise it is a plain row. For an
+  off-main row (SB-5), it also shows its `location` and either a status chip or a "mockups only" tag,
+  plus "picked X".
 - `project-card`: status bar and counts, a parse-error warning, stale/unreachable/pending state,
   `last_error`, the project's own ref @ SHA, and "indexed ago".
 - `status-chip`: shows the raw status. Any value outside the vocabulary gets the danger tone.
@@ -103,7 +95,7 @@ refresh's log lines on the worker trace back to the page load or button press th
   `?project=<name>` is redirected to `/p/<name>` by `RedirectProjectFilter` (SB-7).
 - `GET /p/{project}` (route `projects.show`) → the same component, pinned (SB-7).
 - Livewire actions: `refresh`, `toggleSection('offmain'|'built'|'parked')`, `showAll(<group>)`,
-  `expand(<stories.id>)`, `clearFilters`.
+  `clearFilters`. `?story=<project>/<ID>` belongs to the embedded modal.
 - `ListWhatNeedsMe::handle(?project, ?initiative, ?search)` returns
   `{approval, pick, build, parked, built, offmain, projects}`. `section('offmain'|'built'|'parked', …)` and
   `withId($id, ?project)` are also public.
@@ -122,7 +114,7 @@ refresh's log lines on the worker trace back to the page load or button press th
 - `PHP_CLI_SERVER_WORKERS=4` in `.env` / `.env.example`. With a single worker, a slow mockup iframe
   would block the page's own Livewire requests.
 - `@tailwindcss/typography` (dev dependency, owner-approved) styles the rendered story text.
-  `prose-h1:hidden` hides the story's `#` title because the row already shows it.
+  `prose-h1:hidden` hides the story's `#` title because the modal header already shows it.
 - Status colours are theme tokens in `resources/css/app.css` `@theme`: `--color-draft`, `-approved`,
   `-built`, `-cancelled`, `-pick`, `-danger`, `-warning`.
 
@@ -146,7 +138,7 @@ outlive a killed process until its TTL runs out, and that is expected.
 - `tests/Feature/Board/HomePageTest.php` has one `it()` per acceptance criterion: parked drafts
   hidden, a pick row leaving once `Chosen option` is on the ref, oldest-first build order, the URL
   project filter, exact ID search, empty states, an unreachable card, parse-error warning plus raw
-  status. It also covers the gate rulings (closed sections, row cap, expand with text and mockups,
+  status. It also covers the gate rulings (closed sections, row cap,
   ID search with no visible group), queued refresh on load and on the button, one job per project,
   request-ID propagation, `home_viewed` logging and the locked properties.
 - `tests/Feature/Board/WhatNeedsMeTest.php` tests `ListWhatNeedsMe` directly: each group, the
@@ -161,8 +153,9 @@ outlive a killed process until its TTL runs out, and that is expected.
 ## Key decisions & tradeoffs
 - Refresh runs on the queue, unique per project, instead of after the response →
   [ADR-006](../decisions/ADR-006-refresh-runs-on-the-queue.md) (supersedes ADR-005 §1).
-- Story text is read from git on first expand, not stored →
-  [ADR-007](../decisions/ADR-007-story-text-read-on-expand.md).
+- Story text is read from git on demand, not stored →
+  [ADR-007](../decisions/ADR-007-story-text-read-on-expand.md). Since SB-8 the demand is the story
+  modal, not an expanded row.
 - **Parked** means the initiative README's `Status:` starts `draft group`, not merely that a README
   exists (owner ruling at the gate). It is computed at refresh and stored, so the lists stay a plain
   indexed query.
@@ -170,7 +163,7 @@ outlive a killed process until its TTL runs out, and that is expected.
   (F-1). The board is deliberately not patched to work around it (owner ruling).
 - **Not on main** reuses the collapsible section, is closed by default, and never counts in the three
   groups, because the ref stays the truth for status (SB-5).
-- Rows expand in place with several open at once, per the owner's pick of mockup A. Built and Parked
+- Rows open the story modal (SB-8), which replaced SB-3's expand in place. Built and Parked
   drafts are closed by default and load their rows only when opened. Cancelled stories show up only
   through an ID search.
 - Status colours are semantic theme tokens, so re-theming happens in `app.css` and not in the views.
@@ -190,3 +183,4 @@ outlive a killed process until its TTL runs out, and that is expected.
 2026-09-29 — Refresh confirmation, `SECTION_PAGE`, `expand()` and the initiative list limited to enabled projects, cards show the project's ref, story links resolve (SB-4)
 2026-09-29 — Not on main section (off-main rows, location labels, mockups-only tag, `?v=` links); Built hint now says "on each project's ref" (SB-5)
 2026-09-29 — Rendered in the sidebar shell; `/p/{project}` reuses the component pinned to one project; `?project=` redirects there (SB-7)
+2026-09-29 — Rows open the story modal; `expand()` and `bodies` removed (SB-8, `f601c01`)

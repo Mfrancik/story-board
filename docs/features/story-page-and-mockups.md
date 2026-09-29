@@ -1,5 +1,5 @@
 # Story page and mockups
-Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-4, SB-5, SB-7
+Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-4, SB-5, SB-7, SB-8
 
 ## Overview
 `/p/{project}/s/{storyId}` shows one story's full text, read from its project's ref, above its mockup
@@ -20,13 +20,14 @@ The compare overlay was added by owner ruling at the gate.
 **The page.** An unknown or disabled project never reaches it: the route's `EnsureProjectIsShown`
 refuses it first (SB-7; see [App shell](app-shell-and-project-switcher.md)). The page renders inside the
 sidebar shell with its project marked current. `app/Livewire/Board/StoryPage.php:mount()` 404s a `?v=` that
-is not all digits (`board.version_rejected`). `resolve()` then picks the row: the requested off-main
+is not all digits (`board.version_rejected`). `resolve()` then picks the row through
+`app/Actions/Board/FindStoryVersion.php` (shared with the story modal since SB-8): the requested off-main
 version, else the on-ref row, else the story's first off-main version (see
 [Versions](#versions-sb-5)), or 404s. The row ID is stored as `rowId`. It reads the raw
 markdown once with `RenderStory::read()` (`GitReader::show()` at the row's `sha`) and uses that one
 read for two things:
 - `RenderStory::toHtml()` makes the body: `Str::markdown` with raw HTML escaped and unsafe links
-  dropped. This is the same renderer the home page's expand uses.
+  dropped. This is the same renderer the [story modal](story-modal.md) uses.
 - `app/Actions/Board/ReadMockupGate.php:handle()` quotes the `## Design mockup gate` section. It
   returns `visual` (false when the section starts `n/a`), `chosen` (the `Chosen option:` text as
   written) and `why` (`Why I chose it:`), with emphasis stripped and `_pending_` read as null.
@@ -68,7 +69,7 @@ A story can also exist off main: on an unmerged branch, in a worktree, or untrac
   another story or project is a 404.
 - When the shown row is off main, an amber line (`data-offmain-shown`) says where it lives
   (`Story::placePhrase()`) and links to the version on main, or says there is none.
-- `StoryPage::versions()` lists every *other* version in a banner (`data-offmain-banner`), one link
+- `FindStoryVersion::others()` (formerly `StoryPage::versions()`) lists every *other* version in a banner (`data-offmain-banner`), one link
   each. The ref's row reads "The version on main: <status>". An off-main row reads
   "<what> <where> — not on main", where *what* is `Exists only` (no ref row), `Picked X` (a different
   `chosen`), the capitalised status (a different status), or `Changed`. For example: "Picked D on
@@ -199,3 +200,4 @@ Any `mockup_path_rejected` means a URL the board never builds, so someone is pro
 2026-09-29 — Compare frames load only while open; focus trapped in the dialog (SB-4, `e4c2d9e`)
 2026-09-29 — Versions: `?v=` row selection, the off-main line and versions banner, branch/commit metadata, `mockups.file` `?v=` for branch versions, a story that exists only off main opens instead of returning 404 (SB-5, `7165b18`, `f83e02e`)
 2026-09-29 — Unknown/disabled project refused by `EnsureProjectIsShown` before binding (replaces `mount()`'s disabled check); renders in the sidebar shell; project breadcrumb links to `/p/{project}` (SB-7)
+2026-09-29 — Version picking and the versions banner lines moved to `FindStoryVersion`, shared with the story modal (SB-8, `f601c01`)

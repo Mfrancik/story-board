@@ -1,5 +1,5 @@
 # Project brief — story-board
-Last refreshed: 2026-09-29 (SB-7)
+Last refreshed: 2026-09-29 (SB-8)
 
 ## What it is, and for whom
 A localhost Laravel app for one owner. It reads the `stories/` folder of every project that uses
@@ -30,10 +30,11 @@ shown beside it, labelled with where it lives, and never counts as status.
 | Feature | Status | Doc |
 |---|---|---|
 | Project registry and story reader: `board:project`, `board:refresh`, queued page-load refresh, `GitReader` | active (SB-2, SB-3) | [doc](features/project-registry-and-reader.md) |
-| What needs me: `/` lists drafts to approve, mockups to pick and work to build; rows expand in place; project cards; URL filters | active (SB-3, SB-4, SB-5) | [doc](features/what-needs-me-home.md) |
+| What needs me: `/` lists drafts to approve, mockups to pick and work to build; rows open the story modal; project cards; URL filters | active (SB-3, SB-4, SB-5, SB-8) | [doc](features/what-needs-me-home.md) |
 | Story page and mockups: `/p/{project}/s/{id}`, story above sandboxed mockup frames, 375/768/1280, full-screen compare; raw mockup route; `?v=` versions banner | active (SB-4, SB-5) | [doc](features/story-page-and-mockups.md) |
 | Not on main: branches, worktrees and untracked stories/mockups, indexed at refresh; home section and story-page banner; `board:project alias` | active (SB-5) | [doc](features/not-on-main.md) |
 | App shell and project switcher: sidebar on every page, filterable project list, drawer below 768px, `/p/{project}`, `/?project=` redirect | active (SB-7) | [doc](features/app-shell-and-project-switcher.md) |
+| Story modal: `?story=<project>/<ID>` on `/` and `/p/{project}`, text, details, dependency chips, mockups, versions off main; Back closes | active (SB-8) | [doc](features/story-modal.md) |
 
 ## Journeys
 None yet. Every SB story so far is `Journey: none`.
@@ -47,7 +48,7 @@ None yet. Every SB story so far is `Journey: none`.
 | SB-5 | Show work that isn't on main yet | built |
 | SB-6 | The board on an always-live domain (parked) | draft |
 | SB-7 | App shell and project switcher | built |
-| SB-8 | Story detail modal | approved |
+| SB-8 | Story detail modal | built |
 | SB-9 | All-projects dashboard | approved |
 | SB-10 | Single-project dashboard | approved |
 | SB-11 | Live sessions | approved |
@@ -64,7 +65,7 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
   [ADR-005](decisions/ADR-005-snapshot-refresh-model.md)
 - Refresh runs on the queue, unique per project, carrying the request ID (replaces ADR-005's
   after-response dispatch) → [ADR-006](decisions/ADR-006-refresh-runs-on-the-queue.md)
-- Story text is read from git when a row is expanded, not stored →
+- Story text is read from git on demand (now when the story modal opens), not stored →
   [ADR-007](decisions/ADR-007-story-text-read-on-expand.md)
 - Mockups are served from `git show` at the snapshot SHA through one CSP-sandboxed route →
   [ADR-008](decisions/ADR-008-mockups-served-from-git-in-a-sandbox.md)
@@ -81,13 +82,17 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
   always logs → [ADR-013](decisions/ADR-013-project-refusal-runs-before-route-binding.md)
 - `/p/{project}` reuses the home component pinned to one project until SB-10 →
   [ADR-014](decisions/ADR-014-project-page-reuses-home-pinned.md)
+- The story modal pushes its own history from Alpine before the server call →
+  [ADR-015](decisions/ADR-015-story-modal-history-is-driven-by-alpine.md)
+- `?story` has one parser, the version rule is shared with the story page, and a link names a story,
+  not a version → [ADR-016](decisions/ADR-016-one-story-link-parser-and-one-version-picker.md)
 - The board is read-only: no approve, pick or cancel actions (owner ruling). Compare is Alpine-only.
 - Preflight audit scope and isolation, audit cost record, build-artifact disposal (kit) →
   ADR-001 to ADR-003
 
 ## Current phase and what's next
 Phase 2: UI organisation (SB-7 to SB-14). Phase 1 (SB-2 to SB-5) is built and
-retro'd. SB-7 has shipped the sidebar shell and `/p/{project}`. Next: SB-8 (story modal), SB-9 and SB-10
+retro'd. SB-7 (sidebar shell, `/p/{project}`) and SB-8 (story modal) have shipped. Next: SB-9 and SB-10
 (the all-projects and single-project dashboards that fill the shell), SB-11 (live sessions), SB-12
 (Manage projects, which switches on the sidebar's Manage slot), SB-13 (pick a mockup) and SB-14
 (handbook). SB-6 (hosted) stays parked. F-2 (a timeline of what was built) is in the backlog.
@@ -98,7 +103,9 @@ retro'd. SB-7 has shipped the sidebar shell and `/p/{project}`. Next: SB-8 (stor
 - Refresh needs a queue worker; `composer run dev` starts one, a bare `artisan serve` does not.
 - Until the kit parser reads `Chosen option: **B**` (F-1), "Awaiting a mockup pick" over-reports and
   the story page quotes such a choice without marking a frame.
-- Untracked stories and mockups are listed but cannot be opened on the board (not in git). `?v=`
+- Untracked stories and mockups are listed but their text and mockups cannot be shown (not in git).
+  Off-main rows whose IDs are not well formed (odd mockup folder names) cannot open the modal at all;
+  owner decision pending. `?v=`
   links break at the next refresh. Uncommitted edits to tracked files are not shown.
 - Layout classes still use the raw `zinc-*` palette; only status and project-state colours are theme tokens.
 - `/p/{project}` is the home content filtered to one project, and `/` still has its project dropdown
