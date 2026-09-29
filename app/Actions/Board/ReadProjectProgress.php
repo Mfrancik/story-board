@@ -3,6 +3,7 @@
 namespace App\Actions\Board;
 
 use App\Models\Story;
+use stdClass;
 
 /**
  * One project's depth for its dashboard (SB-10): how each initiative is
@@ -53,7 +54,25 @@ class ReadProjectProgress
             ->groupBy('initiative', 'status')
             ->get();
 
-        $initiatives = $rows->groupBy(fn ($row) => (string) $row->initiative)->map(function ($group) {
+        return $this->rollup($rows);
+    }
+
+    /**
+     * Roll status counts up into one row per initiative, most open work first.
+     * The one copy of Progress by initiative's counting and order: SB-10 feeds it
+     * its grouped query, and SB-15's Stories page feeds it rows counted in PHP
+     * from the story list it already holds, so both pages agree without a second query.
+     *
+     * Each row is a plain object — a toBase() aggregate or one built in PHP — with
+     * `initiative` (null for none), `status` (a missing one as `(none)`), `n` (its
+     * count, a string from MySQL) and `parked`.
+     *
+     * @param  iterable<stdClass>  $rows  one row per (initiative, status); only read, never kept
+     * @return list<array{name: string|null, counts: array<string, int>, total: int, built: int, open: int, parked: bool}>
+     */
+    public function rollup(iterable $rows): array
+    {
+        $initiatives = collect($rows)->groupBy(fn ($row) => (string) $row->initiative)->map(function ($group) {
             // Summed, not keyed: a null status and a literal "(none)" are two SQL rows
             // with one key, and mapWithKeys would drop one of them.
             $counts = $group->groupBy('status')->map(fn ($rows) => $rows->sum(fn ($row) => (int) $row->n))->all();

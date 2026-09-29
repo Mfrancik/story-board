@@ -1,5 +1,5 @@
 # SB-15 — Stories by initiative
-Status: approved       Journey: none
+Status: built          Journey: none
 Source: F-4 + owner 2026-09-29 (/story): *"in a project id like to go in and see all of the built stories in
 openable sections with their groups. so i would see brand, then open it to see all the brand stories, with
 tags of built, canceled (crossed out), draft, to do."* Owner answers: a new Stories tab; off-list statuses
@@ -54,7 +54,7 @@ not which stories are done. Today the only way to see the stories behind a bar i
 
 ## Acceptance criteria (executable — these become the Pest test names)
 - Given a project with initiatives branding (7 built, 3 draft) and acquisition (2 built, 1 cancelled,
-  1 approved), when `/p/{project}/stories` loads, then the left pane lists both, acquisition first (more
+  4 approved), when `/p/{project}/stories` loads, then the left pane lists both, acquisition first (more
   open work), branding shows its counts "3 open / 10", and acquisition's stories fill the right pane.
 - Given branding is selected, then its 10 stories are listed in natural ID order in the right pane, each
   with its tag, and no request is sent to the server.

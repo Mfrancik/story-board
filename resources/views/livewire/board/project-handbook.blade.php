@@ -67,27 +67,7 @@
     x-on:handbook-decision="openDoc($event.detail)"
     x-on:keydown.escape.window="closeDoc()">
 
-    <header class="flex flex-wrap items-end justify-between gap-3">
-        <div class="min-w-0">
-            <p class="text-xs text-zinc-500 dark:text-zinc-400">
-                <a href="{{ route('home') }}" wire:navigate class="hover:underline">All projects</a> <span aria-hidden="true">/</span>
-                <a href="{{ route('projects.show', $model->name) }}" wire:navigate class="hover:underline">{{ $model->name }}</a> <span aria-hidden="true">/</span> Handbook
-            </p>
-            <h1 class="mt-1 flex items-center gap-2 text-2xl font-semibold tracking-tight">
-                <span class="truncate">{{ $model->name }}</span>
-                <x-board.state :state="$model->state" title="State: {{ $model->state }}" />
-                <span class="sr-only">, state {{ $model->state }}</span>
-                <x-board.state :state="$model->state" part="label" />
-            </h1>
-            <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                <span class="font-mono text-xs">{{ $model->sha ? $model->ref.' @ '.substr($model->sha, 0, 8) : $model->ref.' · no snapshot yet' }}</span>
-            </p>
-        </div>
-        <button type="button" x-data x-on:click="$flux.dark = ! $flux.dark" aria-label="Toggle dark mode"
-            class="rounded-md border border-zinc-300 px-2 py-1.5 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">◐</button>
-    </header>
-
-    <x-board.project-tabs :project="$model->name" current="handbook" />
+    <x-board.project-header :model="$model" page="Handbook" current="handbook" />
 
     @unless ($kitOk)
         <div role="status" data-kit-unreachable class="mt-5 flex items-start gap-3 rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-sm">
