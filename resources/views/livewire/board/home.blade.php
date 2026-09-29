@@ -64,7 +64,8 @@
     <x-board.needs-me-cards :pick="$pick" :approval="$approval" :build="$build" :parked="$parked" :expanded="$expandedGroups"
         :filtered="$filtered" :page="\App\Livewire\Board\Home::PAGE" class="mt-4" wire:loading.class="opacity-60" wire:target="initiative,q" />
 
-    {{-- 2. Live now: SB-11 renders its slot here. Not rendered until then. --}}
+    {{-- 2. Live now (SB-11): every enabled project's live Claude Code sessions. It polls itself; this page does not. --}}
+    <livewire:board.live-sessions />
 
     {{-- 3. In flight: summed from the project tiles below, so it follows the same enabled-only rule. --}}
     <h2 class="mt-10 {{ $label }}">In flight</h2>

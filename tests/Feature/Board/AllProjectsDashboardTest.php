@@ -240,8 +240,8 @@ it('drops the project dropdown for the sidebar and keeps the initiative filter a
         ->assertSee('id="f-q"', false);
 });
 
-it('does not render the Live now slot until SB-11 ships', function () {
-    $this->get('/')->assertDontSee('Live now');
+it('renders the Live now panel (SB-11) between What needs me and In flight', function () {
+    $this->get('/')->assertOk()->assertSeeInOrder(['Awaiting a pick', 'Live now', 'In flight']);
 });
 
 it('scopes the What needs me cards on /p/{project} to that project (SB-10 page)', function () {

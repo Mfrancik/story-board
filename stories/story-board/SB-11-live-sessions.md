@@ -1,5 +1,5 @@
 # SB-11 — Live sessions
-Status: approved         Journey: none
+Status: built            Journey: none
 Source: owner 2026-09-29 (/story): *"active sessions (if possible) … visually see what is being worked on as
 we speak."* Owner answer: metadata only, *"and description of story being built. if theres mockups that are
 approved id like to see them when i look in this"*.

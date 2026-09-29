@@ -296,8 +296,8 @@ it('gives a project with no stories designed empty states instead of blank panel
         ->and(initiativeRows($html))->toBe([]);
 });
 
-it('does not render the Live now slot until SB-11 ships', function () {
-    $this->get('/p/coins')->assertOk()->assertDontSee('Live now');
+it('renders the Live now panel (SB-11) between What needs me and Progress by initiative', function () {
+    $this->get('/p/coins')->assertOk()->assertSeeInOrder(['Awaiting a pick', 'Live now', 'Progress by initiative']);
 });
 
 it('keeps /p/coins on coins whatever the query string says', function () {

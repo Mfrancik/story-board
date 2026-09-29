@@ -1,6 +1,6 @@
 {{-- SB-10 single-project dashboard, design A (docs/mockups/SB-7/option-a.html, view 2 "Project: coins").
      Header with a one-project refresh, What needs me (the SB-9 cards, scoped), then Progress by initiative
-     beside Not on main. Every story row opens the SB-8 modal. Live now is SB-11's and is not rendered yet. --}}
+     beside Not on main. Every story row opens the SB-8 modal. Live now is SB-11's panel. --}}
 @php
     $ref = $model->ref;
     $stories = array_sum($counts);
@@ -83,7 +83,8 @@
     <x-board.needs-me-cards :pick="$pick" :approval="$approval" :build="$build" :parked="$parked" :expanded="$expandedGroups"
         :page="\App\Livewire\Board\Home::PAGE" class="mt-3" />
 
-    {{-- 2. Live now: SB-11 renders this project's sessions here. Not rendered until then. --}}
+    {{-- 2. Live now (SB-11): this project's live Claude Code sessions. It polls itself; this page does not. --}}
+    <livewire:board.live-sessions :project="$model->name" :key="'live-'.$model->name" />
 
     <div class="mt-10 grid items-start gap-4 lg:grid-cols-3">
         {{-- 3. Progress by initiative: most open work first; the first rows show, the rest behind "Show all"

@@ -2,6 +2,7 @@
 
 namespace App\View\Components\Board;
 
+use App\Actions\Board\ListLiveSessions;
 use App\Models\Project;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Route;
@@ -10,7 +11,8 @@ use Illuminate\View\Component;
 /**
  * The board's project switcher (SB-7, design A): every enabled project with its
  * snapshot state and on-ref story count, "All projects", and the Manage projects
- * slot once SB-12 registers its page. A drawer below 768px; all toggling is Alpine.
+ * slot once SB-12 registers its page, and (SB-11) a live badge beside each project
+ * with a Claude Code session active now. A drawer below 768px; all toggling is Alpine.
  */
 class Sidebar extends Component
 {
@@ -38,6 +40,8 @@ class Sidebar extends Component
             // SB-12 ships the page; until its route exists the slot stays hidden.
             'manageUrl' => Route::has('projects.manage') ? route('projects.manage') : null,
             'onManage' => request()->routeIs('projects.manage'),
+            // Live sessions per project (SB-11), from the same 20 s cached scan as the Live now panel.
+            'live' => app(ListLiveSessions::class)->counts(),
         ]);
     }
 }

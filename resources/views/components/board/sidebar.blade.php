@@ -69,6 +69,12 @@
                             <x-board.state :state="$p->state" title="State: {{ $p->state }}" />
                             <span class="flex-1 truncate">{{ $p->name }}</span>
                             <span class="sr-only">{{ $p->state }}</span>
+                            @if ($n = $live[$p->name] ?? 0)
+                                <span data-live-count="{{ $n }}" title="{{ $n }} live {{ Str::plural('session', $n) }}"
+                                    class="inline-flex items-center gap-1 rounded-full bg-ok/15 px-1.5 text-xs text-zinc-800 dark:text-zinc-100">
+                                    <span class="live-pulse size-1.5 rounded-full bg-ok" aria-hidden="true"></span>{{ $n }}<span class="sr-only"> live {{ Str::plural('session', $n) }},</span>
+                                </span>
+                            @endif
                             <span class="text-xs tabular-nums text-zinc-500 dark:text-zinc-400">{{ number_format($p->stories_count) }}<span class="sr-only"> stories</span></span>
                         </a>
                     </li>
