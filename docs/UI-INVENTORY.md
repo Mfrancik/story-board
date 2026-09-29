@@ -25,8 +25,8 @@ Every reusable component. Consult BEFORE building any new UI (design-standards
 | board/project-card | Blade | The dashboard tile, a link to `/p/{project}`: state, story total, status bar, count chips, not-on-main, refresh age, parse errors | Home |
 | board/status-chip | Blade | A story's raw status with parse-error marker; danger tone for out-of-vocabulary values; `count` prop makes a tally chip | Home, story-row, project-card |
 | board/status-bar | Blade | Stacked bar of counts by raw status; out-of-vocabulary values get a danger-toned segment | project-card, ProjectPage initiative rows |
-| layouts/board | Blade layout | The board's shell: board/sidebar beside the page, persisted Flux toasts, no auth, Flux appearance for light/dark | Home, ProjectPage, StoryPage, ManageProjects |
-| board/sidebar | Blade (class) | Project switcher: filter box (⌘K), All projects, enabled projects with state dot, count and live badge (`data-live-count`); drawer below 768px; Manage slot | layouts/board |
+| layouts/board | Blade layout | The board's shell: board/sidebar beside the page, persisted Flux toasts, no auth, Flux appearance for light/dark | Home, ProjectPage, StoryPage, ManageProjects, ProductionDashboard |
+| board/sidebar | Blade (class) | Project switcher: filter box (⌘K), All projects, Production (connected/shown), enabled projects with state dot, count and live badge; drawer below 768px; Manage slot | layouts/board |
 | StoryPage | Livewire (Board) | Story above its mockups (side-by-side / one-at-a-time, 375/768/1280), full-screen compare; `?v=` versions banner for off-main copies | `/p/{project}/s/{id}` |
 | StoryModal | Livewire (Board) | Design-A story modal at `?story=<project>/<ID>`: text, details, dependency chips, mockup thumbnails, versions off main; opened by the `board-story` event | Home, ProjectPage |
 | ProjectPage | Livewire (Board) | One project's dashboard (SB-10): header with Refresh this project, scoped What needs me cards, Progress by initiative, Not on main by kind; embeds StoryModal | `/p/{project}` |
@@ -43,3 +43,8 @@ Every reusable component. Consult BEFORE building any new UI (design-standards
 | LiveSessions | Livewire (Board) | Live now (SB-11): a card per active Claude Code session with checkout, branch, age and linked stories; `wire:poll.30s` on the panel only | Home, ProjectPage |
 | ProductionSettings | Livewire (Board) | A project's Production panel (SB-17), lazy under its row: read-only connection form + inline check, read-only user one-liner, preset and custom metrics with Test | ManageProjects |
 | board/metric-result | Blade | A production metric's last Test result inline: value + ms, timed out, or the refusal/error | ProductionSettings |
+| ProductionDashboard | Livewire (Board) | Production (SB-18): projects × metrics table (cards below 768px), skeleton per row until its queued read is back, Refresh per row, Not connected list | `/prod` |
+| board/prod-stat | Blade | One production metric: value, change vs yesterday and 7 days ago, trend, read time, greyed when last-good; `layout="cell"` or `"line"` | ProductionDashboard |
+| board/prod-change | Blade | A signed change with ▲/▼ and gain/loss colour, "—" when no snapshot that day | prod-stat |
+| board/prod-row-status | Blade | Under a project's name on /prod: Reading… / read time, and the failed read's badge and sentence | ProductionDashboard |
+| board/sparkline | Blade | Inline-SVG 30-day trend line, gaps for missing days, end dot, Alpine hover readout; no chart library | prod-stat |

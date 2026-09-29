@@ -11,7 +11,7 @@
         <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
     <span class="font-semibold">Story board</span>
-    <span class="truncate text-sm text-zinc-500 dark:text-zinc-400">· {{ $current ?? ($onManage ? 'Manage projects' : 'All projects') }}</span>
+    <span class="truncate text-sm text-zinc-500 dark:text-zinc-400">· {{ $current ?? ($onManage ? 'Manage projects' : ($onProd ? 'Production' : 'All projects')) }}</span>
 </div>
 
 <div x-show="open" x-cloak x-on:click="open = false" class="fixed inset-0 z-40 bg-zinc-950/40 md:hidden" aria-hidden="true"></div>
@@ -48,6 +48,13 @@
             <span class="flex-1">All projects</span>
             <span class="text-xs tabular-nums text-zinc-500 dark:text-zinc-400">{{ number_format($total) }}<span class="sr-only"> stories</span></span>
         </a>
+        @if ($prodUrl)
+            <a href="{{ $prodUrl }}" wire:navigate data-sidebar-prod @if ($onProd) aria-current="page" @endif class="mt-0.5 {{ $item }} {{ $state($onProd) }}">
+                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 20h18M5 16l4-5 4 3 6-8"/></svg>
+                <span class="flex-1">Production</span>
+                <span class="text-xs tabular-nums text-zinc-500 dark:text-zinc-400">{{ $prodConnected }}/{{ $projects->count() }}<span class="sr-only"> projects connected</span></span>
+            </a>
+        @endif
 
         <p class="mt-5 mb-1 px-3 text-xs font-semibold tracking-wider text-zinc-400 uppercase">Projects</p>
         @if ($projects->isEmpty())

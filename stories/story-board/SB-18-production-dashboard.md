@@ -1,5 +1,5 @@
 # SB-18 — Production dashboard
-Status: approved       Journey: none
+Status: built          Journey: none
 Source: owner 2026-09-29 (/story): *"a dashboard report that connects to production … query things like number of
 users, users logged in today, etc.. so i have a centralized place to see all of that."* Owner answer: daily
 snapshot for history.

@@ -38,6 +38,15 @@
     --color-ok: var(--color-emerald-500);
     --color-pending: var(--color-zinc-400);
 
+    /* Production trend lines (SB-18): one colour per project row, the dataviz reference palette's first
+       three slots (validated all-pairs). A failed read's greyed line uses zinc-400, not a slot. */
+    --color-series-1: #2a78d6;
+    --color-series-2: #eb6834;
+    --color-series-3: #1baf7a;
+    /* A production change's direction (SB-18): text on white, so the darker steps. */
+    --color-gain: var(--color-emerald-700);
+    --color-loss: var(--color-rose-700);
+
     --color-accent: var(--color-neutral-800);
     --color-accent-content: var(--color-neutral-800);
     --color-accent-foreground: var(--color-white);
@@ -45,6 +54,12 @@
 
 @layer theme {
     .dark {
+        /* Dark steps are chosen for the dark surface, not flipped (SB-18 mockup). */
+        --color-series-1: #3987e5;
+        --color-series-2: #d95926;
+        --color-series-3: #199e70;
+        --color-gain: var(--color-emerald-400);
+        --color-loss: var(--color-rose-400);
         --color-accent: var(--color-white);
         --color-accent-content: var(--color-white);
         --color-accent-foreground: var(--color-neutral-800);

@@ -5,6 +5,7 @@ use App\Http\Middleware\EnsureProjectIsShown;
 use App\Http\Middleware\RedirectProjectFilter;
 use App\Livewire\Board\Home;
 use App\Livewire\Board\ManageProjects;
+use App\Livewire\Board\ProductionDashboard;
 use App\Livewire\Board\ProjectHandbook;
 use App\Livewire\Board\ProjectPage;
 use App\Livewire\Board\StoryPage;
@@ -35,6 +36,10 @@ Route::livewire('/p/{project:name}/s/{storyId}', StoryPage::class)
 // Switch projects on and off, add and remove them (SB-12). No auth: the board is localhost-only;
 // a hosted board (SB-6) would need auth in front of this page first.
 Route::livewire('/projects', ManageProjects::class)->name('projects.manage');
+
+// Every connected project's production numbers side by side (SB-18). Reads go through the queue and
+// ProductionReader; the page itself only reads the board's own database.
+Route::livewire('/prod', ProductionDashboard::class)->name('prod');
 
 // Raw mockup bytes from a project's ref (SB-4). `file` may contain slashes (shots/01.png);
 // ReadMockupFile, not this pattern, decides what is allowed.

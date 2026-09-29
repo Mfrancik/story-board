@@ -12,7 +12,8 @@ use Illuminate\View\Component;
  * The board's project switcher (SB-7, design A): every enabled project with its
  * snapshot state and on-ref story count, "All projects", and the Manage projects
  * slot once SB-12 registers its page, and (SB-11) a live badge beside each project
- * with a Claude Code session active now. A drawer below 768px; all toggling is Alpine.
+ * with a Claude Code session active now; (SB-18) a Production link counting the
+ * projects connected to production. A drawer below 768px; all toggling is Alpine.
  */
 class Sidebar extends Component
 {
@@ -40,6 +41,10 @@ class Sidebar extends Component
             // SB-12 ships the page; until its route exists the slot stays hidden.
             'manageUrl' => Route::has('projects.manage') ? route('projects.manage') : null,
             'onManage' => request()->routeIs('projects.manage'),
+            // SB-18: Production, with how many of the shown projects have a connection ("3/4").
+            'prodUrl' => Route::has('prod') ? route('prod') : null,
+            'onProd' => request()->routeIs('prod'),
+            'prodConnected' => Project::enabled()->has('prodConnection')->count(),
             // Live sessions per project (SB-11), from the same 20 s cached scan as the Live now panel.
             'live' => app(ListLiveSessions::class)->counts(),
         ]);
