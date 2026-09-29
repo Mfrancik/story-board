@@ -1,6 +1,6 @@
 # ADR-005 — Story snapshots refresh after the response, go stale on fetch failure, and are replaced wholesale
 
-Date: 2026-09-29 · Status: accepted
+Date: 2026-09-29 · Status: accepted; Decision 1 superseded by [ADR-006](ADR-006-refresh-runs-on-the-queue.md)
 
 ## Context
 
@@ -50,3 +50,10 @@ has ~916 story rows.
 - The 180 s lock TTL above equalled the sum of every git timeout in one refresh (30 + 60 + 30 + 60 s),
   so a refresh that hit all of them could lose its lock while still running and overlap the next. The
   TTL is now `RefreshProject::LOCK_SECONDS` (300 s), kept longer than that sum.
+
+## Amendment — 2026-09-29 (SB-3, `feat(SB-3): the home page shows what needs me`)
+
+- **Decision 1 is superseded.** The page-load refresh is no longer `dispatchAfterResponse()`: under
+  `php artisan serve` it held a stale page open for the whole refresh (8–30 s+). `RefreshProjectJob`
+  is now a queued, unique-per-project job → [ADR-006](ADR-006-refresh-runs-on-the-queue.md).
+  Decisions 2 and 3 (stale-on-fetch-failure, wholesale replace) and the lock amendments stand.

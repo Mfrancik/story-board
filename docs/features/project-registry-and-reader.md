@@ -1,5 +1,5 @@
 # Project registry and story reader
-Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-2
+Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-2, SB-3
 
 ## Overview
 The board keeps a list of local project checkouts and a snapshot of every story file at each
@@ -34,14 +34,14 @@ before touching git, then:
 A failure in one project never stops the others: `board:refresh`
 (`app/Console/Commands/BoardRefresh.php`) loops enabled projects and prints one line each.
 
-**Page-load refresh.** `app/Http/Controllers/BoardController.php` (route `/`, name `home`) lists
-enabled projects with `stories_count`. For each project where `Project::needsRefresh()` is true
-(`refresh_attempted_at ?? indexed_at` null or older than `Project::STALE_AFTER_MINUTES`), it calls
-`RefreshProjectJob::dispatchAfterResponse()`. The page renders from the existing snapshot; the
-refresh runs in the same PHP process after the response is sent, so no queue worker is needed.
-Staleness keys on the last *attempt*, not on `indexed_at` (which only moves on success), so a
-`stale` or `unreachable` project is retried every 5 minutes rather than on every page load. The
-manual Refresh button is SB-3's to place.
+**Page-load refresh.** The home page (`app/Livewire/Board/Home.php:mount()`, see
+[What needs me](what-needs-me-home.md)) queues `RefreshProjectJob` for each enabled project where
+`Project::needsRefresh()` is true (`refresh_attempted_at ?? indexed_at` null or older than
+`Project::STALE_AFTER_MINUTES`). The page renders from the existing snapshot; a queue worker runs the
+refresh. The job is `ShouldBeUnique` per project, so repeated loads queue one refresh
+([ADR-006](../decisions/ADR-006-refresh-runs-on-the-queue.md), superseding ADR-005's after-response
+dispatch). Staleness keys on the last *attempt*, not on `indexed_at` (which only moves on success), so a
+`stale` or `unreachable` project is retried every 5 minutes rather than on every page load.
 
 **The git gateway.** `app/Services/GitReader.php` is the only app code that runs git. `run()`
 refuses any subcommand not in `ALLOWED` (`fetch`, `ls-tree`, `show`, `rev-parse`, `cat-file`,
@@ -53,9 +53,8 @@ before a trailing newline). git runs with
 never repacks a project's `.git`. `bin/story-index` is spawned only from `GitReader::storyIndex()`
 with the same env.
 
-**The page.** `resources/views/board/index.blade.php` is a plain Blade page (not Livewire): a bare
-table of project, story count, state, ref @ SHA and indexed time. It exists only to prove the data;
-SB-3 replaces it.
+**The page.** SB-2 shipped a bare Blade list at `/`; SB-3 replaced it with the Livewire home
+([What needs me](what-needs-me-home.md)), which also adds `is_parked` and `dated_on` to each snapshot.
 
 ## Data model
 - `projects` (`database/migrations/2026_09_29_000001_create_projects_table.php`, `app/Models/Project.php`):
@@ -80,8 +79,8 @@ SB-3 replaces it.
 - `php artisan board:project disable <name>` — sets `is_enabled=false`; the row and snapshot stay.
 - `php artisan board:refresh [project]` — refresh all enabled projects, or one by name. Exits
   non-zero only when the named project does not exist or is disabled.
-- `GET /` — the bare list.
-- `GitReader` public methods: `isRepository()`, `fetch()`, `resolve()`, `show()`, `storyIndex()`,
+- `GET /` — the home page ([What needs me](what-needs-me-home.md)).
+- `GitReader` public methods: `isRepository()`, `fetch()`, `resolve()`, `show()`, `listFiles()`, `storyIndex()`,
   `run()`, static `isValidRef()`. All failures throw `App\Exceptions\GitReaderException`.
 
 ## Configuration
@@ -107,8 +106,8 @@ All events go to the default log channel with a `project` context key:
 A healthy refresh is `refresh_started` then `refresh_finished` for the same `project`. A `started`
 with no `finished` means one of the warnings fired (or a crash). A `refresh_skipped` is benign: a
 refresh of that project was already in flight. If `refresh_skipped` repeats for minutes with no
-`started`, a crashed process may be holding the lock; it expires after `RefreshProject::LOCK_SECONDS`. There is no request ID yet (no
-`AssignRequestId` middleware in the app), so trace by `project` and timestamp. The quickest check
+`started`, a crashed process may be holding the lock; it expires after `RefreshProject::LOCK_SECONDS`. Every line carries `request_id` (SB-3's `AssignRequestId`
+middleware, restored inside the queued job), so a refresh traces back to the page load that queued it. The quickest check
 without logs: `php artisan board:project list` shows each `state`, and `projects.last_error` holds
 the first line of git's stderr.
 
@@ -133,8 +132,9 @@ the first line of git's stderr.
 ## Key decisions & tradeoffs
 - One git gateway with an allow-list plus argument guards, not care at call sites →
   [ADR-004](../decisions/ADR-004-gitreader-read-only-git-gateway.md).
-- Page-load refresh after the response, stale-on-fetch-failure, wholesale snapshot replace →
-  [ADR-005](../decisions/ADR-005-snapshot-refresh-model.md).
+- Stale-on-fetch-failure, wholesale snapshot replace →
+  [ADR-005](../decisions/ADR-005-snapshot-refresh-model.md); the refresh is queued, unique per
+  project → [ADR-006](../decisions/ADR-006-refresh-runs-on-the-queue.md).
 - Staleness keys on the last attempt (`refresh_attempted_at`), not the last success, and a
   per-project cache lock dedupes overlapping refreshes → ADR-005, Amendment.
 - Log events are `board.<event>`, exactly as the story named them, not
@@ -155,8 +155,8 @@ the first line of git's stderr.
   `GitReader` timeout grows.
 - No test proves the lock is released after an exception inside `refresh()`; it is correct by the
   `try/finally` in `handle()`.
-- No request ID: the app has no `AssignRequestId` middleware, so logs trace by `project` and
-  timestamp only.
+- Refresh needs a running queue worker (`composer run dev` starts one); under a bare
+  `artisan serve`, queued refreshes never run.
 - `storyIndex()` does not guard a `-`-leading path; paths come from `realpath()`, so they are
   absolute today.
 - The seeder assumes projects live under `$HOME/Code/`.
@@ -169,3 +169,4 @@ the first line of git's stderr.
 2026-09-29 — `refresh_attempted_at` staleness, per-project refresh lock (`board.refresh_skipped`),
 `REF_PATTERN` `D` flag, tests for stored bad ref and `refresh_crashed`, `.env.example` on MySQL (SB-2)
 2026-09-29 — Refresh lock TTL (`RefreshProject::LOCK_SECONDS`) raised above the git timeout sum (SB-2)
+2026-09-29 — Page-load refresh moved to the Livewire home and the queue; bare list removed; request IDs on refresh logs (SB-3)
