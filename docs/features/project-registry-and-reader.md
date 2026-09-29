@@ -16,7 +16,7 @@ inserts a `projects` row in state `pending`. Registration reads no stories; the 
 under `$HOME/Code/` (idempotent `firstOrCreate`).
 
 **Refresh.** `app/Actions/Board/RefreshProject.php:handle()` runs per project. It first takes
-`Cache::lock("board:refresh:{id}", 180)`; if another refresh of the same project holds it, this one
+`Cache::lock("board:refresh:{id}", RefreshProject::LOCK_SECONDS)`; if another refresh of the same project holds it, this one
 logs `board.refresh_skipped` and returns, so two quick page loads never swap one snapshot twice. The
 lock is released in a `finally`. Under the lock, `refresh()` stamps `refresh_attempted_at = now()`
 before touching git, then:
@@ -107,7 +107,7 @@ All events go to the default log channel with a `project` context key:
 A healthy refresh is `refresh_started` then `refresh_finished` for the same `project`. A `started`
 with no `finished` means one of the warnings fired (or a crash). A `refresh_skipped` is benign: a
 refresh of that project was already in flight. If `refresh_skipped` repeats for minutes with no
-`started`, a crashed process may be holding the lock; it expires after 180 s. There is no request ID yet (no
+`started`, a crashed process may be holding the lock; it expires after `RefreshProject::LOCK_SECONDS`. There is no request ID yet (no
 `AssignRequestId` middleware in the app), so trace by `project` and timestamp. The quickest check
 without logs: `php artisan board:project list` shows each `state`, and `projects.last_error` holds
 the first line of git's stderr.
@@ -150,8 +150,9 @@ the first line of git's stderr.
   show `ok` on `/`; run `board:refresh <name>` to force it.
 - **The lock needs a shared cache store.** `Cache::lock` uses the default store, `database`
   (`CACHE_STORE`), which every PHP process shares; switching to `array` silently disables the
-  dedupe. The 180 s TTL is sized to the git timeouts (60 s fetch, 60 s `story-index`, 30 s for the
-  rest); a refresh that hit every timeout could outlive it and overlap the next one.
+  dedupe. `RefreshProject::LOCK_SECONDS` is deliberately longer than the sum of every git timeout in
+  one refresh, so the lock cannot expire under a refresh that is still running. Raise it if a
+  `GitReader` timeout grows.
 - No test proves the lock is released after an exception inside `refresh()`; it is correct by the
   `try/finally` in `handle()`.
 - No request ID: the app has no `AssignRequestId` middleware, so logs trace by `project` and
@@ -167,3 +168,4 @@ the first line of git's stderr.
 2026-09-29 — Registry, refresh, GitReader, bare `/` list; argument/ref guards added after preflight (SB-2)
 2026-09-29 — `refresh_attempted_at` staleness, per-project refresh lock (`board.refresh_skipped`),
 `REF_PATTERN` `D` flag, tests for stored bad ref and `refresh_crashed`, `.env.example` on MySQL (SB-2)
+2026-09-29 — Refresh lock TTL (`RefreshProject::LOCK_SECONDS`) raised above the git timeout sum (SB-2)

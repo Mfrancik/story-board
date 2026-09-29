@@ -44,3 +44,9 @@ has ~916 story rows.
   releases it in `finally`. An overlapping refresh of the same project logs `board.refresh_skipped`
   and returns, so two snapshot replacements never run at once.
 - Consequence: the dedupe depends on a cache store shared across processes (`database` today).
+
+## Amendment — 2026-09-29 (SB-2 fix, `fix(SB-2): refresh lock outlives the worst-case git timeouts`)
+
+- The 180 s lock TTL above equalled the sum of every git timeout in one refresh (30 + 60 + 30 + 60 s),
+  so a refresh that hit all of them could lose its lock while still running and overlap the next. The
+  TTL is now `RefreshProject::LOCK_SECONDS` (300 s), kept longer than that sum.
