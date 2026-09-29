@@ -1,0 +1,626 @@
+<!-- SB-7 option A — Sidebar command center. Static mockup, dummy data drawn from the real board on 2026-09-29. -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Story board — option A</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'media',
+    theme: { extend: { fontFamily: { sans: ['"Instrument Sans"', 'system-ui', 'sans-serif'] } } }
+  };
+</script>
+<style>
+  html, body { overflow-x: hidden; }
+  .focus-ring:focus-visible { outline: 2px solid #0ea5e9; outline-offset: 2px; border-radius: 0.5rem; }
+  button:focus-visible, a:focus-visible, input:focus-visible, [tabindex]:focus-visible { outline: 2px solid #0ea5e9; outline-offset: 2px; }
+  @keyframes pulse-ring { 0% { transform: scale(.8); opacity: .7 } 100% { transform: scale(2.2); opacity: 0 } }
+  .pulse::after { content: ""; position: absolute; inset: 0; border-radius: 9999px; background: inherit; animation: pulse-ring 1.6s ease-out infinite; }
+  @media (prefers-reduced-motion: reduce) { .pulse::after { animation: none; } }
+</style>
+</head>
+<body class="font-sans bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100 antialiased">
+
+<!-- Mockup view switcher (not part of the design) -->
+<div class="fixed inset-x-0 top-0 z-[60] h-10 bg-neutral-900 text-neutral-100 dark:bg-white dark:text-neutral-900 flex items-center gap-2 px-3 text-xs overflow-x-auto">
+  <span class="shrink-0 font-semibold">Mockup view:</span>
+  <div role="tablist" aria-label="Mockup view" class="flex gap-1">
+    <button role="tab" data-view="overview" class="mtab shrink-0 rounded-md px-2 py-1">All projects</button>
+    <button role="tab" data-view="coins" class="mtab shrink-0 rounded-md px-2 py-1">Project: coins</button>
+    <button role="tab" data-view="modal" class="mtab shrink-0 rounded-md px-2 py-1">Story modal</button>
+    <button role="tab" data-view="manage" class="mtab shrink-0 rounded-md px-2 py-1">Manage projects</button>
+  </div>
+</div>
+
+<!-- Mobile top bar -->
+<div class="lg:hidden sticky top-10 z-30 flex items-center gap-3 border-b border-neutral-200 dark:border-neutral-800 bg-white/90 dark:bg-neutral-900/90 backdrop-blur px-4 h-14 mt-10">
+  <button id="menuBtn" type="button" aria-label="Open project menu" aria-controls="sidebar" aria-expanded="false" class="rounded-lg p-2 -ml-2 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+    <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+  <span class="font-semibold">Story board</span>
+  <span id="mobileCrumb" class="text-sm text-neutral-500 truncate">· All projects</span>
+</div>
+
+<!-- Drawer backdrop -->
+<div id="drawerBackdrop" class="hidden fixed inset-0 top-10 z-40 bg-neutral-950/40 lg:hidden"></div>
+
+<!-- Sidebar -->
+<aside id="sidebar" aria-label="Projects" class="fixed top-10 bottom-0 left-0 z-50 w-72 lg:w-64 -translate-x-full lg:translate-x-0 transition-transform bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-800 flex flex-col">
+  <div class="flex items-center justify-between px-5 pt-5 pb-3">
+    <div class="flex items-center gap-2">
+      <span class="grid place-items-center size-7 rounded-lg bg-neutral-800 text-white dark:bg-white dark:text-neutral-900 text-xs font-bold">SB</span>
+      <span class="font-semibold">Story board</span>
+    </div>
+    <button id="closeDrawer" type="button" aria-label="Close project menu" class="lg:hidden rounded-lg p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+      <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="px-4 pb-3">
+    <button type="button" class="w-full flex items-center gap-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 px-3 py-2 text-sm text-neutral-500 hover:border-neutral-300 dark:hover:border-neutral-700">
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <span class="flex-1 text-left">Find a story</span>
+      <kbd class="rounded border border-neutral-200 dark:border-neutral-700 px-1.5 text-[11px] font-sans">⌘K</kbd>
+    </button>
+  </div>
+  <nav class="flex-1 overflow-y-auto px-3 pb-3 text-sm" aria-label="Project switcher">
+    <button type="button" data-nav="overview" class="snav w-full flex items-center gap-3 rounded-lg px-3 py-2">
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      <span class="flex-1 text-left font-medium">All projects</span>
+      <span class="text-xs text-neutral-500 tabular-nums">1,044</span>
+    </button>
+    <p class="mt-5 mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-neutral-400">Projects</p>
+    <ul id="sideProjects" class="space-y-0.5"></ul>
+  </nav>
+  <div class="border-t border-neutral-200 dark:border-neutral-800 p-3">
+    <button type="button" data-nav="manage" class="snav w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm">
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/></svg>
+      <span class="flex-1 text-left font-medium">Manage projects</span>
+    </button>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="lg:pl-64 lg:pt-10 min-h-screen">
+
+  <!-- ============ VIEW: ALL PROJECTS ============ -->
+  <section id="view-overview" class="view mx-auto max-w-6xl px-4 sm:px-6 lg:px-10 py-6 lg:py-10">
+    <header class="flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h1 class="text-2xl font-semibold tracking-tight">All projects</h1>
+        <p class="mt-1 text-sm text-neutral-500">4 projects · 1,044 stories on origin/main</p>
+      </div>
+      <p class="text-sm text-neutral-500 flex items-center gap-2">Refreshed 2 min ago <span aria-hidden="true">·</span>
+        <button type="button" class="font-medium text-neutral-800 dark:text-white underline-offset-4 hover:underline">Refresh</button></p>
+    </header>
+
+    <h2 class="mt-8 text-sm font-semibold uppercase tracking-wider text-neutral-500">What needs me</h2>
+    <div class="mt-3 grid gap-4 md:grid-cols-3">
+      <article class="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex flex-col">
+        <div class="flex items-center justify-between px-4 pt-4">
+          <h3 class="flex items-center gap-2 font-medium"><span class="size-2 rounded-full bg-violet-500"></span>Awaiting a pick</h3>
+          <span class="text-2xl font-semibold tabular-nums">3</span>
+        </div>
+        <p class="px-4 text-xs text-neutral-500">Mockups waiting for your choice</p>
+        <ul class="mt-3 flex-1 divide-y divide-neutral-100 dark:divide-neutral-800" data-list="picks-all"></ul>
+      </article>
+      <article class="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex flex-col">
+        <div class="flex items-center justify-between px-4 pt-4">
+          <h3 class="flex items-center gap-2 font-medium"><span class="size-2 rounded-full bg-amber-500"></span>Drafts to approve</h3>
+          <span class="text-2xl font-semibold tabular-nums">50</span>
+        </div>
+        <p class="px-4 text-xs text-neutral-500">Newest first, across projects</p>
+        <ul class="mt-3 flex-1 divide-y divide-neutral-100 dark:divide-neutral-800" data-list="drafts-all"></ul>
+        <button type="button" class="m-3 mt-1 rounded-lg px-3 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-left">Show all 50 →</button>
+      </article>
+      <article class="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex flex-col">
+        <div class="flex items-center justify-between px-4 pt-4">
+          <h3 class="flex items-center gap-2 font-medium"><span class="size-2 rounded-full bg-sky-500"></span>Ready to build</h3>
+          <span class="text-2xl font-semibold tabular-nums">30</span>
+        </div>
+        <p class="px-4 text-xs text-neutral-500">Approved, oldest first · coins 29, client-dashboard 1</p>
+        <ul class="mt-3 flex-1 divide-y divide-neutral-100 dark:divide-neutral-800" data-list="build-all"></ul>
+        <button type="button" class="m-3 mt-1 rounded-lg px-3 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-left">Show all 30 →</button>
+      </article>
+    </div>
+
+    <div class="mt-10 flex items-baseline justify-between">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-neutral-500">Live now</h2>
+      <span class="text-xs text-neutral-500">5 Claude Code sessions · metadata only</span>
+    </div>
+    <div class="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-3" data-list="sessions-all"></div>
+
+    <h2 class="mt-10 text-sm font-semibold uppercase tracking-wider text-neutral-500">Projects</h2>
+    <div class="mt-3 grid gap-4 sm:grid-cols-2" id="projectTiles"></div>
+  </section>
+
+  <!-- ============ VIEW: PROJECT COINS ============ -->
+  <section id="view-coins" class="view hidden mx-auto max-w-6xl px-4 sm:px-6 lg:px-10 py-6 lg:py-10">
+    <header class="flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <p class="text-xs text-neutral-500"><button type="button" data-nav="overview" class="hover:underline underline-offset-4">All projects</button> <span aria-hidden="true">/</span> coins</p>
+        <h1 class="mt-1 text-2xl font-semibold tracking-tight flex items-center gap-2">coins <span class="size-2 rounded-full bg-emerald-500" title="State ok"></span></h1>
+        <p class="mt-1 text-sm text-neutral-500"><span class="font-mono text-xs">~/Code/coins</span> · origin/main · 921 stories · 57 initiatives</p>
+      </div>
+      <p class="text-sm text-neutral-500 flex items-center gap-2">Refreshed 2 min ago <span aria-hidden="true">·</span>
+        <button type="button" class="font-medium text-neutral-800 dark:text-white underline-offset-4 hover:underline">Refresh</button></p>
+    </header>
+
+    <div class="mt-5 flex flex-wrap gap-2" id="coinsChips"></div>
+
+    <h2 class="mt-8 text-sm font-semibold uppercase tracking-wider text-neutral-500">What needs me</h2>
+    <div class="mt-3 grid gap-4 md:grid-cols-3">
+      <article class="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex flex-col">
+        <div class="flex items-center justify-between px-4 pt-4">
+          <h3 class="flex items-center gap-2 font-medium"><span class="size-2 rounded-full bg-violet-500"></span>Awaiting a pick</h3>
+          <span class="text-2xl font-semibold tabular-nums">2</span>
+        </div>
+        <ul class="mt-3 flex-1 divide-y divide-neutral-100 dark:divide-neutral-800" data-list="picks-coins"></ul>
+      </article>
+      <article class="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex flex-col">
+        <div class="flex items-center justify-between px-4 pt-4">
+          <h3 class="flex items-center gap-2 font-medium"><span class="size-2 rounded-full bg-amber-500"></span>Drafts to approve</h3>
+          <span class="text-2xl font-semibold tabular-nums">37</span>
+        </div>
+        <ul class="mt-3 flex-1 divide-y divide-neutral-100 dark:divide-neutral-800" data-list="drafts-coins"></ul>
+        <button type="button" class="m-3 mt-1 rounded-lg px-3 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-left">Show all 37 →</button>
+      </article>
+      <article class="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex flex-col">
+        <div class="flex items-center justify-between px-4 pt-4">
+          <h3 class="flex items-center gap-2 font-medium"><span class="size-2 rounded-full bg-sky-500"></span>Ready to build</h3>
+          <span class="text-2xl font-semibold tabular-nums">29</span>
+        </div>
+        <ul class="mt-3 flex-1 divide-y divide-neutral-100 dark:divide-neutral-800" data-list="build-coins"></ul>
+        <button type="button" class="m-3 mt-1 rounded-lg px-3 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-left">Show all 29 →</button>
+      </article>
+    </div>
+
+    <div class="mt-10 flex items-baseline justify-between">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-neutral-500">Live now</h2>
+      <span class="text-xs text-neutral-500">4 sessions in coins</span>
+    </div>
+    <div class="mt-3 grid gap-4 sm:grid-cols-2" data-list="sessions-coins"></div>
+
+    <div class="mt-10 grid gap-4 lg:grid-cols-3">
+      <article class="lg:col-span-2 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5">
+        <div class="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 class="font-medium">Progress by initiative</h2>
+          <div class="flex gap-3 text-xs text-neutral-500">
+            <span class="flex items-center gap-1"><span class="size-2 rounded-sm bg-emerald-500"></span>built</span>
+            <span class="flex items-center gap-1"><span class="size-2 rounded-sm bg-sky-500"></span>approved</span>
+            <span class="flex items-center gap-1"><span class="size-2 rounded-sm bg-amber-500"></span>draft</span>
+          </div>
+        </div>
+        <ul class="mt-4 space-y-3" id="initiatives"></ul>
+        <button type="button" class="mt-4 rounded-lg px-3 py-2 -ml-3 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">Show all 57 →</button>
+      </article>
+      <article class="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5">
+        <h2 class="font-medium">Not on main</h2>
+        <p class="mt-2 text-3xl font-semibold tabular-nums">262</p>
+        <p class="text-xs text-neutral-500">story versions outside origin/main</p>
+        <div class="mt-4 flex h-2 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800" aria-hidden="true">
+          <span class="bg-neutral-800 dark:bg-white" style="width:72.5%"></span>
+          <span class="bg-neutral-500" style="width:19.1%"></span>
+          <span class="bg-neutral-300 dark:bg-neutral-600" style="width:8.4%"></span>
+        </div>
+        <dl class="mt-4 space-y-2 text-sm">
+          <div class="flex justify-between"><dt class="flex items-center gap-2"><span class="size-2 rounded-sm bg-neutral-800 dark:bg-white"></span>On branches</dt><dd class="tabular-nums">190</dd></div>
+          <div class="flex justify-between"><dt class="flex items-center gap-2"><span class="size-2 rounded-sm bg-neutral-500"></span>In worktrees</dt><dd class="tabular-nums">50</dd></div>
+          <div class="flex justify-between"><dt class="flex items-center gap-2"><span class="size-2 rounded-sm bg-neutral-300 dark:bg-neutral-600"></span>Untracked</dt><dd class="tabular-nums">22</dd></div>
+        </dl>
+        <button type="button" class="mt-4 rounded-lg px-3 py-2 -ml-3 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">See versions →</button>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ VIEW: MANAGE PROJECTS ============ -->
+  <section id="view-manage" class="view hidden mx-auto max-w-6xl px-4 sm:px-6 lg:px-10 py-6 lg:py-10">
+    <header>
+      <h1 class="text-2xl font-semibold tracking-tight">Manage projects</h1>
+      <p class="mt-1 text-sm text-neutral-500 max-w-2xl">Turn a project off to hide it everywhere and stop refreshing it. Its data is kept. These settings live in the board's own database — nothing is written to your projects.</p>
+    </header>
+
+    <div class="mt-6 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
+      <div class="hidden md:grid grid-cols-[4rem_1.4fr_1fr_5rem_5rem_7rem_6rem] gap-4 px-5 py-3 text-xs font-medium text-neutral-500 border-b border-neutral-200 dark:border-neutral-800">
+        <span>Shown</span><span>Project</span><span>Ref</span><span>State</span><span class="text-right">Stories</span><span>Refreshed</span><span class="sr-only">Actions</span>
+      </div>
+      <ul id="manageRows" class="divide-y divide-neutral-100 dark:divide-neutral-800"></ul>
+    </div>
+
+    <form class="mt-8 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5" novalidate onsubmit="return false">
+      <h2 class="font-medium">Add project</h2>
+      <p class="mt-1 text-sm text-neutral-500">Point the board at a git checkout on this machine.</p>
+      <div class="mt-5 grid gap-4 md:grid-cols-3">
+        <div>
+          <label for="f-path" class="block text-sm font-medium">Path <span class="text-red-600">*</span></label>
+          <input id="f-path" type="text" value="~/Code/new-site" aria-invalid="true" aria-describedby="f-path-err" class="mt-1 w-full rounded-lg border border-red-600 bg-white dark:bg-neutral-950 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-red-600/40">
+          <p id="f-path-err" class="mt-1.5 text-sm text-red-600 flex items-center gap-1.5">
+            <svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+            That folder is not a git repository.</p>
+        </div>
+        <div>
+          <label for="f-name" class="block text-sm font-medium">Name <span class="font-normal text-neutral-500">(optional)</span></label>
+          <input id="f-name" type="text" placeholder="new-site" class="mt-1 w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/40">
+          <p class="mt-1.5 text-xs text-neutral-500">Defaults to the folder name.</p>
+        </div>
+        <div>
+          <label for="f-ref" class="block text-sm font-medium">Ref</label>
+          <input id="f-ref" type="text" value="origin/main" class="mt-1 w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-sky-500/40">
+          <p class="mt-1.5 text-xs text-neutral-500">The branch the board treats as main.</p>
+        </div>
+      </div>
+      <div class="mt-5 flex justify-end">
+        <button type="submit" class="rounded-lg bg-neutral-800 text-white dark:bg-white dark:text-neutral-900 px-4 py-2 text-sm font-medium hover:bg-neutral-700 dark:hover:bg-neutral-200">Add project</button>
+      </div>
+    </form>
+  </section>
+</main>
+
+<!-- ============ STORY MODAL ============ -->
+<div id="storyModal" class="hidden fixed inset-0 z-[70] flex items-end sm:items-center justify-center sm:p-6">
+  <div class="absolute inset-0 bg-neutral-950/50 backdrop-blur-[2px]" data-close></div>
+  <div role="dialog" aria-modal="true" aria-labelledby="modalTitle" class="relative w-full max-w-5xl h-[92vh] sm:h-[90vh] flex flex-col rounded-t-2xl sm:rounded-2xl bg-white dark:bg-neutral-900 shadow-2xl ring-1 ring-neutral-200 dark:ring-neutral-800">
+    <header class="flex items-start gap-3 border-b border-neutral-200 dark:border-neutral-800 px-5 sm:px-6 py-4">
+      <div class="min-w-0 flex-1">
+        <div class="flex flex-wrap items-center gap-2 text-xs text-neutral-500">
+          <span class="font-mono font-medium text-neutral-700 dark:text-neutral-300">coins · ACQ-20</span>
+          <span id="modalChip"></span>
+          <span class="hidden sm:inline font-mono rounded-md bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5">localhost:8010/?story=coins/ACQ-20</span>
+        </div>
+        <h2 id="modalTitle" class="mt-1.5 text-lg sm:text-xl font-semibold tracking-tight">Open “didn't meet your rules” and see them</h2>
+      </div>
+      <a href="#" class="hidden sm:inline-flex shrink-0 items-center rounded-lg px-3 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800">Open full page →</a>
+      <button type="button" id="modalClose" data-close aria-label="Close story" class="shrink-0 rounded-lg p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+        <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </header>
+    <div class="flex-1 overflow-y-auto">
+      <div class="sm:hidden px-5 pt-3 flex items-center justify-between text-xs">
+        <span class="font-mono text-neutral-500 truncate">localhost:8010/?story=coins/ACQ-20</span>
+        <a href="#" class="font-medium text-neutral-800 dark:text-white shrink-0">Open full page →</a>
+      </div>
+      <div class="grid lg:grid-cols-[1fr_20rem]">
+        <article class="px-5 sm:px-8 py-6 space-y-7 text-[15px] leading-relaxed">
+          <section>
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-neutral-500">Story</h3>
+            <p class="mt-2">As the owner, when an acquisition lot is marked <em>didn't meet your rules</em>, I want to open it and see exactly which of my rules it failed, so I can decide whether the rule or the lot is wrong.</p>
+          </section>
+          <section>
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-neutral-500">Why</h3>
+            <p class="mt-2">Today the label is a dead end. Owners re-check lots by hand, and good lots are skipped because a rule was set too tight months ago.</p>
+          </section>
+          <section>
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-neutral-500">In scope</h3>
+            <ul class="mt-2 list-disc pl-5 space-y-1">
+              <li>The label becomes a link that opens a rules panel on the lot.</li>
+              <li>Each failed rule shows its threshold and the lot's actual value.</li>
+              <li>Passed rules are listed, collapsed, below the failures.</li>
+            </ul>
+          </section>
+          <section>
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-neutral-500">Acceptance criteria</h3>
+            <ul class="mt-2 space-y-2">
+              <li class="rounded-lg bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 px-3 py-2"><b>Given</b> a lot that failed the max-premium rule, <b>when</b> I click “didn't meet your rules”, <b>then</b> the panel lists “Max premium 8% · this lot 11.4%”.</li>
+              <li class="rounded-lg bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 px-3 py-2"><b>Given</b> a lot that failed two rules, <b>when</b> the panel opens, <b>then</b> both failures show before any passed rule.</li>
+              <li class="rounded-lg bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 px-3 py-2"><b>Given</b> a rule was deleted after the lot was scored, <b>when</b> the panel opens, <b>then</b> the failure shows as “Rule no longer exists”.</li>
+              <li class="rounded-lg bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 px-3 py-2"><b>Given</b> a lot that met every rule, <b>when</b> I view it, <b>then</b> no link is shown.</li>
+            </ul>
+          </section>
+          <section>
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-neutral-500">Test plan</h3>
+            <ul class="mt-2 list-disc pl-5 space-y-1">
+              <li>Pest feature test per criterion, seeded with a rule set and three lots.</li>
+              <li>Browser check at 375px: the panel opens as a sheet and scrolls.</li>
+            </ul>
+          </section>
+        </article>
+        <aside class="border-t lg:border-t-0 lg:border-l border-neutral-200 dark:border-neutral-800 bg-neutral-50/60 dark:bg-neutral-950/40 px-5 sm:px-6 py-6 space-y-6">
+          <section>
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-neutral-500">Details</h3>
+            <dl class="mt-3 grid grid-cols-[6.5rem_1fr] gap-y-2.5 text-sm">
+              <dt class="text-neutral-500">Status</dt><dd id="modalChip2"></dd>
+              <dt class="text-neutral-500">Initiative</dt><dd>acquisition</dd>
+              <dt class="text-neutral-500">Journey</dt><dd class="text-neutral-400">none</dd>
+              <dt class="text-neutral-500">Source date</dt><dd class="tabular-nums">2026-09-12</dd>
+              <dt class="text-neutral-500">Depends on</dt>
+              <dd class="flex flex-wrap gap-1.5">
+                <button type="button" class="rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-1.5 py-0.5 font-mono text-xs hover:border-neutral-400">ACQ-19</button>
+                <button type="button" class="rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-1.5 py-0.5 font-mono text-xs hover:border-neutral-400">ACQ-17</button>
+              </dd>
+              <dt class="text-neutral-500">Parse errors</dt><dd class="text-neutral-400">none</dd>
+              <dt class="text-neutral-500">Path</dt><dd class="font-mono text-xs break-all">stories/acquisition/ACQ-20-didnt-meet-your-rules.md</dd>
+              <dt class="text-neutral-500">Version</dt><dd class="font-mono text-xs">origin/main · 054f56c</dd>
+            </dl>
+          </section>
+          <section>
+            <div class="flex items-baseline justify-between">
+              <h3 class="text-xs font-semibold uppercase tracking-wider text-neutral-500">Mockups</h3>
+              <span class="text-xs text-neutral-500">chosen: A</span>
+            </div>
+            <div class="mt-3 grid grid-cols-3 gap-2">
+              <a href="#" class="group block rounded-lg ring-2 ring-emerald-500 bg-white dark:bg-neutral-900 p-1.5">
+                <div class="aspect-[4/3] rounded bg-neutral-100 dark:bg-neutral-800 p-1.5 space-y-1"><div class="h-1.5 w-2/3 rounded bg-neutral-300 dark:bg-neutral-600"></div><div class="h-6 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1.5 w-1/2 rounded bg-neutral-300 dark:bg-neutral-600"></div></div>
+                <div class="mt-1.5 flex items-center justify-between text-[11px]"><span class="font-medium">A</span><span class="rounded-full bg-emerald-500 text-white px-1.5">chosen</span></div>
+              </a>
+              <a href="#" class="block rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 bg-white dark:bg-neutral-900 p-1.5 opacity-70 hover:opacity-100">
+                <div class="aspect-[4/3] rounded bg-neutral-100 dark:bg-neutral-800 p-1.5 flex gap-1"><div class="w-1/3 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="flex-1 space-y-1"><div class="h-1.5 rounded bg-neutral-300 dark:bg-neutral-600"></div><div class="h-1.5 w-2/3 rounded bg-neutral-300 dark:bg-neutral-600"></div></div></div>
+                <div class="mt-1.5 text-[11px] font-medium">B</div>
+              </a>
+              <a href="#" class="block rounded-lg ring-1 ring-neutral-200 dark:ring-neutral-800 bg-white dark:bg-neutral-900 p-1.5 opacity-70 hover:opacity-100">
+                <div class="aspect-[4/3] rounded bg-neutral-100 dark:bg-neutral-800 p-1.5 grid grid-cols-2 gap-1"><div class="rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="rounded bg-neutral-200 dark:bg-neutral-700"></div></div>
+                <div class="mt-1.5 text-[11px] font-medium">C</div>
+              </a>
+            </div>
+            <p class="mt-2 text-xs text-neutral-500">Compare side by side on the full page.</p>
+          </section>
+          <section>
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-neutral-500">Versions off main</h3>
+            <p class="mt-2 text-sm text-neutral-400">None — this story only exists on origin/main.</p>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ REMOVE CONFIRM MODAL ============ -->
+<div id="removeModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4">
+  <div class="absolute inset-0 bg-neutral-950/50" data-close></div>
+  <div role="alertdialog" aria-modal="true" aria-labelledby="rmTitle" aria-describedby="rmBody" class="relative w-full max-w-md rounded-xl bg-white dark:bg-neutral-900 p-6 shadow-2xl ring-1 ring-neutral-200 dark:ring-neutral-800">
+    <h2 id="rmTitle" class="text-lg font-semibold">Remove <span id="rmName">acme-site</span>?</h2>
+    <p id="rmBody" class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">Its snapshot is deleted from the board. The project's files are not touched.</p>
+    <div class="mt-6 flex justify-end gap-2">
+      <button type="button" id="rmCancel" data-close class="rounded-lg px-4 py-2 text-sm font-medium hover:bg-neutral-100 dark:hover:bg-neutral-800">Cancel</button>
+      <button type="button" data-close class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">Remove</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  // ---------- tokens ----------
+  const S = {
+    draft:     { dot: 'bg-amber-500',   chip: 'bg-amber-500/10 text-amber-700 ring-amber-500/30 dark:text-amber-300' },
+    approved:  { dot: 'bg-sky-500',     chip: 'bg-sky-500/10 text-sky-700 ring-sky-500/30 dark:text-sky-300' },
+    built:     { dot: 'bg-emerald-500', chip: 'bg-emerald-500/10 text-emerald-700 ring-emerald-500/30 dark:text-emerald-300' },
+    cancelled: { dot: 'bg-zinc-400',    chip: 'bg-zinc-400/10 text-zinc-600 ring-zinc-400/40 dark:text-zinc-300' },
+    pick:      { dot: 'bg-violet-500',  chip: 'bg-violet-500/10 text-violet-700 ring-violet-500/30 dark:text-violet-300' },
+    oov:       { dot: 'bg-red-600',     chip: 'bg-red-600/10 text-red-700 ring-red-600/30 dark:text-red-400' },
+  };
+  const chip = (st, label) => {
+    const t = S[st] || S.oov;
+    return `<span class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${t.chip}"><span class="size-1.5 rounded-full ${t.dot}"></span>${label || st}</span>`;
+  };
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+
+  // ---------- data ----------
+  const picks = [
+    ['coins', 'AUC-17', 'The auction page, rebuilt around the bid', 'draft', ['a', 'b']],
+    ['coins', 'MOB-65', 'The bullion room groups by product', 'approved', ['a', 'b']],
+    ['client-dashboard', 'SS-17', 'Super-admin Sale types settings page', 'draft', ['a', 'b', 'c']],
+  ];
+  const drafts = [
+    ['coins', 'VIEW-48', 'Remember the last view per room', '2 days ago'],
+    ['coins', 'PRF-8', 'Browser suite retries a flaky step once', '3 days ago'],
+    ['asset-track', 'CV-4', 'Current value from the last appraisal', '4 days ago'],
+    ['rent-track', 'MT-6', 'Log a repair against a unit', '6 days ago'],
+    ['client-dashboard', 'SS-18', 'Sale types appear in the sale filter', '1 week ago'],
+  ];
+  const draftsCoins = [drafts[0], drafts[1],
+    ['coins', 'AUC-18', 'Outbid alert on the lot card', '1 week ago'],
+    ['coins', 'MOB-70', 'Swipe between lots on phone', '1 week ago'],
+    ['coins', 'SET-47', 'Empty slot shows what fits', '2 weeks ago']];
+  const build = [
+    ['coins', 'SET-42', 'Lock a coin in its slot', '41 days'],
+    ['coins', 'PAY-3', 'The fee is fixed on the order', '38 days'],
+    ['coins', 'MKT-27', 'My orders', '33 days'],
+    ['coins', 'VAR-20', 'The VAM request queue', '29 days'],
+    ['client-dashboard', 'SS-12', 'Sale type on each call row', '27 days'],
+  ];
+  const buildCoins = [build[0], build[1], build[2], build[3], ['coins', 'ACQ-22', 'Save a rule set as a preset', '25 days']];
+
+  const sessions = [
+    { p: 'coins', where: 'worktree set42', branch: 'feat/SET-42-lock-a-coin-in-its-slot', when: 'active 1 min ago', live: true,
+      story: { id: 'SET-42', title: 'Lock a coin in its slot', st: 'approved', desc: 'Once a coin is placed in a set slot, it stays there until the owner moves it.', thumb: 'option-b · chosen' } },
+    { p: 'coins', where: 'main checkout', branch: 'integrate/bullion-phone-1', when: 'active 2 min ago', live: true,
+      note: '1 story changed on this branch', story: { id: 'MOB-65', title: 'The bullion room groups by product', st: 'approved' } },
+    { p: 'coins', where: 'worktree prf7ef', branch: 'docs/PRF-browser-flake-stories', when: 'active 1 min ago', live: true, none: 'No story linked · writing stories' },
+    { p: 'coins', where: 'worktree set39', branch: 'detached HEAD', when: 'active 3 min ago', live: true, none: 'No story linked' },
+    { p: 'client-dashboard', where: 'worktree', branch: 'feat/CT-1-call-types', when: 'idle 46 min', live: false,
+      story: { id: 'CT-1', title: 'Split Key-0 call data by source (IPR / KSLT / KSLP)', st: 'draft', offMain: true } },
+  ];
+
+  const projects = [
+    { name: 'coins', total: 921, counts: [['built', 836], ['approved', 29], ['draft', 37], ['cancelled', 19]], init: 57, off: 262, live: 4 },
+    { name: 'client-dashboard', total: 97, counts: [['built', 89], ['approved', 1], ['draft', 7]], init: 14, off: 28, live: 0, idle: 1 },
+    { name: 'asset-track', total: 11, counts: [['built', 3], ['draft', 8]], init: 4, off: 0, live: 0 },
+    { name: 'rent-track', total: 15, counts: [['draft', 11], ['oov', 1, 'in'], ['oov', 3, 'done']], init: null, off: 0, live: 0, warn: 'All 15 stories have a parse warning' },
+  ];
+
+  const initiatives = [
+    ['acquisition', 22, 18, 3, 1], ['mobile', 70, 60, 6, 4], ['auction', 24, 14, 4, 6], ['bullion', 31, 27, 2, 2],
+    ['sets', 45, 40, 3, 2], ['marketplace', 30, 26, 2, 2], ['payments', 12, 9, 2, 1], ['profile', 18, 16, 1, 1],
+  ];
+
+  // ---------- renderers ----------
+  const rowBase = 'story-row w-full text-left px-4 py-2.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/60 focus-ring';
+  const meta = (p, id) => `<span class="font-mono text-[11px] text-neutral-500">${p} · ${id}</span>`;
+
+  const pickRow = ([p, id, t, st, opts]) => `<li><button type="button" class="${rowBase}" data-story="${p}/${id}">
+      <div class="flex items-center justify-between gap-2">${meta(p, id)}${chip(st)}</div>
+      <div class="mt-0.5 text-sm font-medium truncate">${esc(t)}</div>
+      <div class="mt-1.5 flex gap-1">${opts.map(o => `<span class="rounded border border-violet-500/40 text-violet-700 dark:text-violet-300 px-1.5 text-[11px] font-mono">${o}</span>`).join('')}<span class="ml-1 text-[11px] text-neutral-500">options</span></div>
+    </button></li>`;
+  const draftRow = ([p, id, t, age]) => `<li><button type="button" class="${rowBase}" data-story="${p}/${id}">
+      <div class="flex items-center justify-between gap-2">${meta(p, id)}<span class="text-[11px] text-neutral-400">${age}</span></div>
+      <div class="mt-0.5 text-sm font-medium truncate">${esc(t)}</div></button></li>`;
+  const buildRow = ([p, id, t, age]) => `<li><button type="button" class="${rowBase}" data-story="${p}/${id}">
+      <div class="flex items-center justify-between gap-2">${meta(p, id)}<span class="text-[11px] text-neutral-400 tabular-nums">approved ${age} ago</span></div>
+      <div class="mt-0.5 text-sm font-medium truncate">${esc(t)}</div></button></li>`;
+
+  const sessionCard = s => {
+    const pulse = s.live
+      ? `<span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-300"><span class="relative size-1.5 rounded-full bg-emerald-500 pulse"></span>${s.when}</span>`
+      : `<span class="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 text-[11px] font-medium text-neutral-500"><span class="size-1.5 rounded-full bg-zinc-400"></span>${s.when}</span>`;
+    let body;
+    if (s.story) {
+      const st = s.story;
+      body = `<button type="button" class="story-row mt-3 w-full text-left rounded-lg border border-neutral-200 dark:border-neutral-800 p-3 hover:border-neutral-300 dark:hover:border-neutral-700 focus-ring" data-story="${s.p}/${st.id}">
+        ${s.note ? `<p class="text-[11px] text-neutral-500 mb-1">${s.note}</p>` : ''}
+        <div class="flex items-center justify-between gap-2"><span class="font-mono text-[11px] text-neutral-500">${st.id}</span>${chip(st.st)}</div>
+        <p class="mt-0.5 text-sm font-medium">${esc(st.title)}</p>
+        ${st.desc ? `<p class="mt-1 text-xs text-neutral-500">${esc(st.desc)}</p>` : ''}
+        ${st.offMain ? `<p class="mt-1.5 text-[11px] text-amber-600">On this branch only · not on main</p>` : ''}
+        ${st.thumb ? `<div class="mt-2.5 flex items-center gap-2"><div class="w-20 aspect-[4/3] rounded ring-2 ring-emerald-500 bg-neutral-100 dark:bg-neutral-800 p-1 flex gap-0.5"><div class="w-1/3 rounded-sm bg-neutral-300 dark:bg-neutral-600"></div><div class="flex-1 space-y-0.5"><div class="h-1 rounded-sm bg-neutral-300 dark:bg-neutral-600"></div><div class="h-3 rounded-sm bg-neutral-200 dark:bg-neutral-700"></div></div></div><span class="text-[11px] font-mono text-emerald-700 dark:text-emerald-300">${st.thumb}</span></div>` : ''}
+      </button>`;
+    } else {
+      body = `<p class="mt-3 rounded-lg border border-dashed border-neutral-200 dark:border-neutral-800 p-3 text-sm text-neutral-500">${s.none}</p>`;
+    }
+    return `<article class="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
+      <div class="flex items-center justify-between gap-2"><span class="text-sm font-medium truncate">${s.p} <span class="text-neutral-400 font-normal">· ${s.where}</span></span>${pulse}</div>
+      <p class="mt-1 font-mono text-[11px] text-neutral-500 truncate" title="${s.branch}">${s.branch}</p>
+      ${body}</article>`;
+  };
+
+  const bar = (counts, total) => `<div class="flex h-2 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800" aria-hidden="true">${
+    counts.map(([st, n]) => `<span class="${(S[st] || S.oov).dot}" style="width:${(n / total * 100).toFixed(2)}%"></span>`).join('')}</div>`;
+
+  const projectTile = p => `<button type="button" data-nav="${p.name === 'coins' ? 'coins' : 'overview'}" class="text-left rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 hover:border-neutral-300 dark:hover:border-neutral-700 focus-ring">
+      <div class="flex items-center justify-between gap-2">
+        <span class="flex items-center gap-2 font-medium"><span class="size-2 rounded-full bg-emerald-500" title="State ok"></span>${p.name}</span>
+        ${p.live ? `<span class="inline-flex items-center gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-300"><span class="relative size-1.5 rounded-full bg-emerald-500 pulse"></span>${p.live} live</span>` : p.idle ? `<span class="text-[11px] text-neutral-500">1 idle session</span>` : ''}
+      </div>
+      <p class="mt-2 text-3xl font-semibold tabular-nums">${p.total}</p>
+      <p class="text-xs text-neutral-500">stories on origin/main</p>
+      <div class="mt-4">${bar(p.counts, p.total)}</div>
+      <div class="mt-3 flex flex-wrap gap-1.5">${p.counts.map(([st, n, lbl]) => chip(st, `${lbl || st} ${n}`)).join('')}</div>
+      <div class="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-500">
+        ${p.init ? `<span>${p.init} initiatives</span>` : ''}
+        <span>${p.off} not on main</span>
+      </div>
+      ${p.warn ? `<p class="mt-3 flex items-center gap-1.5 text-xs text-amber-600"><svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg>${p.warn} · 2 statuses out of vocabulary</p>` : ''}
+    </button>`;
+
+  const fill = (sel, html) => document.querySelectorAll(`[data-list="${sel}"]`).forEach(el => el.innerHTML = html);
+  fill('picks-all', picks.map(pickRow).join(''));
+  fill('picks-coins', picks.filter(r => r[0] === 'coins').map(pickRow).join(''));
+  fill('drafts-all', drafts.map(draftRow).join(''));
+  fill('drafts-coins', draftsCoins.map(draftRow).join(''));
+  fill('build-all', build.map(buildRow).join(''));
+  fill('build-coins', buildCoins.map(buildRow).join(''));
+  fill('sessions-all', sessions.map(sessionCard).join(''));
+  fill('sessions-coins', sessions.filter(s => s.p === 'coins').map(sessionCard).join(''));
+  document.getElementById('projectTiles').innerHTML = projects.map(projectTile).join('');
+  document.getElementById('coinsChips').innerHTML = projects[0].counts.map(([st, n]) => chip(st, `${st} ${n}`)).join('');
+  document.getElementById('modalChip').innerHTML = chip('built');
+  document.getElementById('modalChip2').innerHTML = chip('built');
+
+  document.getElementById('initiatives').innerHTML = initiatives.map(([n, t, b, a, d]) => `<li>
+      <button type="button" class="w-full text-left grid grid-cols-[6.5rem_1fr_4.5rem] sm:grid-cols-[8rem_1fr_7rem] items-center gap-3 rounded-lg -mx-2 px-2 py-1 hover:bg-neutral-50 dark:hover:bg-neutral-800/60">
+        <span class="text-sm truncate">${n}</span>
+        ${bar([['built', b], ['approved', a], ['draft', d]], t)}
+        <span class="text-xs text-neutral-500 tabular-nums text-right">${b}/${t}<span class="hidden sm:inline"> built</span></span>
+      </button></li>`).join('');
+
+  // sidebar project list
+  const side = projects.map(p => `<li><button type="button" data-nav="${p.name === 'coins' ? 'coins' : 'overview'}" data-proj="${p.name}" class="snav w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm">
+      <span class="size-2 rounded-full bg-emerald-500" title="State ok"></span>
+      <span class="flex-1 text-left truncate">${p.name}</span>
+      ${p.live ? `<span class="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-1.5 text-[11px] text-emerald-700 dark:text-emerald-300" aria-label="${p.live} live sessions"><span class="relative size-1.5 rounded-full bg-emerald-500 pulse"></span>${p.live}</span>` : ''}
+      ${p.warn ? `<span class="text-amber-600" aria-label="Parse warnings"><svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 3l9 16H3z"/><path d="M12 10v4"/></svg></span>` : ''}
+      <span class="text-xs text-neutral-500 tabular-nums">${p.total}</span></button></li>`).join('');
+  document.getElementById('sideProjects').innerHTML = side;
+
+  // manage rows
+  const manage = [
+    ...projects.map(p => ({ name: p.name, path: `~/Code/${p.name}`, on: true, state: 'ok', stories: p.total, ref: 'origin/main', when: '2 min ago' })),
+    { name: 'acme-site', path: '~/Code/acme-site', on: false, state: 'off', stories: 42, ref: 'origin/main', when: '18 days ago' },
+  ];
+  document.getElementById('manageRows').innerHTML = manage.map(m => `<li class="px-5 py-4 grid grid-cols-[auto_1fr_auto] md:grid-cols-[4rem_1.4fr_1fr_5rem_5rem_7rem_6rem] gap-x-4 gap-y-1 items-center ${m.on ? '' : 'bg-neutral-50 dark:bg-neutral-950/40'}">
+      <button type="button" role="switch" aria-checked="${m.on}" aria-label="Show ${m.name}" class="toggle relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors ${m.on ? 'bg-neutral-800 dark:bg-white' : 'bg-neutral-300 dark:bg-neutral-700'}">
+        <span class="knob absolute top-0.5 left-0.5 size-5 rounded-full bg-white dark:bg-neutral-900 shadow transition-transform ${m.on ? 'translate-x-5' : ''}"></span>
+      </button>
+      <div class="min-w-0"><p class="font-medium ${m.on ? '' : 'text-neutral-500'}">${m.name}</p><p class="font-mono text-xs text-neutral-500 truncate">${m.path}</p></div>
+      <button type="button" data-remove="${m.name}" class="md:order-last justify-self-end rounded-lg px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-600/10">Remove</button>
+      <span class="col-start-2 md:col-start-auto font-mono text-xs text-neutral-500">${m.ref}</span>
+      <span class="col-start-2 md:col-start-auto text-xs">${m.on ? `<span class="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300"><span class="size-1.5 rounded-full bg-emerald-500"></span>ok</span>` : `<span class="inline-flex items-center gap-1.5 text-neutral-500"><span class="size-1.5 rounded-full bg-zinc-400"></span>Off</span>`}</span>
+      <span class="col-start-2 md:col-start-auto text-xs md:text-sm md:text-right tabular-nums text-neutral-600 dark:text-neutral-400">${m.stories}<span class="md:hidden"> stories</span></span>
+      <span class="col-start-2 md:col-start-auto text-xs text-neutral-500">${m.on ? 'Refreshed ' : 'Last refreshed '}${m.when}</span>
+    </li>`).join('');
+
+  // ---------- behaviour ----------
+  const sidebar = document.getElementById('sidebar');
+  const backdrop = document.getElementById('drawerBackdrop');
+  const menuBtn = document.getElementById('menuBtn');
+  const openDrawer = () => { sidebar.classList.remove('-translate-x-full'); backdrop.classList.remove('hidden'); menuBtn.setAttribute('aria-expanded', 'true'); };
+  const closeDrawer = () => { sidebar.classList.add('-translate-x-full'); backdrop.classList.add('hidden'); menuBtn.setAttribute('aria-expanded', 'false'); };
+  menuBtn.onclick = openDrawer;
+  document.getElementById('closeDrawer').onclick = closeDrawer;
+  backdrop.onclick = closeDrawer;
+
+  const storyModal = document.getElementById('storyModal');
+  const removeModal = document.getElementById('removeModal');
+  let lastFocus = null;
+  const openModal = (m, focusEl) => { lastFocus = document.activeElement; m.classList.remove('hidden'); document.body.style.overflow = 'hidden'; (focusEl || m.querySelector('button')).focus(); };
+  const closeModal = m => {
+    if (m.classList.contains('hidden')) return;
+    m.classList.add('hidden'); document.body.style.overflow = '';
+    if (m === storyModal && current === 'modal') setTabs('overview');
+    if (lastFocus) lastFocus.focus();
+  };
+  [storyModal, removeModal].forEach(m => m.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => closeModal(m))));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(storyModal); closeModal(removeModal); closeDrawer(); } });
+
+  let current = 'overview';
+  const setTabs = v => {
+    current = v;
+    document.querySelectorAll('.mtab').forEach(t => {
+      const on = t.dataset.view === v;
+      t.setAttribute('aria-selected', on);
+      t.className = 'mtab shrink-0 rounded-md px-2 py-1 ' + (on ? 'bg-white text-neutral-900 dark:bg-neutral-900 dark:text-white font-medium' : 'opacity-70 hover:opacity-100');
+    });
+  };
+  const show = v => {
+    const page = v === 'modal' ? 'overview' : v;
+    document.querySelectorAll('.view').forEach(s => s.classList.toggle('hidden', s.id !== 'view-' + page));
+    document.querySelectorAll('.snav').forEach(n => {
+      const on = (page === 'coins' && n.dataset.proj === 'coins') || (page !== 'coins' && !n.dataset.proj && n.dataset.nav === page);
+      n.setAttribute('aria-current', on ? 'page' : 'false');
+      n.classList.toggle('bg-neutral-100', on); n.classList.toggle('dark:bg-neutral-800', on); n.classList.toggle('font-medium', on);
+      n.classList.toggle('hover:bg-neutral-50', !on); n.classList.toggle('dark:hover:bg-neutral-800/50', !on);
+    });
+    document.getElementById('mobileCrumb').textContent = '· ' + ({ overview: 'All projects', coins: 'coins', manage: 'Manage projects' })[page];
+    setTabs(v);
+    closeModal(removeModal);
+    if (v === 'modal') { current = 'modal'; openModal(storyModal, document.getElementById('modalClose')); }
+    else { storyModal.classList.add('hidden'); document.body.style.overflow = ''; }
+    window.scrollTo(0, 0);
+  };
+
+  document.querySelectorAll('.mtab').forEach(t => t.addEventListener('click', () => show(t.dataset.view)));
+  document.addEventListener('click', e => {
+    const nav = e.target.closest('[data-nav]');
+    if (nav) { show(nav.dataset.nav); closeDrawer(); return; }
+    const row = e.target.closest('.story-row');
+    if (row) { openModal(storyModal, document.getElementById('modalClose')); return; }
+    const rm = e.target.closest('[data-remove]');
+    if (rm) { document.getElementById('rmName').textContent = rm.dataset.remove; openModal(removeModal, document.getElementById('rmCancel')); return; }
+    const tg = e.target.closest('.toggle');
+    if (tg) {
+      const on = tg.getAttribute('aria-checked') !== 'true';
+      tg.setAttribute('aria-checked', on);
+      tg.classList.toggle('bg-neutral-800', on); tg.classList.toggle('dark:bg-white', on);
+      tg.classList.toggle('bg-neutral-300', !on); tg.classList.toggle('dark:bg-neutral-700', !on);
+      tg.querySelector('.knob').classList.toggle('translate-x-5', on);
+    }
+  });
+
+  show('overview');
+})();
+</script>
+</body>
+</html>

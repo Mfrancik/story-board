@@ -1,0 +1,597 @@
+<!-- SB-7 option C — Flow board. Static mockup, dummy data drawn from the real board on 2026-09-29. -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Story board — option C, flow board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'media',
+    theme: { extend: { fontFamily: { sans: ['"Instrument Sans"', 'system-ui', 'sans-serif'] } } }
+  };
+</script>
+<style>
+  html, body { overflow-x: hidden; }
+  :focus-visible { outline: 2px solid #262626; outline-offset: 2px; border-radius: 6px; }
+  @media (prefers-color-scheme: dark) { :focus-visible { outline-color: #fff; } }
+  .thumb-lines { background-image: repeating-linear-gradient(180deg, transparent 0 10px, rgba(115,115,115,.18) 10px 13px); }
+  .no-scrollbar::-webkit-scrollbar { height: 6px; }
+  .no-scrollbar::-webkit-scrollbar-thumb { background: rgba(115,115,115,.35); border-radius: 3px; }
+  body.modal-open { overflow: hidden; }
+</style>
+</head>
+<body class="min-h-screen bg-neutral-100 font-sans text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100">
+
+<!-- Mockup-only tab strip -->
+<nav aria-label="Mockup views" class="sticky top-0 z-40 border-b border-dashed border-neutral-300 bg-yellow-50/95 text-xs backdrop-blur dark:border-neutral-700 dark:bg-neutral-900/95">
+  <div class="no-scrollbar mx-auto flex max-w-7xl items-center gap-2 overflow-x-auto px-4 py-1.5">
+    <span class="shrink-0 font-semibold text-neutral-600 dark:text-neutral-400">Mockup view:</span>
+    <button type="button" data-view-btn="overview" class="shrink-0 rounded px-2 py-1 font-medium aria-pressed:bg-neutral-800 aria-pressed:text-white dark:aria-pressed:bg-white dark:aria-pressed:text-neutral-900">1 · All projects</button>
+    <button type="button" data-view-btn="project" class="shrink-0 rounded px-2 py-1 font-medium aria-pressed:bg-neutral-800 aria-pressed:text-white dark:aria-pressed:bg-white dark:aria-pressed:text-neutral-900">2 · Project: coins</button>
+    <button type="button" data-view-btn="modal" class="shrink-0 rounded px-2 py-1 font-medium aria-pressed:bg-neutral-800 aria-pressed:text-white dark:aria-pressed:bg-white dark:aria-pressed:text-neutral-900">3 · Story open</button>
+    <button type="button" data-view-btn="manage" class="shrink-0 rounded px-2 py-1 font-medium aria-pressed:bg-neutral-800 aria-pressed:text-white dark:aria-pressed:bg-white dark:aria-pressed:text-neutral-900">4 · Manage projects</button>
+    <span class="mx-1 h-4 w-px shrink-0 bg-neutral-300 dark:bg-neutral-700"></span>
+    <button type="button" id="mock-switcher-toggle" aria-pressed="false" class="shrink-0 rounded border border-neutral-300 px-2 py-1 font-medium aria-pressed:bg-neutral-800 aria-pressed:text-white dark:border-neutral-600 dark:aria-pressed:bg-white dark:aria-pressed:text-neutral-900">Show switcher open</button>
+  </div>
+</nav>
+
+<!-- App header -->
+<header class="border-b border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+  <div class="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3">
+    <a href="#" class="flex shrink-0 items-center gap-2 font-semibold" data-go="overview">
+      <span class="grid h-7 w-7 grid-cols-2 gap-0.5 rounded-md bg-neutral-800 p-1 dark:bg-white" aria-hidden="true">
+        <span class="rounded-sm bg-amber-500"></span><span class="rounded-sm bg-sky-500"></span>
+        <span class="rounded-sm bg-violet-500"></span><span class="rounded-sm bg-emerald-500"></span>
+      </span>
+      <span class="hidden sm:inline">Story board</span>
+    </a>
+
+    <!-- Project switcher combobox -->
+    <div class="relative min-w-0" id="switcher">
+      <button type="button" id="switcher-btn" aria-haspopup="listbox" aria-expanded="false" aria-controls="switcher-pop"
+        class="flex min-w-0 items-center gap-2 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800">
+        <span id="switcher-dot" class="hidden h-2.5 w-2.5 shrink-0 rounded-sm bg-indigo-500"></span>
+        <span id="switcher-label" class="truncate">All projects</span>
+        <svg class="h-4 w-4 shrink-0 text-neutral-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M5.5 7.5 10 12l4.5-4.5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div id="switcher-pop" hidden class="absolute left-0 z-30 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-900">
+        <div class="border-b border-neutral-200 p-2 dark:border-neutral-800">
+          <label for="switcher-search" class="sr-only">Find a project</label>
+          <input id="switcher-search" type="search" placeholder="Find a project…" autocomplete="off"
+            class="w-full rounded-md border border-neutral-300 bg-neutral-50 px-2.5 py-1.5 text-sm placeholder:text-neutral-400 focus:border-neutral-800 focus:outline-none dark:border-neutral-700 dark:bg-neutral-950 dark:focus:border-white">
+        </div>
+        <ul role="listbox" aria-label="Projects" id="switcher-list" class="max-h-80 overflow-y-auto p-1 text-sm"></ul>
+        <div class="border-t border-neutral-200 p-1 dark:border-neutral-800">
+          <button type="button" data-go="manage" class="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm font-medium hover:bg-neutral-100 dark:hover:bg-neutral-800">
+            <svg class="h-4 w-4 text-neutral-500" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 6h12M4 10h12M4 14h7"/></svg>
+            Manage projects
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="ml-auto flex shrink-0 items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
+      <span class="hidden sm:inline">Refreshed 2 min ago</span>
+      <button type="button" aria-label="Refresh now" class="rounded-md p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+        <svg class="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M15.5 8A6 6 0 0 0 4.6 6.5M4.5 12a6 6 0 0 0 10.9 1.5M15.5 3.5V8H11M4.5 16.5V12H9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ============ VIEW 1 / 3: ALL PROJECTS OVERVIEW ============ -->
+<main id="view-overview" data-view class="mx-auto max-w-7xl px-4 py-6">
+  <section aria-labelledby="wnm-all">
+    <div class="flex flex-wrap items-end justify-between gap-2">
+      <div>
+        <h1 id="wnm-all" class="text-xl font-semibold tracking-tight">What needs me</h1>
+        <p class="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">50 to approve · 3 to pick · 30 to build · 4 sessions live now</p>
+      </div>
+      <p class="text-xs text-neutral-500 sm:hidden">Swipe the columns →</p>
+    </div>
+    <div id="flow-all" class="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-3 lg:mx-0 lg:overflow-visible lg:px-0"></div>
+  </section>
+
+  <section aria-labelledby="proj-h" class="mt-8">
+    <div class="flex items-baseline justify-between gap-2">
+      <h2 id="proj-h" class="text-base font-semibold">Projects</h2>
+      <button type="button" data-go="manage" class="text-sm font-medium text-neutral-600 underline-offset-2 hover:underline dark:text-neutral-300">Manage projects</button>
+    </div>
+    <div class="mt-3 overflow-x-auto rounded-xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+      <table class="w-full min-w-[760px] text-left text-sm">
+        <thead class="border-b border-neutral-200 text-xs text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+          <tr>
+            <th scope="col" class="px-4 py-2 font-medium">Project</th>
+            <th scope="col" class="px-4 py-2 font-medium">Status on origin/main</th>
+            <th scope="col" class="px-4 py-2 text-right font-medium">Stories</th>
+            <th scope="col" class="px-4 py-2 text-right font-medium">Initiatives</th>
+            <th scope="col" class="px-4 py-2 text-right font-medium">Not on main</th>
+            <th scope="col" class="px-4 py-2 font-medium">Warnings</th>
+            <th scope="col" class="px-4 py-2 font-medium">Live</th>
+          </tr>
+        </thead>
+        <tbody id="proj-rows" class="divide-y divide-neutral-100 dark:divide-neutral-800"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<!-- ============ VIEW 2: SINGLE PROJECT (coins) ============ -->
+<main id="view-project" data-view hidden class="mx-auto max-w-7xl px-4 py-6">
+  <section aria-labelledby="wnm-coins">
+    <div class="flex flex-wrap items-end justify-between gap-2">
+      <div>
+        <h1 id="wnm-coins" class="text-xl font-semibold tracking-tight">What needs me <span class="text-neutral-400">in</span> <span class="inline-flex items-center gap-1.5"><span class="h-3 w-3 rounded-sm bg-indigo-500"></span>coins</span></h1>
+        <p class="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">36 to approve · 2 to pick · 29 to build · 4 sessions live now</p>
+      </div>
+      <p class="text-xs text-neutral-500 dark:text-neutral-400">921 stories on origin/main · 57 initiatives · refreshed 2 min ago</p>
+    </div>
+    <div id="flow-coins" class="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-3 lg:mx-0 lg:overflow-visible lg:px-0"></div>
+  </section>
+
+  <div class="mt-8 grid gap-6 lg:grid-cols-3">
+    <section aria-labelledby="init-h" class="rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900 lg:col-span-2">
+      <div class="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="init-h" class="text-base font-semibold">Progress by initiative</h2>
+        <div class="flex flex-wrap items-center gap-3 text-xs text-neutral-500 dark:text-neutral-400">
+          <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Built</span>
+          <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-sky-500"></span>Approved</span>
+          <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-amber-500"></span>Draft</span>
+        </div>
+      </div>
+      <ul id="init-rows" class="mt-4 space-y-3"></ul>
+      <button type="button" class="mt-4 rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800">Show all 57</button>
+    </section>
+
+    <section aria-labelledby="nom-h" class="rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+      <h2 id="nom-h" class="text-base font-semibold">Not on main: 262</h2>
+      <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Story versions that exist only on branches, worktrees or untracked files.</p>
+      <div class="mt-4 flex h-3 overflow-hidden rounded-full" role="img" aria-label="Branch 190, worktree 50, untracked 22">
+        <span class="bg-neutral-700 dark:bg-neutral-300" style="width:72.5%"></span>
+        <span class="bg-neutral-500" style="width:19.1%"></span>
+        <span class="bg-neutral-300 dark:bg-neutral-600" style="width:8.4%"></span>
+      </div>
+      <dl class="mt-4 space-y-2 text-sm">
+        <div class="flex justify-between"><dt class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-sm bg-neutral-700 dark:bg-neutral-300"></span>Branch</dt><dd class="font-medium tabular-nums">190</dd></div>
+        <div class="flex justify-between"><dt class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-sm bg-neutral-500"></span>Worktree</dt><dd class="font-medium tabular-nums">50</dd></div>
+        <div class="flex justify-between"><dt class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-sm bg-neutral-300 dark:bg-neutral-600"></span>Untracked</dt><dd class="font-medium tabular-nums">22</dd></div>
+      </dl>
+      <button type="button" class="mt-4 text-sm font-medium underline-offset-2 hover:underline">See versions not on main</button>
+    </section>
+  </div>
+</main>
+
+<!-- ============ VIEW 4: MANAGE PROJECTS ============ -->
+<main id="view-manage" data-view hidden class="mx-auto max-w-5xl px-4 py-6">
+  <div>
+    <h1 class="text-xl font-semibold tracking-tight">Manage projects</h1>
+    <p class="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">Turning a project off hides it everywhere and stops refreshing it. Its data is kept.</p>
+  </div>
+
+  <ul id="manage-rows" class="mt-5 space-y-2"></ul>
+
+  <section aria-labelledby="add-h" class="mt-8 rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900 sm:p-5">
+    <h2 id="add-h" class="text-base font-semibold">Add project</h2>
+    <form class="mt-4 grid gap-4 sm:grid-cols-3" onsubmit="event.preventDefault()">
+      <div class="sm:col-span-3">
+        <label for="add-path" class="text-sm font-medium">Path <span class="text-red-600">*</span></label>
+        <input id="add-path" name="path" required value="~/Code/new-site" aria-invalid="true" aria-describedby="add-path-err"
+          class="mt-1 w-full rounded-md border border-red-600 bg-white px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-red-600/40 dark:bg-neutral-950">
+        <p id="add-path-err" class="mt-1 flex items-center gap-1.5 text-sm text-red-600">
+          <svg class="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16Zm-.75 4h1.5v5h-1.5V6Zm0 6.5h1.5V14h-1.5v-1.5Z"/></svg>
+          That folder is not a git repository.
+        </p>
+      </div>
+      <div>
+        <label for="add-name" class="text-sm font-medium">Name <span class="font-normal text-neutral-500">(optional)</span></label>
+        <input id="add-name" name="name" placeholder="new-site" class="mt-1 w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm focus:border-neutral-800 focus:outline-none dark:border-neutral-700 dark:bg-neutral-950 dark:focus:border-white">
+        <p class="mt-1 text-xs text-neutral-500">Defaults to the folder name.</p>
+      </div>
+      <div>
+        <label for="add-ref" class="text-sm font-medium">Ref</label>
+        <input id="add-ref" name="ref" value="origin/main" class="mt-1 w-full rounded-md border border-neutral-300 bg-white px-3 py-2 font-mono text-sm focus:border-neutral-800 focus:outline-none dark:border-neutral-700 dark:bg-neutral-950 dark:focus:border-white">
+      </div>
+      <div class="flex items-end">
+        <button type="submit" class="w-full rounded-md bg-neutral-800 px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-700 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200">Add project</button>
+      </div>
+    </form>
+  </section>
+</main>
+
+<!-- Remove confirmation dialog -->
+<div id="confirm" hidden class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/50" data-close-confirm></div>
+  <div role="alertdialog" aria-modal="true" aria-labelledby="confirm-h" aria-describedby="confirm-d" class="relative w-full max-w-md rounded-xl bg-white p-5 shadow-2xl dark:bg-neutral-900">
+    <h2 id="confirm-h" class="text-base font-semibold">Remove acme-site?</h2>
+    <p id="confirm-d" class="mt-2 text-sm text-neutral-600 dark:text-neutral-300">Its snapshot is deleted from the board. The project's files are not touched.</p>
+    <div class="mt-5 flex justify-end gap-2">
+      <button type="button" data-close-confirm class="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium hover:bg-neutral-50 dark:border-neutral-700 dark:hover:bg-neutral-800">Cancel</button>
+      <button type="button" data-close-confirm class="rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700">Remove</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ STORY SLIDE-OVER ============ -->
+<div id="story" hidden class="fixed inset-0 z-50">
+  <div class="absolute inset-0 bg-neutral-950/40" data-close-story></div>
+  <div role="dialog" aria-modal="true" aria-labelledby="story-title"
+       class="absolute inset-y-0 right-0 flex w-full flex-col overflow-y-auto bg-white shadow-2xl dark:bg-neutral-900 sm:max-w-[720px] sm:border-l sm:border-neutral-200 sm:dark:border-neutral-800">
+    <div class="sticky top-0 z-10 border-b border-neutral-200 bg-white/95 px-4 pb-3 pt-3 backdrop-blur dark:border-neutral-800 dark:bg-neutral-900/95 sm:px-6">
+      <div class="flex items-center gap-2">
+        <code class="min-w-0 truncate rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">localhost:8010/?story=coins/ACQ-20</code>
+        <a href="#" class="ml-auto shrink-0 text-sm font-medium underline-offset-2 hover:underline">Open full page →</a>
+        <button type="button" id="story-close" data-close-story aria-label="Close story" class="shrink-0 rounded-md p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+          <svg class="h-5 w-5" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
+        <span class="inline-flex items-center gap-1.5 rounded-md bg-indigo-500/10 px-2 py-0.5 font-medium text-indigo-700 dark:text-indigo-300"><span class="h-2 w-2 rounded-sm bg-indigo-500"></span>coins</span>
+        <span class="font-mono text-neutral-500">ACQ-20</span>
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-0.5 font-medium text-emerald-700 dark:text-emerald-300"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Built</span>
+      </div>
+      <h2 id="story-title" class="mt-1.5 text-lg font-semibold leading-snug sm:text-xl">Open “didn’t meet your rules” and see them</h2>
+    </div>
+
+    <div class="space-y-6 px-4 py-5 sm:px-6">
+      <p id="story-note" class="hidden rounded-md border border-dashed border-neutral-300 px-3 py-2 text-xs text-neutral-500 dark:border-neutral-700">Mockup: every card opens this ACQ-20 example.</p>
+
+      <!-- Details -->
+      <section aria-labelledby="det-h" class="rounded-xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-950">
+        <h3 id="det-h" class="sr-only">Details</h3>
+        <dl class="grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-3">
+          <div><dt class="text-xs text-neutral-500">Status</dt><dd class="mt-0.5 flex items-center gap-1.5 font-medium"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>Built</dd></div>
+          <div><dt class="text-xs text-neutral-500">Initiative</dt><dd class="mt-0.5 font-medium">acquisition</dd></div>
+          <div><dt class="text-xs text-neutral-500">Journey</dt><dd class="mt-0.5 text-neutral-500">None</dd></div>
+          <div><dt class="text-xs text-neutral-500">Source date</dt><dd class="mt-0.5 font-medium tabular-nums">2026-09-12</dd></div>
+          <div><dt class="text-xs text-neutral-500">Depends on</dt><dd class="mt-1 flex flex-wrap gap-1">
+            <button type="button" data-open class="rounded border border-neutral-300 bg-white px-1.5 py-0.5 font-mono text-xs hover:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-900">ACQ-19</button>
+            <button type="button" data-open class="rounded border border-neutral-300 bg-white px-1.5 py-0.5 font-mono text-xs hover:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-900">ACQ-17</button>
+          </dd></div>
+          <div><dt class="text-xs text-neutral-500">Parse errors</dt><dd class="mt-0.5 text-neutral-500">None</dd></div>
+          <div class="col-span-2 sm:col-span-3"><dt class="text-xs text-neutral-500">Path</dt><dd class="mt-0.5 break-all font-mono text-xs">stories/acquisition/ACQ-20-didnt-meet-your-rules.md</dd></div>
+          <div><dt class="text-xs text-neutral-500">At</dt><dd class="mt-0.5 font-mono text-xs">origin/main 054f56c</dd></div>
+          <div class="col-span-1 sm:col-span-2"><dt class="text-xs text-neutral-500">Versions off main</dt><dd class="mt-0.5 text-neutral-500">None</dd></div>
+        </dl>
+      </section>
+
+      <!-- Mockups -->
+      <section aria-labelledby="mk-h">
+        <h3 id="mk-h" class="text-sm font-semibold">Mockups</h3>
+        <div class="mt-2 grid grid-cols-3 gap-2 sm:gap-3">
+          <a href="#" class="group relative block rounded-lg ring-2 ring-neutral-800 ring-offset-2 ring-offset-white dark:ring-white dark:ring-offset-neutral-900">
+            <span class="thumb-lines block aspect-[4/3] rounded-lg border border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800"></span>
+            <span class="absolute left-1.5 top-1.5 rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white dark:bg-white dark:text-neutral-900">Chosen</span>
+            <span class="mt-1.5 block text-xs font-medium">Option A</span>
+          </a>
+          <a href="#" class="block rounded-lg opacity-80 hover:opacity-100">
+            <span class="thumb-lines block aspect-[4/3] rounded-lg border border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800"></span>
+            <span class="mt-1.5 block text-xs text-neutral-500">Option B</span>
+          </a>
+          <a href="#" class="block rounded-lg opacity-80 hover:opacity-100">
+            <span class="thumb-lines block aspect-[4/3] rounded-lg border border-neutral-200 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800"></span>
+            <span class="mt-1.5 block text-xs text-neutral-500">Option C</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- Body -->
+      <article class="space-y-5 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
+        <section>
+          <h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Story</h3>
+          <p class="mt-1">As the owner, when listings are hidden because they didn’t meet my acquisition rules, I want to open that count and see which rule each one failed, so I can tune my rules instead of guessing.</p>
+        </section>
+        <section>
+          <h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Why</h3>
+          <p class="mt-1">Today “didn’t meet your rules: 14” is a dead end. Owners loosen rules blindly and then get flooded with listings they would never buy.</p>
+        </section>
+        <section>
+          <h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">In scope</h3>
+          <ul class="mt-1 list-disc space-y-1 pl-5">
+            <li>The “didn’t meet your rules” count becomes a link that opens a panel.</li>
+            <li>The panel lists each hidden listing with the rule or rules it failed.</li>
+            <li>Each failed rule links to its setting in acquisition settings.</li>
+            <li>Out of scope: editing rules inside the panel.</li>
+          </ul>
+        </section>
+        <section>
+          <h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Acceptance criteria</h3>
+          <ul class="mt-1 space-y-2">
+            <li class="rounded-md bg-neutral-50 px-3 py-2 dark:bg-neutral-800/60"><b>Given</b> 3 listings failed the max price rule, <b>when</b> I open “didn’t meet your rules”, <b>then</b> I see 3 rows, each labelled “Over max price”.</li>
+            <li class="rounded-md bg-neutral-50 px-3 py-2 dark:bg-neutral-800/60"><b>Given</b> a listing failed two rules, <b>when</b> I open the panel, <b>then</b> both rules are listed on its row.</li>
+            <li class="rounded-md bg-neutral-50 px-3 py-2 dark:bg-neutral-800/60"><b>Given</b> no listings failed, <b>when</b> I view acquisition, <b>then</b> the count reads 0 and is not a link.</li>
+            <li class="rounded-md bg-neutral-50 px-3 py-2 dark:bg-neutral-800/60"><b>Given</b> the panel is open, <b>when</b> I click a failed rule, <b>then</b> I land on that rule’s setting.</li>
+          </ul>
+        </section>
+        <section>
+          <h3 class="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Test plan</h3>
+          <ul class="mt-1 list-disc space-y-1 pl-5">
+            <li>Pest feature test: the panel query returns each hidden listing with its failed rules.</li>
+            <li>Pest feature test: zero failures renders a plain count, no link.</li>
+            <li>Browser check at 375 and 1280: panel opens, rule links land on the right setting.</li>
+          </ul>
+        </section>
+      </article>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  // ---------- Data ----------
+  const PROJ = {
+    'coins':            { tag: 'bg-indigo-500', bd: 'border-l-indigo-500', soft: 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-300' },
+    'client-dashboard': { tag: 'bg-pink-500',   bd: 'border-l-pink-500',   soft: 'bg-pink-500/10 text-pink-700 dark:text-pink-300' },
+    'asset-track':      { tag: 'bg-teal-500',   bd: 'border-l-teal-500',   soft: 'bg-teal-500/10 text-teal-700 dark:text-teal-300' },
+    'rent-track':       { tag: 'bg-stone-500',  bd: 'border-l-stone-500',  soft: 'bg-stone-500/10 text-stone-700 dark:text-stone-300' },
+    'acme-site':        { tag: 'bg-neutral-400', bd: 'border-l-neutral-400', soft: 'bg-neutral-400/10 text-neutral-600 dark:text-neutral-300' }
+  };
+  const ST = {
+    draft:     ['bg-amber-500',   'bg-amber-500/10 text-amber-800 dark:text-amber-300',     'Draft'],
+    approved:  ['bg-sky-500',     'bg-sky-500/10 text-sky-800 dark:text-sky-300',           'Approved'],
+    built:     ['bg-emerald-500', 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300', 'Built'],
+    cancelled: ['bg-zinc-400',    'bg-zinc-400/15 text-zinc-600 dark:text-zinc-300',        'Cancelled'],
+    pick:      ['bg-violet-500',  'bg-violet-500/10 text-violet-800 dark:text-violet-300',  'Awaiting pick'],
+    oov:       ['bg-red-600',     'bg-red-600/10 text-red-700 dark:text-red-400',           '?'],
+    warn:      ['bg-amber-600',   'bg-amber-600/10 text-amber-800 dark:text-amber-400',     'Warning']
+  };
+
+  const chip = (s, label) => `<span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${ST[s][1]}"><span class="h-1.5 w-1.5 rounded-full ${ST[s][0]}"></span>${label || ST[s][2]}</span>`;
+  const ptag = (p) => `<span class="inline-flex items-center gap-1.5 rounded px-1.5 py-0.5 text-[11px] font-medium ${PROJ[p].soft}"><span class="h-2 w-2 rounded-sm ${PROJ[p].tag}"></span>${p}</span>`;
+  const opts = (o) => `<span class="inline-flex gap-0.5">${o.map(x => `<span class="rounded border border-violet-500/40 px-1 font-mono text-[10px] uppercase text-violet-700 dark:text-violet-300">${x}</span>`).join('')}</span>`;
+
+  const card = (s) => `
+    <li><button type="button" data-open class="block w-full rounded-lg border border-l-4 border-neutral-200 ${PROJ[s.p].bd} bg-white p-3 text-left transition hover:-translate-y-px hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900">
+      <span class="flex items-center justify-between gap-2">${ptag(s.p)}<span class="font-mono text-xs text-neutral-500">${s.id}</span></span>
+      <span class="mt-1.5 block text-sm font-medium leading-snug">${s.t}</span>
+      <span class="mt-2 flex flex-wrap items-center gap-1.5">${chip(s.s)}${s.o ? chip('pick') + opts(s.o) : ''}${s.age ? `<span class="text-[11px] text-neutral-500">${s.age}</span>` : ''}</span>
+    </button></li>`;
+
+  const thumb = (label) => `<span class="relative mt-2 block overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-700"><span class="thumb-lines block aspect-[16/9] bg-neutral-50 dark:bg-neutral-800"></span><span class="absolute bottom-1 left-1 rounded bg-neutral-800 px-1.5 py-0.5 font-mono text-[10px] text-white dark:bg-white dark:text-neutral-900">${label}</span></span>`;
+
+  const session = (x) => `
+    <li class="rounded-lg border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-900">
+      <div class="flex items-center justify-between gap-2">${ptag(x.p)}
+        <span class="inline-flex items-center gap-1.5 text-[11px] ${x.idle ? 'text-neutral-500' : 'font-medium text-emerald-700 dark:text-emerald-400'}">
+          <span class="relative flex h-2 w-2">${x.idle ? '' : '<span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60"></span>'}<span class="relative inline-flex h-2 w-2 rounded-full ${x.idle ? 'bg-zinc-400' : 'bg-emerald-500'}"></span></span>${x.when}</span>
+      </div>
+      <p class="mt-2 break-all font-mono text-xs text-neutral-800 dark:text-neutral-200">${x.branch}</p>
+      <p class="mt-0.5 text-[11px] text-neutral-500">${x.where}</p>
+      ${x.story ? `
+        ${x.note ? `<p class="mt-2 text-[11px] text-neutral-500">${x.note}</p>` : ''}
+        <button type="button" data-open class="mt-2 block w-full rounded-md border border-neutral-200 bg-neutral-50 p-2 text-left hover:border-neutral-400 dark:border-neutral-700 dark:bg-neutral-950 dark:hover:border-neutral-500">
+          <span class="flex items-center gap-2"><span class="font-mono text-xs text-neutral-500">${x.story.id}</span>${chip(x.story.s)}${x.story.flag ? `<span class="text-[11px] text-neutral-500">${x.story.flag}</span>` : ''}</span>
+          <span class="mt-1 block text-sm font-medium leading-snug">${x.story.t}</span>
+          ${x.story.d ? `<span class="mt-1 block text-xs text-neutral-600 dark:text-neutral-400">${x.story.d}</span>` : ''}
+          ${x.story.mock ? thumb(x.story.mock) : ''}
+        </button>` : `<p class="mt-2 rounded-md border border-dashed border-neutral-300 px-2 py-1.5 text-xs text-neutral-500 dark:border-neutral-700">No story linked${x.hint ? ` · ${x.hint}` : ''}</p>`}
+    </li>`;
+
+  const column = (c) => `
+    <section aria-label="${c.name}" class="flex w-[85%] shrink-0 snap-start flex-col rounded-xl bg-neutral-200/60 p-2.5 dark:bg-neutral-900/60 sm:w-80 lg:w-auto lg:min-w-0 lg:flex-1 ${c.live ? 'ring-1 ring-emerald-500/30' : ''}">
+      <h2 class="flex items-center justify-between px-1 pb-2 text-sm font-semibold">
+        <span class="flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full ${c.dot}"></span>${c.name}</span>
+        <span class="rounded-full bg-white px-2 py-0.5 text-xs tabular-nums text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">${c.count}</span>
+      </h2>
+      ${c.sub ? `<p class="-mt-1 px-1 pb-2 text-[11px] text-neutral-500">${c.sub}</p>` : ''}
+      <ul class="space-y-2">${c.items.map(c.live ? session : card).join('')}</ul>
+      ${c.more ? `<button type="button" class="mt-2 w-full rounded-md px-2 py-1.5 text-sm font-medium text-neutral-600 hover:bg-white dark:text-neutral-300 dark:hover:bg-neutral-800">${c.more}</button>` : ''}
+    </section>`;
+
+  const SESSIONS = [
+    { p: 'coins', when: 'active 1 min ago', branch: 'feat/SET-42-lock-a-coin-in-its-slot', where: 'worktree set42',
+      story: { id: 'SET-42', s: 'approved', t: 'Lock a coin in its slot', d: 'Once a coin is placed in a set slot, it stays there until the owner moves it.', mock: 'option-b · chosen' } },
+    { p: 'coins', when: 'active 2 min ago', branch: 'integrate/bullion-phone-1', where: 'main checkout', note: '1 story changed on this branch',
+      story: { id: 'MOB-65', s: 'approved', t: 'The bullion room groups by product' } },
+    { p: 'coins', when: 'active 1 min ago', branch: 'docs/PRF-browser-flake-stories', where: 'worktree prf7ef', hint: 'writing stories' },
+    { p: 'coins', when: 'active 3 min ago', branch: 'detached HEAD', where: 'worktree set39' },
+    { p: 'client-dashboard', idle: true, when: 'idle 46 min', branch: 'feat/CT-1-call-types', where: 'worktree',
+      story: { id: 'CT-1', s: 'draft', t: 'Split Key-0 call data by source (IPR / KSLT / KSLP)', flag: 'on branch only, not on main' } }
+  ];
+
+  const FLOW_ALL = [
+    { name: 'Needs approval', dot: 'bg-amber-500', count: 50, more: 'Show all 50', items: [
+      { p: 'coins', id: 'VIEW-48', t: 'Saved views remember their sort', s: 'draft' },
+      { p: 'coins', id: 'PRF-8', t: 'Browser tests stop flaking on slow boots', s: 'draft' },
+      { p: 'asset-track', id: 'CV-4', t: 'Condition value shows on the asset card', s: 'draft' },
+      { p: 'rent-track', id: 'MT-6', t: 'Log a repair from the tenant page', s: 'draft' },
+      { p: 'client-dashboard', id: 'SS-18', t: 'Sale types list shows how often each is used', s: 'draft' } ] },
+    { name: 'Needs a pick', dot: 'bg-violet-500', count: 3, items: [
+      { p: 'coins', id: 'AUC-17', t: 'The auction page, rebuilt around the bid', s: 'draft', o: ['a','b'] },
+      { p: 'coins', id: 'MOB-65', t: 'The bullion room groups by product', s: 'approved', o: ['a','b'] },
+      { p: 'client-dashboard', id: 'SS-17', t: 'Super-admin Sale types settings page', s: 'draft', o: ['a','b','c'] } ] },
+    { name: 'Ready to build', dot: 'bg-sky-500', count: 30, sub: 'Oldest first · coins 29, client-dashboard 1', more: 'Show all 30', items: [
+      { p: 'coins', id: 'SET-42', t: 'Lock a coin in its slot', s: 'approved', age: 'waiting 41 d' },
+      { p: 'coins', id: 'PAY-3', t: 'The fee is fixed on the order', s: 'approved', age: 'waiting 38 d' },
+      { p: 'coins', id: 'MKT-27', t: 'My orders', s: 'approved', age: 'waiting 33 d' },
+      { p: 'coins', id: 'VAR-20', t: 'The VAM request queue', s: 'approved', age: 'waiting 29 d' },
+      { p: 'client-dashboard', id: 'SS-12', t: 'Sales summary exports to CSV', s: 'approved', age: 'waiting 24 d' } ] },
+    { name: 'In progress now', dot: 'bg-emerald-500', count: 5, live: true, sub: '4 active · 1 idle', items: SESSIONS }
+  ];
+
+  const FLOW_COINS = [
+    { name: 'Needs approval', dot: 'bg-amber-500', count: 36, more: 'Show all 36', items: [
+      { p: 'coins', id: 'VIEW-48', t: 'Saved views remember their sort', s: 'draft' },
+      { p: 'coins', id: 'PRF-8', t: 'Browser tests stop flaking on slow boots', s: 'draft' },
+      { p: 'coins', id: 'AUC-21', t: 'Bid history folds after 20 bids', s: 'draft' },
+      { p: 'coins', id: 'MOB-71', t: 'Pinch to zoom on a bullion photo', s: 'draft' },
+      { p: 'coins', id: 'SET-44', t: 'Empty set slots show the coin they want', s: 'draft' } ] },
+    { name: 'Needs a pick', dot: 'bg-violet-500', count: 2, items: FLOW_ALL[1].items.filter(s => s.p === 'coins') },
+    { name: 'Ready to build', dot: 'bg-sky-500', count: 29, sub: 'Oldest first', more: 'Show all 29', items: [
+      ...FLOW_ALL[2].items.filter(s => s.p === 'coins'),
+      { p: 'coins', id: 'ACQ-22', t: 'Export my acquisition rules', s: 'approved', age: 'waiting 22 d' } ] },
+    { name: 'In progress now', dot: 'bg-emerald-500', count: 4, live: true, sub: '4 active', items: SESSIONS.filter(x => x.p === 'coins') }
+  ];
+
+  document.getElementById('flow-all').innerHTML = FLOW_ALL.map(column).join('');
+  document.getElementById('flow-coins').innerHTML = FLOW_COINS.map(column).join('');
+
+  // ---------- Projects summary table ----------
+  const PROJECTS = [
+    { p: 'coins', total: 921, parts: [['built',836],['approved',29],['draft',37],['cancelled',19]], init: 57, nom: 262, warn: 0, live: 4 },
+    { p: 'client-dashboard', total: 97, parts: [['built',89],['approved',1],['draft',7]], init: 14, nom: 28, warn: 0, live: 1 },
+    { p: 'asset-track', total: 11, parts: [['built',3],['draft',8]], init: 4, nom: 0, warn: 0, live: 0 },
+    { p: 'rent-track', total: 15, parts: [['oov',3,'done'],['oov',1,'in'],['draft',11]], init: 0, nom: 0, warn: 15, live: 0 }
+  ];
+  const bar = (r) => `<span class="flex h-2 w-40 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800" role="img" aria-label="${r.parts.map(x => x[1] + ' ' + (x[2] || x[0])).join(', ')}">${r.parts.map(x => `<span class="${ST[x[0]][0]}" style="width:${(x[1] / r.total * 100).toFixed(2)}%"></span>`).join('')}</span>`;
+  const counts = (r) => `<span class="mt-1.5 flex flex-wrap gap-x-2 gap-y-1 text-[11px] text-neutral-500">${r.parts.map(x => x[0] === 'oov' ? chip('oov', `${x[1]} “${x[2]}”`) : `<span class="inline-flex items-center gap-1"><span class="h-1.5 w-1.5 rounded-full ${ST[x[0]][0]}"></span>${x[1]} ${ST[x[0]][2].toLowerCase()}</span>`).join('')}</span>`;
+  document.getElementById('proj-rows').innerHTML = PROJECTS.map(r => `
+    <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
+      <th scope="row" class="px-4 py-3 font-medium"><button type="button" ${r.p === 'coins' ? 'data-go="project"' : ''} class="inline-flex items-center gap-2 hover:underline"><span class="h-3 w-3 rounded-sm ${PROJ[r.p].tag}"></span>${r.p}</button></th>
+      <td class="px-4 py-3">${bar(r)}${counts(r)}</td>
+      <td class="px-4 py-3 text-right tabular-nums">${r.total}</td>
+      <td class="px-4 py-3 text-right tabular-nums">${r.init}</td>
+      <td class="px-4 py-3 text-right tabular-nums ${r.nom ? '' : 'text-neutral-400'}">${r.nom}</td>
+      <td class="px-4 py-3">${r.warn ? chip('warn', `${r.warn} parse errors`) : '<span class="text-neutral-400">None</span>'}</td>
+      <td class="px-4 py-3">${r.live ? `<span class="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400"><span class="h-2 w-2 rounded-full bg-emerald-500"></span>${r.live} live</span>` : '<span class="text-neutral-400">—</span>'}</td>
+    </tr>`).join('');
+
+  // ---------- Initiative progress (coins) ----------
+  const INITS = [['acquisition',22,18,3,1],['mobile',70,60,6,4],['auction',24,14,4,6],['bullion',31,27,2,2],['sets',45,40,3,2],['marketplace',30,26,2,2],['payments',12,9,2,1],['profile',18,16,1,1]];
+  document.getElementById('init-rows').innerHTML = INITS.map(([n,t,b,a,d]) => `
+    <li class="grid grid-cols-[6.5rem_1fr_auto] items-center gap-3 text-sm sm:grid-cols-[8rem_1fr_auto]">
+      <span class="truncate font-medium">${n}</span>
+      <span class="flex h-2.5 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800" role="img" aria-label="${n}: ${b} built, ${a} approved, ${d} draft of ${t}">
+        <span class="bg-emerald-500" style="width:${b/t*100}%"></span><span class="bg-sky-500" style="width:${a/t*100}%"></span><span class="bg-amber-500" style="width:${d/t*100}%"></span>
+      </span>
+      <span class="text-right text-xs tabular-nums text-neutral-500"><b class="font-semibold text-neutral-800 dark:text-neutral-200">${b}</b>/${t}</span>
+    </li>`).join('');
+
+  // ---------- Manage projects ----------
+  const MANAGE = [
+    { p: 'coins', path: '~/Code/coins', on: true, stories: 921, when: '2 min ago' },
+    { p: 'client-dashboard', path: '~/Code/client-dashboard', on: true, stories: 97, when: '2 min ago' },
+    { p: 'asset-track', path: '~/Code/asset-track', on: true, stories: 11, when: '2 min ago' },
+    { p: 'rent-track', path: '~/Code/rent-track', on: true, stories: 15, when: '2 min ago', warn: 15 },
+    { p: 'acme-site', path: '~/Code/acme-site', on: false, stories: 6, when: '12 days ago' }
+  ];
+  const renderManage = () => {
+    document.getElementById('manage-rows').innerHTML = MANAGE.map((m, i) => `
+      <li class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-900 sm:flex-nowrap sm:p-4 ${m.on ? '' : 'opacity-70'}">
+        <button type="button" role="switch" aria-checked="${m.on}" aria-label="Show ${m.p} on the board" data-toggle="${i}"
+          class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${m.on ? 'bg-neutral-800 dark:bg-white' : 'bg-neutral-300 dark:bg-neutral-700'}">
+          <span class="inline-block h-5 w-5 rounded-full bg-white shadow transition dark:${m.on ? 'bg-neutral-900' : 'bg-neutral-300'} ${m.on ? 'translate-x-5' : 'translate-x-0.5'}"></span>
+        </button>
+        <div class="min-w-0 flex-1">
+          <p class="flex flex-wrap items-center gap-2 font-medium"><span class="h-3 w-3 rounded-sm ${PROJ[m.p].tag}"></span>${m.p}
+            ${m.on ? chip('built', 'Ok').replace(ST.built[1], 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300') : chip('cancelled', 'Off')}
+            ${m.warn ? chip('warn', `${m.warn} parse errors`) : ''}</p>
+          <p class="mt-0.5 truncate font-mono text-xs text-neutral-500">${m.path} · origin/main</p>
+        </div>
+        <dl class="flex gap-4 text-xs text-neutral-500">
+          <div><dt class="sr-only">Stories</dt><dd><b class="font-semibold tabular-nums text-neutral-800 dark:text-neutral-200">${m.stories}</b> stories</dd></div>
+          <div><dt class="sr-only">Last refreshed</dt><dd>${m.on ? 'Refreshed ' + m.when : 'Not refreshed · data kept'}</dd></div>
+        </dl>
+        <button type="button" data-remove="${m.p}" class="ml-auto rounded-md border border-neutral-300 px-2.5 py-1 text-xs font-medium text-red-600 hover:border-red-600 hover:bg-red-600/5 dark:border-neutral-700">Remove</button>
+      </li>`).join('');
+  };
+  renderManage();
+
+  // ---------- Switcher ----------
+  const SW = [
+    { p: 'coins', n: 921, live: 4, go: 'project' },
+    { p: 'client-dashboard', n: 97, live: 1 },
+    { p: 'asset-track', n: 11 },
+    { p: 'rent-track', n: 15, warn: 15 }
+  ];
+  const swList = document.getElementById('switcher-list');
+  const renderSwitcher = (q = '') => {
+    const rows = SW.filter(s => s.p.includes(q.toLowerCase()));
+    swList.innerHTML = (q ? '' : `<li><button type="button" role="option" aria-selected="${current !== 'project'}" data-go="overview" class="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left font-medium hover:bg-neutral-100 aria-selected:bg-neutral-100 dark:hover:bg-neutral-800 dark:aria-selected:bg-neutral-800"><span class="grid h-3 w-3 grid-cols-2 gap-px"><span class="bg-indigo-500"></span><span class="bg-pink-500"></span><span class="bg-teal-500"></span><span class="bg-stone-500"></span></span>All projects<span class="ml-auto text-xs text-neutral-500">1,044</span></button></li>`) +
+      rows.map(s => `<li><button type="button" role="option" aria-selected="${current === 'project' && s.p === 'coins'}" ${s.go ? `data-go="${s.go}"` : ''} class="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left hover:bg-neutral-100 aria-selected:bg-neutral-100 dark:hover:bg-neutral-800 dark:aria-selected:bg-neutral-800">
+        <span class="h-3 w-3 shrink-0 rounded-sm ${PROJ[s.p].tag}"></span>
+        <span class="min-w-0 flex-1"><span class="block truncate font-medium">${s.p}</span>
+          <span class="flex items-center gap-1.5 text-[11px] text-neutral-500"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true"></span>Ok · ${s.n} stories${s.warn ? ` · <span class="text-amber-700 dark:text-amber-400">${s.warn} warnings</span>` : ''}</span></span>
+        ${s.live ? `<span class="shrink-0 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">${s.live} live</span>` : ''}
+      </button></li>`).join('') +
+      (rows.length ? '' : `<li class="px-2.5 py-3 text-sm text-neutral-500">No project matches “${q}”.</li>`);
+  };
+  const swBtn = document.getElementById('switcher-btn');
+  const swPop = document.getElementById('switcher-pop');
+  const mockSw = document.getElementById('mock-switcher-toggle');
+  const setSwitcher = (open) => {
+    swPop.hidden = !open;
+    swBtn.setAttribute('aria-expanded', open);
+    mockSw.setAttribute('aria-pressed', open);
+    if (open) { renderSwitcher(document.getElementById('switcher-search').value); }
+  };
+  swBtn.addEventListener('click', () => setSwitcher(swPop.hidden));
+  mockSw.addEventListener('click', () => setSwitcher(swPop.hidden));
+  document.getElementById('switcher-search').addEventListener('input', e => renderSwitcher(e.target.value));
+  document.addEventListener('click', e => {
+    if (!swPop.hidden && !e.target.closest('#switcher') && e.target !== mockSw) setSwitcher(false);
+  });
+
+  // ---------- Views ----------
+  let current = 'overview';
+  const show = (v) => {
+    current = v;
+    const base = v === 'modal' ? 'overview' : v;
+    document.querySelectorAll('[data-view]').forEach(el => el.hidden = el.id !== 'view-' + base);
+    document.querySelectorAll('[data-view-btn]').forEach(b => b.setAttribute('aria-pressed', b.dataset.viewBtn === v));
+    document.getElementById('switcher-label').textContent = v === 'project' ? 'coins' : v === 'manage' ? 'Manage projects' : 'All projects';
+    document.getElementById('switcher-dot').classList.toggle('hidden', v !== 'project');
+    setSwitcher(false);
+    if (v === 'modal') openStory(null, false); else closeStory(false);
+    window.scrollTo(0, 0);
+  };
+  document.querySelectorAll('[data-view-btn]').forEach(b => b.addEventListener('click', () => show(b.dataset.viewBtn)));
+  document.addEventListener('click', e => {
+    const go = e.target.closest('[data-go]');
+    if (go) { e.preventDefault(); show(go.dataset.go); }
+  });
+
+  // ---------- Story slide-over ----------
+  const story = document.getElementById('story');
+  let lastTrigger = null;
+  function openStory(trigger, fromCard = true) {
+    lastTrigger = trigger;
+    story.hidden = false;
+    document.body.classList.add('modal-open');
+    document.getElementById('story-note').classList.toggle('hidden', !fromCard);
+    story.querySelector('[role=dialog]').scrollTop = 0;
+    document.getElementById('story-close').focus();
+  }
+  function closeStory(restore = true) {
+    if (story.hidden) return;
+    story.hidden = true;
+    document.body.classList.remove('modal-open');
+    if (current === 'modal') document.querySelector('[data-view-btn="modal"]').setAttribute('aria-pressed', 'false'), document.querySelector('[data-view-btn="overview"]').setAttribute('aria-pressed', 'true'), current = 'overview';
+    if (restore && lastTrigger) lastTrigger.focus();
+  }
+  document.addEventListener('click', e => {
+    const t = e.target.closest('[data-open]');
+    if (t && !t.closest('#story')) openStory(t);
+    if (e.target.closest('[data-close-story]')) closeStory();
+  });
+
+  // ---------- Remove confirmation + toggles ----------
+  const confirmEl = document.getElementById('confirm');
+  document.addEventListener('click', e => {
+    const r = e.target.closest('[data-remove]');
+    if (r) {
+      document.getElementById('confirm-h').textContent = `Remove ${r.dataset.remove}?`;
+      confirmEl.hidden = false; lastTrigger = r;
+      confirmEl.querySelector('[data-close-confirm]:not(.absolute)').focus();
+    }
+    if (e.target.closest('[data-close-confirm]')) { confirmEl.hidden = true; lastTrigger && lastTrigger.focus(); }
+    const tg = e.target.closest('[data-toggle]');
+    if (tg) { const m = MANAGE[+tg.dataset.toggle]; m.on = !m.on; renderManage(); document.querySelector(`[data-toggle="${tg.dataset.toggle}"]`).focus(); }
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if (!confirmEl.hidden) { confirmEl.hidden = true; lastTrigger && lastTrigger.focus(); return; }
+    if (!story.hidden) { closeStory(); return; }
+    if (!swPop.hidden) { setSwitcher(false); swBtn.focus(); }
+  });
+
+  show('overview');
+})();
+</script>
+</body>
+</html>
