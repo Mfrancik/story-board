@@ -30,6 +30,17 @@ has ~916 story rows.
   `board.refresh_crashed` before rethrowing.
 - Story rows have no stable identity across refreshes. Anything that needs one must key on
   `(project_id, path)` or `story_id`, not the row `id`.
-- `indexed_at` moves only on success, so a stale or unreachable project is re-dispatched on every page
-  load, and nothing dedupes concurrent refreshes of the same project. Acceptable for a single-owner
-  localhost board. Revisit if SB-6 hosts it.
+- As first shipped, `indexed_at` moved only on success, so a stale or unreachable project was
+  re-dispatched on every page load and nothing deduped concurrent refreshes. Resolved the same day;
+  see the amendment below.
+
+## Amendment — 2026-09-29 (SB-2 fix, `fix(SB-2): stop retrying a failing project on every page load`)
+
+- Staleness now keys on a new column, `projects.refresh_attempted_at`, stamped at the start of every
+  attempt whatever its outcome. `Project::needsRefresh()` reads `refresh_attempted_at ?? indexed_at`,
+  so a failing project is retried every `STALE_AFTER_MINUTES` rather than on every page load.
+  `indexed_at` keeps its meaning: the last successful snapshot.
+- `RefreshProject::handle()` holds `Cache::lock("board:refresh:{id}", 180)` for the whole refresh and
+  releases it in `finally`. An overlapping refresh of the same project logs `board.refresh_skipped`
+  and returns, so two snapshot replacements never run at once.
+- Consequence: the dedupe depends on a cache store shared across processes (`database` today).

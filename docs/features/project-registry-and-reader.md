@@ -15,7 +15,11 @@ inserts a `projects` row in state `pending`. Registration reads no stories; the 
 `database/seeders/ProjectSeeder.php` registers coins, client-dashboard, asset-track and rent-track
 under `$HOME/Code/` (idempotent `firstOrCreate`).
 
-**Refresh.** `app/Actions/Board/RefreshProject.php:handle()` runs per project:
+**Refresh.** `app/Actions/Board/RefreshProject.php:handle()` runs per project. It first takes
+`Cache::lock("board:refresh:{id}", 180)`; if another refresh of the same project holds it, this one
+logs `board.refresh_skipped` and returns, so two quick page loads never swap one snapshot twice. The
+lock is released in a `finally`. Under the lock, `refresh()` stamps `refresh_attempted_at = now()`
+before touching git, then:
 1. `GitReader::isRepository()` fails → state `unreachable`, log `board.project_unreachable`, stop.
 2. `GitReader::fetch()` fetches the remote named by the ref's first segment (`origin` for
    `origin/main`). Fails → state `stale`, last snapshot kept, log `board.fetch_failed`, stop. It
@@ -32,15 +36,18 @@ A failure in one project never stops the others: `board:refresh`
 
 **Page-load refresh.** `app/Http/Controllers/BoardController.php` (route `/`, name `home`) lists
 enabled projects with `stories_count`. For each project where `Project::needsRefresh()` is true
-(`indexed_at` null or older than `Project::STALE_AFTER_MINUTES`), it calls
+(`refresh_attempted_at ?? indexed_at` null or older than `Project::STALE_AFTER_MINUTES`), it calls
 `RefreshProjectJob::dispatchAfterResponse()`. The page renders from the existing snapshot; the
-refresh runs in the same PHP process after the response is sent, so no queue worker is needed. The
+refresh runs in the same PHP process after the response is sent, so no queue worker is needed.
+Staleness keys on the last *attempt*, not on `indexed_at` (which only moves on success), so a
+`stale` or `unreachable` project is retried every 5 minutes rather than on every page load. The
 manual Refresh button is SB-3's to place.
 
 **The git gateway.** `app/Services/GitReader.php` is the only app code that runs git. `run()`
 refuses any subcommand not in `ALLOWED` (`fetch`, `ls-tree`, `show`, `rev-parse`, `cat-file`,
 `remote`), refuses `remote` with arguments, and refuses any `--output`/`-o` argument. Every ref goes
-through `assertRef()` (`REF_PATTERN`: no leading `-`, no `..`). git runs with
+through `assertRef()` (`REF_PATTERN`: no leading `-`, no `..`; `D` flag so `$` cannot match
+before a trailing newline). git runs with
 `GIT_TERMINAL_PROMPT=0`, ssh `BatchMode=yes`, `GIT_OPTIONAL_LOCKS=0`, and fetch adds
 `-c gc.auto=0 -c maintenance.auto=false`, so the board never prompts, never takes an index lock and
 never repacks a project's `.git`. `bin/story-index` is spawned only from `GitReader::storyIndex()`
@@ -53,7 +60,10 @@ SB-3 replaces it.
 ## Data model
 - `projects` (`database/migrations/2026_09_29_000001_create_projects_table.php`, `app/Models/Project.php`):
   `name` (unique), `path`, `ref` (default `origin/main`), `is_enabled`, `state`
-  (`pending|ok|stale|unreachable`, constants `Project::STATE_*`), `sha`, `indexed_at`, `last_error`.
+  (`pending|ok|stale|unreachable`, constants `Project::STATE_*`), `sha`, `indexed_at`,
+  `refresh_attempted_at`, `last_error`. `indexed_at` is the last *successful* snapshot;
+  `refresh_attempted_at` (`database/migrations/2026_09_29_000003_add_refresh_attempted_at_to_projects_table.php`)
+  is the last try of any outcome and is what `needsRefresh()` reads.
   `state` and `last_error` go beyond the story's schema; they carry the stale/unreachable outcomes.
   The story's `enabled` is `is_enabled` per boolean naming.
 - `stories` (`database/migrations/2026_09_29_000002_create_stories_table.php`, `app/Models/Story.php`):
@@ -89,12 +99,15 @@ All events go to the default log channel with a `project` context key:
 | `board.fetch_failed` | warning | `RefreshProject` | `project`, `error` |
 | `board.index_failed` | warning | `RefreshProject` | `project`, `ref`, `error` |
 | `board.project_unreachable` | warning | `RefreshProject` | `project`, `path` |
+| `board.refresh_skipped` | info | `RefreshProject` | `project`, `reason` (`already running`) |
 | `board.refresh_crashed` | error | `RefreshProjectJob` | `project`, `exception` (rethrown) |
 | `board.project_registered` | info | `RegisterProject` | `project`, `path`, `ref` |
 | `board.project_disabled` | info | `BoardProject` command | `project` |
 
 A healthy refresh is `refresh_started` then `refresh_finished` for the same `project`. A `started`
-with no `finished` means one of the warnings fired (or a crash). There is no request ID yet (no
+with no `finished` means one of the warnings fired (or a crash). A `refresh_skipped` is benign: a
+refresh of that project was already in flight. If `refresh_skipped` repeats for minutes with no
+`started`, a crashed process may be holding the lock; it expires after 180 s. There is no request ID yet (no
 `AssignRequestId` middleware in the app), so trace by `project` and timestamp. The quickest check
 without logs: `php artisan board:project list` shows each `state`, and `projects.last_error` holds
 the first line of git's stderr.
@@ -104,9 +117,12 @@ the first line of git's stderr.
   `origin/main` with the right SHA; statuses from `origin/main`, not a lagging working tree; non-repo
   path `unreachable` while others refresh; failed fetch keeps the snapshot as `stale`; parse-error
   stories stored; `git status --porcelain` byte-identical. It also covers logging, single-project
-  refresh, disabled projects and snapshot replacement.
+  refresh, disabled projects, snapshot replacement, the lock stand-down (`board.refresh_skipped`), a
+  bad `projects.ref` already stored in the DB (snapshot kept, state `stale`, git writes no file) and
+  the `board.refresh_crashed` log-and-rethrow.
 - `tests/Feature/Board/ProjectRegistryTest.php` covers registration, list/disable, the seeder, the
-  page and the page-load refresh.
+  page and the page-load refresh, including that a failing project attempted under 5 minutes ago is
+  not re-dispatched.
 - `tests/Unit/GitReaderTest.php` covers the allow-list, the argument guards and ref validation.
 - `tests/Support/GitFixture.php` builds real fixture repos with a bare "origin" in the test. It runs
   git directly on purpose: it is test code building fixtures. The GitReader-only rule is for `app/`.
@@ -119,6 +135,8 @@ the first line of git's stderr.
   [ADR-004](../decisions/ADR-004-gitreader-read-only-git-gateway.md).
 - Page-load refresh after the response, stale-on-fetch-failure, wholesale snapshot replace →
   [ADR-005](../decisions/ADR-005-snapshot-refresh-model.md).
+- Staleness keys on the last attempt (`refresh_attempted_at`), not the last success, and a
+  per-project cache lock dedupes overlapping refreshes → ADR-005, Amendment.
 - Log events are `board.<event>`, exactly as the story named them, not
   `<feature>.<action>.<result>`.
 
@@ -128,13 +146,16 @@ the first line of git's stderr.
   `bin/story-index` excludes by contract. 916 is correct.
 - **rent-track rows all carry a parse error** because its `stories/README.md` has no §Status list.
   That is the project's problem, not the reader's.
-- **A failing project retries on every page load.** `indexed_at` only moves on success, so a
-  `stale` or `unreachable` project stays past `STALE_AFTER_MINUTES` and each `/` load dispatches
-  another refresh (a fetch can take up to 60 s after the response). Nothing dedupes concurrent
-  refreshes of one project either: two quick loads can run two snapshot replacements at once.
-- `REF_PATTERN` ends in `$`, not `\z`, so a ref with a trailing newline passes validation.
-- No test covers a bad `projects.ref` already stored in the DB reaching `RefreshProject`, or the
-  `board.refresh_crashed` path.
+- **A failing project retries every 5 minutes**, not sooner. A fixed remote can take that long to
+  show `ok` on `/`; run `board:refresh <name>` to force it.
+- **The lock needs a shared cache store.** `Cache::lock` uses the default store, `database`
+  (`CACHE_STORE`), which every PHP process shares; switching to `array` silently disables the
+  dedupe. The 180 s TTL is sized to the git timeouts (60 s fetch, 60 s `story-index`, 30 s for the
+  rest); a refresh that hit every timeout could outlive it and overlap the next one.
+- No test proves the lock is released after an exception inside `refresh()`; it is correct by the
+  `try/finally` in `handle()`.
+- No request ID: the app has no `AssignRequestId` middleware, so logs trace by `project` and
+  timestamp only.
 - `storyIndex()` does not guard a `-`-leading path; paths come from `realpath()`, so they are
   absolute today.
 - The seeder assumes projects live under `$HOME/Code/`.
@@ -144,3 +165,5 @@ the first line of git's stderr.
 
 ## Change history
 2026-09-29 — Registry, refresh, GitReader, bare `/` list; argument/ref guards added after preflight (SB-2)
+2026-09-29 — `refresh_attempted_at` staleness, per-project refresh lock (`board.refresh_skipped`),
+`REF_PATTERN` `D` flag, tests for stored bad ref and `refresh_crashed`, `.env.example` on MySQL (SB-2)

@@ -9,7 +9,8 @@ an owner ruling.
 
 ## Domain model
 - **Project**: a registered local checkout (`name`, `path`, `ref`, `is_enabled`). It has a refresh
-  `state` (`pending | ok | stale | unreachable`) and the `sha`/`indexed_at` of its last good snapshot.
+  `state` (`pending | ok | stale | unreachable`), the `sha`/`indexed_at` of its last good snapshot,
+  and `refresh_attempted_at` (last try, any outcome), which drives page-load staleness.
 - **Story**: one story file at a project's ref, as reported by the kit's `bin/story-index`. It holds
   ID, title, status, initiative, journey, path, source, depends_on, mockups and parse_errors.
 - **Snapshot**: a project's full set of Story rows. It is replaced wholesale on each successful
@@ -52,7 +53,7 @@ SB-5 (branches and unmerged work). SB-6 (hosted) is parked.
 - Laravel 13 / Livewire 4 are installed (starter kit), while `CLAUDE.md` says 12 / 3. Flagged to the
   owner and unchanged.
 - There is no request-ID middleware yet, so logs trace by `project` and timestamp only.
-- A failing project re-dispatches a refresh on every page load, and concurrent refreshes of one
-  project are not deduped.
+- A failing project is retried at most every 5 minutes (staleness keys on the last attempt), so a
+  fixed remote can take that long to show as `ok` without a manual `board:refresh`.
 - Dev server runs on port 8010 (coins holds 8000/8001). There is no git remote for this repo, by
   owner ruling.
