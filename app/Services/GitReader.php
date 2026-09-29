@@ -100,6 +100,21 @@ class GitReader
     }
 
     /**
+     * Every file path under `$prefix` at `$ref`, recursively.
+     *
+     * @return list<string>
+     *
+     * @throws GitReaderException when the ref does not resolve.
+     */
+    public function listFiles(string $path, string $ref, string $prefix): array
+    {
+        $this->assertRef($ref);
+        $out = $this->run($path, ['ls-tree', '-r', '-z', '--name-only', $ref, '--', $prefix]);
+
+        return array_values(array_filter(explode("\0", $out), fn ($f) => $f !== ''));
+    }
+
+    /**
      * Every story record at `$ref`, straight from the kit's bin/story-index
      * contract (docs/KIT-REFERENCE.md §story-index). The parser reads through
      * `git ls-tree` and `git cat-file` only, so it is inside the read-only rule.

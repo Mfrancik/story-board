@@ -196,3 +196,31 @@ it('logs a refresh that crashes unexpectedly and rethrows', function () {
 
     Log::shouldHaveReceived('error')->withArgs(fn ($event, $ctx) => $event === 'board.refresh_crashed' && $ctx['exception'] === 'db gone')->once();
 });
+
+it('marks drafts in a parked draft group, and only a group whose README says so', function () {
+    $this->fixture
+        ->story('IMP-1', 'draft', 'import')
+        ->write('stories/import/README.md', "# Import\n\nStatus: draft group — parked 2026-09-02\n")
+        ->story('APP-1', 'draft', 'app-store-launch')
+        ->write('stories/app-store-launch/README.md', "# App store\n\nStatus: release group — opened 2026-09-22\n")
+        ->story('PAY-1', 'draft', 'payments')
+        ->write('stories/payments/README.md', "# Payments\n\nNo status line here.\n")
+        ->commitAndPush();
+    $project = Project::factory()->create(['path' => $this->fixture->project]);
+
+    $this->artisan('board:refresh')->assertSuccessful();
+
+    expect($project->stories()->where('is_parked', true)->pluck('story_id')->all())->toBe(['IMP-1']);
+});
+
+it('dates each story from the first date in its Source line', function () {
+    $this->fixture->write('stories/demo/FX-1-story.md', "# FX-1 — Dated\nStatus: approved\nSource: owner 2026-07-02 (coins /story), revised 2026-09-01\n\n## Story\nx\n")
+        ->story('FX-2', 'approved')
+        ->commitAndPush();
+    $project = Project::factory()->create(['path' => $this->fixture->project]);
+
+    $this->artisan('board:refresh')->assertSuccessful();
+
+    expect($project->stories()->orderBy('story_id')->get()->map(fn ($s) => $s->dated_on?->toDateString())->all())
+        ->toBe(['2026-07-02', null]);
+});

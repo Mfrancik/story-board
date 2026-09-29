@@ -6,6 +6,7 @@ use Database\Factories\StoryFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * One story file at a project's ref, as bin/story-index reported it on the last refresh.
@@ -16,9 +17,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $title
  * @property string|null $status
  * @property string|null $initiative
+ * @property bool $is_parked
  * @property string|null $journey
  * @property string $path
  * @property string|null $source
+ * @property Carbon|null $dated_on
  * @property list<string> $depends_on
  * @property array{dir: string|null, options: list<string>, chosen: string|null} $mockups
  * @property list<string> $parse_errors
@@ -31,7 +34,7 @@ class Story extends Model
 
     /** @var list<string> */
     protected $fillable = [
-        'project_id', 'story_id', 'title', 'status', 'initiative', 'journey', 'path', 'source',
+        'project_id', 'story_id', 'title', 'status', 'initiative', 'is_parked', 'journey', 'path', 'source', 'dated_on',
         'depends_on', 'mockups', 'parse_errors', 'sha',
     ];
 
@@ -41,6 +44,8 @@ class Story extends Model
     protected function casts(): array
     {
         return [
+            'is_parked' => 'boolean',
+            'dated_on' => 'date',
             'depends_on' => 'array',
             'mockups' => 'array',
             'parse_errors' => 'array',

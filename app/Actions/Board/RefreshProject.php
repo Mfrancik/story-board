@@ -80,6 +80,8 @@ class RefreshProject
         try {
             $sha = $this->git->resolve($project->path, $project->ref);
             $records = $this->git->storyIndex($project->path, $project->ref);
+            // Read at the resolved SHA, not the ref, so both reads describe the same commit.
+            $parked = $this->parkedInitiatives($project, $sha);
         } catch (GitReaderException $e) {
             Log::warning('board.index_failed', ['project' => $project->name, 'ref' => $project->ref, 'error' => $e->getMessage()]);
             $project->update(['state' => Project::STATE_STALE, 'last_error' => $e->getMessage()]);
@@ -87,7 +89,7 @@ class RefreshProject
             return;
         }
 
-        $this->replaceSnapshot($project, $sha, $records);
+        $this->replaceSnapshot($project, $sha, $records, $parked);
 
         Log::info('board.refresh_finished', [
             'project' => $project->name,
@@ -102,8 +104,9 @@ class RefreshProject
      * reader never sees a half-written snapshot.
      *
      * @param  list<array<string, mixed>>  $records  bin/story-index output
+     * @param  list<string>  $parked  initiatives that are parked draft groups
      */
-    private function replaceSnapshot(Project $project, string $sha, array $records): void
+    private function replaceSnapshot(Project $project, string $sha, array $records, array $parked): void
     {
         $now = now();
         $rows = array_map(fn (array $r) => [
@@ -112,9 +115,11 @@ class RefreshProject
             'title' => $r['title'],
             'status' => $r['status'],
             'initiative' => $r['initiative'],
+            'is_parked' => in_array($r['initiative'], $parked, true),
             'journey' => $r['journey'],
             'path' => $r['path'],
             'source' => $r['source'],
+            'dated_on' => $this->dateOf($r['source']),
             'depends_on' => json_encode($r['depends_on']),
             'mockups' => json_encode($r['mockups']),
             'parse_errors' => json_encode($r['parse_errors']),
@@ -131,5 +136,43 @@ class RefreshProject
             }
             $project->update(['state' => Project::STATE_OK, 'sha' => $sha, 'indexed_at' => $now, 'last_error' => null]);
         });
+    }
+
+    /**
+     * Initiatives parked as a draft group at `$sha`: an initiative folder whose own
+     * README has a `Status:` line starting `draft group` (kit stories/README.md
+     * §Draft groups). A README alone is not enough — coins has a "release group"
+     * README and one with no status, and neither is parked.
+     *
+     * @return list<string>
+     *
+     * @throws GitReaderException when git cannot list or read the files.
+     */
+    private function parkedInitiatives(Project $project, string $sha): array
+    {
+        $parked = [];
+        foreach ($this->git->listFiles($project->path, $sha, 'stories/') as $file) {
+            if (! preg_match('#^stories/([^/]+)/README\.md$#', $file, $m)) {
+                continue;
+            }
+            $readme = $this->git->show($project->path, $sha, $file);
+            if (preg_match('/^\**Status:\**\s*draft group\b/mi', $readme)) {
+                $parked[] = $m[1];
+            }
+        }
+
+        return $parked;
+    }
+
+    /**
+     * The first valid YYYY-MM-DD in a Source line, or null.
+     */
+    private function dateOf(mixed $source): ?string
+    {
+        if (! is_string($source) || ! preg_match('/\b(\d{4})-(\d{2})-(\d{2})\b/', $source, $m)) {
+            return null;
+        }
+
+        return checkdate((int) $m[2], (int) $m[3], (int) $m[1]) ? "{$m[1]}-{$m[2]}-{$m[3]}" : null;
     }
 }
