@@ -135,8 +135,11 @@
                     </div>
 
                     {{-- Compare: any two options, full window, 50/50. Esc or × closes. --}}
+                    {{-- x-if, not x-show: the two frames (two git reads) are created only while the overlay is open.
+                         x-trap moves focus in on open and hands it back to "Compare two…" on close. --}}
                     <template x-teleport="body">
-                        <div x-show="compare" x-cloak x-transition.opacity role="dialog" aria-modal="true" aria-label="Compare two mockups"
+                        <template x-if="compare">
+                        <div x-trap.noscroll="compare" x-transition.opacity role="dialog" aria-modal="true" aria-label="Compare two mockups"
                             class="fixed inset-0 z-50 flex flex-col bg-zinc-100 dark:bg-zinc-950">
                             <div class="flex flex-wrap items-center gap-2 border-b border-zinc-200 bg-white px-4 py-2 dark:border-zinc-800 dark:bg-zinc-900">
                                 <span class="text-sm font-semibold">Compare · {{ $story->story_id }}</span>
@@ -169,6 +172,7 @@
                                 </template>
                             </div>
                         </div>
+                        </template>
                     </template>
                 @endif
             </section>

@@ -2,6 +2,7 @@
 
 use App\Livewire\Board\StoryPage;
 use App\Models\Project;
+use App\Models\Story;
 use Illuminate\Support\Facades\Log;
 use Livewire\Livewire;
 use Tests\Support\GitFixture;
@@ -97,4 +98,26 @@ it('quotes a written choice the parser could not read, without marking a frame',
     $html = $this->get('/p/fx/s/FX-80')->assertOk()->assertSeeHtml('data-chosen-text')->assertSee('D (revised hybrid)')->getContent();
 
     expect($html)->not->toMatch('/data-mockup-frame="\w"\s+data-chosen/');
+});
+
+it('404s a story in a disabled project and a malformed ID', function (string $url) {
+    $this->project->update(['is_enabled' => str_contains($url, 'FX-65') ? false : true]);
+
+    $this->get($url)->assertNotFound();
+})->with(['/p/fx/s/FX-65', '/p/fx/s/fx-65', '/p/fx/s/FX-65x1', '/p/fx/s/F-1']);
+
+it('says so, and logs it, when the story cannot be read from git', function () {
+    Log::spy();
+    // The row points at a commit git does not have.
+    Story::onRef()->where('story_id', 'FX-65')->update(['sha' => str_repeat('0', 40)]);
+
+    $this->get('/p/fx/s/FX-65')->assertOk()->assertSee('could not be read from git');
+
+    Log::shouldHaveReceived('warning')->withArgs(fn ($event) => $event === 'board.story_read_failed')->once();
+});
+
+it('does not load the compare frames until the overlay opens', function () {
+    $html = $this->get('/p/fx/s/FX-65')->getContent();
+
+    expect($html)->toContain('<template x-if="compare">');
 });
