@@ -1,5 +1,5 @@
 # SB-2 — Register projects and read their stories from git
-Status: approved         Journey: none
+Status: built            Journey: none
 Source: owner 2026-09-29 (coins /story) — see SB-1 for the verbatim ask. Owner rulings: new repo +
 kit contract; localhost first; read-only.
 
