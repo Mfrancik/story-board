@@ -10,6 +10,24 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-09-29 — A query-count test failed (15 vs 17) with no growth in the page
+Symptom: SB-10's "same number of queries whatever the number of initiatives" test counted 15 queries before adding initiatives and 17 after.
+Root cause: the fixture's What needs me cards started empty. An empty card skips its eager-load query, so the "after" run (which added open work) paid two queries the "before" run never made. Empty vs filled looked like growth.
+Fix: the test starts with non-empty cards and an off-main row, so both runs take the same code paths (`tests/Feature/Board/ProjectPageTest.php`, SB-10). Any query-count test must fill every conditional branch in its baseline.
+Log trail: none; compare `DB::getQueryLog()` of the two runs.
+
+## 2026-09-29 — Browser test timed out clicking "Refresh this project" by its text
+Symptom: in `tests/Browser/ProjectPageTest.php`, a click by the text "Refresh this project" timed out, and an assertion on a branch name failed Playwright strict mode.
+Root cause: the text click likely resolved against the button's hidden `wire:loading` span beside the label (unconfirmed). The branch name appears on several off-main rows, so a text locator matched more than one element.
+Fix: the button carries `data-refresh-project` and the test clicks that; the branch check is a script assertion over the rows (SB-10). Prefer `data-*` hooks to text locators for Livewire buttons with loading states.
+Log trail: none; Playwright timeout and strict-mode errors.
+
+## 2026-09-29 — A Pest test helper collided with another file's helper
+Symptom: a new test file's helper function clashed with one of the same name declared in another test file.
+Root cause: helper functions defined at the top level of Pest files are global across the whole suite. A helper named `offMain` already existed.
+Fix: SB-10's helpers have names unique to the file (`seedInitiatives`, `addOffMain`, `initiativeRows`, `offMainPanel`, ...). Name top-level Pest helpers after their file's subject, or grep `tests/` before adding one.
+Log trail: none; a PHP redeclare error when the suite loads.
+
 ## 2026-09-29 — A project tile 500'd with "ViewErrorBag could not be converted to int"
 Symptom: `/` returned 500 once the SB-9 tiles rendered `<x-board.status-chip :status :count />`, with `Object of class Illuminate\Support\ViewErrorBag could not be converted to int`.
 Root cause: the chip's prop is named `errors`. When a caller does not pass it, the `@props` default of 0 does not apply: the name resolves to the `$errors` `ViewErrorBag` that Laravel shares with every view, and `$errors > 0` then fails.

@@ -1,5 +1,5 @@
 # Project brief — story-board
-Last refreshed: 2026-09-29 (SB-9)
+Last refreshed: 2026-09-29 (SB-10)
 
 ## What it is, and for whom
 A localhost Laravel app for one owner. It reads the `stories/` folder of every project that uses
@@ -33,8 +33,9 @@ shown beside it, labelled with where it lives, and never counts as status.
 | All-projects dashboard: `/` leads with What needs me cards, then In flight, a tile per project and the collapsible sections; rows open the story modal | active (SB-3, SB-4, SB-5, SB-8, SB-9) | [doc](features/what-needs-me-home.md) |
 | Story page and mockups: `/p/{project}/s/{id}`, story above sandboxed mockup frames, 375/768/1280, full-screen compare; raw mockup route; `?v=` versions banner | active (SB-4, SB-5) | [doc](features/story-page-and-mockups.md) |
 | Not on main: branches, worktrees and untracked stories/mockups, indexed at refresh; home section and story-page banner; `board:project alias` | active (SB-5) | [doc](features/not-on-main.md) |
-| App shell and project switcher: sidebar on every page, filterable project list, drawer below 768px, `/p/{project}`, `/?project=` redirect | active (SB-7) | [doc](features/app-shell-and-project-switcher.md) |
+| App shell and project switcher: sidebar on every page, filterable project list, drawer below 768px, `/p/{project}` refusal, `/?project=` redirect | active (SB-7, SB-10) | [doc](features/app-shell-and-project-switcher.md) |
 | Story modal: `?story=<project>/<ID>` on `/` and `/p/{project}`, text, details, dependency chips, mockups, versions off main; Back closes | active (SB-8) | [doc](features/story-modal.md) |
+| Single-project dashboard: `/p/{project}` header with one-project refresh, scoped What needs me cards, Progress by initiative, Not on main by kind | active (SB-10) | [doc](features/single-project-dashboard.md) |
 
 ## Journeys
 None yet. Every SB story so far is `Journey: none`.
@@ -50,7 +51,7 @@ None yet. Every SB story so far is `Journey: none`.
 | SB-7 | App shell and project switcher | built |
 | SB-8 | Story detail modal | built |
 | SB-9 | All-projects dashboard | built |
-| SB-10 | Single-project dashboard | approved |
+| SB-10 | Single-project dashboard | built |
 | SB-11 | Live sessions | approved |
 | SB-12 | Manage projects from the board | approved |
 | SB-13 | Pick a mockup from the board | approved |
@@ -80,8 +81,10 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
   served → [ADR-012](decisions/ADR-012-off-main-reads-stay-read-only-and-in-git.md)
 - An unknown or disabled project is refused by one middleware that runs before route binding, so it
   always logs → [ADR-013](decisions/ADR-013-project-refusal-runs-before-route-binding.md)
-- `/p/{project}` reuses the home component pinned to one project until SB-10 →
-  [ADR-014](decisions/ADR-014-project-page-reuses-home-pinned.md)
+- `/p/{project}` is its own `ProjectPage`, sharing the What needs me cards with `/` (supersedes
+  ADR-014) → [ADR-019](decisions/ADR-019-project-page-is-its-own-component.md)
+- The initiative rollup is one grouped query, and off-main rows load only when a kind opens →
+  [ADR-020](decisions/ADR-020-initiative-rollup-is-one-grouped-query.md)
 - `/` leads with What needs me; the project filter was removed, not hidden (the sidebar switches) →
   [ADR-017](decisions/ADR-017-dashboard-leads-with-what-needs-me-and-drops-the-project-filter.md)
 - Tiles and In flight ignore initiative/search, add no query (pinned by a query-count test), and the
@@ -96,9 +99,9 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
 
 ## Current phase and what's next
 Phase 2: UI organisation (SB-7 to SB-14). Phase 1 (SB-2 to SB-5) is built and
-retro'd. SB-7 (sidebar shell, `/p/{project}`), SB-8 (story modal) and SB-9 (all-projects dashboard)
-have shipped. Next: SB-10 (the single-project dashboard), SB-11 (live sessions, which fills the
-dashboard's Live now slot), SB-12
+retro'd. SB-7 (sidebar shell, `/p/{project}`), SB-8 (story modal), SB-9 (all-projects dashboard) and SB-10
+(single-project dashboard) have shipped. Next: SB-11 (live sessions, which fills both dashboards'
+Live now slot), SB-12
 (Manage projects, which switches on the sidebar's Manage slot), SB-13 (pick a mockup) and SB-14
 (handbook). SB-6 (hosted) stays parked. F-2 (a timeline of what was built) is in the backlog.
 
@@ -113,7 +116,8 @@ dashboard's Live now slot), SB-12
   owner decision pending. `?v=`
   links break at the next refresh. Uncommitted edits to tracked files are not shown.
 - Layout classes still use the raw `zinc-*` palette; only status and project-state colours are theme tokens.
-- `/p/{project}` is the all-projects dashboard pinned to one project until SB-10.
+- Initiative rows on the project page are aggregates and open nothing; there is no drill-down from an
+  initiative to its stories yet. The project page has no initiative or search filter.
 - The initiative filter and search narrow only the What needs me cards and the sections; tiles and
   In flight always show the whole portfolio (ADR-018).
 - A failing project is retried at most every 5 minutes (staleness keys on the last attempt), so a

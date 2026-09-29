@@ -1,12 +1,12 @@
 # App shell and project switcher
-Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-7
+Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-7, SB-10
 
 ## Overview
 Every board page sits in one frame: a left sidebar that lists the enabled projects and switches
 between the all-projects view (`/`) and a single project's view (`/p/{project}`). Before this, the
 only way to change project was the `project` dropdown in the home page's filter bar. That stops
 working as the number of projects grows. The frame is design A from `docs/mockups/SB-7/option-a.html`
-(owner pick). SB-8 to SB-10 and SB-12 fill it in later.
+(owner pick). SB-8 to SB-10 filled it in; SB-12 switches on the Manage slot.
 
 ## How it works
 **The layout.** `resources/views/layouts/board.blade.php` wraps every board page in
@@ -43,16 +43,12 @@ button and the backdrop close it. `x-trap.noscroll="open"` holds focus in the op
 gone. The slide-in is a CSS animation on `.board-drawer[data-open]` in `resources/css/app.css`,
 switched off under `prefers-reduced-motion`.
 
-**`/p/{project}`, the single-project page (interim).** `routes/web.php` mounts
-`App\Livewire\Board\Home` a second time as `projects.show`. `Home::mount(?string $project)` stores
-the name in `#[Locked] public ?string $pinned` and logs `board.project_viewed` rather than
-`board.home_viewed`. `render()` narrows every card, figure, tile and section, the ID search and the
-initiative dropdown by `pinned`. SB-9 removed the `project` filter altogether, so on `/` nothing is
-pinned and the sidebar is the only project switcher. The view shows an "All projects / name"
-breadcrumb and a project heading.
-The page title is the project name. When SB-10 ships its own dashboard, `projects.show` will point at
-that component instead
-([ADR-014](../decisions/ADR-014-project-page-reuses-home-pinned.md)).
+**`/p/{project}`, the single-project page.** `routes/web.php` names the route `projects.show`. Since
+SB-10 it mounts `App\Livewire\Board\ProjectPage`, whose `mount()` logs `board.project_viewed`; see
+[Single-project dashboard](single-project-dashboard.md). SB-7 served it from `Home` pinned to the
+project; that mode and `Home`'s `$pinned` are gone
+([ADR-019](../decisions/ADR-019-project-page-is-its-own-component.md), superseding ADR-014). The
+sidebar is the only project switcher; `/` has no project filter since SB-9.
 
 **One refusal for every project URL.** `app/Actions/Board/CheckProjectShown.php:refusal($name)` returns
 `unknown`, `disabled` or null. Two middlewares call it:
@@ -75,12 +71,11 @@ None owned. Reads `projects` (`name`, `state`, `is_enabled`) and counts `stories
 (`location_kind IS NULL`). No migrations.
 
 ## Interfaces
-- `GET /p/{project:name}` (`projects.show`) → `Home` pinned to the project. 404 for an unknown or
+- `GET /p/{project:name}` (`projects.show`) → `ProjectPage` (SB-10). 404 for an unknown or
   disabled project.
 - `GET /?project=<name>[&…]` → 301 to `/p/<name>[?…]`, or 302 to `/` if the name is refused.
 - `CheckProjectShown::refusal(string): 'unknown'|'disabled'|null`. Constants `UNKNOWN` and `DISABLED`.
 - `<x-board.sidebar />` takes no props. It reads the current route.
-- `Home` gains `mount(?string $project)` and the locked `pinned`.
 - Theme tokens `--color-ok` and `--color-pending` (in `resources/css/app.css`). `stale` and
   `unreachable` reuse `--color-warning` and `--color-danger`.
 - Test hooks: `data-sidebar-all`, `data-sidebar-project="<name>"`, `data-story-count`,
@@ -93,7 +88,7 @@ a flag.
 ## Observability
 | Event | Level | Where | Context |
 |---|---|---|---|
-| `board.project_viewed` | info | `Home::mount()` on `/p/{project}` | `project` |
+| `board.project_viewed` | info | `ProjectPage::mount()` (SB-10; `Home::mount()` before) | `project` |
 | `board.project_page_refused` | info | `EnsureProjectIsShown` | `project`, `reason` (`unknown` / `disabled`) |
 | `board.project_filter_redirected` | info | `RedirectProjectFilter`, refused names only | `project`, `reason`, `to` (`home`) |
 
@@ -106,7 +101,8 @@ disabled project now logs `project_page_refused`, not `board.story_not_found`.
 - `tests/Feature/Board/AppShellTest.php` has one `it()` per acceptance criterion. It also covers the
   story route refused in the same place, redirects that keep other filters, a disabled project's old
   URL going to `/`, pinning that survives the query string and Clear filters, the empty sidebar, and
-  the Manage slot staying hidden.
+  the Manage slot staying hidden. The pinning test now checks `/p/coins` ignores `?project=` and has
+  no project dropdown (SB-10).
 - `tests/Browser/AppShellTest.php`: at 375px the drawer is hidden, the menu button opens it and
   Escape closes it. At desktop width, clicking a project switches to its page and typing filters the
   list.
@@ -118,8 +114,8 @@ disabled project now logs `project_page_refused`, not `board.story_not_found`.
 ## Key decisions & tradeoffs
 - The refusal is a middleware that runs before route binding, not a `Route::bind`, `->missing()` or
   `resolveRouteBinding` override → [ADR-013](../decisions/ADR-013-project-refusal-runs-before-route-binding.md).
-- `/p/{project}` reuses `Home` with a locked `pinned` rather than a wrapper component, until SB-10 →
-  [ADR-014](../decisions/ADR-014-project-page-reuses-home-pinned.md).
+- `/p/{project}` reused `Home` with a locked `pinned` until SB-10 (ADR-014); it is now its own
+  `ProjectPage` → [ADR-019](../decisions/ADR-019-project-page-is-its-own-component.md).
 - The sidebar works out "current" from the route rather than having each page pass it in, so new
   pages under `/p/{project}` get it for free.
 - Deviations from the mockup, both deliberate: the drawer breakpoint is `md` (768px), as the story
@@ -129,8 +125,6 @@ disabled project now logs `project_page_refused`, not `board.story_not_found`.
   so that every refusing branch logs.
 
 ## Known limitations & gotchas
-- `/p/{project}` is the all-projects dashboard pinned to one project, not a real project dashboard.
-  That is SB-10.
 - The sidebar re-queries projects and counts on every full page load, `wire:navigate` included.
   Counts are live as of the last refresh, not the moment.
 - ⌘K / Ctrl+K is captured window-wide on every board page, so the browser's own shortcut for that
@@ -138,3 +132,4 @@ disabled project now logs `project_page_refused`, not `board.story_not_found`.
 
 ## Change history
 2026-09-29 — Sidebar shell, `/p/{project}`, `/?project=` redirect, one project refusal before binding (SB-7, `d5867f6`)
+2026-09-29 — `projects.show` points at the new `ProjectPage`; `Home`'s pinned mode removed (SB-10, `a062331`)

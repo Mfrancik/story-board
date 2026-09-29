@@ -1,6 +1,6 @@
 # ADR-014 — `/p/{project}` reuses the Home component, pinned, until SB-10
 
-Date: 2026-09-29 · Status: accepted (interim; SB-10 replaces it)
+Date: 2026-09-29 · Status: superseded by [ADR-019](ADR-019-project-page-is-its-own-component.md)
 
 ## Context
 
