@@ -2,13 +2,13 @@
 
 namespace App\Livewire\Board;
 
+use App\Actions\Board\FindStoryVersion;
 use App\Actions\Board\ParseVersion;
 use App\Actions\Board\ReadMockupGate;
 use App\Actions\Board\RenderStory;
 use App\Models\Project;
 use App\Models\Story;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
@@ -23,9 +23,6 @@ use Livewire\Component;
 #[Layout('layouts.board')]
 class StoryPage extends Component
 {
-    /** Where off-main versions are looked for first when the ref has no such story. */
-    private const KIND_ORDER = [Story::KIND_BRANCH, Story::KIND_WORKTREE, Story::KIND_UNTRACKED];
-
     /** The project the story belongs to. */
     #[Locked]
     public Project $project;
@@ -50,11 +47,11 @@ class StoryPage extends Component
      * Resolve which version to show, load its text from git, or 404. An unknown or
      * disabled project never gets here: the route's EnsureProjectIsShown refuses it (SB-7).
      */
-    public function mount(Project $project, string $storyId, RenderStory $render, ReadMockupGate $gate, ParseVersion $parse): void
+    public function mount(Project $project, string $storyId, RenderStory $render, ReadMockupGate $gate, ParseVersion $parse, FindStoryVersion $find): void
     {
         $version = $parse->handle(request()->query('v'), ['project' => $project->name, 'story' => $storyId]);
 
-        $story = $this->resolve($project, $storyId, $version);
+        $story = $this->resolve($project, $storyId, $version, $find);
         $this->project = $project;
         $this->storyId = $storyId;
         $this->rowId = $story->id;
@@ -71,10 +68,10 @@ class StoryPage extends Component
     /**
      * Render the page.
      */
-    public function render(): View
+    public function render(FindStoryVersion $find): View
     {
         $story = Story::with('project')->findOrFail($this->rowId);
-        $all = Story::where('project_id', $this->project->id)->where('story_id', $this->storyId)->get();
+        $all = $find->all($this->project, $this->storyId);
         $onRef = $all->first(fn (Story $s) => $s->location_kind === null);
         // Depends-on IDs that exist in this project become links; others stay plain text.
         $known = Story::onRef()->where('project_id', $this->project->id)
@@ -84,61 +81,21 @@ class StoryPage extends Component
             'story' => $story,
             'known' => $known,
             'onRef' => $onRef,
-            'versions' => $this->versions($all, $story, $onRef),
+            'versions' => $find->others($all, $story),
         ])->title("{$story->story_id} — ".($story->title ?? 'not on main'));
     }
 
     /**
-     * The row to show: the requested version, else the ref's row, else the
-     * story's first off-main version (a story that exists only on a branch).
+     * The row to show, or a logged 404 when the story or version does not exist.
      */
-    private function resolve(Project $project, string $storyId, ?int $version): Story
+    private function resolve(Project $project, string $storyId, ?int $version, FindStoryVersion $find): Story
     {
-        $query = Story::where('project_id', $project->id)->where('story_id', $storyId);
-
-        $story = match (true) {
-            $version !== null => (clone $query)->offMain()->find($version),
-            default => (clone $query)->onRef()->first()
-                ?? (clone $query)->offMain()->get()->sortBy(fn (Story $s) => array_search($s->location_kind, self::KIND_ORDER, true))->first(),
-        };
+        $story = $find->handle($project, $storyId, $version);
         if ($story === null) {
             Log::info('board.story_not_found', ['project' => $project->name, 'story' => $storyId, 'v' => $version, 'reason' => 'no such story or version']);
             abort(404);
         }
 
         return $story;
-    }
-
-    /**
-     * Banner lines for every version other than the one shown: what each says
-     * differently from main, and where it lives ("Picked D on branch x — not on main").
-     *
-     * @param  Collection<int, Story>  $all
-     * @return list<array{id: int, text: string, onRef: bool}>
-     */
-    private function versions(Collection $all, Story $shown, ?Story $onRef): array
-    {
-        $lines = [];
-        foreach ($all as $version) {
-            if ($version->id === $shown->id) {
-                continue;
-            }
-            if ($version->location_kind === null) {
-                $lines[] = ['id' => $version->id, 'text' => 'The version on main: '.($version->status ?? 'no status'), 'onRef' => true];
-
-                continue;
-            }
-
-            $chosen = $version->mockups['chosen'] ?? null;
-            $what = match (true) {
-                $onRef === null => 'Exists only',
-                $chosen !== null && $chosen !== ($onRef->mockups['chosen'] ?? null) => 'Picked '.strtoupper($chosen),
-                $version->status !== $onRef->status => ucfirst((string) $version->status),
-                default => 'Changed',
-            };
-            $lines[] = ['id' => $version->id, 'text' => "{$what} {$version->placePhrase()} — not on main", 'onRef' => false];
-        }
-
-        return $lines;
     }
 }

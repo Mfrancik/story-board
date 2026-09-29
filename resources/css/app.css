@@ -84,18 +84,36 @@ select:focus[data-flux-control] {
     display: none !important;
 }
 
-/* A mockup thumbnail (SB-3 expanded row): the option renders at a desktop viewport, 1280×800,
-   then scales down to fit its 11rem-wide box. The render size is a viewport, not a layout
-   value, so it lives here once rather than as arbitrary values in a view. */
+/* A mockup thumbnail (SB-8 story modal rail): the option renders at a desktop viewport, 1280×800,
+   then scales down to fit its 4.5rem-wide box — three to a row in the 20rem rail. The render size
+   is a viewport, not a layout value, so it lives here once rather than as arbitrary values in a view. */
+.mockup-thumb-box {
+    position: relative;
+    overflow: hidden;
+    width: 4.5rem;
+    height: 2.8125rem;
+}
+
 .mockup-thumb {
     position: absolute;
     inset: 0 auto auto 0;
     width: 1280px;
     height: 800px;
-    transform: scale(0.1375);
+    transform: scale(0.05625);
     transform-origin: top left;
     pointer-events: none;
     border: 0;
+}
+
+/* The story modal (SB-8, design A): about 90% of the viewport, a bottom sheet a little taller on phones. */
+.board-modal {
+    height: 92vh;
+}
+
+@media (min-width: 40rem) {
+    .board-modal {
+        height: 90vh;
+    }
 }
 
 /* A mockup option on the story page (SB-4): tall enough to judge a screen, width set by the 375/768/1280 toggle. */

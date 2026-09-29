@@ -1,11 +1,9 @@
 <?php
 
 use App\Exceptions\GitReaderException;
-use App\Livewire\Board\Home;
 use App\Models\Project;
 use App\Services\GitReader;
 use Illuminate\Support\Facades\Log;
-use Livewire\Livewire;
 
 /**
  * L-5: every guard that refuses input says why in the log. One test per guard
@@ -41,12 +39,6 @@ it('logs a mockup request for a disabled project', function () {
     $this->get('/p/off/m/AB-1/option-a.html')->assertNotFound();
 
     logged('info', 'board.mockup_not_found', fn ($c) => $c['reason'] === 'project disabled');
-});
-
-it('logs an expand of a row that is gone', function () {
-    Livewire::test(Home::class)->call('expand', 999999);
-
-    logged('info', 'board.story_not_found', fn ($c) => $c['row'] === 999999);
 });
 
 it('logs a refused project registration', function () {

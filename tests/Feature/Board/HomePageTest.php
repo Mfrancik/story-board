@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
-use Tests\Support\GitFixture;
 
 /**
  * SB-3 acceptance criteria, against the rendered page.
@@ -135,25 +134,6 @@ it('shows ten rows per group, then the rest on request', function () {
         ->assertSeeHtml('data-row="AP-12"');
 });
 
-it('expands a row in place with the story text from the ref and its mockup options', function () {
-    $fixture = new GitFixture;
-    $fixture->story('FX-1', 'approved', 'demo', "## Why\nBecause **reasons**.\n<script>alert(1)</script>\n")
-        ->write('docs/mockups/FX-1/option-a.html', 'a')->write('docs/mockups/FX-1/option-b.html', 'b')
-        ->commitAndPush();
-    $project = Project::factory()->create(['name' => 'fx', 'path' => $fixture->project, 'indexed_at' => now()]);
-    $this->artisan('board:refresh', ['project' => 'fx'])->assertSuccessful();
-    $story = $project->stories()->onRef()->where('story_id', 'FX-1')->sole();
-
-    Livewire::test(Home::class)
-        ->call('expand', $story->id)
-        ->assertSeeHtml('<strong>reasons</strong>')
-        ->assertDontSeeHtml('<script>alert(1)</script>')
-        ->assertSeeHtml('sandbox="allow-scripts"')
-        ->assertSeeHtml('src="'.route('mockups.file', ['project' => 'fx', 'storyId' => 'FX-1', 'file' => 'option-b.html']).'"');
-
-    $fixture->destroy();
-});
-
 it('refreshes every enabled project on the queue when Refresh is pressed', function () {
     Bus::fake();
     Log::spy();
@@ -206,21 +186,14 @@ it('queues one refresh per project however many times the page loads', function 
     expect(collect(Queue::pushedJobs()[RefreshProjectJob::class] ?? [])->filter(fn ($p) => $p['job']->project->is($this->coins)))->toHaveCount(1);
 });
 
-it('refuses browser edits to the expanded bodies and open sections', function () {
-    Livewire::test(Home::class)->set('bodies', [1 => '<script>alert(1)</script>']);
+it('refuses browser edits to the open sections', function () {
+    Livewire::test(Home::class)->set('openSections', ['built']);
 })->throws(CannotUpdateLockedPropertyException::class);
 
 it('confirms a refresh in the button\'s own verb', function () {
     Bus::fake();
 
     Livewire::test(Home::class)->call('refresh')->assertSee('Refresh queued for 2 projects');
-});
-
-it('does not expand a story from a disabled project', function () {
-    $off = Project::factory()->disabled()->create();
-    $story = Story::factory()->for($off)->create();
-
-    Livewire::test(Home::class)->call('expand', $story->id)->assertSet("bodies.{$story->id}", '');
 });
 
 it('labels each project card with its own ref', function () {

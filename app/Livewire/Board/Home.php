@@ -3,7 +3,6 @@
 namespace App\Livewire\Board;
 
 use App\Actions\Board\ListWhatNeedsMe;
-use App\Actions\Board\RenderStory;
 use App\Jobs\RefreshProjectJob;
 use App\Models\Project;
 use App\Models\Story;
@@ -17,7 +16,8 @@ use Livewire\Component;
 /**
  * The board's home (SB-3, mockup A "Inbox"): what is waiting on the owner
  * across every project, then collapsible Built and Parked drafts, then one card
- * per project. Reads the stored snapshot; git only for an expanded story's text.
+ * per project. Reads the stored snapshot only; a row opens the story modal (SB-8),
+ * which does its own git read.
  * Also serves `/p/{project}` (SB-7), pinned to that project until SB-10 gives
  * the single-project page its own dashboard.
  */
@@ -49,8 +49,8 @@ class Home extends Component
     public string $q = '';
 
     /*
-     * Locked: public Livewire properties are otherwise settable from the browser, and
-     * `bodies` is rendered as HTML — only the server's own actions may change these three.
+     * Locked: public Livewire properties are otherwise settable from the browser —
+     * only the server's own actions may change these.
      */
 
     /** @var list<string> groups the owner expanded past the first PAGE rows */
@@ -60,10 +60,6 @@ class Home extends Component
     /** @var list<string> collapsible sections currently open */
     #[Locked]
     public array $openSections = [];
-
-    /** @var array<int, string> rendered story bodies by stories.id, fetched on first expand */
-    #[Locked]
-    public array $bodies = [];
 
     /**
      * The project this page is fixed to on `/p/{project}`, null on `/`. Locked and
@@ -132,23 +128,6 @@ class Home extends Component
         if (in_array($group, [...self::GROUPS, ...self::SECTIONS], true) && ! in_array($group, $this->expandedGroups, true)) {
             $this->expandedGroups[] = $group;
         }
-    }
-
-    /**
-     * Load a story's text for its expanded row. Opening and closing the row is
-     * Alpine state; this runs once per story, the first time it is opened.
-     */
-    public function expand(int $storyId, RenderStory $render): void
-    {
-        if (isset($this->bodies[$storyId])) {
-            return;
-        }
-
-        $story = Story::onRef()->with('project')->whereHas('project', fn ($q) => $q->where('is_enabled', true))->find($storyId);
-        if ($story === null) {
-            Log::info('board.story_not_found', ['row' => $storyId, 'reason' => 'no such row on an enabled project']);
-        }
-        $this->bodies[$storyId] = $story ? ($render->handle($story) ?? '') : '';
     }
 
     /**

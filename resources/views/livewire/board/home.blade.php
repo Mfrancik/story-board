@@ -1,4 +1,4 @@
-{{-- SB-3 home — mockup A (Inbox), rows expand in place, Built / Parked drafts collapsible.
+{{-- SB-3 home — mockup A (Inbox), Built / Parked drafts collapsible. A row opens the SB-8 story modal.
      On /p/{project} (SB-7) the same content is pinned to one project: its name heads the page
      and the project filter is gone, because the sidebar is how you change project. --}}
 @php
@@ -41,6 +41,9 @@
         <p role="status" class="mt-3 rounded-md border border-built/50 bg-built/10 px-3 py-2 text-sm">{{ $notice }}</p>
     @endif
 
+    {{-- SB-8: `?story=<project>/<ID>` opens here, on / and on /p/{project}. --}}
+    <livewire:board.story-modal />
+
     <div class="mt-4 flex flex-wrap items-center gap-2" role="search">
         @unless ($pinned)
             <label class="sr-only" for="f-project">Project</label>
@@ -75,7 +78,7 @@
             @php $rows = $$key; $all = in_array($key, $expandedGroups, true); @endphp
             <x-board.section :key="$key" :title="$g['title']" :count="$rows->count()" :hint="$g['hint']" :note="$g['note']" :accent="$g['accent']">
                 @forelse ($all ? $rows : $rows->take(\App\Livewire\Board\Home::PAGE) as $story)
-                    <x-board.story-row :story="$story" :body="$bodies[$story->id] ?? null" :group="$key" />
+                    <x-board.story-row :story="$story" :group="$key" />
                 @empty
                     <p class="px-3 py-3 text-sm text-zinc-500 dark:text-zinc-400">{{ $g['empty'] }}</p>
                 @endforelse
@@ -95,7 +98,7 @@
             @php $open = in_array($key, $openSections, true); $rows = $sections[$key] ?? collect(); $all = in_array($key, $expandedGroups, true); @endphp
             <x-board.section :key="$key" :title="$title" :count="$count" :hint="$hint" :accent="$accent" collapsible :open="$open">
                 @forelse ($all ? $rows : $rows->take(\App\Livewire\Board\Home::SECTION_PAGE) as $story)
-                    <x-board.story-row :story="$story" :body="$bodies[$story->id] ?? null" :group="$key" />
+                    <x-board.story-row :story="$story" :group="$key" />
                 @empty
                     <p class="px-3 py-3 text-sm text-zinc-500 dark:text-zinc-400">None{{ $filtered ? ' match the filters' : '' }}.</p>
                 @endforelse

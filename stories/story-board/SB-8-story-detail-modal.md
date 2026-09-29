@@ -1,5 +1,5 @@
 # SB-8 — Story detail modal
-Status: approved         Journey: none
+Status: built            Journey: none
 Source: owner 2026-09-29 (/story): *"id like clicking one of the line items to open a big modal to show me
 everything there."* Owner answer: the modal is URL-addressable.
 
