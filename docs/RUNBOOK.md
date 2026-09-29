@@ -10,6 +10,12 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-09-29 — Every story page view made two extra mockup requests
+Symptom: opening a story page served two more mockup files than it had option frames, even though the compare overlay was never opened.
+Root cause: the compare overlay's two iframes were inside an `x-show` container. `x-show` renders the element and only hides it with CSS, so both frames loaded their `src` (two requests, two `git show`s) on every view.
+Fix: the overlay is `<template x-teleport="body"><template x-if="compare">…`, so the frames are created only while it is open (`resources/views/livewire/board/story-page.blade.php`; SB-4, `e4c2d9e`). Use `x-if`, not `x-show`, for any hidden iframe. Pinned by `StoryPageTest` "does not load the compare frames until the overlay opens".
+Log trail: per page view, more `board.mockup_served` (debug) lines than the story has options. Found by the preflight audit.
+
 ## 2026-09-29 — Horizontal scroll at 375 px on the home page
 Symptom: `/` scrolled sideways on a 375 px viewport, although every row is `truncate`d.
 Root cause: `status-chip`'s `sr-only` text ("has parse errors") is `position: absolute`. With no positioned ancestor, it was placed relative to the page instead of the truncated row, so it escaped the row's overflow clipping and widened the document.

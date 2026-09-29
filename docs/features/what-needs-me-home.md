@@ -1,5 +1,5 @@
 # What needs me (home page)
-Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-3
+Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-3, SB-4
 
 ## Overview
 `/` answers one question across every registered project: what is waiting on the owner? It lists
@@ -39,27 +39,29 @@ filters applied:
 A search shaped like a story ID (`ID_PATTERN`, CLAUDE.md step 6) matches `story_id` exactly, so
 `MOB-65` does not also match `MOB-650`. Any other search is a `LIKE` on ID or title, with `%`, `_` and
 `\` escaped. `withId()` catches an ID search that no visible group answers, such as a cancelled
-story. The page then says which status the story has and, once SB-4's `stories.show` route exists,
-links to it.
+story. The page then says which status the story has and links to its
+[story page](story-page-and-mockups.md) (`stories.show`).
 
 **The component.** `app/Livewire/Board/Home.php` is the page, mounted at `/` with
 `Route::livewire('/', Home::class)` in `routes/web.php`.
 - `mount()` logs `board.home_viewed` and queues a `RefreshProjectJob` for each enabled project whose
   `needsRefresh()` is true. Queued rather than run after the response; see
   [ADR-006](../decisions/ADR-006-refresh-runs-on-the-queue.md).
-- `refresh()` is the Refresh button. It logs `board.refresh_requested` and queues a job for every
-  enabled project.
+- `refresh()` is the Refresh button. It logs `board.refresh_requested`, queues a job for every
+  enabled project, and sets the locked `notice` ("Refresh queued for N projects…"), shown as a
+  `role="status"` line.
 - `project`, `initiative` and `q` are `#[Url]` properties, so filters survive a reload and can be
   shared as a link.
 - `toggleSection()` opens Built or Parked drafts. `showAll()` lifts a group's row cap: `Home::PAGE`
-  for the three groups, and a separate cap written into the view for the sections.
-- `expand($id)` renders a story's text on the first open of its row, through
+  for the three groups and `Home::SECTION_PAGE` for the sections.
+- `expand($id)` renders a story's text on the first open of its row, only for a story whose project
+  is enabled, through
   `app/Actions/Board/RenderStory.php`. That class reads the file with `GitReader::show()` at the
   row's `sha` and converts it with `Str::markdown` (`html_input=escape`,
   `allow_unsafe_links=false`). Opening and closing a row is Alpine state (`x-data="{ open }"` in
   `story-row`), so it costs no round trip after the first open. See
   [ADR-007](../decisions/ADR-007-story-text-read-on-expand.md).
-- `bodies`, `openSections` and `expandedGroups` are `#[Locked]`. Livewire public properties can
+- `bodies`, `openSections`, `expandedGroups` and `notice` are `#[Locked]`. Livewire public properties can
   otherwise be set from the browser, and `bodies` is printed raw (`{!! !!}`).
 
 **The view.** `resources/views/livewire/board/home.blade.php` uses the `layouts/board` shell (no
@@ -69,10 +71,10 @@ collapsible sections and the project cards. The Blade components are in
 - `section`: a boxed list with a heading, count and hint. Optionally collapsible.
 - `story-row`: one row that expands in place to chips, the story text and mockup thumbnails. A
   thumbnail is a sandboxed `<iframe>` of the SB-4 route `mockups.file`, created only while the row is
-  open (`<template x-if="open">`). The `.mockup-thumb` class in `resources/css/app.css` renders it at
+  open (`<template x-if="open">`). "Open full page →" links to the story page. The `.mockup-thumb` class in `resources/css/app.css` renders it at
   1280×800 and scales it down.
 - `project-card`: status bar and counts, a parse-error warning, stale/unreachable/pending state,
-  `last_error`, SHA and "indexed ago".
+  `last_error`, the project's own ref @ SHA, and "indexed ago".
 - `status-chip`: shows the raw status. Any value outside the vocabulary gets the danger tone.
 
 **Request IDs.** `app/Http/Middleware/AssignRequestId.php` is prepended to every request in
@@ -167,20 +169,12 @@ outlive a killed process until its TTL runs out, and that is expected.
 - **No worker, no refresh.** See Configuration.
 - **A migrated but unrefreshed row** reads `is_parked=false` and `dated_on=null`, so a parked draft
   shows under Awaiting approval until the next refresh.
-- The Built/Parked row cap (`50`) is hardcoded in `home.blade.php` rather than a constant. Carried to
-  SB-4.
-- The Refresh button gives no success confirmation. The jobs are queued and the snapshot changes on
-  a later render. Carried to SB-4.
-- `Home::expand()` looks up any on-ref story by id without checking that its project is enabled.
-  Carried to SB-4.
-- The page subtitle and the project card show `origin/main` as a literal rather than the project's
-  `ref`.
-- The initiative dropdown lists initiatives from every project, including disabled ones.
+- The Built section's hint still reads "on origin/main" as a literal in `home.blade.php`. The
+  subtitle and project cards now use each project's ref.
 - Layout classes still use the raw `zinc-*` palette. Only the status colours are tokens (preflight
   WARN, deferred).
-- The story link ("Open full page →", "Go to <ID> →") appears only once SB-4's `stories.show` route
-  exists (`Route::has`).
 
 ## Change history
 2026-09-29 — Snapshot facts `is_parked` and `dated_on`, `ListWhatNeedsMe`, `GitReader::listFiles` (SB-3, data layer, `a1874aa`)
 2026-09-29 — Livewire home replaces SB-2's bare list. Expand in place, Built/Parked sections, project cards, URL filters, queued refresh, request IDs (SB-3)
+2026-09-29 — Refresh confirmation, `SECTION_PAGE`, `expand()` and the initiative list limited to enabled projects, cards show the project's ref, story links resolve (SB-4)
