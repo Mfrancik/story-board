@@ -171,6 +171,19 @@ it('ignores `## L-` headings inside HTML comments and code fences', function () 
         ->and($lessons[0])->toMatchArray(['date' => '2026-09-03', 'name' => 'Lesson number 3', 'scope' => 'PROJECT-ONLY']);
 });
 
+it('shows a lesson scope as a short chip and keeps the full scope text as its tooltip', function () {
+    // Real ledgers write prose after the keyword (coins L-5), and "not promoted" must not read as Central.
+    $long = 'PROJECT-ONLY — the light-only choice is this project\'s call. (Generally good practice but not promoted as a hard central rule.)';
+    $markdown = "## L-2 — 2026-09-02 — Long scope\nScope: {$long}\n\n## L-1 — 2026-09-01 — Central\nScope: PROMOTE TO CENTRAL\n\n## L-3 — 2026-09-03 — Odd\nScope: kit-wide once proven in two projects\n";
+    $lessons = app(ReadHandbook::class)->parseLessons($markdown);
+
+    expect(array_column($lessons, 'scope_label', 'number'))->toBe([3 => 'Other', 2 => 'Project only', 1 => 'Central']);
+
+    $html = handbookSection(handbookProject($this, 'coins', ['docs/LESSONS.md' => $markdown]), 'lessons');
+    expect($html)->toContain('>Project only</span>')->toContain('title="'.e($long).'"')
+        ->not->toContain('>'.e($long).'</span>');
+});
+
 it('Given asset-track, which has no docs/LESSONS.md and no docs/standards/, then Lessons and Standards show empty states naming the file and the page still returns 200', function () {
     $asset = handbookProject($this, 'asset-track', ['CLAUDE.md' => "# Asset\n"]);
 

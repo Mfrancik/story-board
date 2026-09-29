@@ -78,7 +78,7 @@ class ReadHandbook
     /**
      * The project's lessons, newest first, or null when it has no LESSONS.md.
      *
-     * @return list<array{number: int, date: string|null, name: string, scope: string|null, html: string}>|null
+     * @return list<array{number: int, date: string|null, name: string, scope: string|null, scope_label: string|null, html: string}>|null
      */
     public function lessons(Project $project): ?array
     {
@@ -93,7 +93,7 @@ class ReadHandbook
      * ledger carries its entry format as a commented-out `## L-<n>` template, and
      * counting it is what made the story's first real counts one too high.
      *
-     * @return list<array{number: int, date: string|null, name: string, scope: string|null, html: string}>
+     * @return list<array{number: int, date: string|null, name: string, scope: string|null, scope_label: string|null, html: string}>
      */
     public function parseLessons(string $markdown): array
     {
@@ -143,11 +143,14 @@ class ReadHandbook
                 ? [$m[1], trim($m[2])]
                 : [null, $entry['rest']];
 
+            $scope = preg_match('/^Scope:\s*(.+)$/mi', $body, $s) ? trim($s[1]) : null;
+
             return [
                 'number' => $entry['number'],
                 'date' => $date,
                 'name' => $name,
-                'scope' => preg_match('/^Scope:\s*(.+)$/mi', $body, $s) ? trim($s[1]) : null,
+                'scope' => $scope,
+                'scope_label' => self::scopeLabel($scope),
                 'html' => $this->markdown->toHtml($body),
             ];
         }, $entries);
@@ -155,6 +158,25 @@ class ReadHandbook
         usort($lessons, fn ($a, $b) => $b['number'] <=> $a['number']);
 
         return $lessons;
+    }
+
+    /**
+     * A lesson's scope as a chip-sized label: "Central", "Project only" or "Other".
+     * Ledgers often follow the keyword with prose (coins L-5 runs to a paragraph),
+     * so only the LEADING keyword decides — a "not promoted" later in a PROJECT-ONLY
+     * scope must not read as Central. The full text stays available as a tooltip.
+     */
+    public static function scopeLabel(?string $scope): ?string
+    {
+        if ($scope === null) {
+            return null;
+        }
+
+        return match (true) {
+            (bool) preg_match('/^PROMOTE\b/i', $scope) => 'Central',
+            (bool) preg_match('/^PROJECT[- ]ONLY\b/i', $scope) => 'Project only',
+            default => 'Other',
+        };
     }
 
     /**

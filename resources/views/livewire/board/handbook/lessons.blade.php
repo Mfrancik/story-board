@@ -23,10 +23,11 @@
                         class="grid w-full grid-cols-[3rem_1fr_auto] items-center gap-x-3 gap-y-1 px-5 py-3 text-left hover:bg-zinc-50 sm:grid-cols-[3.5rem_6.5rem_1fr_auto] dark:hover:bg-zinc-800/60">
                         <span class="font-mono text-xs font-medium text-zinc-500 dark:text-zinc-400">L-{{ $lesson['number'] }}</span>
                         <span class="hidden text-xs text-zinc-500 tabular-nums sm:block dark:text-zinc-400">{{ $lesson['date'] ?? '—' }}</span>
-                        <span class="text-sm font-medium">{{ $lesson['name'] }}</span>
+                        <span class="min-w-0 text-sm font-medium">{{ $lesson['name'] }}</span>
                         <span class="row-span-2 flex items-center gap-2 sm:row-span-1">
-                            @if ($lesson['scope'])
-                                <span class="hidden rounded-full px-2 py-0.5 text-xs ring-1 ring-zinc-300 ring-inset md:inline dark:ring-zinc-700">{{ $lesson['scope'] }}</span>
+                            {{-- A short chip; the ledger's full Scope line (often prose) is the tooltip and sits in the expanded body. --}}
+                            @if ($lesson['scope_label'])
+                                <span title="{{ $lesson['scope'] }}" class="hidden shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-xs text-zinc-600 ring-1 ring-zinc-300 ring-inset md:inline dark:text-zinc-400 dark:ring-zinc-700">{{ $lesson['scope_label'] }}</span>
                             @endif
                             <svg class="size-4 text-zinc-400 transition-transform" x-bind:class="open && 'rotate-180'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
                         </span>
