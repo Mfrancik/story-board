@@ -1,5 +1,5 @@
 # Project brief — story-board
-Last refreshed: 2026-09-29 (SB-5)
+Last refreshed: 2026-09-29 (SB-7)
 
 ## What it is, and for whom
 A localhost Laravel app for one owner. It reads the `stories/` folder of every project that uses
@@ -33,6 +33,7 @@ shown beside it, labelled with where it lives, and never counts as status.
 | What needs me: `/` lists drafts to approve, mockups to pick and work to build; rows expand in place; project cards; URL filters | active (SB-3, SB-4, SB-5) | [doc](features/what-needs-me-home.md) |
 | Story page and mockups: `/p/{project}/s/{id}`, story above sandboxed mockup frames, 375/768/1280, full-screen compare; raw mockup route; `?v=` versions banner | active (SB-4, SB-5) | [doc](features/story-page-and-mockups.md) |
 | Not on main: branches, worktrees and untracked stories/mockups, indexed at refresh; home section and story-page banner; `board:project alias` | active (SB-5) | [doc](features/not-on-main.md) |
+| App shell and project switcher: sidebar on every page, filterable project list, drawer below 768px, `/p/{project}`, `/?project=` redirect | active (SB-7) | [doc](features/app-shell-and-project-switcher.md) |
 
 ## Journeys
 None yet. Every SB story so far is `Journey: none`.
@@ -45,6 +46,14 @@ None yet. Every SB story so far is `Journey: none`.
 | SB-4 | Read a story and see its mockups side by side | built |
 | SB-5 | Show work that isn't on main yet | built |
 | SB-6 | The board on an always-live domain (parked) | draft |
+| SB-7 | App shell and project switcher | built |
+| SB-8 | Story detail modal | approved |
+| SB-9 | All-projects dashboard | approved |
+| SB-10 | Single-project dashboard | approved |
+| SB-11 | Live sessions | approved |
+| SB-12 | Manage projects from the board | approved |
+| SB-13 | Pick a mockup from the board | approved |
+| SB-14 | Project handbook | approved |
 
 SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this repo.
 
@@ -68,15 +77,20 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
   [ADR-011](decisions/ADR-011-off-main-text-parsed-by-the-kits-own-parser.md)
 - Four more read-only git forms are allowed. Untracked files are read only at refresh and never
   served → [ADR-012](decisions/ADR-012-off-main-reads-stay-read-only-and-in-git.md)
+- An unknown or disabled project is refused by one middleware that runs before route binding, so it
+  always logs → [ADR-013](decisions/ADR-013-project-refusal-runs-before-route-binding.md)
+- `/p/{project}` reuses the home component pinned to one project until SB-10 →
+  [ADR-014](decisions/ADR-014-project-page-reuses-home-pinned.md)
 - The board is read-only: no approve, pick or cancel actions (owner ruling). Compare is Alpine-only.
 - Preflight audit scope and isolation, audit cost record, build-artifact disposal (kit) →
   ADR-001 to ADR-003
 
 ## Current phase and what's next
-Localhost first. The data layer (SB-2), the "What needs me" home (SB-3), the story page with mockups
-(SB-4) and Not on main (SB-5) are built. SB-5 was the last approved story, so the phase is at its
-end: `/lesson retro` and a `full` preflight sweep are due. SB-6 (hosted) stays parked. F-2
-(timeline of what was built) is in the backlog.
+Phase 2: UI organisation (SB-7 to SB-14). Phase 1 (SB-2 to SB-5) is built and
+retro'd. SB-7 has shipped the sidebar shell and `/p/{project}`. Next: SB-8 (story modal), SB-9 and SB-10
+(the all-projects and single-project dashboards that fill the shell), SB-11 (live sessions), SB-12
+(Manage projects, which switches on the sidebar's Manage slot), SB-13 (pick a mockup) and SB-14
+(handbook). SB-6 (hosted) stays parked. F-2 (a timeline of what was built) is in the backlog.
 
 ## Known limitations
 - Laravel 13 / Livewire 4 are installed (starter kit), while `CLAUDE.md` says 12 / 3. Flagged to the
@@ -86,7 +100,9 @@ end: `/lesson retro` and a `full` preflight sweep are due. SB-6 (hosted) stays p
   the story page quotes such a choice without marking a frame.
 - Untracked stories and mockups are listed but cannot be opened on the board (not in git). `?v=`
   links break at the next refresh. Uncommitted edits to tracked files are not shown.
-- Layout classes still use the raw `zinc-*` palette; only status colours are theme tokens.
+- Layout classes still use the raw `zinc-*` palette; only status and project-state colours are theme tokens.
+- `/p/{project}` is the home content filtered to one project, and `/` still has its project dropdown
+  next to the sidebar, until SB-10 and SB-9.
 - A failing project is retried at most every 5 minutes (staleness keys on the last attempt), so a
   fixed remote can take that long to show as `ok` without a manual `board:refresh`.
 - Dev server runs on port 8010 (coins holds 8000/8001). There is no git remote for this repo, by

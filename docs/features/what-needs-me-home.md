@@ -1,5 +1,5 @@
 # What needs me (home page)
-Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-3, SB-4, SB-5
+Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-3, SB-4, SB-5, SB-7
 
 ## Overview
 `/` answers one question across every registered project: what is waiting on the owner? It lists
@@ -67,8 +67,9 @@ story. The page then says which status the story has and links to its
 - `bodies`, `openSections`, `expandedGroups` and `notice` are `#[Locked]`. Livewire public properties can
   otherwise be set from the browser, and `bodies` is printed raw (`{!! !!}`).
 
-**The view.** `resources/views/livewire/board/home.blade.php` uses the `layouts/board` shell (no
-sidebar, no auth, Flux appearance for light/dark). It has a filter bar, the three groups, the three
+**The view.** `resources/views/livewire/board/home.blade.php` uses the `layouts/board` shell (the SB-7 project
+sidebar, no auth, Flux appearance for light/dark). The same component also serves `/p/{project}`,
+pinned to one project; see [App shell and project switcher](app-shell-and-project-switcher.md). It has a filter bar, the three groups, the three
 collapsible sections (Not on main, Built, Parked drafts) and the project cards. The Blade components are in
 `resources/views/components/board/`:
 - `section`: a boxed list with a heading, count and hint. Optionally collapsible.
@@ -98,7 +99,9 @@ refresh's log lines on the worker trace back to the page load or button press th
 - The page reads `projects` and `stories` and writes nothing. The board is read-only by owner ruling.
 
 ## Interfaces
-- `GET /` (route `home`) → `App\Livewire\Board\Home`. Query string: `?project=<name>&initiative=<name>&q=<text>`.
+- `GET /` (route `home`) → `App\Livewire\Board\Home`. Query string: `?initiative=<name>&q=<text>`. A
+  `?project=<name>` is redirected to `/p/<name>` by `RedirectProjectFilter` (SB-7).
+- `GET /p/{project}` (route `projects.show`) → the same component, pinned (SB-7).
 - Livewire actions: `refresh`, `toggleSection('offmain'|'built'|'parked')`, `showAll(<group>)`,
   `expand(<stories.id>)`, `clearFilters`.
 - `ListWhatNeedsMe::handle(?project, ?initiative, ?search)` returns
@@ -186,3 +189,4 @@ outlive a killed process until its TTL runs out, and that is expected.
 2026-09-29 — Livewire home replaces SB-2's bare list. Expand in place, Built/Parked sections, project cards, URL filters, queued refresh, request IDs (SB-3)
 2026-09-29 — Refresh confirmation, `SECTION_PAGE`, `expand()` and the initiative list limited to enabled projects, cards show the project's ref, story links resolve (SB-4)
 2026-09-29 — Not on main section (off-main rows, location labels, mockups-only tag, `?v=` links); Built hint now says "on each project's ref" (SB-5)
+2026-09-29 — Rendered in the sidebar shell; `/p/{project}` reuses the component pinned to one project; `?project=` redirects there (SB-7)
