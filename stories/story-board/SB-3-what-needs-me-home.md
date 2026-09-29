@@ -56,8 +56,25 @@ The owner picked this over counts or a kanban. The board is for making decisions
 ## Design mockup gate
 - Mockups: `docs/mockups/SB-3/option-{a,b,c}.html`, using the real coins data shape (~900 stories,
   4 projects).
-- Chosen option: _pending_
-- Why I chose it: _pending_
+- Chosen option: a
+- Why I chose it: "A is fine, but I'd like to be able to select things and they open up and give more
+  detail, mockups, etc." (owner, 2026-09-29) — rows expand in place (below).
+
+## Owner rulings at the gate (2026-09-29)
+- **Rows expand in place** (accordion, several open at once): chips, the story text and the mockup
+  options as thumbnails, plus "Open full page →" to SB-4. Expanding reads the story through
+  `GitReader` at the snapshot SHA; the list itself still reads only the `stories` table.
+- **Collapsible sections under the three groups, closed by default**, same rows, filters and expand:
+  **Built** and **Parked drafts**. Cancelled stays out (reachable by an ID search, which offers the
+  story page when the ID is not in any visible group).
+- **Parked** = the initiative README's `Status:` starts `draft group` (kit §Draft groups), not any
+  README. Coins: only `import`.
+- **Awaiting a mockup pick** counts draft and approved stories only. Its accuracy depends on the kit
+  parser reading `Chosen option: **B**` (F-1): owner ruling, fix in the kit first, board unchanged.
+- **Ready to build, oldest first** = first date in the story's `Source:` line; undated last.
+- **Request IDs:** add the `AssignRequestId` middleware (logging-standards) in this build, carried
+  into the after-response refresh job.
+- A timeline of what was built, in order, is logged as F-2 — not this story.
 
 ## Do NOT touch
 - Registered projects. SB-2's `GitReader`, except to call it.

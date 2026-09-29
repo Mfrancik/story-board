@@ -51,8 +51,14 @@ through /story or /build, by the read-only ruling.
 
 ## Design mockup gate
 - Mockups: `docs/mockups/SB-4/option-{a,b}.html` (layout: story beside mockups, or story above them).
-- Chosen option: _pending_
-- Why I chose it: _pending_
+- Chosen option: b
+- Why I chose it: story above the mockups gives the frames the full width; owner also asked for "an
+  option to open a bigger browser screen and pick two to see side by side" (owner, 2026-09-29).
+
+## Owner rulings at the gate (2026-09-29)
+- **Full-screen compare**: a Compare button opens a full-window overlay; choose any two options
+  (default: the chosen one and the first other), each fills half the screen at 375/768/1280, with a
+  swap button; Esc closes. Pure UI state (Alpine) — nothing is recorded; the board stays read-only.
 
 ## Do NOT touch
 - Registered projects' files. SB-3's home layout, apart from pointing its rows at this page.
