@@ -20,6 +20,8 @@ class ListWhatNeedsMe
 
     /**
      * The three groups and the project summaries, each narrowed by the same filters.
+     * The project summaries and In flight (SB-9) describe the whole portfolio, so
+     * only the project filter narrows them — never the initiative or the search.
      *
      * @param  string|null  $project  a project name, or null for all
      * @param  string|null  $initiative  an initiative folder name, or null for all
@@ -31,12 +33,14 @@ class ListWhatNeedsMe
      *     parked: int,
      *     built: int,
      *     offmain: int,
-     *     projects: list<array{name: string, ref: string, state: string, sha: string|null, indexed_at: Carbon|null, last_error: string|null, counts: array<string, int>, parse_errors: int}>
+     *     projects: list<array{name: string, ref: string, state: string, sha: string|null, indexed_at: Carbon|null, last_error: string|null, counts: array<string, int>, parse_errors: int, offmain: int}>,
+     *     in_flight: array{approved: int, offmain: int, not_ok: list<string>}
      * }
      */
     public function handle(?string $project = null, ?string $initiative = null, ?string $search = null): array
     {
         $scoped = fn () => $this->scoped($project, $initiative, $search);
+        $projects = $this->projects($project);
 
         return [
             'approval' => $scoped()->where('stories.status', 'draft')->where('stories.is_parked', false)
@@ -54,7 +58,8 @@ class ListWhatNeedsMe
             'parked' => $scoped()->where('stories.status', 'draft')->where('stories.is_parked', true)->count(),
             'built' => $scoped()->where('stories.status', 'built')->count(),
             'offmain' => $this->scoped($project, $initiative, $search, offMain: true)->count(),
-            'projects' => $this->projects($project),
+            'projects' => $projects,
+            'in_flight' => $this->inFlight($projects),
         ];
     }
 
@@ -121,18 +126,22 @@ class ListWhatNeedsMe
     }
 
     /**
-     * One summary per enabled project: counts by raw status (so an out-of-vocabulary
-     * status stays visible) and how many stories carry parse errors.
+     * One summary per enabled project: on-ref counts by raw status (so an
+     * out-of-vocabulary status stays visible), how many stories carry parse errors,
+     * and how many versions are not on main (SB-9 tiles).
      *
-     * @return list<array{name: string, ref: string, state: string, sha: string|null, indexed_at: Carbon|null, last_error: string|null, counts: array<string, int>, parse_errors: int}>
+     * @return list<array{name: string, ref: string, state: string, sha: string|null, indexed_at: Carbon|null, last_error: string|null, counts: array<string, int>, parse_errors: int, offmain: int}>
      */
     private function projects(?string $only): array
     {
         $projects = Project::enabled()->when($only, fn ($q) => $q->where('name', $only))->orderBy('name')->get();
 
-        // Two grouped queries for all projects instead of two per project.
-        $counts = Story::onRef()->whereIn('project_id', $projects->modelKeys())
-            ->selectRaw('project_id, coalesce(status, ?) as status, count(*) as n', ['(none)'])
+        // Two grouped queries for all projects instead of two per project, so the page's
+        // query count does not grow with the portfolio. The first carries the on-ref and
+        // off-main counts side by side; raw SQL because a conditional sum has no builder
+        // form. Constant expressions, no input.
+        $counts = Story::query()->whereIn('project_id', $projects->modelKeys())
+            ->selectRaw('project_id, coalesce(status, ?) as status, sum(location_kind is null) as n, sum(location_kind is not null) as off', ['(none)'])
             ->groupBy('project_id', 'status')->get()->groupBy('project_id');
         // Raw SQL: JSON array length has no query-builder form. Constant expression, no input.
         $errors = Story::onRef()->whereIn('project_id', $projects->modelKeys())
@@ -146,9 +155,29 @@ class ListWhatNeedsMe
             'sha' => $p->sha,
             'indexed_at' => $p->indexed_at,
             'last_error' => $p->last_error,
-            'counts' => $this->ordered($counts->get($p->id, collect())->mapWithKeys(fn ($row) => [$row->status => (int) $row->n])->all()),
+            // A status seen only off main (a mockup-only row's null, say) is not on the ref: no segment.
+            'counts' => $this->ordered($counts->get($p->id, collect())->filter(fn ($row) => (int) $row->n > 0)
+                ->mapWithKeys(fn ($row) => [$row->status => (int) $row->n])->all()),
             'parse_errors' => (int) ($errors[$p->id] ?? 0),
+            'offmain' => (int) $counts->get($p->id, collect())->sum(fn ($row) => (int) $row->off),
         ])->all());
+    }
+
+    /**
+     * The In flight figures (SB-9), summed from the project summaries so they cost
+     * no query of their own: approved-and-unbuilt stories, versions not on main, and
+     * the projects whose snapshot is not `ok` (pending, stale or unreachable).
+     *
+     * @param  list<array{name: string, state: string, counts: array<string, int>, offmain: int}>  $projects
+     * @return array{approved: int, offmain: int, not_ok: list<string>}
+     */
+    private function inFlight(array $projects): array
+    {
+        return [
+            'approved' => array_sum(array_map(fn (array $p) => $p['counts']['approved'] ?? 0, $projects)),
+            'offmain' => array_sum(array_column($projects, 'offmain')),
+            'not_ok' => array_values(array_map(fn (array $p) => $p['name'], array_filter($projects, fn (array $p) => $p['state'] !== Project::STATE_OK))),
+        ];
     }
 
     /**

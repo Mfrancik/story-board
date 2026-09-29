@@ -24,12 +24,13 @@ function mockups(?string $chosen, array $options = ['a', 'b']): array
     return ['dir' => 'docs/mockups/X', 'options' => $options, 'chosen' => $chosen];
 }
 
-it('lists unparked drafts under Awaiting approval and hides parked ones', function () {
+it('lists unparked drafts under Drafts to approve and hides parked ones', function () {
     Story::factory()->for($this->coins)->create(['story_id' => 'AUC-17', 'status' => 'draft', 'title' => 'The auction page']);
     Story::factory()->for($this->coins)->create(['story_id' => 'IMP-1', 'status' => 'draft', 'title' => 'The door', 'is_parked' => true]);
 
+    // SB-9 card order (design A): Awaiting a pick, Drafts to approve, Ready to build.
     Livewire::test(Home::class)
-        ->assertSeeInOrder(['Awaiting approval', 'AUC-17', 'Awaiting a mockup pick'])
+        ->assertSeeInOrder(['Awaiting a pick', 'Drafts to approve', 'AUC-17', 'Ready to build'])
         ->assertDontSeeHtml('data-row="IMP-1"')
         ->assertSee('1 draft in parked groups is hidden');
 });
@@ -51,16 +52,11 @@ it('lists approved stories across projects as ready to build, oldest first', fun
     Livewire::test(Home::class)->assertSeeInOrder(['Ready to build', 'SS-6', 'PAY-20', 'LEGAL-1']);
 });
 
-it('keeps the project filter in the URL and shows only that project', function () {
+it('sends the old project filter URL to the project page, which shows only that project', function () {
     Story::factory()->for($this->coins)->create(['story_id' => 'AUC-17', 'status' => 'draft']);
     Story::factory()->for($this->cd)->create(['story_id' => 'SS-15', 'status' => 'draft']);
 
-    Livewire::withQueryParams(['project' => 'coins'])->test(Home::class)
-        ->assertSet('project', 'coins')
-        ->assertSeeHtml('data-row="AUC-17"')
-        ->assertDontSeeHtml('data-row="SS-15"');
-
-    // SB-7: the filter URL now redirects to the project page, which keeps the same promise.
+    // SB-7 moved the filter URL to /p/{project}; SB-9 removed the filter itself (the sidebar replaces it).
     $this->followingRedirects()->get('/?project=coins')->assertOk()->assertSee('AUC-17')->assertDontSee('SS-15');
 });
 
@@ -85,7 +81,7 @@ it('offers the story page when a searched ID is in no visible group', function (
 
 it('shows a one-line empty state for every empty group', function () {
     Livewire::test(Home::class)
-        ->assertSee('Nothing waiting for approval.')
+        ->assertSee('Nothing to approve.')
         ->assertSee('No mockups waiting on a pick.')
         ->assertSee('Nothing approved and unbuilt.');
 });
@@ -124,11 +120,13 @@ it('keeps Built and Parked drafts closed until opened, then lists them', functio
         ->assertSeeHtml('data-row="IMP-1"');
 });
 
-it('shows ten rows per group, then the rest on request', function () {
+it('shows five rows per card, then all of them on request', function () {
     Story::factory()->for($this->coins)->count(12)->sequence(fn ($s) => ['story_id' => 'AP-'.($s->index + 1), 'status' => 'draft', 'path' => sprintf('stories/demo/AP-%02d.md', $s->index + 1)])->create();
 
     Livewire::test(Home::class)
-        ->assertSee('Show 2 more')
+        ->assertSee('Show all 12')
+        ->assertSeeHtml('data-row="AP-5"')
+        ->assertDontSeeHtml('data-row="AP-6"')
         ->assertDontSeeHtml('data-row="AP-12"')
         ->call('showAll', 'approval')
         ->assertSeeHtml('data-row="AP-12"');
@@ -147,10 +145,10 @@ it('refreshes every enabled project on the queue when Refresh is pressed', funct
 it('logs each view with its filters', function () {
     Log::spy();
 
-    Livewire::withQueryParams(['project' => 'coins', 'q' => 'MOB'])->test(Home::class);
+    Livewire::withQueryParams(['initiative' => 'mobile', 'q' => 'MOB'])->test(Home::class);
 
     Log::shouldHaveReceived('info')->withArgs(fn ($event, $ctx = []) => $event === 'board.home_viewed'
-        && $ctx['project'] === 'coins' && $ctx['q'] === 'MOB')->once();
+        && $ctx === ['initiative' => 'mobile', 'q' => 'MOB'])->once();
 });
 
 it('queues a refresh on page load for a stale project only', function () {

@@ -29,7 +29,8 @@ afterEach(function () {
 });
 
 it('opens a clicked row in the modal and keeps the list at its scroll position, and Back closes it', function () {
-    $page = visit('/')->resize(1280, 600);
+    // SB-9: a card shows its top 5; FX-9 is behind Show all.
+    $page = visit('/')->resize(1280, 600)->click('[data-show-all="build"]')->assertPresent('[data-row="FX-9"]');
     $page->script("document.querySelector('[data-row=\"FX-9\"]').scrollIntoView({ block: 'center' })");
     $y = $page->script('Math.round(window.scrollY)');
     expect($y)->toBeGreaterThan(0);
@@ -48,7 +49,8 @@ it('opens a clicked row in the modal and keeps the list at its scroll position, 
 
 it('keeps the scroll position on Back after arriving at /p/{project} through the sidebar', function () {
     // wire:navigate stamps the history entry with a page snapshot; Back must not restore it over the list.
-    $page = visit('/')->resize(1280, 600)->click('[data-sidebar-project="coins"]')->assertPathIs('/p/coins');
+    $page = visit('/')->resize(1280, 600)->click('[data-sidebar-project="coins"]')->assertPathIs('/p/coins')
+        ->click('[data-show-all="build"]')->assertPresent('[data-row="FX-9"]');
     $page->script("document.querySelector('[data-row=\"FX-9\"]').scrollIntoView({ block: 'center' })");
     $y = $page->script('Math.round(window.scrollY)');
     expect($y)->toBeGreaterThan(0);

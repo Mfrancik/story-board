@@ -1,6 +1,9 @@
-{{-- A story's raw status. Out-of-vocabulary values and parse errors show in the danger colour, never hidden. --}}
-@props(['status', 'errors' => 0])
+{{-- A story's raw status. Out-of-vocabulary values and parse errors show in the danger colour, never hidden.
+     With `count` it labels a tally instead ("draft 11"), as on the SB-9 project tile. --}}
+@props(['status', 'errors' => 0, 'count' => null])
 @php
+    // Unpassed, `errors` resolves to Laravel's shared ViewErrorBag, not the default 0.
+    $errors = is_int($errors) ? $errors : 0;
     $tone = match ($status) {
         'draft' => 'bg-draft/15 text-zinc-800 ring-draft/40 dark:text-zinc-100',
         'approved' => 'bg-approved/15 text-zinc-800 ring-approved/40 dark:text-zinc-100',
@@ -11,5 +14,8 @@
 @endphp
 <span data-status-chip="{{ $status }}" {{ $attributes->class(['relative inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium ring-1 ring-inset', $tone, 'ring-danger/60' => $errors > 0]) }}
     @if ($errors > 0) title="{{ $errors }} parse {{ Str::plural('error', $errors) }}" @endif>
-    {{ $status ?? 'no status' }}@if ($errors > 0)<span aria-hidden="true">⚠</span><span class="sr-only">, has parse errors</span>@endif
+    {{ $status ?? 'no status' }}
+    {{-- Whitespace between these is dropped: the chip is inline-flex, spaced by gap. --}}
+    @if ($count !== null)<span class="tabular-nums">{{ $count }}</span>@endif
+    @if ($errors > 0)<span aria-hidden="true">⚠</span><span class="sr-only">, has parse errors</span>@endif
 </span>

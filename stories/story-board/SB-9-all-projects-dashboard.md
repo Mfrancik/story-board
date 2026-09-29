@@ -1,5 +1,5 @@
 # SB-9 — All-projects dashboard
-Status: approved         Journey: none
+Status: built            Journey: none
 Source: owner 2026-09-29 (/story): *"a main dashboar dthat gives me an overview of everything going on with
 projects … insights to basically visually see what is being worked on as we speak."*
 

@@ -3,8 +3,10 @@
     with `<project>/<ID>`, which StoryModal turns into `?story=`. No round trip on the list itself.
     A row whose ID is not well formed (an oddly named mockup directory off main) cannot be linked
     by `?story=`, so it stays a plain, non-interactive row.
+    `variant="card"` (SB-9) is the compact two-line row of a What needs me card: project · ID and a
+    right-hand meta (status chip on a pick, the `Source:` date otherwise), then the title.
 --}}
-@props(['story', 'group' => null])
+@props(['story', 'group' => null, 'variant' => 'list'])
 @php
     $options = $story->mockups['options'] ?? [];
     $errors = count($story->parse_errors);
@@ -13,7 +15,31 @@
     $link = $story->hasPage() ? $story->project->name.'/'.$story->story_id : null;
     $tag = $link ? 'button' : 'div';
 @endphp
-<div wire:key="row-{{ $story->id }}" x-data>
+<div wire:key="row-{{ $variant }}-{{ $group }}-{{ $story->id }}" x-data>
+@if ($variant === 'card')
+    <{{ $tag }} data-row="{{ $story->story_id }}" @if ($group === 'pick') data-pick-row="{{ $story->story_id }}" @endif
+        @if ($link) type="button" data-story-link="{{ $link }}" aria-haspopup="dialog" x-on:click="$dispatch('board-story', @js($link))" @endif
+        class="block w-full px-4 py-2.5 text-left {{ $link ? 'hover:bg-zinc-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent dark:hover:bg-zinc-800/50' : '' }}">
+        <span class="flex items-center justify-between gap-2">
+            <span class="truncate font-mono text-xs text-zinc-500 dark:text-zinc-400">{{ $story->project->name }} · {{ $story->story_id ?? '—' }}</span>
+            @if ($group === 'pick' || $showStatus)
+                <x-board.status-chip :status="$story->status" :errors="$errors" class="shrink-0" />
+            @elseif ($story->dated_on)
+                <time datetime="{{ $story->dated_on->toDateString() }}" title="Asked for on {{ $story->dated_on->toDateString() }}"
+                    class="shrink-0 text-xs tabular-nums text-zinc-400">{{ $story->dated_on->diffForHumans() }}</time>
+            @endif
+        </span>
+        <span class="mt-0.5 block truncate text-sm font-medium">{{ $story->title ?? $story->path }}</span>
+        @if ($group === 'pick')
+            <span class="mt-1.5 flex flex-wrap items-center gap-1">
+                @foreach ($options as $option)
+                    <span class="rounded border border-pick/40 px-1.5 font-mono text-xs">{{ $option }}</span>
+                @endforeach
+                <span class="ml-1 text-xs text-zinc-500 dark:text-zinc-400">options</span>
+            </span>
+        @endif
+    </{{ $tag }}>
+@else
     <{{ $tag }} data-row="{{ $story->story_id }}" @if ($group === 'pick') data-pick-row="{{ $story->story_id }}" @endif
         @if ($link) type="button" data-story-link="{{ $link }}" aria-haspopup="dialog" x-on:click="$dispatch('board-story', @js($link))" @endif
         class="grid w-full grid-cols-[auto_1fr] items-baseline gap-x-3 gap-y-0.5 px-3 py-2 text-left sm:grid-cols-[8rem_6rem_1fr_auto] {{ $link ? 'hover:bg-zinc-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent dark:hover:bg-zinc-800/50' : '' }}">
@@ -38,4 +64,5 @@
             </span>
         @endif
     </{{ $tag }}>
+@endif
 </div>

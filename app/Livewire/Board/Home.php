@@ -14,18 +14,19 @@ use Livewire\Attributes\Url;
 use Livewire\Component;
 
 /**
- * The board's home (SB-3, mockup A "Inbox"): what is waiting on the owner
- * across every project, then collapsible Built and Parked drafts, then one card
- * per project. Reads the stored snapshot only; a row opens the story modal (SB-8),
- * which does its own git read.
+ * The all-projects dashboard at `/` (SB-9, design A): What needs me first — three
+ * cards of what is waiting on the owner — then the In flight figures, one tile per
+ * project, and the collapsible Not on main, Built and Parked drafts sections (SB-3,
+ * SB-5). Reads the stored snapshot only; a row opens the story modal (SB-8), which
+ * does its own git read.
  * Also serves `/p/{project}` (SB-7), pinned to that project until SB-10 gives
  * the single-project page its own dashboard.
  */
 #[Layout('layouts.board')]
 class Home extends Component
 {
-    /** Rows a group shows before "Show N more". */
-    public const PAGE = 10;
+    /** Rows a What needs me card shows before "Show all N" (design A: top 5). */
+    public const PAGE = 5;
 
     /** Rows an open collapsible section shows before "Show N more" — Built runs to hundreds. */
     public const SECTION_PAGE = 50;
@@ -33,12 +34,8 @@ class Home extends Component
     /** The collapsible sections the owner asked for at the gate. */
     public const SECTIONS = ['offmain', 'built', 'parked'];
 
-    /** The three action groups, in page order. */
-    public const GROUPS = ['approval', 'pick', 'build'];
-
-    /** Project filter (a project name), kept in the URL. */
-    #[Url]
-    public string $project = '';
+    /** The three What needs me cards, in page order (design A). */
+    public const GROUPS = ['pick', 'approval', 'build'];
 
     /** Initiative filter, kept in the URL. */
     #[Url]
@@ -62,9 +59,9 @@ class Home extends Component
     public array $openSections = [];
 
     /**
-     * The project this page is fixed to on `/p/{project}`, null on `/`. Locked and
-     * separate from the `project` filter, so neither the query string nor
-     * Clear filters can move the project page off its project.
+     * The project this page is fixed to on `/p/{project}`, null on `/`. Locked, so
+     * neither the browser nor Clear filters can move the project page off its
+     * project. (SB-9 removed the `project` filter: the sidebar switches project.)
      */
     #[Locked]
     public ?string $pinned = null;
@@ -87,7 +84,7 @@ class Home extends Component
             $this->pinned = $project;
             Log::info('board.project_viewed', ['project' => $project]);
         } else {
-            Log::info('board.home_viewed', ['project' => $this->project, 'initiative' => $this->initiative, 'q' => $this->q]);
+            Log::info('board.home_viewed', ['initiative' => $this->initiative, 'q' => $this->q]);
         }
 
         Project::enabled()->get()
@@ -121,7 +118,7 @@ class Home extends Component
     }
 
     /**
-     * Show every row of a group instead of the first PAGE.
+     * Show every row of a card (or open section) instead of the first PAGE.
      */
     public function showAll(string $group): void
     {
@@ -135,7 +132,7 @@ class Home extends Component
      */
     public function clearFilters(): void
     {
-        $this->reset(...($this->pinned === null ? ['project', 'initiative', 'q'] : ['initiative', 'q']));
+        $this->reset('initiative', 'q');
     }
 
     /**
@@ -143,7 +140,7 @@ class Home extends Component
      */
     public function render(ListWhatNeedsMe $list): View
     {
-        $project = $this->pinned ?? ($this->project ?: null);
+        $project = $this->pinned;
         $filters = [$project, $this->initiative ?: null, $this->q ?: null];
         $data = $list->handle(...$filters);
 
@@ -167,11 +164,12 @@ class Home extends Component
             ...$data,
             'sections' => $sections,
             'goto' => $goto,
-            'projectNames' => Project::enabled()->orderBy('name')->pluck('name'),
+            // The header's "Refreshed N min ago": the stalest snapshot, since the page is only as fresh as that.
+            'refreshedAt' => collect($data['projects'])->pluck('indexed_at')->filter()->min(),
             'initiatives' => Story::onRef()->whereNotNull('initiative')
                 ->whereHas('project', fn ($q) => $q->where('is_enabled', true)->when($project, fn ($q) => $q->where('name', $project)))
                 ->distinct()->orderBy('initiative')->pluck('initiative'),
-            'filtered' => ($this->pinned === null && $this->project !== '') || $this->initiative !== '' || $this->q !== '',
+            'filtered' => $this->initiative !== '' || $this->q !== '',
         ])->title($this->pinned ?? 'What needs me');
     }
 }
