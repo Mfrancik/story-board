@@ -34,7 +34,7 @@ class ReadMockupFile
     public function handle(Project $project, string $storyId, string $file, ?int $version = null): string
     {
         // Checked here, not only by the database lookup below, so the guarantee is local to this file.
-        if (! preg_match('/^[A-Z]{2,}-[0-9]+[a-z]?$/D', $storyId) || ! $this->isPlainRelativePath($file)) {
+        if (! preg_match(Story::ID_PATTERN, $storyId) || ! $this->isPlainRelativePath($file)) {
             Log::warning('board.mockup_path_rejected', ['project' => $project->name, 'story' => $storyId, 'file' => $file]);
             throw new MockupNotFoundException("Rejected mockup path: {$file}");
         }

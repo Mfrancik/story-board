@@ -36,6 +36,15 @@ class Story extends Model
     /** @use HasFactory<StoryFactory> */
     use HasFactory;
 
+    /**
+     * A story ID as CLAUDE.md step 6 defines it (AP-1, SS-10, MT-2a). The one copy:
+     * routes use ID_ROUTE, everything else matches against this.
+     */
+    public const ID_PATTERN = '/^[A-Z]{2,}-[0-9]+[a-z]?$/D';
+
+    /** ID_PATTERN without anchors or delimiters, for route constraints. */
+    public const ID_ROUTE = '[A-Z]{2,}-[0-9]+[a-z]?';
+
     /** Committed on a branch that is not merged into the project's ref. */
     public const KIND_BRANCH = 'branch';
 
@@ -143,6 +152,6 @@ class Story extends Model
      */
     public function hasPage(): bool
     {
-        return $this->story_id !== null && preg_match('/^[A-Z]{2,}-[0-9]+[a-z]?$/D', $this->story_id) === 1;
+        return $this->story_id !== null && preg_match(self::ID_PATTERN, $this->story_id) === 1;
     }
 }

@@ -15,8 +15,6 @@ use Illuminate\Support\Carbon;
  */
 class ListWhatNeedsMe
 {
-    /** Story IDs as CLAUDE.md step 6 defines them; a search shaped like one matches exactly. */
-    private const ID_PATTERN = '/^[A-Z]{2,}-[0-9]+[a-z]?$/iD';
 
     /** Card order for the kit's vocabulary; anything else (a project's own or a typo) follows, A–Z. */
     private const STATUS_ORDER = ['draft', 'approved', 'built', 'cancelled'];
@@ -90,7 +88,8 @@ class ListWhatNeedsMe
      */
     public function withId(string $storyId, ?string $project = null): Collection
     {
-        if (! preg_match(self::ID_PATTERN, trim($storyId))) {
+        $storyId = $this->asId($storyId);
+        if ($storyId === null) {
             return new Collection;
         }
 
@@ -116,8 +115,8 @@ class ListWhatNeedsMe
             ->when($project, fn ($q) => $q->where('projects.name', $project))
             ->when($initiative, fn ($q) => $q->where('stories.initiative', $initiative))
             // A search shaped like an ID wants that one story: `MOB-65` must not also match MOB-650.
-            ->when($search !== '' && preg_match(self::ID_PATTERN, $search), fn ($q) => $q->where('stories.story_id', $search))
-            ->when($search !== '' && ! preg_match(self::ID_PATTERN, $search), fn ($q) => $q->where(fn ($q) => $q
+            ->when($search !== '' && $this->asId($search) !== null, fn ($q) => $q->where('stories.story_id', $this->asId($search)))
+            ->when($search !== '' && $this->asId($search) === null, fn ($q) => $q->where(fn ($q) => $q
                 ->where('stories.story_id', 'like', '%'.addcslashes($search, '%_\\').'%')
                 ->orWhere('stories.title', 'like', '%'.addcslashes($search, '%_\\').'%')));
     }
@@ -165,5 +164,16 @@ class ListWhatNeedsMe
         uksort($counts, fn ($a, $b) => $rank((string) $a) <=> $rank((string) $b));
 
         return $counts;
+    }
+
+    /**
+     * The search as a story ID when it is shaped like one. Typing `mob-65` finds
+     * MOB-65: the letters are upper-cased, the optional suffix (`2a`) kept lower.
+     */
+    private function asId(string $search): ?string
+    {
+        $candidate = preg_replace_callback('/^[a-z]+/i', fn ($m) => strtoupper($m[0]), trim($search)) ?? '';
+
+        return preg_match(Story::ID_PATTERN, $candidate) === 1 ? $candidate : null;
     }
 }
