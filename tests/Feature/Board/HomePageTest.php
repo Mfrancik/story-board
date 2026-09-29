@@ -61,7 +61,8 @@ it('keeps the project filter in the URL and shows only that project', function (
         ->assertSeeHtml('data-row="AUC-17"')
         ->assertDontSeeHtml('data-row="SS-15"');
 
-    $this->get('/?project=coins')->assertOk()->assertSee('AUC-17')->assertDontSee('SS-15');
+    // SB-7: the filter URL now redirects to the project page, which keeps the same promise.
+    $this->followingRedirects()->get('/?project=coins')->assertOk()->assertSee('AUC-17')->assertDontSee('SS-15');
 });
 
 it('finds exactly one story when searching for its ID', function () {

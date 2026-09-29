@@ -1,4 +1,6 @@
-{{-- SB-3 home — mockup A (Inbox), rows expand in place, Built / Parked drafts collapsible. --}}
+{{-- SB-3 home — mockup A (Inbox), rows expand in place, Built / Parked drafts collapsible.
+     On /p/{project} (SB-7) the same content is pinned to one project: its name heads the page
+     and the project filter is gone, because the sidebar is how you change project. --}}
 @php
     $groups = [
         'approval' => ['title' => 'Awaiting approval', 'hint' => 'draft stories', 'empty' => 'Nothing waiting for approval.', 'accent' => 'border-l-draft',
@@ -10,10 +12,20 @@
 @endphp
 <main class="mx-auto max-w-6xl px-4 py-6">
     <header class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-            <h1 class="text-xl font-semibold tracking-tight">What needs me</h1>
-            <p class="text-sm text-zinc-500 dark:text-zinc-400">Across {{ count($projects) }} {{ Str::plural('project', count($projects)) }} · read from each project's ref</p>
-        </div>
+        @if ($pinned)
+            <div>
+                <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                    <a href="{{ route('home') }}" wire:navigate class="hover:underline">All projects</a> <span aria-hidden="true">/</span> {{ $pinned }}
+                </p>
+                <h1 class="mt-1 text-xl font-semibold tracking-tight">{{ $pinned }}</h1>
+                <p class="text-sm text-zinc-500 dark:text-zinc-400">What needs me in this project · read from its ref</p>
+            </div>
+        @else
+            <div>
+                <h1 class="text-xl font-semibold tracking-tight">What needs me</h1>
+                <p class="text-sm text-zinc-500 dark:text-zinc-400">Across {{ count($projects) }} {{ Str::plural('project', count($projects)) }} · read from each project's ref</p>
+            </div>
+        @endif
         <div class="flex items-center gap-2">
             <button type="button" x-data x-on:click="$flux.dark = ! $flux.dark" aria-label="Toggle dark mode"
                 class="rounded-md border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-700">◐</button>
@@ -30,11 +42,13 @@
     @endif
 
     <div class="mt-4 flex flex-wrap items-center gap-2" role="search">
-        <label class="sr-only" for="f-project">Project</label>
-        <select id="f-project" wire:model.live="project" class="{{ $select }}">
-            <option value="">All projects</option>
-            @foreach ($projectNames as $name)<option value="{{ $name }}">{{ $name }}</option>@endforeach
-        </select>
+        @unless ($pinned)
+            <label class="sr-only" for="f-project">Project</label>
+            <select id="f-project" wire:model.live="project" class="{{ $select }}">
+                <option value="">All projects</option>
+                @foreach ($projectNames as $name)<option value="{{ $name }}">{{ $name }}</option>@endforeach
+            </select>
+        @endunless
         <label class="sr-only" for="f-initiative">Initiative</label>
         <select id="f-initiative" wire:model.live="initiative" class="{{ $select }} max-w-48">
             <option value="">All initiatives</option>

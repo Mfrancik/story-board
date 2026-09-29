@@ -23,7 +23,8 @@ it('logs a story page request for a disabled project', function () {
 
     $this->get('/p/off/s/AB-1')->assertNotFound();
 
-    logged('info', 'board.story_not_found', fn ($c) => $c['reason'] === 'project disabled');
+    // SB-7: the project-page guard refuses it before the story page mounts.
+    logged('info', 'board.project_page_refused', fn ($c) => $c['reason'] === 'disabled');
 });
 
 it('logs a story page request for an unknown story', function () {

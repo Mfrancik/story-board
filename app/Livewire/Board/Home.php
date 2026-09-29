@@ -11,7 +11,6 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
-use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -19,9 +18,10 @@ use Livewire\Component;
  * The board's home (SB-3, mockup A "Inbox"): what is waiting on the owner
  * across every project, then collapsible Built and Parked drafts, then one card
  * per project. Reads the stored snapshot; git only for an expanded story's text.
+ * Also serves `/p/{project}` (SB-7), pinned to that project until SB-10 gives
+ * the single-project page its own dashboard.
  */
 #[Layout('layouts.board')]
-#[Title('What needs me')]
 class Home extends Component
 {
     /** Rows a group shows before "Show N more". */
@@ -65,6 +65,14 @@ class Home extends Component
     #[Locked]
     public array $bodies = [];
 
+    /**
+     * The project this page is fixed to on `/p/{project}`, null on `/`. Locked and
+     * separate from the `project` filter, so neither the query string nor
+     * Clear filters can move the project page off its project.
+     */
+    #[Locked]
+    public ?string $pinned = null;
+
     /** Confirmation after Refresh, in the button's own verb (design-standards §Four states). */
     #[Locked]
     public ?string $notice = null;
@@ -73,10 +81,18 @@ class Home extends Component
      * Log the view and queue a refresh for any project whose snapshot is stale.
      * Queued, not after-response: `artisan serve` cannot flush a response early,
      * so after-response work held the page open for the whole refresh (8–50 s).
+     *
+     * @param  string|null  $project  the `/p/{project}` route's name, already checked
+     *                                by EnsureProjectIsShown; null on `/`
      */
-    public function mount(): void
+    public function mount(?string $project = null): void
     {
-        Log::info('board.home_viewed', ['project' => $this->project, 'initiative' => $this->initiative, 'q' => $this->q]);
+        if ($project !== null) {
+            $this->pinned = $project;
+            Log::info('board.project_viewed', ['project' => $project]);
+        } else {
+            Log::info('board.home_viewed', ['project' => $this->project, 'initiative' => $this->initiative, 'q' => $this->q]);
+        }
 
         Project::enabled()->get()
             ->filter(fn (Project $p) => $p->needsRefresh())
@@ -140,7 +156,7 @@ class Home extends Component
      */
     public function clearFilters(): void
     {
-        $this->reset('project', 'initiative', 'q');
+        $this->reset(...($this->pinned === null ? ['project', 'initiative', 'q'] : ['initiative', 'q']));
     }
 
     /**
@@ -148,7 +164,8 @@ class Home extends Component
      */
     public function render(ListWhatNeedsMe $list): View
     {
-        $filters = [$this->project ?: null, $this->initiative ?: null, $this->q ?: null];
+        $project = $this->pinned ?? ($this->project ?: null);
+        $filters = [$project, $this->initiative ?: null, $this->q ?: null];
         $data = $list->handle(...$filters);
 
         $sections = [];
@@ -164,7 +181,7 @@ class Home extends Component
             $inGroups = $inGroups->merge($rows->pluck('story_id'));
         }
         $goto = $this->q !== ''
-            ? $list->withId($this->q, $this->project ?: null)->reject(fn (Story $s) => $inGroups->contains($s->story_id))
+            ? $list->withId($this->q, $project)->reject(fn (Story $s) => $inGroups->contains($s->story_id))
             : collect();
 
         return view('livewire.board.home', [
@@ -173,9 +190,9 @@ class Home extends Component
             'goto' => $goto,
             'projectNames' => Project::enabled()->orderBy('name')->pluck('name'),
             'initiatives' => Story::onRef()->whereNotNull('initiative')
-                ->whereHas('project', fn ($q) => $q->where('is_enabled', true))
+                ->whereHas('project', fn ($q) => $q->where('is_enabled', true)->when($project, fn ($q) => $q->where('name', $project)))
                 ->distinct()->orderBy('initiative')->pluck('initiative'),
-            'filtered' => $this->project !== '' || $this->initiative !== '' || $this->q !== '',
-        ]);
+            'filtered' => ($this->pinned === null && $this->project !== '') || $this->initiative !== '' || $this->q !== '',
+        ])->title($this->pinned ?? 'What needs me');
     }
 }

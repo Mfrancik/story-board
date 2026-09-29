@@ -34,6 +34,10 @@
     --color-danger: var(--color-red-600);
     --color-warning: var(--color-amber-600);
 
+    /* Project snapshot states (SB-7 sidebar dots). `stale` and `unreachable` reuse warning and danger. */
+    --color-ok: var(--color-emerald-500);
+    --color-pending: var(--color-zinc-400);
+
     --color-accent: var(--color-neutral-800);
     --color-accent-content: var(--color-neutral-800);
     --color-accent-foreground: var(--color-white);
@@ -100,4 +104,24 @@ select:focus[data-flux-control] {
     height: 70vh;
     max-width: none;
     border: 0;
+}
+
+/* The project drawer below 768px (SB-7): slides in when opened. Display is toggled by Alpine
+   (data-open), so a closed drawer is display:none, not merely off-screen. */
+@media (max-width: 47.999rem) {
+    .board-drawer[data-open] {
+        animation: board-drawer-in 150ms ease-out;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .board-drawer[data-open] {
+        animation: none;
+    }
+}
+
+@keyframes board-drawer-in {
+    from {
+        transform: translateX(-100%);
+    }
 }

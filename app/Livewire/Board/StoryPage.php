@@ -47,14 +47,11 @@ class StoryPage extends Component
     public array $gate = ['visual' => true, 'chosen' => null, 'why' => null];
 
     /**
-     * Resolve which version to show, load its text from git, or 404.
+     * Resolve which version to show, load its text from git, or 404. An unknown or
+     * disabled project never gets here: the route's EnsureProjectIsShown refuses it (SB-7).
      */
     public function mount(Project $project, string $storyId, RenderStory $render, ReadMockupGate $gate, ParseVersion $parse): void
     {
-        if (! $project->is_enabled) {
-            Log::info('board.story_not_found', ['project' => $project->name, 'story' => $storyId, 'reason' => 'project disabled']);
-            abort(404);
-        }
         $version = $parse->handle(request()->query('v'), ['project' => $project->name, 'story' => $storyId]);
 
         $story = $this->resolve($project, $storyId, $version);

@@ -14,7 +14,7 @@
     <header class="flex flex-wrap items-center gap-2 border-b border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
         <a href="{{ route('home') }}" wire:navigate class="text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">← What needs me</a>
         <span class="text-zinc-300 dark:text-zinc-600" aria-hidden="true">/</span>
-        <a href="{{ route('home', ['project' => $project->name]) }}" wire:navigate class="text-sm hover:underline">{{ $project->name }}</a>
+        <a href="{{ route('projects.show', ['project' => $project->name]) }}" wire:navigate class="text-sm hover:underline">{{ $project->name }}</a>
         <span class="text-zinc-300 dark:text-zinc-600" aria-hidden="true">/</span>
         <span class="font-mono text-sm font-semibold">{{ $story->story_id }}</span>
         <div class="ml-auto flex items-center gap-2">

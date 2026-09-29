@@ -1,5 +1,5 @@
 # SB-7 — App shell and project switcher
-Status: approved         Journey: none
+Status: built            Journey: none
 Source: owner 2026-09-29 (/story): *"a bettetr way of switching between projects … a view like this of
 all projects, but also a view of a sepcific single project. lets focus on some UI stuff here to make this
 more organized."*
