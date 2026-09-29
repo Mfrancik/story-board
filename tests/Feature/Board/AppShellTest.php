@@ -142,14 +142,16 @@ it('keeps /p/coins on coins whatever the query string says, with no project drop
         ->assertDontSeeHtml('id="f-project"');
 });
 
-it('shows an empty sidebar with the command that adds a project', function () {
+it('shows an empty sidebar that links to Manage projects to add a project', function () {
     Project::query()->delete();
 
-    $this->get('/')->assertOk()->assertSee('No projects yet')->assertSee('board:project add');
+    // SB-12 registered projects.manage, so the empty state points at the page, not the command.
+    $this->get('/')->assertOk()->assertSee('No projects yet')->assertSee('Add a project')
+        ->assertSee(route('projects.manage'));
 });
 
-it('hides the Manage projects slot until its page exists', function () {
-    $this->get('/')->assertDontSee('Manage projects');
+it('shows the Manage projects slot now that its page exists (SB-12)', function () {
+    $this->get('/')->assertSee('Manage projects');
 });
 
 it('renders the story page for coins MOB-65 inside the shell with coins current', function () {

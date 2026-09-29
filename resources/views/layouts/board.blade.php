@@ -12,6 +12,12 @@
                 {{ $slot }}
             </div>
         </div>
+        {{-- Toasts (SB-12). Persisted so one raised just before a wire:navigate reload survives it. --}}
+        @persist('toast')
+            <flux:toast.group>
+                <flux:toast />
+            </flux:toast.group>
+        @endpersist
         @fluxScripts
     </body>
 </html>

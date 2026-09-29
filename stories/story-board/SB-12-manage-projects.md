@@ -1,5 +1,5 @@
 # SB-12 — Manage projects from the board
-Status: approved         Journey: none
+Status: built            Journey: none
 Source: owner 2026-09-29 (/story): *"how do we get a new project into this system if i create a new one?"*
 and *"a way to add or remove projects easily from a UI … if i do some one off wegbsite changes, i dont need
 to see that on a main dashboard, id like to toggle some projects on and off entirely"*. Owner answer: off
