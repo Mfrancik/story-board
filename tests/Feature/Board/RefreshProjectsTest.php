@@ -1,7 +1,10 @@
 <?php
 
+use App\Actions\Board\RefreshProject;
+use App\Jobs\RefreshProjectJob;
 use App\Models\Project;
 use App\Models\Story;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Tests\Support\GitFixture;
@@ -151,4 +154,45 @@ it('replaces the previous snapshot rather than appending to it', function () {
     $this->artisan('board:refresh')->assertSuccessful();
 
     expect($project->stories()->pluck('story_id')->all())->toBe(['FX-1']);
+});
+
+it('stands down when a refresh of the same project is already running', function () {
+    Log::spy();
+    $this->fixture->story('FX-1', 'draft')->commitAndPush();
+    $project = Project::factory()->create(['path' => $this->fixture->project]);
+    $lock = Cache::lock("board:refresh:{$project->id}", 60);
+    $lock->get();
+
+    $this->artisan('board:refresh')->assertSuccessful();
+
+    expect($project->refresh()->indexed_at)->toBeNull()
+        ->and($project->stories()->count())->toBe(0);
+    Log::shouldHaveReceived('info')->withArgs(fn ($event) => $event === 'board.refresh_skipped')->once();
+    $lock->release();
+});
+
+it('keeps the snapshot when a stored ref is one git would read as an option', function () {
+    Log::spy();
+    $this->fixture->story('FX-1', 'draft')->commitAndPush();
+    $project = Project::factory()->create(['path' => $this->fixture->project]);
+    $this->artisan('board:refresh')->assertSuccessful();
+    $target = $this->fixture->root.'/written-by-git';
+    $project->forceFill(['ref' => "--output={$target}"])->save();
+
+    $this->artisan('board:refresh')->assertSuccessful();
+
+    expect($project->refresh()->state)->toBe(Project::STATE_STALE)
+        ->and($project->last_error)->toContain('invalid ref')
+        ->and($project->stories()->count())->toBe(1)
+        ->and(file_exists($target))->toBeFalse();
+});
+
+it('logs a refresh that crashes unexpectedly and rethrows', function () {
+    Log::spy();
+    $project = Project::factory()->create();
+    $this->mock(RefreshProject::class)->shouldReceive('handle')->andThrow(new RuntimeException('db gone'));
+
+    expect(fn () => app()->call([new RefreshProjectJob($project), 'handle']))->toThrow(RuntimeException::class);
+
+    Log::shouldHaveReceived('error')->withArgs(fn ($event, $ctx) => $event === 'board.refresh_crashed' && $ctx['exception'] === 'db gone')->once();
 });

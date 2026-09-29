@@ -5,6 +5,7 @@ namespace App\Actions\Board;
 use App\Exceptions\GitReaderException;
 use App\Models\Project;
 use App\Services\GitReader;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -27,6 +28,28 @@ class RefreshProject
      */
     public function handle(Project $project): void
     {
+        // Two page loads a second apart would otherwise run two fetches and two
+        // snapshot swaps against the same rows; the second one simply stands down.
+        $lock = Cache::lock("board:refresh:{$project->id}", 180);
+        if (! $lock->get()) {
+            Log::info('board.refresh_skipped', ['project' => $project->name, 'reason' => 'already running']);
+
+            return;
+        }
+
+        try {
+            $this->refresh($project);
+        } finally {
+            $lock->release();
+        }
+    }
+
+    /**
+     * The refresh itself, run while holding the project's lock.
+     */
+    private function refresh(Project $project): void
+    {
+        $project->update(['refresh_attempted_at' => now()]);
         $started = hrtime(true);
         Log::info('board.refresh_started', ['project' => $project->name, 'ref' => $project->ref]);
 

@@ -26,7 +26,7 @@ class GitReader
      * refused because git would parse the ref as an option — `show --output=…`
      * writes a file. Stricter than git-check-ref-format on purpose.
      */
-    private const REF_PATTERN = '#^(?!-)(?!.*\.\.)[A-Za-z0-9._/-]+$#';
+    private const REF_PATTERN = '#^(?!-)(?!.*\.\.)[A-Za-z0-9._/-]+$#D';
 
     /**
      * Keep git from ever waiting on a human: a passphrase or host-key prompt

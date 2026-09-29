@@ -97,3 +97,14 @@ it('refuses to register a project with a ref git would read as an option', funct
     expect(Project::count())->toBe(0);
     $fixture->destroy();
 });
+
+it('does not retry a failing project on every page load', function () {
+    Bus::fake();
+    Project::factory()->create(['state' => Project::STATE_STALE, 'indexed_at' => now()->subHour(), 'refresh_attempted_at' => now()->subMinute()]);
+    $due = Project::factory()->create(['state' => Project::STATE_STALE, 'indexed_at' => now()->subHour(), 'refresh_attempted_at' => now()->subMinutes(6)]);
+
+    $this->get('/')->assertOk();
+
+    Bus::assertDispatchedAfterResponse(RefreshProjectJob::class, 1);
+    Bus::assertDispatchedAfterResponse(RefreshProjectJob::class, fn ($job) => $job->project->is($due));
+});

@@ -20,6 +20,7 @@ use Illuminate\Support\Carbon;
  * @property string $state
  * @property string|null $sha
  * @property Carbon|null $indexed_at
+ * @property Carbon|null $refresh_attempted_at
  * @property string|null $last_error
  */
 class Project extends Model
@@ -43,7 +44,7 @@ class Project extends Model
     public const STALE_AFTER_MINUTES = 5;
 
     /** @var list<string> */
-    protected $fillable = ['name', 'path', 'ref', 'is_enabled', 'state', 'sha', 'indexed_at', 'last_error'];
+    protected $fillable = ['name', 'path', 'ref', 'is_enabled', 'state', 'sha', 'indexed_at', 'refresh_attempted_at', 'last_error'];
 
     /**
      * @return array<string, string>
@@ -53,6 +54,7 @@ class Project extends Model
         return [
             'is_enabled' => 'boolean',
             'indexed_at' => 'datetime',
+            'refresh_attempted_at' => 'datetime',
         ];
     }
 
@@ -77,11 +79,15 @@ class Project extends Model
     }
 
     /**
-     * Whether the snapshot is missing or old enough to refresh on page load.
+     * Whether a page load should refresh this project: it has never been tried,
+     * or the last try (successful or not) is older than the staleness window.
+     * Keyed on the attempt, not on `indexed_at`, so a failing project is retried
+     * every few minutes rather than on every page load.
      */
     public function needsRefresh(): bool
     {
-        return $this->indexed_at === null
-            || $this->indexed_at->lt(now()->subMinutes(self::STALE_AFTER_MINUTES));
+        $last = $this->refresh_attempted_at ?? $this->indexed_at;
+
+        return $last === null || $last->lt(now()->subMinutes(self::STALE_AFTER_MINUTES));
     }
 }
