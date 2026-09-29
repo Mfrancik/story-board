@@ -10,6 +10,12 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-09-29 — An unknown project's page 404'd with no log line
+Symptom: `/p/nope` returned 404, but no `board.project_page_refused` was logged, so the refusal could not be explained from the log.
+Root cause: Livewire 4 binds `{project:name}` inside `SubstituteBindings`. That runs before route middleware, so an unknown name 404'd in the binding before the guard ran.
+Fix: `bootstrap/app.php` calls `prependToPriorityList(SubstituteBindings::class, EnsureProjectIsShown::class)`, so the guard runs first and reads the raw route string ([ADR-013](decisions/ADR-013-project-refusal-runs-before-route-binding.md), SB-7). Pinned by `AppShellTest` "404s /p/nope and logs board.project_page_refused with reason unknown". Any guard that has to see an unbound name needs the same priority entry.
+Log trail: none, and that absence was the symptom. The request's `request_id` had no board event at all.
+
 ## 2026-09-29 — The story page for a branch version said "@ origin/main"
 Symptom: a story page opened with `?v=` for a branch version showed its path as `@ origin/main <sha>`, so it looked like the ref's copy.
 Root cause: the metadata line printed `$project->ref` for every row. Off-main rows carry their own `branch` and commit `sha`.

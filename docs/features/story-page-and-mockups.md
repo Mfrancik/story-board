@@ -1,5 +1,5 @@
 # Story page and mockups
-Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-4, SB-5
+Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-4, SB-5, SB-7
 
 ## Overview
 `/p/{project}/s/{storyId}` shows one story's full text, read from its project's ref, above its mockup
@@ -17,7 +17,9 @@ The compare overlay was added by owner ruling at the gate.
   `.*` so that relative assets like `shots/01.png` match. `ReadMockupFile` decides what is allowed,
   not the route pattern.
 
-**The page.** `app/Livewire/Board/StoryPage.php:mount()` 404s a disabled project and a `?v=` that
+**The page.** An unknown or disabled project never reaches it: the route's `EnsureProjectIsShown`
+refuses it first (SB-7; see [App shell](app-shell-and-project-switcher.md)). The page renders inside the
+sidebar shell with its project marked current. `app/Livewire/Board/StoryPage.php:mount()` 404s a `?v=` that
 is not all digits (`board.version_rejected`). `resolve()` then picks the row: the requested off-main
 version, else the on-ref row, else the story's first off-main version (see
 [Versions](#versions-sb-5)), or 404s. The row ID is stored as `rowId`. It reads the raw
@@ -126,6 +128,7 @@ page. `@tailwindcss/typography` styles the story text.
 | Event | Level | Where | Context |
 |---|---|---|---|
 | `board.story_viewed` | info | `StoryPage::mount()` | `project`, `story`, `version` (row `location`; null on the ref) |
+| `board.project_page_refused` | info | `EnsureProjectIsShown` (before `mount()`) | `project`, `reason` (`unknown` / `disabled`) |
 | `board.version_rejected` | warning | `StoryPage::mount()`, `MockupFileController` | `project`, `story`, `v` |
 | `board.story_read_failed` | warning | `RenderStory::read()` | `project`, `story`, `error` |
 | `board.mockup_served` | debug | `ReadMockupFile` | `project`, `story`, `file`, `bytes` |
@@ -195,3 +198,4 @@ Any `mockup_path_rejected` means a URL the board never builds, so someone is pro
 2026-09-29 — Story page (layout B), mockup panel, full-screen compare. Also fixed SB-3's carried WARNs (SB-4, `c7d383c`)
 2026-09-29 — Compare frames load only while open; focus trapped in the dialog (SB-4, `e4c2d9e`)
 2026-09-29 — Versions: `?v=` row selection, the off-main line and versions banner, branch/commit metadata, `mockups.file` `?v=` for branch versions, a story that exists only off main opens instead of returning 404 (SB-5, `7165b18`, `f83e02e`)
+2026-09-29 — Unknown/disabled project refused by `EnsureProjectIsShown` before binding (replaces `mount()`'s disabled check); renders in the sidebar shell; project breadcrumb links to `/p/{project}` (SB-7)
