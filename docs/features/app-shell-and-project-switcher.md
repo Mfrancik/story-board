@@ -19,8 +19,10 @@ sidebar's menu button, its backdrop and the `<aside>` itself.
 from the route, so no page has to pass it in:
 - `current` is the route's `project` parameter. It can be a bound `Project` or a plain string.
 - `onHome` is `routeIs('home')`.
-- `manageUrl` is set only when `Route::has('projects.manage')` (SB-12's route name). Until then the
-  Manage projects slot is not rendered.
+- `manageUrl` is set only when `Route::has('projects.manage')`. SB-12 registered that route, so the
+  Manage projects slot now links to [Manage projects](manage-projects.md), and the empty state links
+  there ("Add a project") instead of printing the `board:project add` command. `onManage` marks the slot
+  current on that page.
 
 `resources/views/components/board/sidebar.blade.php` renders three things:
 - A mobile top bar (`md:hidden`) with the menu button (`aria-label="Open projects"`).
@@ -101,8 +103,8 @@ disabled project now logs `project_page_refused`, not `board.story_not_found`.
 ## Testing & verification
 - `tests/Feature/Board/AppShellTest.php` has one `it()` per acceptance criterion. It also covers the
   story route refused in the same place, redirects that keep other filters, a disabled project's old
-  URL going to `/`, pinning that survives the query string and Clear filters, the empty sidebar, and
-  the Manage slot staying hidden. The pinning test now checks `/p/coins` ignores `?project=` and has
+  URL going to `/`, pinning that survives the query string and Clear filters, the empty sidebar linking to
+  Manage projects, and the Manage slot being shown (both updated by SB-12). The pinning test now checks `/p/coins` ignores `?project=` and has
   no project dropdown (SB-10).
 - `tests/Browser/AppShellTest.php`: at 375px the drawer is hidden, the menu button opens it and
   Escape closes it. At desktop width, clicking a project switches to its page and typing filters the
@@ -135,3 +137,4 @@ disabled project now logs `project_page_refused`, not `board.story_not_found`.
 2026-09-29 — Sidebar shell, `/p/{project}`, `/?project=` redirect, one project refusal before binding (SB-7, `d5867f6`)
 2026-09-29 — `projects.show` points at the new `ProjectPage`; `Home`'s pinned mode removed (SB-10, `a062331`)
 2026-09-29 — Sidebar dots render through `board/state`; its own dot map removed (SB-10, `e9a2f6e`)
+2026-09-29 — Manage slot and empty state link to `/projects` now that the route exists (SB-12)

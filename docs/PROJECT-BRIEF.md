@@ -1,5 +1,5 @@
 # Project brief — story-board
-Last refreshed: 2026-09-29 (SB-10)
+Last refreshed: 2026-09-29 (SB-12)
 
 ## What it is, and for whom
 A localhost Laravel app for one owner. It reads the `stories/` folder of every project that uses
@@ -9,7 +9,8 @@ an owner ruling. Work that is not on the ref yet (unmerged branches, worktrees, 
 shown beside it, labelled with where it lives, and never counts as status.
 
 ## Domain model
-- **Project**: a registered local checkout (`name`, `path`, `ref`, `is_enabled`). It has a refresh
+- **Project**: a registered local checkout (`name`, `path`, `ref`, `is_enabled`; off hides it everywhere
+  and stops its refreshes, keeping its rows). It has a refresh
   `state` (`pending | ok | stale | unreachable`), the `sha`/`indexed_at` of its last good snapshot,
   and `refresh_attempted_at` (last try, any outcome), which drives page-load staleness.
 - **Story**: one story file, as reported by the kit's `bin/story-index`. It holds
@@ -36,26 +37,17 @@ shown beside it, labelled with where it lives, and never counts as status.
 | App shell and project switcher: sidebar on every page, filterable project list, drawer below 768px, `/p/{project}` refusal, `/?project=` redirect | active (SB-7, SB-10) | [doc](features/app-shell-and-project-switcher.md) |
 | Story modal: `?story=<project>/<ID>` on `/` and `/p/{project}`, text, details, dependency chips, mockups, versions off main; Back closes | active (SB-8) | [doc](features/story-modal.md) |
 | Single-project dashboard: `/p/{project}` header with one-project refresh, scoped What needs me cards, Progress by initiative, Not on main by kind | active (SB-10) | [doc](features/single-project-dashboard.md) |
+| Manage projects: `/projects` switch on/off, add by folder, remove behind a confirmation; `board:project enable` | active (SB-12) | [doc](features/manage-projects.md) |
 
 ## Journeys
 None yet. Every SB story so far is `Journey: none`.
 
 ## Stories
-| ID | Title | Status |
-|---|---|---|
-| SB-2 | Register projects and read their stories from git | built |
-| SB-3 | The home page shows what needs me | built |
-| SB-4 | Read a story and see its mockups side by side | built |
-| SB-5 | Show work that isn't on main yet | built |
-| SB-6 | The board on an always-live domain (parked) | draft |
-| SB-7 | App shell and project switcher | built |
-| SB-8 | Story detail modal | built |
-| SB-9 | All-projects dashboard | built |
-| SB-10 | Single-project dashboard | built |
-| SB-11 | Live sessions | approved |
-| SB-12 | Manage projects from the board | approved |
-| SB-13 | Pick a mockup from the board | approved |
-| SB-14 | Project handbook | approved |
+- **built**: SB-2 registry and reader · SB-3 what needs me · SB-4 story and mockups · SB-5 not on main ·
+  SB-7 app shell · SB-8 story modal · SB-9 all-projects dashboard · SB-10 single-project dashboard ·
+  SB-12 manage projects
+- **approved**: SB-11 live sessions · SB-13 pick a mockup · SB-14 project handbook
+- **draft (parked)**: SB-6 the board on an always-live domain
 
 SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this repo.
 
@@ -93,17 +85,20 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
   [ADR-015](decisions/ADR-015-story-modal-history-is-driven-by-alpine.md)
 - `?story` has one parser, the version rule is shared with the story page, and a link names a story,
   not a version → [ADR-016](decisions/ADR-016-one-story-link-parser-and-one-version-picker.md)
-- The board is read-only: no approve, pick or cancel actions (owner ruling). Compare is Alpine-only.
+- Manage projects re-navigates after every write so the layout's sidebar follows; toasts persist →
+  [ADR-021](decisions/ADR-021-manage-projects-re-navigates-so-the-sidebar-follows.md)
+- Add project reuses `RegisterProject` unchanged and names refusals by re-running its checks →
+  [ADR-022](decisions/ADR-022-add-project-classifies-refusals-by-re-running-checks.md)
+- The board never writes to a project: no approve, pick or cancel actions (owner ruling). Its only
+  writes are its own database (Manage projects). Compare is Alpine-only.
 - Preflight audit scope and isolation, audit cost record, build-artifact disposal (kit) →
   ADR-001 to ADR-003
 
 ## Current phase and what's next
 Phase 2: UI organisation (SB-7 to SB-14). Phase 1 (SB-2 to SB-5) is built and
-retro'd. SB-7 (sidebar shell, `/p/{project}`), SB-8 (story modal), SB-9 (all-projects dashboard) and SB-10
-(single-project dashboard) have shipped. Next: SB-11 (live sessions, which fills both dashboards'
-Live now slot), SB-12
-(Manage projects, which switches on the sidebar's Manage slot), SB-13 (pick a mockup) and SB-14
-(handbook). SB-6 (hosted) stays parked. F-2 (a timeline of what was built) is in the backlog.
+retro'd. SB-7 (sidebar shell), SB-8 (story modal), SB-9 (all-projects dashboard), SB-10 (single-project
+dashboard) and SB-12 (Manage projects) have shipped. Next: SB-11 (live sessions, fills both dashboards'
+Live now slot), SB-13 (pick a mockup, reuses `board/confirm-modal`) and SB-14 (handbook). SB-6 (hosted) stays parked. F-2 (a timeline of what was built) is in the backlog.
 
 ## Known limitations
 - Laravel 13 / Livewire 4 are installed (starter kit), while `CLAUDE.md` says 12 / 3. Flagged to the
@@ -122,5 +117,7 @@ Live now slot), SB-12
   In flight always show the whole portfolio (ADR-018).
 - A failing project is retried at most every 5 minutes (staleness keys on the last attempt), so a
   fixed remote can take that long to show as `ok` without a manual `board:refresh`.
+- `/projects` has no auth and can add and delete projects; safe only while the board is localhost-only.
+  SB-6 (hosted) would need auth first. A project's path and ref cannot be edited (remove and re-add).
 - Dev server runs on port 8010 (coins holds 8000/8001). There is no git remote for this repo, by
   owner ruling.

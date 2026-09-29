@@ -86,6 +86,8 @@ with the same env.
   checkout of the project (SB-5, [Not on main](not-on-main.md)).
 - `php artisan board:project list` — table of every project and its last refresh.
 - `php artisan board:project disable <name>` — sets `is_enabled=false`; the row and snapshot stay.
+  `enable <name>` undoes it and queues one refresh. Both go through `SwitchProject` (SB-12,
+  [Manage projects](manage-projects.md)), which also switches, adds and removes projects from `/projects`.
 - `php artisan board:refresh [project]` — refresh all enabled projects, or one by name. Exits
   non-zero only when the named project does not exist or is disabled.
 - `GET /` — the home page ([What needs me](what-needs-me-home.md)).
@@ -111,7 +113,7 @@ All events go to the default log channel with a `project` context key:
 | `board.refresh_skipped` | info | `RefreshProject` | `project`, `reason` (`already running`) |
 | `board.refresh_crashed` | error | `RefreshProjectJob` | `project`, `exception` (rethrown) |
 | `board.project_registered` | info | `RegisterProject` | `project`, `path`, `ref` |
-| `board.project_disabled` | info | `BoardProject` command | `project` |
+| `board.project_disabled` / `board.project_enabled` | info | `SwitchProject` | `project`, `source` (`ui` / `cli`) (SB-12) |
 
 A healthy refresh is `refresh_started` then `refresh_finished` for the same `project`. A `started`
 with no `finished` means one of the warnings fired (or a crash). A `refresh_skipped` is benign: a
@@ -181,3 +183,4 @@ the first line of git's stderr.
 2026-09-29 — Refresh lock TTL (`RefreshProject::LOCK_SECONDS`) raised above the git timeout sum (SB-2)
 2026-09-29 — Page-load refresh moved to the Livewire home and the queue; bare list removed; request IDs on refresh logs (SB-3)
 2026-09-29 — GitReader allow-list gains four read-only forms; `(project_id, path)` no longer unique; `board:project alias`; off-main scan after each refresh (SB-5)
+2026-09-29 — `board:project enable`; enable/disable go through `SwitchProject` and log `source` (SB-12)

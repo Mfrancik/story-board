@@ -10,6 +10,12 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-09-29 — A blank Add project path would register the board itself
+Symptom: submitting Add project with an empty Path would have registered story-board's own checkout as a project instead of refusing.
+Root cause: `RegisterProject` resolves the path with `realpath()`, and PHP's `realpath('')` returns the current working directory. For the web app that is the board's own checkout, which is a git repository, so every check passed.
+Fix: `AddProject::handle()` refuses a blank path (after trimming and `~` expansion) before calling `RegisterProject`, with reason `missing_path` and "Enter the folder of a git checkout." (SB-12, `617f555`). Pinned by `ManageProjectsTest` "refuses a blank or missing path with reason missing_path, expanding ~ first". Anything else that feeds user input to `realpath()` needs the same blank check.
+Log trail: `board.project_add_refused` with `reason: missing_path` and an empty `path`. Without the fix you would see `board.project_registered` with the board's own path.
+
 ## 2026-09-29 — A project switched off mid-visit kept rendering its rollup
 Symptom: with `/p/coins` open, switching coins off and then clicking a kind button still re-rendered its initiatives; a removed project 404'd the Livewire request with no log line (L-5).
 Root cause: `EnsureProjectIsShown` is route middleware, and Livewire update requests (`/livewire/update`) never pass through the page's route middleware, so only the initial GET was guarded. Test trap: after `assertRedirect()`, Livewire's test harness still holds the previous HTML, so `assertDontSee('secret-rollup')` passes against stale markup and proves nothing.
