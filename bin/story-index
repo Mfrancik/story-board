@@ -1,0 +1,329 @@
+#!/usr/bin/env python3
+"""story-index — read a project's stories from a git ref and emit them as JSON.
+
+The story format was prose until this script: `preflight.sh` parsed `Status:`
+leniently for one gate, and every other reader (a board, a sweep, a person) had
+to re-invent the rules. This is the one parser. Its JSON is a CONTRACT — the
+shape is documented in docs/KIT-REFERENCE.md §story-index, and anything that
+reads stories (SB-2+) reads this output instead of the files.
+
+Usage:
+  bin/story-index [--check] <repo> [ref]      ref defaults to origin/main
+
+  (default)  print a JSON list, one record per story file, sorted by path
+  --check    print one `<path>: <error>` line per parse error; exit 1 if any.
+             This is what `./preflight.sh gate story-format` runs.
+
+Exit codes: 0 ok · 1 --check found parse errors · 2 bad repo or ref (one line
+on stderr, nothing on stdout — never partial JSON).
+
+Everything is read THROUGH GIT (`git ls-tree`, one `git cat-file --batch`),
+never the working tree. A checkout can be stale or mid-edit: on 2026-09-29 one
+project's primary checkout showed 11 approved stories where origin/main had 23.
+A ref is a fact; a working tree is an opinion.
+
+A story file is any `stories/**/*.md` except a `README.md` — the same rule
+story_status_gate uses, so the two cannot disagree about what a story is.
+Format drift inside a story is a `parse_errors` entry, never a crash: a board
+should show a broken row, not lose it.
+"""
+
+import argparse
+import json
+import re
+import subprocess
+import sys
+
+# Story IDs, exactly as CLAUDE.md step 6 defines them (AP-1, SS-10, MT-2a).
+ID_RE = r"[A-Z]{2,}-[0-9]+[a-z]?"
+# `<ID>-<slug>.md` (the /story convention) or bare `<ID>.md` — story_status_gate
+# accepts both, so this does too.
+FILENAME_RE = re.compile(rf"^({ID_RE})(?:-.*)?\.md$")
+# Same anchor and first-word rule as story_status_gate's grep | sed | grep:
+# tolerates `**Status:** built`, `Status: draft   Journey: …`, `draft — pending`.
+STATUS_LINE_RE = re.compile(r"^\**Status:")
+STATUS_STRIP_RE = re.compile(r"^\**Status:\**\s*")
+STATUS_WORD_RE = re.compile(r"^[A-Za-z]+")
+# The Chosen option value is free text in practice (`b`, `**b — "The Ledger"**`,
+# `a (revision 2)`, `n/a`). Only a lone leading letter is an option; `n/a` is not.
+CHOSEN_RE = re.compile(r"^([A-Za-z])(?=$|[\s—–.,:;)(-])")
+OPTION_FILE_RE = re.compile(r"^option-(.+)\.html$")
+
+
+class IndexError_(Exception):
+    """A repo or ref problem that must abort the run with one stderr line."""
+
+
+# --- reading through git ----------------------------------------------------
+
+def git(repo, *args, stdin=None):
+    """Run a git command in `repo` and return stdout bytes; raise on failure.
+
+    The first stderr line becomes the error, so a failure stays one line.
+    """
+    proc = subprocess.run(["git", "-C", repo, *args], input=stdin,
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if proc.returncode != 0:
+        err = proc.stderr.decode(errors="replace").strip().splitlines()
+        raise IndexError_(err[0] if err else f"git {args[0]} failed")
+    return proc.stdout
+
+
+def resolve_ref(repo, ref):
+    """Return the commit SHA `ref` names in `repo`, or raise a one-line error."""
+    try:
+        git(repo, "rev-parse", "--git-dir")
+    except (IndexError_, FileNotFoundError, NotADirectoryError):
+        raise IndexError_(f"not a git repository: {repo}")
+    try:
+        return git(repo, "rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}").decode().strip()
+    except IndexError_:
+        # --quiet leaves stderr empty, so name the ref here rather than relay nothing.
+        raise IndexError_(f"ref not found in {repo}: {ref}")
+
+
+def list_files(repo, sha, prefix):
+    """List every file path under `prefix` at commit `sha` (empty if absent)."""
+    out = git(repo, "ls-tree", "-r", "-z", "--name-only", sha, "--", prefix)
+    return [p for p in out.decode(errors="replace").split("\0") if p]
+
+
+def read_blobs(repo, sha, paths):
+    """Read many files at `sha` with ONE `git cat-file --batch` process.
+
+    A `git show` per file costs a process each; ~900 stories would pay that
+    ~900 times on every preflight. Returns {path: text}; a path git reports
+    missing is simply absent from the result.
+    """
+    if not paths:
+        return {}
+    req = "".join(f"{sha}:{p}\n" for p in paths).encode()
+    out = git(repo, "cat-file", "--batch", stdin=req)
+    blobs, pos = {}, 0
+    for p in paths:
+        nl = out.index(b"\n", pos)
+        header = out[pos:nl].split()
+        pos = nl + 1
+        if len(header) < 3 or header[1] != b"blob":
+            continue  # "<name> missing" — no body follows
+        size = int(header[2])
+        blobs[p] = out[pos:pos + size].decode("utf-8", errors="replace")
+        pos += size + 1  # the body is followed by one newline
+    return blobs
+
+
+# --- parsing one file ---------------------------------------------------------
+
+def parse_vocabulary(readme):
+    """Return the allowed statuses from a stories/README.md §Status list.
+
+    The project's README is the single source of truth for the vocabulary (the
+    kit ships three values, a project may add `cancelled`), so nothing here is
+    hardcoded. Takes the backticked bullets under the first heading that starts
+    with `Status`, up to the next heading. None when there is no such list.
+    """
+    if readme is None:
+        return None
+    values, inside = [], False
+    for line in readme.splitlines():
+        if re.match(r"^#{1,6}\s", line):
+            if inside:
+                break
+            inside = bool(re.match(r"^#{2,6}\s+Status\b", line))
+            continue
+        if inside:
+            m = re.match(r"^\s*[-*]\s+`([^`]+)`", line)
+            if m:
+                values.append(m.group(1))
+    return values or None
+
+
+def parse_status(text):
+    """Return the story's status word, exactly as story_status_gate reads it."""
+    for line in text.splitlines():
+        if STATUS_LINE_RE.match(line):
+            m = STATUS_WORD_RE.match(STATUS_STRIP_RE.sub("", line))
+            return m.group(0) if m else None
+    return None
+
+
+def header_lines(text):
+    """The story's header: every line before the first `## ` section."""
+    lines = []
+    for line in text.splitlines():
+        if line.startswith("## "):
+            break
+        lines.append(line)
+    return lines
+
+
+def section(text, name):
+    """The body lines of the `## <name>` section, or [] if it is absent."""
+    lines, inside = [], False
+    for line in text.splitlines():
+        if re.match(r"^#{1,2}\s", line):
+            if inside:
+                break
+            inside = bool(re.match(rf"^##\s+{re.escape(name)}\b", line))
+            continue
+        if inside:
+            lines.append(line)
+    return lines
+
+
+def parse_title(text, story_id):
+    """The H1 with its `<ID> — ` prefix removed; None if there is no H1."""
+    for line in text.splitlines():
+        m = re.match(r"^#\s+(.*)", line)
+        if m:
+            title = m.group(1).strip()
+            if story_id:
+                title = re.sub(rf"^{re.escape(story_id)}\s*[—–:-]?\s*", "", title)
+            return title or None
+    return None
+
+
+def parse_journey(header):
+    """The `Journey:` value from the header — its own line or trailing Status."""
+    for line in header:
+        m = re.search(r"\**Journey:\**\s*(.*)", line)
+        if m:
+            return m.group(1).strip() or None
+    return None
+
+
+def parse_source(header):
+    """The `Source:` value, joined across its wrapped continuation lines.
+
+    Continuation stops at a blank line, a heading, or the next `Key:` field
+    (Initiative:, Journey:) so one field never swallows the next.
+    """
+    out = None
+    for line in header:
+        if out is None:
+            m = re.match(r"^\**Source:\**\s*(.*)", line)
+            if m:
+                out = [m.group(1).strip()]
+            continue
+        if not line.strip() or line.startswith("#") or re.match(r"^\**[A-Z][A-Za-z -]*:\**\s", line):
+            break
+        out.append(line.strip())
+    if out is None:
+        return None
+    return " ".join(out).strip() or None
+
+
+def parse_depends_on(text):
+    """Story IDs from the `Depends on:` field of `## Links`, in order, deduped.
+
+    The field shares a line with `Journey:` and `Blocks:`, separated by ` · `,
+    and wraps across lines in practice — so the section is joined first, then
+    cut at the next separator. `Depends on: none` yields [].
+    """
+    links = " ".join(section(text, "Links"))
+    m = re.search(r"Depends on:\s*(.*)", links)
+    if not m:
+        return []
+    value = re.split(r"·|\bBlocks:", m.group(1))[0]
+    return list(dict.fromkeys(re.findall(rf"\b{ID_RE}\b", value)))
+
+
+def parse_chosen(text):
+    """The option letter named by `Chosen option:`, lowercased; else None."""
+    for line in text.splitlines():
+        m = re.search(r"Chosen option:\s*(.*)", line)
+        if m:
+            value = m.group(1).strip().lstrip("*_`")
+            letter = CHOSEN_RE.match(value)
+            return letter.group(1).lower() if letter else None
+    return None
+
+
+def index_story(path, text, vocab, mockup_files):
+    """Build one contract record for the story at `path`."""
+    errors = []
+    fm = FILENAME_RE.match(path.rsplit("/", 1)[-1])
+    story_id = fm.group(1) if fm else None
+    if not story_id:
+        errors.append(f"filename does not start with a story ID ({ID_RE}): {path}")
+
+    status = parse_status(text)
+    if status is None:
+        errors.append("no `Status:` line")
+    elif vocab is None:
+        errors.append(f"status '{status}' cannot be checked: stories/README.md has no §Status list at this ref")
+    elif status not in vocab:
+        errors.append(f"status '{status}' is not in stories/README.md §Status ({', '.join(vocab)})")
+
+    title = parse_title(text, story_id)
+    if title is None:
+        errors.append("no `# <ID> — <title>` heading")
+
+    parts = path.split("/")
+    mockup_dir = f"docs/mockups/{story_id}" if story_id else None
+    options = []
+    if mockup_dir and mockup_dir in mockup_files:
+        options = sorted(m.group(1) for f in mockup_files[mockup_dir]
+                         if (m := OPTION_FILE_RE.match(f)))
+    else:
+        mockup_dir = None
+
+    header = header_lines(text)
+    return {
+        "id": story_id,
+        "title": title,
+        "status": status,
+        "journey": parse_journey(header),
+        "initiative": parts[1] if len(parts) > 2 else None,
+        "path": path,
+        "source": parse_source(header),
+        "depends_on": parse_depends_on(text),
+        "mockups": {"dir": mockup_dir, "options": options, "chosen": parse_chosen(text)},
+        "parse_errors": errors,
+    }
+
+
+# --- the whole index ------------------------------------------------------------
+
+def build_index(repo, ref):
+    """Return every story record at `ref`, sorted by path. Raises IndexError_."""
+    sha = resolve_ref(repo, ref)
+    stories = sorted(p for p in list_files(repo, sha, "stories/")
+                     if p.endswith(".md") and p.rsplit("/", 1)[-1] != "README.md")
+    if not stories:
+        return []
+    # Mockup files grouped by their story directory: docs/mockups/<ID>/<file>.
+    mockup_files = {}
+    for p in list_files(repo, sha, "docs/mockups/"):
+        parts = p.split("/")
+        if len(parts) == 4:
+            mockup_files.setdefault("/".join(parts[:3]), []).append(parts[3])
+    blobs = read_blobs(repo, sha, ["stories/README.md", *stories])
+    vocab = parse_vocabulary(blobs.get("stories/README.md"))
+    return [index_story(p, blobs.get(p, ""), vocab, mockup_files) for p in stories]
+
+
+def main(argv):
+    """CLI entry point; returns the process exit code."""
+    ap = argparse.ArgumentParser(prog="story-index", description=__doc__.split("\n")[0])
+    ap.add_argument("--check", action="store_true",
+                    help="print parse errors as `<path>: <error>`; exit 1 if any")
+    ap.add_argument("repo")
+    ap.add_argument("ref", nargs="?", default="origin/main")
+    args = ap.parse_args(argv)
+    try:
+        records = build_index(args.repo, args.ref)
+    except IndexError_ as e:
+        print(f"story-index: {e}", file=sys.stderr)
+        return 2
+    if args.check:
+        bad = [(r["path"], e) for r in records for e in r["parse_errors"]]
+        for path, err in bad:
+            print(f"{path}: {err}")
+        return 1 if bad else 0
+    print(json.dumps(records, indent=2, ensure_ascii=False))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
