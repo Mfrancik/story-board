@@ -13,13 +13,7 @@ An entry leaves `## Open` exactly two ways:
 - **It ships** — a story named it in `Source: F-<n>`, and `/document` removed it
   on completion. Its trace lives in that story file and in git. A preflight gate
   to pin this is written at `wip/backlog_sync_gate.sh` but is not yet installed.
-- **It's cut** — moved to `### F-5 — 2026-09-29 — Preflight run record: tests, failures, gates, verdict
-Area: kit tooling (preflight.sh) · feeds SB-16 preflight history
-Scope: PROMOTE
-
-Owner wants preflight history to show "the tests that ran, failures, which fialures, time it took to run". The cost CSV holds none of that and preflight.sh keeps nothing after it exits. Proposal: preflight.sh writes one JSON per run (gates with pass/fail and seconds, pest counts per suite, failing test names, verdict) to ~/.claude/projects/<p>/preflight-runs/. Deferred by owner 2026-09-29: "I dont want to make too many changes to the preflight scripts right now".
-
-## Cut` with a reason, via `/feature cut` or at retro.
+- **It's cut** — moved to `## Cut` with a reason, via `/feature cut` or at retro.
 
 It does not leave because it got scheduled, and it does not leave because someone
 tidied up.
@@ -58,6 +52,12 @@ Area: kit tooling (bin/preflight-meter.py)
 Scope: PROMOTE
 
 Retro finding (owner-approved capture): three times this phase the cost label read "audit opus" or "opus+sonnet" when the preflight audit ran on Sonnet. The meter counts every subagent that ran in its window, so a documenter subagent (session model) was reported as the audit tier. It should count only `preflight`-type subagents toward the audit tier. Fix in the kit, proven with bin/preflight-ab.sh.
+
+### F-5 — 2026-09-29 — Preflight run record: tests, failures, gates, verdict
+Area: kit tooling (preflight.sh) · feeds SB-16 preflight history
+Scope: PROMOTE
+
+Owner wants preflight history to show "the tests that ran, failures, which fialures, time it took to run". The cost CSV holds none of that and preflight.sh keeps nothing after it exits. Proposal: preflight.sh writes one JSON per run (gates with pass/fail and seconds, pest counts per suite, failing test names, verdict) to ~/.claude/projects/<p>/preflight-runs/. Deferred by owner 2026-09-29: "I dont want to make too many changes to the preflight scripts right now".
 
 ## Cut
 
