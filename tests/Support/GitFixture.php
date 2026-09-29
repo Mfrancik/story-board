@@ -91,6 +91,57 @@ class GitFixture
     }
 
     /**
+     * Commit the author clone's changes on a new branch and push it to origin,
+     * leaving the author back on main. The branch is unmerged until merged.
+     */
+    public function pushBranch(string $branch, string $message = 'docs: branch work'): self
+    {
+        $this->git($this->author, 'checkout', '--quiet', '-b', $branch);
+        $this->git($this->author, 'add', '-A');
+        $this->git($this->author, 'commit', '--quiet', '-m', $message);
+        $this->git($this->author, 'push', '--quiet', 'origin', $branch);
+        $this->git($this->author, 'checkout', '--quiet', 'main');
+
+        return $this;
+    }
+
+    /**
+     * Merge `$branch` into main in the author clone and push main.
+     */
+    public function mergeBranch(string $branch): self
+    {
+        $this->git($this->author, 'merge', '--quiet', '--no-ff', '-m', "merge {$branch}", $branch);
+        $this->git($this->author, 'push', '--quiet', 'origin', 'main');
+
+        return $this;
+    }
+
+    /**
+     * Add a worktree of the registered clone on a new local branch, the way the
+     * owner's `coins-*` checkouts are made. Returns the worktree's path.
+     */
+    public function addWorktree(string $name, string $branch): string
+    {
+        $path = $this->root.'/'.$name;
+        // The clone only knows the origin/main it was cloned at; branch from the current one.
+        $this->git($this->project, 'fetch', '--quiet');
+        $this->git($this->project, 'worktree', 'add', '--quiet', '-b', $branch, $path, 'origin/main');
+
+        return $path;
+    }
+
+    /**
+     * Write a file into any checkout without staging it (an untracked file).
+     */
+    public function untracked(string $checkout, string $path, string $contents): self
+    {
+        File::ensureDirectoryExists(dirname($checkout.'/'.$path));
+        File::put($checkout.'/'.$path, $contents);
+
+        return $this;
+    }
+
+    /**
      * The commit SHA that origin's main points at right now.
      */
     public function originSha(): string

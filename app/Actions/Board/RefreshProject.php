@@ -23,8 +23,9 @@ class RefreshProject
 
     /**
      * @param  GitReader  $git  the only way the board touches a project
+     * @param  IndexOffMain  $offMain  SB-5's scan of branches and checkouts
      */
-    public function __construct(private GitReader $git) {}
+    public function __construct(private GitReader $git, private IndexOffMain $offMain) {}
 
     /**
      * Refresh `$project`, recording the outcome in its `state`.
@@ -91,6 +92,14 @@ class RefreshProject
 
         $this->replaceSnapshot($project, $sha, $records, $parked);
 
+        try {
+            $this->offMain->handle($project, $sha, $records);
+        } catch (\RuntimeException $e) {
+            // The ref snapshot above is complete and correct on its own; off-main work is
+            // extra context, so its failure is logged and never marks the project stale.
+            Log::warning('board.offmain_failed', ['project' => $project->name, 'error' => $e->getMessage()]);
+        }
+
         Log::info('board.refresh_finished', [
             'project' => $project->name,
             'count' => count($records),
@@ -129,7 +138,7 @@ class RefreshProject
         ], $records);
 
         DB::transaction(function () use ($project, $sha, $rows, $now) {
-            $project->stories()->delete();
+            $project->stories()->onRef()->delete();
             // Bulk insert: coins alone is ~900 rows, one INSERT per row would dominate the refresh.
             foreach (array_chunk($rows, 500) as $chunk) {
                 DB::table('stories')->insert($chunk);

@@ -18,7 +18,7 @@ class BoardController extends Controller
      */
     public function __invoke(): View
     {
-        $projects = Project::enabled()->withCount('stories')->orderBy('name')->get();
+        $projects = Project::enabled()->withCount(['stories' => fn ($q) => $q->onRef()])->orderBy('name')->get();
 
         $projects->filter(fn (Project $p) => $p->needsRefresh())
             ->each(fn (Project $p) => RefreshProjectJob::dispatchAfterResponse($p));

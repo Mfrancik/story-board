@@ -25,3 +25,12 @@ it('refuses a ref git would read as an option or a range', function (string $ref
 it('accepts ordinary refs', function (string $ref) {
     expect(GitReader::isValidRef($ref))->toBeTrue();
 })->with(['origin/main', 'main', 'docs/MOB-56-pick', '5e48518e7bc665f5aff02360b259a4597bca423b', 'release-1.2']);
+
+it('refuses worktree and status in any form but the read-only one', function (array $args) {
+    (new GitReader)->run('/tmp', $args);
+})->with([
+    'worktree add' => [['worktree', 'add', '/tmp/x']],
+    'worktree remove' => [['worktree', 'remove', '/tmp/x']],
+    'worktree prune' => [['worktree', 'prune']],
+    'status without porcelain' => [['status']],
+])->throws(GitReaderException::class, 'not allowed');

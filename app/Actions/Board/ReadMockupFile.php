@@ -37,7 +37,7 @@ class ReadMockupFile
             throw new MockupNotFoundException("Rejected mockup path: {$file}");
         }
 
-        $story = Story::where('project_id', $project->id)->where('story_id', $storyId)->first();
+        $story = Story::onRef()->where('project_id', $project->id)->where('story_id', $storyId)->first();
         $dir = $story?->mockups['dir'] ?? null;
         // The directory comes from the snapshot, never the URL, so a story can only serve its own folder.
         if ($story === null || $dir !== "docs/mockups/{$storyId}") {

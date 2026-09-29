@@ -40,7 +40,7 @@ class BoardRefresh extends Command
             $refresh->handle($project);
             $project->refresh();
             $this->line(sprintf('%-20s %-12s %5d stories  %s', $project->name, $project->state,
-                $project->stories()->count(), $project->last_error ?? substr((string) $project->sha, 0, 12)));
+                $project->stories()->onRef()->count(), $project->last_error ?? substr((string) $project->sha, 0, 12)));
         }
 
         return self::SUCCESS;

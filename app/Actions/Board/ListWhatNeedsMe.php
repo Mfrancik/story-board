@@ -69,6 +69,8 @@ class ListWhatNeedsMe
             ->select('stories.*')
             ->join('projects', 'projects.id', '=', 'stories.project_id')
             ->where('projects.is_enabled', true)
+            // Off-main rows (SB-5) have their own section; the groups count the ref only.
+            ->whereNull('stories.location_kind')
             ->with('project')
             ->when($project, fn ($q) => $q->where('projects.name', $project))
             ->when($initiative, fn ($q) => $q->where('stories.initiative', $initiative))
@@ -90,10 +92,10 @@ class ListWhatNeedsMe
         $projects = Project::enabled()->when($only, fn ($q) => $q->where('name', $only))->orderBy('name')->get();
 
         // Two grouped queries for all projects instead of two per project.
-        $counts = Story::query()->whereIn('project_id', $projects->modelKeys())
+        $counts = Story::onRef()->whereIn('project_id', $projects->modelKeys())
             ->selectRaw('project_id, coalesce(status, ?) as status, count(*) as n', ['(none)'])
             ->groupBy('project_id', 'status')->get()->groupBy('project_id');
-        $errors = Story::query()->whereIn('project_id', $projects->modelKeys())
+        $errors = Story::onRef()->whereIn('project_id', $projects->modelKeys())
             ->whereRaw('json_length(parse_errors) > 0')
             ->selectRaw('project_id, count(*) as n')->groupBy('project_id')->pluck('n', 'project_id');
 

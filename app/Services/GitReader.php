@@ -18,8 +18,9 @@ class GitReader
     /**
      * Subcommands that cannot change a working tree, index, or branch. `fetch`
      * is the one that writes at all, and only to remote-tracking refs under .git.
+     * `worktree` and `status` are allowed in one read-only form each (see run()).
      */
-    private const ALLOWED = ['fetch', 'ls-tree', 'show', 'rev-parse', 'cat-file', 'remote'];
+    private const ALLOWED = ['fetch', 'ls-tree', 'show', 'rev-parse', 'cat-file', 'remote', 'for-each-ref', 'worktree', 'status', 'merge-base'];
 
     /**
      * What a ref may look like: branch/remote names and SHAs. A leading `-` is
@@ -115,6 +116,124 @@ class GitReader
     }
 
     /**
+     * Every blob under `stories/` and `docs/mockups/` at `$ref`, as path => blob
+     * SHA. Comparing two of these finds what a branch changed without `git diff`.
+     *
+     * @return array<string, string>
+     *
+     * @throws GitReaderException when the ref does not resolve.
+     */
+    public function storyBlobs(string $path, string $ref): array
+    {
+        $this->assertRef($ref);
+        $out = $this->run($path, ['ls-tree', '-r', '-z', $ref, '--', 'stories/', 'docs/mockups/']);
+
+        $blobs = [];
+        foreach (explode("\0", $out) as $entry) {
+            // `<mode> blob <sha>\t<path>`
+            if (preg_match('/^\d+ blob ([0-9a-f]+)\t(.+)$/s', $entry, $m)) {
+                $blobs[$m[2]] = $m[1];
+            }
+        }
+
+        return $blobs;
+    }
+
+    /**
+     * The commit where `$a` and `$b` diverged.
+     *
+     * @throws GitReaderException when either ref is invalid or they share no history.
+     */
+    public function mergeBase(string $path, string $a, string $b): string
+    {
+        $this->assertRef($a);
+        $this->assertRef($b);
+
+        return trim($this->run($path, ['merge-base', $a, $b]));
+    }
+
+    /**
+     * Local and remote-tracking branches with commits not in `$ref`, as
+     * name => commit SHA. Symbolic refs (origin/HEAD) are skipped.
+     *
+     * @return array<string, string>
+     *
+     * @throws GitReaderException when the ref does not resolve.
+     */
+    public function unmergedBranches(string $path, string $ref): array
+    {
+        $this->assertRef($ref);
+        $out = $this->run($path, ['for-each-ref', "--no-merged={$ref}", '--format=%(refname:short)%09%(objectname)%09%(symref)', 'refs/heads', 'refs/remotes']);
+
+        $branches = [];
+        foreach (array_filter(explode("\n", $out)) as $line) {
+            [$name, $sha, $symref] = array_pad(explode("\t", $line), 3, '');
+            if ($symref === '' && $name !== $ref) {
+                $branches[$name] = $sha;
+            }
+        }
+
+        return $branches;
+    }
+
+    /**
+     * Every worktree of the repository at `$path`, the primary checkout
+     * included. `branch` is the short name checked out there, null when detached.
+     *
+     * @return list<array{path: string, branch: string|null}>
+     *
+     * @throws GitReaderException when `$path` is not a repository.
+     */
+    public function worktrees(string $path): array
+    {
+        $out = $this->run($path, ['worktree', 'list', '--porcelain', '-z']);
+
+        $worktrees = [];
+        $path = null;
+        $branch = null;
+        // Records are NUL-separated lines, each worktree ended by an empty line.
+        foreach (explode("\0", $out) as $line) {
+            if (str_starts_with($line, 'worktree ')) {
+                $path = substr($line, 9);
+                $branch = null;
+            } elseif (str_starts_with($line, 'branch refs/heads/')) {
+                $branch = substr($line, 18);
+            } elseif ($line === '' && $path !== null) {
+                $worktrees[] = ['path' => $path, 'branch' => $branch];
+                $path = null;
+            }
+        }
+        if ($path !== null) {
+            $worktrees[] = ['path' => $path, 'branch' => $branch];
+        }
+
+        return $worktrees;
+    }
+
+    /**
+     * Untracked files under `stories/` and `docs/mockups/` in the checkout at
+     * `$path`, relative to it. GIT_OPTIONAL_LOCKS=0 keeps status from
+     * refreshing the checkout's index, so this does not write either.
+     *
+     * @return list<string>
+     *
+     * @throws GitReaderException when `$path` is not a checkout.
+     */
+    public function untrackedStoryFiles(string $path): array
+    {
+        $out = $this->run($path, ['status', '--porcelain', '-z', '--untracked-files=all', '--', 'stories/', 'docs/mockups/'], timeout: 60);
+
+        $files = [];
+        foreach (explode("\0", $out) as $entry) {
+            if (str_starts_with($entry, '?? ')) {
+                $files[] = substr($entry, 3);
+            }
+        }
+
+        return $files;
+    }
+
+    /**
      * Every story record at `$ref`, straight from the kit's bin/story-index
      * contract (docs/KIT-REFERENCE.md §story-index). The parser reads through
      * `git ls-tree` and `git cat-file` only, so it is inside the read-only rule.
@@ -178,6 +297,13 @@ class GitReader
         // rewrites .git/config and `--output` writes a file, so both are refused outright.
         if ($subcommand === 'remote' && count($args) > 1) {
             throw new GitReaderException('git remote is not allowed with arguments: the board only lists remotes');
+        }
+        // `worktree add|remove|prune` and `status` without --porcelain are not reads the board needs.
+        if ($subcommand === 'worktree' && ($args[1] ?? '') !== 'list') {
+            throw new GitReaderException('git worktree is not allowed except `worktree list`: the board is read-only');
+        }
+        if ($subcommand === 'status' && ! in_array('--porcelain', $args, true)) {
+            throw new GitReaderException('git status is not allowed without --porcelain: the board is read-only');
         }
         foreach ($args as $arg) {
             if (str_starts_with($arg, '--output') || str_starts_with($arg, '-o')) {

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Database\Factories\StoryFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -26,16 +27,28 @@ use Illuminate\Support\Carbon;
  * @property array{dir: string|null, options: list<string>, chosen: string|null} $mockups
  * @property list<string> $parse_errors
  * @property string $sha
+ * @property string|null $location_kind
+ * @property string|null $location
+ * @property string|null $branch
  */
 class Story extends Model
 {
     /** @use HasFactory<StoryFactory> */
     use HasFactory;
 
+    /** Committed on a branch that is not merged into the project's ref. */
+    public const KIND_BRANCH = 'branch';
+
+    /** Committed on an unmerged branch that is checked out in a worktree. */
+    public const KIND_WORKTREE = 'worktree';
+
+    /** An untracked file in one of the project's checkouts. */
+    public const KIND_UNTRACKED = 'untracked';
+
     /** @var list<string> */
     protected $fillable = [
         'project_id', 'story_id', 'title', 'status', 'initiative', 'is_parked', 'journey', 'path', 'source', 'dated_on',
-        'depends_on', 'mockups', 'parse_errors', 'sha',
+        'depends_on', 'mockups', 'parse_errors', 'sha', 'location_kind', 'location', 'branch',
     ];
 
     /**
@@ -60,5 +73,25 @@ class Story extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    /**
+     * Only the ref's snapshot — what SB-2 indexed and what the home groups count.
+     *
+     * @param  Builder<Story>  $query
+     */
+    public function scopeOnRef(Builder $query): void
+    {
+        $query->whereNull('location_kind');
+    }
+
+    /**
+     * Only work that is not on the ref yet (SB-5).
+     *
+     * @param  Builder<Story>  $query
+     */
+    public function scopeOffMain(Builder $query): void
+    {
+        $query->whereNotNull('location_kind');
     }
 }

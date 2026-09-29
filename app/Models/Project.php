@@ -69,6 +69,16 @@ class Project extends Model
     }
 
     /**
+     * Other checkouts of this project: registered aliases and discovered worktrees.
+     *
+     * @return HasMany<ProjectLocation, $this>
+     */
+    public function locations(): HasMany
+    {
+        return $this->hasMany(ProjectLocation::class);
+    }
+
+    /**
      * Only projects that take part in refreshes and on the board.
      *
      * @param  Builder<Project>  $query
