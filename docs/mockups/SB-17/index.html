@@ -1,0 +1,87 @@
+<!-- SB-17 mockups — landing page for the three options. -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SB-17 production mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { darkMode: 'media', theme: { extend: { fontFamily: { sans: ['"Instrument Sans"', 'system-ui', 'sans-serif'] } } } };
+</script>
+<style>html, body { overflow-x: hidden; } a:focus-visible { outline: 2px solid #0ea5e9; outline-offset: 2px; }</style>
+</head>
+<body class="font-sans bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100 antialiased">
+<main class="mx-auto max-w-6xl px-4 sm:px-6 py-10">
+  <p class="font-mono text-xs text-neutral-500">SB-17 · design mockup gate</p>
+  <h1 class="mt-1 text-2xl font-semibold tracking-tight">Production connection and metrics: three placements</h1>
+  <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400 max-w-3xl">All three extend <span class="font-mono text-xs">/projects</span> (SB-12) inside the design-A shell and use coins as the example. Each shows the same pieces: the connection form (the password reads "saved — leave blank to keep" when editing, SSL is on by default), Test connection with its three results, the <span class="font-mono text-xs">CREATE USER … GRANT SELECT</span> one-liner with a Copy button, the four presets with table and column pickers and a Test button, a custom SQL metric that passes, and one that is refused ("one SELECT only"). The column names are coins' real ones (<span class="font-mono text-xs">users.last_seen_at</span>, <span class="font-mono text-xs">users.last_login_at</span>, <span class="font-mono text-xs">user_login_events.user_id / occurred_at</span>). Every number, host and timing is an example value.</p>
+  <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400 max-w-3xl">The dark strip at the top of each option switches the form between <strong>new</strong> and <strong>edit (saved)</strong>, and sets what Test returns: <strong>pass</strong>, <strong>refused</strong> (INSERT found) or <strong>unreachable</strong>. Things to try: press Test connection and Save connection; switch New today on; change Logged in today's table to <span class="font-mono text-xs">users</span> and pick <span class="font-mono text-xs">last_login_at</span>; press Test on both custom rows; press Remove connection.</p>
+
+  <div class="mt-8 grid gap-4 lg:grid-cols-3">
+    <!-- A -->
+    <a href="option-a.html" class="group flex flex-col rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 hover:border-neutral-300 dark:hover:border-neutral-700">
+      <div class="aspect-[16/10] rounded-lg bg-neutral-100 dark:bg-neutral-800 p-3 flex gap-2" aria-hidden="true">
+        <div class="w-1/5 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+        <div class="flex-1 rounded bg-white dark:bg-neutral-900 p-1.5 space-y-1">
+          <div class="h-1.5 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+          <div class="h-1.5 rounded bg-neutral-700 dark:bg-neutral-300"></div>
+          <div class="rounded bg-neutral-100 dark:bg-neutral-800 p-1 space-y-1">
+            <div class="flex gap-1"><div class="flex-[3] h-6 rounded bg-white dark:bg-neutral-900"></div><div class="flex-[2] h-6 rounded bg-neutral-200 dark:bg-neutral-700"></div></div>
+            <div class="h-5 rounded bg-white dark:bg-neutral-900"></div>
+          </div>
+          <div class="h-1.5 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+          <div class="h-1.5 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+        </div>
+      </div>
+      <h2 class="mt-4 font-semibold">Option A: inline expanding row</h2>
+      <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">The row gains a Production column ("Read-only · 4 metrics" or "Not set up"). Clicking it opens a panel under the row: the connection form and result on the left, the one-liner and how read-only is kept on the right, and the metrics list below. The SQL for each preset hides behind "Show SQL".</p>
+      <p class="mt-2 text-sm"><span class="font-medium">Good:</span> <span class="text-neutral-600 dark:text-neutral-400">you never leave the list, which is the closest fit to SB-12's own inline form. It is the least new UI.</span></p>
+      <p class="mt-1 text-sm"><span class="font-medium">Costs:</span> <span class="text-neutral-600 dark:text-neutral-400">the open panel is very tall and pushes the other projects far down. At about 15 fields plus metrics, it goes past the standards' "simple record" size for in-place editing.</span></p>
+      <p class="mt-auto pt-3 text-sm font-medium group-hover:underline underline-offset-4">Open option A →</p>
+    </a>
+    <!-- B -->
+    <a href="option-b.html" class="group flex flex-col rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 hover:border-neutral-300 dark:hover:border-neutral-700">
+      <div class="aspect-[16/10] rounded-lg bg-neutral-100 dark:bg-neutral-800 p-3 flex gap-2" aria-hidden="true">
+        <div class="w-1/5 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+        <div class="flex-1 rounded bg-white dark:bg-neutral-900 p-1.5 space-y-1 opacity-60">
+          <div class="h-1.5 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1.5 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1.5 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1.5 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+        </div>
+        <div class="w-2/5 rounded bg-white dark:bg-neutral-900 p-1.5 space-y-1 shadow">
+          <div class="flex gap-1"><div class="h-1.5 w-6 rounded bg-neutral-700 dark:bg-neutral-300"></div><div class="h-1.5 w-6 rounded bg-neutral-200 dark:bg-neutral-700"></div></div>
+          <div class="h-3 rounded border border-neutral-200 dark:border-neutral-700"></div><div class="h-3 rounded border border-neutral-200 dark:border-neutral-700"></div><div class="h-3 rounded border border-neutral-200 dark:border-neutral-700"></div>
+          <div class="h-2 w-1/2 ml-auto rounded bg-neutral-700 dark:bg-neutral-300"></div>
+        </div>
+      </div>
+      <h2 class="mt-4 font-semibold">Option B: side drawer</h2>
+      <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">The same Production column opens a slide-over from the right (full screen on a phone) with two tabs, "1 · Connection" and "2 · Metrics". The actions for the open tab sit in a sticky footer. The one-liner is a fold-out that starts open for a new connection. Presets are cards: switched off they collapse to one line, switched on they show the pickers, the SQL and Test.</p>
+      <p class="mt-2 text-sm"><span class="font-medium">Good:</span> <span class="text-neutral-600 dark:text-neutral-400">the list stays put behind it, and the tabs keep each step short. Save and Test are always in reach without scrolling.</span></p>
+      <p class="mt-1 text-sm"><span class="font-medium">Costs:</span> <span class="text-neutral-600 dark:text-neutral-400">a slide-over is a new pattern, since the board has only modals. The test result and the metrics are never on screen together, and custom SQL gets a narrow editor.</span></p>
+      <p class="mt-auto pt-3 text-sm font-medium group-hover:underline underline-offset-4">Open option B →</p>
+    </a>
+    <!-- C -->
+    <a href="option-c.html" class="group flex flex-col rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 hover:border-neutral-300 dark:hover:border-neutral-700">
+      <div class="aspect-[16/10] rounded-lg bg-neutral-100 dark:bg-neutral-800 p-3 flex gap-2" aria-hidden="true">
+        <div class="w-1/5 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+        <div class="flex-1 rounded bg-white dark:bg-neutral-900 p-1.5 space-y-1.5">
+          <div class="flex items-center gap-1"><span class="size-2 rounded-full bg-neutral-700 dark:bg-neutral-300"></span><div class="h-1.5 flex-1 rounded bg-neutral-200 dark:bg-neutral-700"></div></div>
+          <div class="flex items-center gap-1"><span class="size-2 rounded-full bg-neutral-700 dark:bg-neutral-300"></span><div class="h-4 flex-1 rounded border border-neutral-200 dark:border-neutral-700"></div></div>
+          <div class="flex items-center gap-1"><span class="size-2 rounded-full bg-neutral-700 dark:bg-neutral-300"></span><div class="h-4 flex-1 rounded border border-neutral-200 dark:border-neutral-700"></div></div>
+        </div>
+        <div class="w-1/4 rounded bg-white dark:bg-neutral-900 p-1 grid grid-cols-2 gap-1 content-start">
+          <div class="h-4 rounded bg-neutral-100 dark:bg-neutral-800"></div><div class="h-4 rounded bg-neutral-100 dark:bg-neutral-800"></div><div class="h-4 rounded bg-neutral-100 dark:bg-neutral-800"></div><div class="h-4 rounded bg-neutral-100 dark:bg-neutral-800"></div>
+        </div>
+      </div>
+      <h2 class="mt-4 font-semibold">Option C: its own page</h2>
+      <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">The row's Production link goes to <span class="font-mono text-xs">/projects/coins/production</span>, with a breadcrumb back. The page is three numbered steps: create the user, connect, pick metrics. Presets are a table with the pickers and generated SQL in place. A sticky column on the right previews the tiles SB-18 will show, filled from each Test, and holds Remove. The strip switches between the list and the page.</p>
+      <p class="mt-2 text-sm"><span class="font-medium">Good:</span> <span class="text-neutral-600 dark:text-neutral-400">it follows the standards' rule for complex forms (more than ~6 fields means a dedicated page). It has the most room for SQL, and the preview ties setup to what SB-18 will show.</span></p>
+      <p class="mt-1 text-sm"><span class="font-medium">Costs:</span> <span class="text-neutral-600 dark:text-neutral-400">it adds a route and one more click away from the list. The preview column has to agree with SB-18's real tile design, which is not approved yet.</span></p>
+      <p class="mt-auto pt-3 text-sm font-medium group-hover:underline underline-offset-4">Open option C →</p>
+    </a>
+  </div>
+</main>
+</body>
+</html>

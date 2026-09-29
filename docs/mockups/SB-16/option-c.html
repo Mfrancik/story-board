@@ -1,0 +1,470 @@
+<!-- SB-16 option C — Preflight history (Split view). Static mockup inside the SB-7 design-A shell, tab bar from SB-15.
+     Real data: all 36 rows of ~/.claude/projects/-Users-mikefrancik-Code-coins/preflight-cost.csv (old shape, no project column),
+     embedded verbatim below and parsed by header name, as ReadPreflightHistory will. "Now" is pinned to 2026-09-29 12:00 UTC. -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SB-16 option C — Split view</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'media',
+    theme: { extend: { fontFamily: { sans: ['"Instrument Sans"', 'system-ui', 'sans-serif'] } } }
+  };
+</script>
+<script>
+// ---- Real data: coins' preflight-cost.csv, verbatim (36 rows, 2026-08-26 → 2026-09-28). ----
+window.CSV = "ts,branch,mode,wall_s,turns,tool_calls,tokens_in,tokens_out,subagent_tokens,pack_bytes,audit_model\n2026-08-26T01:35:21Z,main,,1010,16,13,2559306,10418,0,0,\n2026-08-26T02:33:47Z,feat/MOB-21-status-leaves-the-gallery,,449,48,48,14798031,8069,14806100,0,opus\n2026-08-26T15:06:03Z,feat/SET-21-approve-is-the-last-word,scoped,295,66,67,10182950,4151,10187101,37580,opus+sonnet\n2026-08-26T17:28:04Z,feat/EBAY-1-2-retire-ebay-shopping,,2866,211,211,52609254,97011,0,0,\n2026-08-26T21:19:14Z,feat/SET-20-designation-scope,,2066,99,95,14673984,38689,9240403,44339,opus+sonnet\n2026-08-27T21:05:27Z,feat/VIEW-24-27-gallery-performance,,4038,130,137,15974084,48379,7425560,45670,opus+sonnet\n2026-08-27T22:39:04Z,feat/GS-24-25-catalog-mapper,scoped,2914,84,94,12300439,47852,3362982,40038,opus+sonnet\n2026-08-28T22:28:02Z,feat/GS-29-30-31-fields-decide,scoped,1492,88,97,12780499,21902,7134628,48947,sonnet\n2026-08-29T04:15:55Z,main,,447,13,13,3621270,7767,0,0,\n2026-08-29T04:29:00Z,feat/PM-2-the-paper-money-catalog,,1504,47,46,6361595,11166,4348740,38809,opus+sonnet\n2026-08-29T05:07:08Z,feat/GS-37-die-attribution,scoped,462,96,96,34977326,6632,34983958,44851,fable+sonnet\n2026-08-30T18:12:29Z,main,scoped,488,11,11,2511047,8517,40193,48230,opus\n2026-08-31T02:20:26Z,feat/INTAKE-33-three-tabs-and-a-pill,,1446,30,30,8693808,23442,0,2166,\n2026-09-01T02:45:00Z,integration/intake-44-46,scoped,1820,79,89,10173650,15912,4765672,1795,sonnet\n2026-09-01T11:09:35Z,integration/view-31-sb-6,,144,22,33,3050445,7518,878496,1897,sonnet\n2026-09-02T01:43:41Z,main,scoped,2126,63,66,10151954,33434,2004318,19999,sonnet\n2026-09-02T02:43:22Z,feat/CAC-4-retire-cac-starter-tags,scoped,564,19,24,2983279,7426,618489,19999,sonnet\n2026-09-04T00:37:23Z,feat/BUL-12-what-is-for-sale-is-visible,scoped,3143,102,101,29850132,29352,6497788,47923,sonnet\n2026-09-04T20:58:16Z,integration/mkt-23-18-21,,894,12,12,4487837,6414,0,76,\n2026-09-05T18:33:39Z,feat/SELL-30-an-order-becomes-a-parcel,scoped,4153,197,201,32062164,67685,12723968,498,opus+sonnet\n2026-09-06T17:01:20Z,main,,515,44,50,5012913,3926,4376495,1117,opus+sonnet\n2026-09-07T00:23:30Z,main,scoped,1771,73,77,13976087,31354,2505633,41779,sonnet\n2026-09-08T00:03:09Z,feat/BUL-55-add-what-you-paid,scoped,569,6,6,1898679,3720,0,23663,\n2026-09-08T14:21:24Z,main,scoped,1023,43,47,6160042,19307,3118379,34611,sonnet\n2026-09-08T19:57:33Z,main,scoped,645,6,6,1691833,2134,0,333,\n2026-09-09T00:35:04Z,main,,745,12,12,2044132,6670,0,1117,\n2026-09-09T04:31:09Z,integration/con-2-bul-58,,1053,6,6,1595510,4638,0,4686,\n2026-09-10T14:05:14Z,integration/mob-32-33,scoped,477,1,1,422940,944,0,35225,\n2026-09-10T16:40:48Z,integration/var-1-2-3,,693,3,3,927636,1951,0,0,\n2026-09-10T22:22:07Z,main,,579,7,7,1574781,3465,0,0,\n2026-09-11T12:16:58Z,main,,722,6,6,1694300,6333,0,0,\n2026-09-12T18:53:34Z,main,,187,14,13,4243249,8902,0,1117,\n2026-09-18T02:01:13Z,feat/DLR-17-auctions-are-a-dealers-and-absent-for-everyone-else,,921,15,22,2616666,14240,216201,91,sonnet\n2026-09-18T19:31:04Z,feat/DLR-12-the-seller-application-form,,1553,34,45,5853613,11787,2259296,47206,opus+sonnet\n2026-09-27T15:08:52Z,feat/ADMIN-24-tenant-console,,826,4,4,515663,1273,0,0,\n2026-09-28T18:18:01Z,main,,1223,2,2,567042,1021,0,61,\n";
+
+/** Parse the CSV by header name, never by position (old and new shapes both work). Blank cells become null. */
+window.parseRuns = (text) => {
+  const lines = text.trim().split('\n');
+  const head = lines[0].split(',');
+  const col = (cells, name) => { const i = head.indexOf(name); const v = i < 0 ? '' : (cells[i] ?? ''); return v === '' ? null : v; };
+  const num = (v) => v === null ? null : Number(v);
+  return lines.slice(1).map((line, id) => {
+    const c = line.split(',');
+    const tin = num(col(c, 'tokens_in')), tout = num(col(c, 'tokens_out'));
+    return {
+      id, raw: col(c, 'ts'), ts: Date.parse(col(c, 'ts')), branch: col(c, 'branch'), mode: col(c, 'mode'),
+      wall: num(col(c, 'wall_s')), turns: num(col(c, 'turns')), tools: num(col(c, 'tool_calls')),
+      tin, tout, tokens: (tin ?? 0) + (tout ?? 0), sub: num(col(c, 'subagent_tokens')),
+      pack: num(col(c, 'pack_bytes')), tier: col(c, 'audit_model'),
+      where: 'main checkout',   // coins' CSV sits in the main-checkout folder; a worktree folder would give e.g. "sb-15"
+    };
+  });
+};
+
+window.NOW = Date.parse('2026-09-29T12:00:00Z');
+window.DAY = 86400000;
+window.DOMAIN0 = Date.parse('2026-08-25T12:00:00Z');
+
+/** Merge an option's members into the base state, keeping getters live (a spread would freeze them). */
+window.extend = (base, ext) => Object.defineProperties(base, Object.getOwnPropertyDescriptors(ext));
+
+/** Shared page state. Pure UI: the CSV is read once on page load; filters and hover never call the server. */
+window.preflightBase = () => ({
+  drawer: false,
+  rows: window.parseRuns(window.CSV),
+  fMode: 'all', fBranch: '', fWhere: 'all',
+  hoverId: null, hoverChart: null, sel: null,
+  w: { wall: 0, tokens: 0 },
+
+  init() {
+    this.$nextTick(() => document.querySelectorAll('[data-chart]').forEach(el => {
+      new ResizeObserver(() => { this.w[el.dataset.chart] = el.clientWidth; }).observe(el);
+    }));
+  },
+
+  // ---- filtering ----
+  keep(r) {
+    if (this.fMode !== 'all' && r.mode !== this.fMode) return false;
+    if (this.fBranch && !(r.branch ?? '').toLowerCase().includes(this.fBranch.toLowerCase())) return false;
+    if (this.fWhere === 'main' && r.where !== 'main checkout') return false;
+    if (this.fWhere === 'worktrees' && r.where === 'main checkout') return false;
+    return true;
+  },
+  get visible() { return this.rows.filter(r => this.keep(r)).sort((a, b) => b.ts - a.ts); },
+  get visibleAsc() { return [...this.visible].reverse(); },
+  get filtered() { return this.fMode !== 'all' || this.fBranch !== '' || this.fWhere !== 'all'; },
+  reset() { this.fMode = 'all'; this.fBranch = ''; this.fWhere = 'all'; },
+  modeCount(m) { return m === 'all' ? this.rows.length : this.rows.filter(r => r.mode === m).length; },
+
+  // ---- formatting ----
+  dash: '—',
+  fmtWall(s) { if (s === null) return '—'; const m = Math.floor(s / 60), ss = Math.round(s % 60); return m + ':' + String(ss).padStart(2, '0'); },
+  fmtTok(n) { if (n === null) return '—'; if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M'; if (n >= 1e3) return Math.round(n / 1e3) + 'k'; return String(n); },
+  fmtNum(n) { return n === null ? '—' : n.toLocaleString('en-US'); },
+  fmtPack(b) { if (b === null) return '—'; const kb = b / 1024; return (kb < 10 && kb > 0 ? kb.toFixed(1) : Math.round(kb)) + ' KB'; },
+  share(r) { return r.sub === null || !r.tokens ? null : Math.round(r.sub / r.tokens * 100); },
+  fmtShare(r) { const s = this.share(r); return s === null ? '—' : s + '%'; },
+  fmtDate(t) { return new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); },
+  fmtTime(t) { return new Date(t).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }); },
+  fmtWhen(r) { return this.fmtDate(r.ts) + ' · ' + this.fmtTime(r.ts); },
+  fmtFull(r) { return new Date(r.ts).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }); },
+  flag(r) { return r.tier !== null && r.tier !== 'sonnet'; },
+  get flaggedCount() { return this.visible.filter(r => this.flag(r)).length; },
+
+  // ---- trend figures: last 30 days vs the 30 before ----
+  median(xs) { xs = xs.filter(v => v !== null).sort((a, b) => a - b); if (!xs.length) return null; const m = Math.floor(xs.length / 2); return xs.length % 2 ? xs[m] : (xs[m - 1] + xs[m]) / 2; },
+  win(from, to) { return this.visible.filter(r => r.ts > NOW - from * DAY && r.ts <= NOW - to * DAY); },
+  get kpis() {
+    const cur = this.win(30, 0), prev = this.win(60, 30);
+    const mw = (a) => this.median(a.map(r => r.wall)), mt = (a) => this.median(a.map(r => r.tokens));
+    return [
+      { label: 'Runs', cur: String(cur.length), prev: String(prev.length), d: cur.length - prev.length, fmtD: (d) => (d > 0 ? '+' : '') + d },
+      { label: 'Median wall time', cur: this.fmtWall(mw(cur)), prev: this.fmtWall(mw(prev)), d: (mw(cur) ?? 0) - (mw(prev) ?? 0), fmtD: (d) => (d >= 0 ? '+' : '−') + this.fmtWall(Math.abs(d)) },
+      { label: 'Median tokens', cur: this.fmtTok(mt(cur)), prev: this.fmtTok(mt(prev)), d: (mt(cur) ?? 0) - (mt(prev) ?? 0), fmtD: (d) => (d >= 0 ? '+' : '−') + this.fmtTok(Math.abs(d)) },
+    ];
+  },
+
+  // ---- charts: inline SVG, one series each (two charts, never a dual axis) ----
+  niceCeil(v) { if (v <= 0) return 1; const p = Math.pow(10, Math.floor(Math.log10(v))); for (const m of [1, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (m * p >= v) return m * p; return 10 * p; },
+  val(r, metric) { return metric === 'wall' ? r.wall : r.tokens; },
+  geom(metric, W, H) {
+    const L = 38, R = 8, T = 8, B = 20, iw = Math.max(W - L - R, 10), ih = H - T - B;
+    const vals = this.visible.map(r => this.val(r, metric)).filter(v => v !== null);
+    const raw = Math.max(1, ...vals);
+    const max = metric === 'wall' ? this.niceCeil(raw / 60) * 60 : this.niceCeil(raw);
+    const X = (t) => L + (t - DOMAIN0) / (NOW - DOMAIN0) * iw;
+    const Y = (v) => T + ih - v / max * ih;
+    return { L, R, T, B, iw, ih, X, Y, max };
+  },
+  axisLabel(metric, v) { return metric === 'wall' ? Math.round(v / 60) + 'm' : this.fmtTok(v); },
+  chart(metric, W, H) {
+    if (!W) return '';
+    const g = this.geom(metric, W, H), pts = this.visibleAsc.filter(r => this.val(r, metric) !== null);
+    let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" class="block overflow-visible" aria-hidden="true">`;
+    for (const f of [0, 0.5, 1]) {
+      const y = g.Y(g.max * f).toFixed(1);
+      s += `<line x1="${g.L}" x2="${W - g.R}" y1="${y}" y2="${y}" class="${f === 0 ? 'stroke-neutral-300 dark:stroke-neutral-700' : 'stroke-neutral-100 dark:stroke-neutral-800'}" stroke-width="1"/>`;
+      s += `<text x="${g.L - 6}" y="${y}" dy="0.32em" text-anchor="end" class="fill-neutral-400" font-size="10">${this.axisLabel(metric, g.max * f)}</text>`;
+    }
+    // x ticks: Mondays-ish, thinned when narrow
+    let ticks = ['2026-08-26', '2026-09-01', '2026-09-08', '2026-09-15', '2026-09-22', '2026-09-29'].map(d => Date.parse(d + 'T12:00:00Z'));
+    if (g.iw < 300) ticks = ticks.filter((_, i) => i % 2 === 0);
+    for (const t of ticks) s += `<text x="${g.X(t).toFixed(1)}" y="${H - 4}" text-anchor="middle" class="fill-neutral-400" font-size="10">${this.fmtDate(t)}</text>`;
+    // the 30-day boundary the trend figures compare across
+    const bx = g.X(NOW - 30 * DAY).toFixed(1);
+    s += `<line x1="${bx}" x2="${bx}" y1="${g.T}" y2="${g.T + g.ih}" class="stroke-neutral-300 dark:stroke-neutral-600" stroke-dasharray="3 3"/>`;
+    s += `<text x="${+bx + 4}" y="${g.T + 2}" dy="0.7em" class="fill-neutral-400" font-size="10">last 30 days</text>`;
+    // crosshair for the hovered / selected run
+    const h = pts.find(r => r.id === this.hoverId);
+    if (h) s += `<line x1="${g.X(h.ts).toFixed(1)}" x2="${g.X(h.ts).toFixed(1)}" y1="${g.T}" y2="${g.T + g.ih}" class="stroke-neutral-400 dark:stroke-neutral-500" stroke-width="1"/>`;
+    if (pts.length > 1) s += `<path d="${pts.map((r, i) => (i ? 'L' : 'M') + g.X(r.ts).toFixed(1) + ' ' + g.Y(this.val(r, metric)).toFixed(1)).join(' ')}" fill="none" class="stroke-sky-600 dark:stroke-sky-400" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    for (const r of pts) {
+      const on = h && r.id === h.id;
+      s += `<circle cx="${g.X(r.ts).toFixed(1)}" cy="${g.Y(this.val(r, metric)).toFixed(1)}" r="${on ? 5 : 3}" class="fill-sky-600 dark:fill-sky-400 stroke-white dark:stroke-neutral-900" stroke-width="${on ? 2 : 1.5}"/>`;
+    }
+    return s + '</svg>';
+  },
+  onMove(e, metric) {
+    const W = this.w[metric]; if (!W || !this.visible.length) return;
+    const g = this.geom(metric, W, 100), mx = e.clientX - e.currentTarget.getBoundingClientRect().left;
+    let best = null, bd = Infinity;
+    for (const r of this.visible) { const d = Math.abs(g.X(r.ts) - mx); if (d < bd) { bd = d; best = r; } }
+    this.hoverId = best.id; this.hoverChart = metric;
+  },
+  leave() { this.hoverChart = null; this.hoverId = this.sel; },
+  get hovered() { return this.visible.find(r => r.id === this.hoverId) || null; },
+  tipStyle(metric) {
+    const W = this.w[metric], r = this.hovered; if (!W || !r) return {};  // an object, so x-show's display stays intact
+    const x = Math.min(Math.max(this.geom(metric, W, 100).X(r.ts), 70), W - 70);
+    return { left: x + 'px' };
+  },
+});
+</script>
+<script>
+/** Option C: a split view. Medians, charts and tallies on the left; a compact table on the right whose chosen row opens in place. */
+window.optionC = () => window.extend(window.preflightBase(), {
+  open(r) { this.sel = this.sel === r.id ? null : r.id; this.hoverId = this.sel; },
+  /** Counts of a column's values among the runs shown, largest first; blanks read "—". */
+  tally(field) {
+    const m = new Map();
+    for (const r of this.visible) { const k = r[field] ?? '—'; m.set(k, (m.get(k) || 0) + 1); }
+    return [...m.entries()].sort((a, b) => b[1] - a[1]);
+  },
+  vsMedian(r, metric) {
+    const med = this.median(this.visible.map(x => this.val(x, metric))), v = this.val(r, metric);
+    if (!med || v === null) return '';
+    return '(' + (v / med).toFixed(1) + '× median)';
+  },
+});
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+<style>
+  html, body { overflow-x: hidden; }
+  [x-cloak] { display: none !important; }
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-visible { outline: 2px solid #0ea5e9; outline-offset: 2px; }
+  .no-scrollbar { scrollbar-width: none; } .no-scrollbar::-webkit-scrollbar { display: none; }
+</style>
+</head>
+<body class="font-sans bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100 antialiased" x-data="optionC()" @keydown.escape.window="drawer = false">
+<!-- Tailwind CDN safelist for classes that only appear inside x-html SVG strings -->
+<div class="hidden stroke-neutral-100 stroke-neutral-300 stroke-neutral-400 dark:stroke-neutral-500 dark:stroke-neutral-600 dark:stroke-neutral-700 dark:stroke-neutral-800 fill-neutral-400 stroke-sky-600 dark:stroke-sky-400 fill-sky-600 dark:fill-sky-400 stroke-white dark:stroke-neutral-900"></div>
+
+<!-- Mockup bar (not part of the design) -->
+<div class="fixed inset-x-0 top-0 z-[60] h-10 bg-neutral-900 text-neutral-100 dark:bg-white dark:text-neutral-900 flex items-center gap-3 px-3 text-xs overflow-x-auto no-scrollbar">
+  <span class="shrink-0 font-semibold">Option C · Split view</span>
+  <a href="option-a.html" class="shrink-0 underline-offset-4 hover:underline opacity-70">A</a>
+  <a href="option-b.html" class="shrink-0 underline-offset-4 hover:underline opacity-70">B</a>
+  <a href="option-c.html" class="shrink-0 underline-offset-4 hover:underline font-semibold underline">C</a>
+  <a href="#other-states" class="shrink-0 underline underline-offset-4 opacity-80 hover:opacity-100">empty state and skipped rows ↓</a>
+  <a href="index.html" class="hidden sm:inline ml-auto shrink-0 underline underline-offset-4 opacity-80 hover:opacity-100">All options</a>
+</div>
+
+<!-- Mobile top bar -->
+<div class="lg:hidden sticky top-10 z-30 flex items-center gap-3 border-b border-neutral-200 dark:border-neutral-800 bg-white/90 dark:bg-neutral-900/90 backdrop-blur px-4 h-14 mt-10">
+  <button type="button" @click="drawer = true" aria-label="Open project menu" aria-controls="sidebar" :aria-expanded="drawer" class="rounded-lg p-2 -ml-2 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+    <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+  <span class="font-semibold">Story board</span>
+  <span class="text-sm text-neutral-500 truncate">· coins · Preflight</span>
+</div>
+
+<div x-show="drawer" x-cloak @click="drawer = false" class="fixed inset-0 top-10 z-40 bg-neutral-950/40 lg:hidden"></div>
+
+<!-- Sidebar (design A shell, from SB-7 option A) -->
+<aside id="sidebar" aria-label="Projects" :class="drawer ? 'translate-x-0' : '-translate-x-full'" class="fixed top-10 bottom-0 left-0 z-50 w-72 lg:w-64 lg:translate-x-0 transition-transform bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-800 flex flex-col">
+  <div class="flex items-center justify-between px-5 pt-5 pb-3">
+    <div class="flex items-center gap-2">
+      <span class="grid place-items-center size-7 rounded-lg bg-neutral-800 text-white dark:bg-white dark:text-neutral-900 text-xs font-bold">SB</span>
+      <span class="font-semibold">Story board</span>
+    </div>
+    <button type="button" @click="drawer = false" aria-label="Close project menu" class="lg:hidden rounded-lg p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+      <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="px-4 pb-3">
+    <button type="button" class="w-full flex items-center gap-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 px-3 py-2 text-sm text-neutral-500 hover:border-neutral-300 dark:hover:border-neutral-700">
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <span class="flex-1 text-left">Find a story</span>
+      <kbd class="rounded border border-neutral-200 dark:border-neutral-700 px-1.5 text-[11px] font-sans">⌘K</kbd>
+    </button>
+  </div>
+  <nav class="flex-1 overflow-y-auto px-3 pb-3 text-sm" aria-label="Project switcher">
+    <a href="#" class="w-full flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      <span class="flex-1 text-left font-medium">All projects</span>
+      <span class="text-xs text-neutral-500 tabular-nums">1,069</span>
+    </a>
+    <p class="mt-5 mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-neutral-400">Projects</p>
+    <ul class="space-y-0.5">
+      <template x-for="p in [['coins',946],['client-dashboard',97],['asset-track',11],['rent-track',15]]" :key="p[0]">
+        <li><a href="#" @click.prevent="drawer = false" :aria-current="p[0] === 'coins' ? 'page' : 'false'"
+          :class="p[0] === 'coins' ? 'bg-neutral-100 dark:bg-neutral-800 font-medium' : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50'"
+          class="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm">
+          <span class="size-2 rounded-full bg-emerald-500" title="State ok"></span>
+          <span class="flex-1 text-left truncate" x-text="p[0]"></span>
+          <span class="text-xs text-neutral-500 tabular-nums" x-text="p[1]"></span>
+        </a></li>
+      </template>
+    </ul>
+  </nav>
+  <div class="border-t border-neutral-200 dark:border-neutral-800 p-3">
+    <a href="#" class="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/></svg>
+      <span class="flex-1 text-left font-medium">Manage projects</span>
+    </a>
+  </div>
+</aside>
+
+<main class="lg:pl-64 lg:pt-10 min-h-screen">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-10 py-6 lg:py-10">
+    <!-- Project header (board/project-header, SB-15) -->
+    <header class="flex flex-wrap items-end justify-between gap-3">
+      <div class="min-w-0">
+        <p class="text-xs text-neutral-500"><a href="#" class="hover:underline underline-offset-4">All projects</a> <span aria-hidden="true">/</span> coins</p>
+        <h1 class="mt-1 text-2xl font-semibold tracking-tight flex items-center gap-2">coins <span class="size-2 rounded-full bg-emerald-500" title="State ok"></span></h1>
+        <p class="mt-1 text-sm text-neutral-500"><span class="font-mono text-xs">~/Code/coins</span> · origin/main · <span class="tabular-nums">36</span> preflight runs, Aug 26 – Sep 28</p>
+      </div>
+      <p class="text-sm text-neutral-500 flex items-center gap-2">Read on page load <span aria-hidden="true">·</span>
+        <button type="button" class="font-medium text-neutral-800 dark:text-white underline-offset-4 hover:underline">Refresh</button></p>
+    </header>
+
+    <!-- Page tabs: board/project-tabs gains Preflight -->
+    <nav aria-label="Project pages" class="mt-5 border-b border-neutral-200 dark:border-neutral-800 flex gap-6 text-sm overflow-x-auto no-scrollbar">
+      <a href="#" class="-mb-px shrink-0 border-b-2 border-transparent pb-3 text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200">Dashboard</a>
+      <a href="#" class="-mb-px shrink-0 border-b-2 border-transparent pb-3 text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200">Handbook</a>
+      <a href="#" class="-mb-px shrink-0 border-b-2 border-transparent pb-3 text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200">Stories</a>
+      <a href="#" aria-current="page" class="-mb-px shrink-0 border-b-2 border-neutral-800 dark:border-white pb-3 font-medium">Preflight</a>
+    </nav>
+
+    <div class="mt-5 space-y-4">
+    <!-- Filters: one row, above everything they scope (Alpine, no server call) -->
+    <div class="flex flex-wrap items-center gap-2">
+      <div role="group" aria-label="Mode" class="inline-flex rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-0.5">
+        <template x-for="m in [['all','All'],['scoped','Scoped'],['full','Full']]" :key="m[0]">
+          <button type="button" @click="fMode = m[0]" :aria-pressed="fMode === m[0]" class="rounded-md px-2.5 py-1 text-xs font-medium whitespace-nowrap"
+            :class="fMode === m[0] ? 'bg-neutral-800 text-white dark:bg-white dark:text-neutral-900' : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'">
+            <span x-text="m[1]"></span> <span class="tabular-nums opacity-60" x-text="modeCount(m[0])"></span></button>
+        </template>
+      </div>
+      <label class="relative flex-1 min-w-[9rem] sm:max-w-xs">
+        <span class="sr-only">Branch contains</span>
+        <svg class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input type="search" x-model="fBranch" placeholder="Branch contains…" class="w-full rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 pl-8 pr-3 py-1.5 text-sm placeholder:text-neutral-400">
+      </label>
+      <label class="flex items-center gap-2 text-sm">
+        <span class="text-neutral-500">Where</span>
+        <select x-model="fWhere" class="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 pl-2 pr-7 py-1.5 text-sm">
+          <option value="all">All</option><option value="main">Main checkout</option><option value="worktrees">Worktrees</option>
+        </select>
+      </label>
+      <button type="button" x-show="filtered" x-cloak @click="reset()" class="text-xs text-neutral-500 underline underline-offset-4 hover:text-neutral-800 dark:hover:text-neutral-200">Clear filters</button>
+      <p class="ml-auto text-xs text-neutral-500 tabular-nums"><span x-text="visible.length"></span> of <span x-text="rows.length"></span> runs</p>
+    </div>
+    <p class="flex items-start gap-2 text-xs text-neutral-500">
+      <svg class="mt-px size-4 shrink-0 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+      <span>Test counts and failures are not in the CSV yet, so this page cannot show them. They come with <span class="font-mono">F-5</span> (a kit run record). Open a run to see where they will sit.</span></p>
+
+    <div class="lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] gap-5 items-start space-y-4 lg:space-y-0">
+      <!-- Left: medians and charts, sticky on desktop -->
+      <aside aria-label="Trend" class="lg:sticky lg:top-14 space-y-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
+        <div>
+          <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">Last 30 days vs the 30 before</p>
+          <dl class="mt-2 divide-y divide-neutral-100 dark:divide-neutral-800">
+            <template x-for="k in kpis" :key="k.label">
+              <div class="flex items-baseline justify-between gap-3 py-1.5">
+                <dt class="text-sm text-neutral-600 dark:text-neutral-400" x-text="k.label"></dt>
+                <dd class="text-right"><span class="text-base font-semibold tabular-nums" x-text="k.cur"></span>
+                  <span class="block text-[11px] text-neutral-500 tabular-nums">was <span x-text="k.prev"></span> · <span x-text="k.fmtD(k.d)"></span></span></dd>
+              </div>
+            </template>
+          </dl>
+        </div>
+        <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
+          <figure class="min-w-0">
+          <figcaption class="flex items-baseline justify-between gap-2 text-xs"><span class="font-medium text-neutral-700 dark:text-neutral-300">Wall time per run</span><span class="text-neutral-400">minutes</span></figcaption>
+          <div class="relative mt-2 touch-pan-y" data-chart="wall" @pointermove="onMove($event, 'wall')" @pointerleave="leave()" role="img" :aria-label="'Wall time per run, ' + visible.length + ' runs, oldest to newest'">
+            <div x-html="chart('wall', w.wall, 110)" style="height:110px"></div>
+            <div x-show="hoverChart === 'wall' && hovered" x-cloak class="pointer-events-none absolute bottom-full mb-1 z-10 -translate-x-1/2 rounded-md bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 px-2 py-1 text-[11px] shadow-lg whitespace-nowrap" :style="tipStyle('wall')">
+              <span class="font-semibold tabular-nums" x-text="hovered && fmtWall(hovered.wall)"></span> <span class="opacity-70" x-text="hovered && fmtWhen(hovered)"></span>
+              <span class="block max-w-[14rem] truncate font-mono opacity-70" x-text="hovered && hovered.branch"></span>
+            </div>
+          </div>
+        </figure>
+          <figure class="min-w-0">
+          <figcaption class="flex items-baseline justify-between gap-2 text-xs"><span class="font-medium text-neutral-700 dark:text-neutral-300">Tokens per run</span><span class="text-neutral-400">in + out</span></figcaption>
+          <div class="relative mt-2 touch-pan-y" data-chart="tokens" @pointermove="onMove($event, 'tokens')" @pointerleave="leave()" role="img" :aria-label="'Tokens per run, ' + visible.length + ' runs, oldest to newest'">
+            <div x-html="chart('tokens', w.tokens, 110)" style="height:110px"></div>
+            <div x-show="hoverChart === 'tokens' && hovered" x-cloak class="pointer-events-none absolute bottom-full mb-1 z-10 -translate-x-1/2 rounded-md bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 px-2 py-1 text-[11px] shadow-lg whitespace-nowrap" :style="tipStyle('tokens')">
+              <span class="font-semibold tabular-nums" x-text="hovered && fmtTok(hovered.tokens) + ' tokens'"></span> <span class="opacity-70" x-text="hovered && fmtWhen(hovered)"></span>
+              <span class="block max-w-[14rem] truncate font-mono opacity-70" x-text="hovered && hovered.branch"></span>
+            </div>
+          </div>
+        </figure>
+        </div>
+        <div class="grid grid-cols-2 gap-4 border-t border-neutral-100 dark:border-neutral-800 pt-3">
+          <div>
+            <p class="text-xs font-medium text-neutral-700 dark:text-neutral-300">Audit tier</p>
+            <ul class="mt-1.5 space-y-1 text-xs">
+              <template x-for="t in tally('tier')" :key="t[0]">
+                <li class="flex items-center justify-between gap-2"><span class="truncate font-mono" :class="t[0] === '—' ? 'text-neutral-400' : ''"><span x-show="t[0] !== '—' && t[0] !== 'sonnet'" class="mr-1 inline-block size-1.5 rounded-full bg-amber-500 align-middle" title="check the tier"></span><span x-text="t[0]"></span></span><span class="tabular-nums text-neutral-500" x-text="t[1]"></span></li>
+              </template>
+            </ul>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-neutral-700 dark:text-neutral-300">Mode</p>
+            <ul class="mt-1.5 space-y-1 text-xs">
+              <template x-for="t in tally('mode')" :key="t[0]">
+                <li class="flex items-center justify-between gap-2"><span :class="t[0] === '—' ? 'text-neutral-400' : ''" x-text="t[0]"></span><span class="tabular-nums text-neutral-500" x-text="t[1]"></span></li>
+              </template>
+            </ul>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right: a compact table; a chosen run opens in place with every field -->
+      <div class="min-w-0">
+        <div x-show="!visible.length" x-cloak class="mt-4 rounded-xl border border-dashed border-neutral-300 dark:border-neutral-700 px-6 py-10 text-center text-sm text-neutral-500">
+      No runs match these filters.<span x-show="fWhere === 'worktrees'"> Every coins run was made in the main checkout.</span>
+      <button type="button" @click="reset()" class="font-medium text-neutral-800 dark:text-white underline underline-offset-4">Clear filters</button>
+    </div>
+        <div x-show="visible.length" class="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="text-xs text-neutral-500 bg-neutral-50 dark:bg-neutral-950/60">
+              <tr>
+                <th scope="col" class="w-8"><span class="sr-only">Open</span></th>
+                <th scope="col" class="px-2 py-2 text-left font-medium">When</th>
+                <th scope="col" class="px-2 py-2 text-left font-medium">Branch</th>
+                <th scope="col" class="hidden sm:table-cell px-2 py-2 text-left font-medium">Mode</th>
+                <th scope="col" class="px-2 py-2 text-right font-medium">Wall</th>
+                <th scope="col" class="px-2 py-2 text-right font-medium">Tokens</th>
+                <th scope="col" class="hidden md:table-cell px-3 py-2 text-left font-medium">Audit tier</th>
+              </tr>
+            </thead>
+            <template x-for="r in visible" :key="r.id">
+              <tbody class="border-t border-neutral-100 dark:border-neutral-800">
+                <tr @click="open(r)" @mouseenter="hoverId = r.id" @mouseleave="hoverId = sel" class="cursor-pointer"
+                  :class="sel === r.id ? 'bg-neutral-100 dark:bg-neutral-800' : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50'">
+                  <td class="pl-2 py-1.5">
+                    <button type="button" @click.stop="open(r)" :aria-expanded="sel === r.id" :aria-label="'Details for the run on ' + fmtWhen(r)" class="grid place-items-center rounded p-0.5 text-neutral-400 hover:text-neutral-800 dark:hover:text-white">
+                      <svg class="size-4 transition-transform" :class="sel === r.id ? 'rotate-90' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+                    </button>
+                  </td>
+                  <td class="px-2 py-1.5 whitespace-nowrap tabular-nums"><span x-text="fmtDate(r.ts)"></span> <span class="hidden sm:inline text-neutral-400" x-text="fmtTime(r.ts)"></span><span x-show="flag(r)" class="md:hidden ml-1 inline-block size-1.5 rounded-full bg-amber-500 align-middle" title="check the tier"></span></td>
+                  <td class="px-2 py-1.5 max-w-0 w-full"><span class="block truncate font-mono text-xs" x-text="r.branch ?? '—'" :title="r.branch"></span></td>
+                  <td class="hidden sm:table-cell px-2 py-1.5" :class="r.mode ? '' : 'text-neutral-400'" x-text="r.mode ?? '—'"></td>
+                  <td class="px-2 py-1.5 text-right tabular-nums font-medium" x-text="fmtWall(r.wall)"></td>
+                  <td class="px-2 py-1.5 text-right tabular-nums font-medium" x-text="fmtTok(r.tokens)"></td>
+                  <td class="hidden md:table-cell px-3 py-1.5"><span class="inline-flex flex-wrap items-center gap-1 whitespace-nowrap"><span x-show="!r.tier" class="text-neutral-400">—</span><span x-show="r.tier" class="font-mono text-xs" x-text="r.tier"></span><span x-show="flag(r)" class="inline-flex items-center rounded bg-amber-500/15 px-1.5 py-px text-[11px] font-medium text-zinc-800 dark:text-zinc-100 ring-1 ring-inset ring-amber-500/40" title="CLAUDE.md pins the audit to Sonnet. The label may be off (F-3), so check it rather than assume it is wrong.">check the tier</span></span></td>
+                </tr>
+                <tr x-show="sel === r.id" x-cloak>
+                  <td colspan="7" class="px-3 sm:px-4 pb-4 pt-1 bg-neutral-100/60 dark:bg-neutral-800/40">
+                    <div class="rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 p-3 sm:p-4">
+                      <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <p class="text-sm font-medium" x-text="fmtFull(r)"></p>
+                        <p class="font-mono text-[11px] text-neutral-400" x-text="r.raw"></p>
+                      </div>
+                      <p class="mt-1 font-mono text-xs break-all" x-text="r.branch ?? '—'"></p>
+                      <dl class="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-3 text-sm">
+                        <div><dt class="text-xs text-neutral-500">Wall time</dt><dd class="tabular-nums font-medium"><span x-text="fmtWall(r.wall)"></span> <span class="text-xs font-normal text-neutral-500" x-text="vsMedian(r, 'wall')"></span></dd></div>
+                        <div><dt class="text-xs text-neutral-500">Tokens</dt><dd class="tabular-nums font-medium"><span x-text="fmtTok(r.tokens)"></span> <span class="text-xs font-normal text-neutral-500" x-text="vsMedian(r, 'tokens')"></span></dd></div>
+                        <div><dt class="text-xs text-neutral-500">Tokens in / out</dt><dd class="tabular-nums"><span x-text="fmtTok(r.tin)"></span> / <span x-text="fmtTok(r.tout)"></span></dd></div>
+                        <div><dt class="text-xs text-neutral-500">In subagents</dt><dd class="tabular-nums"><span x-text="fmtShare(r)"></span>
+                          <span class="mt-1 block h-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800"><span class="block h-full rounded-full bg-sky-600 dark:bg-sky-400" :style="'width:' + (share(r) ?? 0) + '%'"></span></span></dd></div>
+                        <div><dt class="text-xs text-neutral-500">Turns</dt><dd class="tabular-nums" x-text="fmtNum(r.turns)"></dd></div>
+                        <div><dt class="text-xs text-neutral-500">Tool calls</dt><dd class="tabular-nums" x-text="fmtNum(r.tools)"></dd></div>
+                        <div><dt class="text-xs text-neutral-500">Audit pack</dt><dd class="tabular-nums" x-text="fmtPack(r.pack)"></dd></div>
+                        <div><dt class="text-xs text-neutral-500">Where · mode</dt><dd><span x-text="r.where"></span> · <span :class="r.mode ? '' : 'text-neutral-400'" x-text="r.mode ?? '—'"></span></dd></div>
+                        <div class="col-span-2 sm:col-span-4"><dt class="text-xs text-neutral-500">Audit tier</dt><dd class="text-sm"><span class="inline-flex flex-wrap items-center gap-1 whitespace-nowrap"><span x-show="!r.tier" class="text-neutral-400">—</span><span x-show="r.tier" class="font-mono text-xs" x-text="r.tier"></span><span x-show="flag(r)" class="inline-flex items-center rounded bg-amber-500/15 px-1.5 py-px text-[11px] font-medium text-zinc-800 dark:text-zinc-100 ring-1 ring-inset ring-amber-500/40" title="CLAUDE.md pins the audit to Sonnet. The label may be off (F-3), so check it rather than assume it is wrong.">check the tier</span></span>
+                          <span x-show="flag(r)" class="block mt-1 text-xs text-neutral-500">CLAUDE.md pins the audit to Sonnet. This row names another tier; the label may be off (F-3), so check the run before calling it wrong.</span></dd></div>
+                      </dl>
+                      <div class="mt-3 rounded-lg border border-dashed border-neutral-300 dark:border-neutral-700 px-3 py-2.5 text-xs text-neutral-400">
+                        <p class="font-medium text-neutral-500">Tests · failures · which tests failed — needs F-5</p>
+                        <p class="mt-0.5">The CSV has no test columns yet. When F-5 adds a run record, they go here.</p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </template>
+          </table>
+        </div>
+        <p x-show="visible.length" class="mt-2 text-xs text-neutral-500">Open a run and it stays marked on both charts. Only one run is open at a time.</p>
+      </div>
+    </div>
+    </div>
+
+    <!-- Other states, shown small -->
+    <section id="other-states" class="mt-10 scroll-mt-28 rounded-xl border border-dashed border-neutral-300 dark:border-neutral-700 p-3 sm:p-4">
+      <p class="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">Other states, shown small</p>
+      <div class="mt-3 grid gap-4 lg:grid-cols-2">
+        <div class="min-w-0">
+          <p class="mb-2 text-xs text-neutral-500">Empty: <span class="font-medium">/p/rent-track/preflight</span>, where no CSV exists. The page still returns 200.</p>
+          <div class="rounded-xl border border-dashed border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-4 sm:px-6 py-8 text-center">
+            <svg class="mx-auto size-8 text-neutral-300 dark:text-neutral-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M21 19H3"/></svg>
+            <p class="mt-3 font-medium">rent-track has no preflight runs recorded yet.</p>
+            <p class="mt-1 text-sm text-neutral-500">Runs appear here after the next <span class="font-mono text-xs">/preflight</span> in that project. These places were checked:</p>
+            <ul class="mt-3 mx-auto max-w-md space-y-1 text-left font-mono text-[11px] text-neutral-500 break-all">
+              <li>~/.claude/projects/-Users-mikefrancik-Code-rent-track/preflight-cost.csv</li>
+              <li>~/.claude/projects/-Users-mikefrancik-Code-rent-track--claude-worktrees-*/preflight-cost.csv</li>
+              <li>~/.claude/projects/-Users-mikefrancik-Code-rent-track--claude-plans/preflight-cost.csv</li>
+            </ul>
+          </div>
+        </div>
+        <div class="min-w-0">
+          <p class="mb-2 text-xs text-neutral-500">Skipped rows: the note sits between the filters and the runs. coins has none; this is how 2 would read.</p>
+          <div role="status" class="flex items-start gap-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-3 py-2.5 text-sm">
+            <svg class="mt-0.5 size-4 shrink-0 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l9.5 17h-19L12 3z"/><path d="M12 10v4M12 17h.01"/></svg>
+            <p><span class="font-medium">2 rows could not be read</span> and are not listed. Each had the wrong number of columns or a date that could not be parsed. The CSV itself is left as it is.</p>
+          </div>
+          <div class="mt-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 divide-y divide-neutral-100 dark:divide-neutral-800 opacity-60" aria-hidden="true">
+            <div class="flex items-center justify-between px-3 py-2 text-xs"><span>Sep 28 · 14:18</span><span class="font-mono">main</span><span class="tabular-nums">20:23</span><span class="tabular-nums">568k</span></div>
+            <div class="flex items-center justify-between px-3 py-2 text-xs"><span>Sep 27 · 11:08</span><span class="font-mono truncate max-w-[10rem]">feat/ADMIN-24-tenant-console</span><span class="tabular-nums">13:46</span><span class="tabular-nums">517k</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <p class="mt-10 text-xs text-neutral-400">Mockup · SB-16 option C · real coins preflight-cost.csv, read 2026-09-29 · times in your local zone · <a href="index.html" class="underline underline-offset-4">all options</a></p>
+  </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,521 @@
+<!-- SB-17 option C — Production is a per-project settings page (/projects/coins/production), linked from the /projects row, with a live preview column. Static mockup inside the SB-7 design-A shell. coins' columns are real; every value, host and timing is illustrative. -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SB-17 option C — Own page</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'media',
+    theme: { extend: { fontFamily: { sans: ['"Instrument Sans"', 'system-ui', 'sans-serif'] } } }
+  };
+</script>
+
+<script>
+// ---- Illustrative schema of coins' production DB (what information_schema would return; example only). ----
+window.SCHEMA = {
+  users:             { ts: ['created_at', 'updated_at', 'last_login_at', 'last_seen_at', 'email_verified_at'], ids: ['id'] },
+  user_login_events: { ts: ['occurred_at'], ids: ['user_id', 'id'] },
+  orders:            { ts: ['created_at', 'paid_at'], ids: ['user_id', 'id'] },
+  sessions:          { ts: [], ids: ['user_id', 'id'] },
+};
+window.GRANT_OK = "GRANT SELECT ON `coins`.* TO `board_ro`@`%`";
+window.GRANT_BAD = "GRANT SELECT, INSERT ON `coins`.* TO `board_ro`@`%`";
+window.ONE_LINER = "CREATE USER 'board_ro'@'%' IDENTIFIED BY '…'; GRANT SELECT ON coins.* TO 'board_ro'@'%';";
+
+/** Merge an option's members into the base state, keeping getters live. */
+window.extend = (base, ext) => Object.defineProperties(base, Object.getOwnPropertyDescriptors(ext));
+
+/** Shared page state. Pure mockup UI: nothing here talks to a server; results are canned "example values". */
+window.prodBase = () => ({
+  drawer: false,                 // sidebar drawer on phones
+  form: 'edit',                  // mockup: new | edit (a saved connection)
+  outcome: 'pass',               // mockup: what Test / Save returns — pass | refused | unreachable
+  test: 'pass',                  // shown result: null | running | pass | refused | unreachable
+  action: 'test',                // which button produced the result: test | save
+  removing: false,
+  copied: false,
+  note: null, noteTimer: null,
+  conn: { host: 'db.coins.example.com', port: '3306', database: 'coins', username: 'board_ro', password: '', ssl: true },
+  tz: 'America/New_York',
+  since: '2026-09-29 04:00:00',
+  schema: window.SCHEMA,
+  oneLiner: window.ONE_LINER,
+  presets: [
+    { key: 'total',  label: 'Total users',     hint: 'Every row in a table.',                          fields: ['table'],                     on: true,  table: 'users',             ts: null,           distinct: '',        value: '12,480', ms: 38, state: 'ok' },
+    { key: 'new',    label: 'New today',       hint: 'Rows whose timestamp is today.',                 fields: ['table', 'ts'],               on: false, table: 'users',             ts: 'created_at',   distinct: '',        value: '37',     ms: 22, state: null },
+    { key: 'active', label: 'Active today',    hint: 'Users seen since local midnight.',               fields: ['table', 'ts'],               on: true,  table: 'users',             ts: 'last_seen_at', distinct: '',        value: '1,912',  ms: 41, state: 'ok' },
+    { key: 'login',  label: 'Logged in today', hint: 'Distinct users with a login event today.',       fields: ['table', 'ts', 'distinct'],   on: true,  table: 'user_login_events', ts: 'occurred_at',  distinct: 'user_id', value: '846',    ms: 57, state: null },
+  ],
+  customs: [
+    { id: 1, name: 'Paid subscribers', sql: "SELECT count(*)\nFROM subscriptions\nWHERE status = 'active'", expect: 'ok', value: '1,204', ms: 64, state: 'ok',
+      err: '' },
+    { id: 2, name: 'Clear old sessions', sql: "DELETE FROM sessions WHERE last_activity < 1727568000;\nSELECT count(*) FROM sessions", expect: 'refused', value: '', ms: 0, state: 'refused',
+      err: 'One SELECT only. This starts with DELETE and has 2 statements, so it was refused before it reached the database.' },
+  ],
+  get connected() { return this.form === 'edit'; },
+  get enabledCount() { return this.presets.filter(p => p.on).length + this.customs.filter(c => c.expect === 'ok').length; },
+  setForm(m) {
+    this.form = m;
+    if (m === 'new') { this.conn = { host: '', port: '3306', database: '', username: '', password: '', ssl: true }; this.test = null; }
+    else { this.conn = { host: 'db.coins.example.com', port: '3306', database: 'coins', username: 'board_ro', password: '', ssl: true }; this.test = this.outcome; this.action = 'test'; }
+  },
+  setOutcome(o) { this.outcome = o; this.test = o; this.action = 'test'; },
+  run(kind) {
+    this.action = kind; this.test = 'running';
+    setTimeout(() => { this.test = this.outcome; if (kind === 'save' && this.outcome === 'pass') this.form = 'edit'; }, this.outcome === 'unreachable' ? 1600 : 700);
+  },
+  get hostLabel() { return (this.conn.host || 'db.coins.example.com') + ':' + (this.conn.port || '3306'); },
+  tables() { return Object.keys(this.schema); },
+  tsCols(p) { return this.schema[p.table]?.ts ?? []; },
+  idCols(p) { return this.schema[p.table]?.ids ?? []; },
+  pickTable(p) { p.ts = this.tsCols(p)[0] ?? null; p.distinct = p.fields.includes('distinct') && this.idCols(p).includes('user_id') ? 'user_id' : ''; p.state = null; },
+  sqlFor(p) {
+    const what = p.distinct ? 'count(DISTINCT ' + p.distinct + ')' : 'count(*)';
+    if (!p.fields.includes('ts')) return 'SELECT ' + what + ' FROM ' + p.table;
+    if (!p.ts) return '— this table has no timestamp column —';
+    return 'SELECT ' + what + ' FROM ' + p.table + ' WHERE ' + p.ts + " >= '" + this.since + "'";
+  },
+  testPreset(p) { p.state = 'running'; setTimeout(() => p.state = p.ts === null && p.fields.includes('ts') ? 'err' : 'ok', 600); },
+  testCustom(c) { c.state = 'running'; setTimeout(() => c.state = c.expect, c.expect === 'refused' ? 150 : 650); },
+  addCustom() { this.customs.push({ id: Date.now(), name: '', sql: 'SELECT count(*) FROM ', expect: 'ok', value: '—', ms: 0, state: null, err: '' }); },
+  dropCustom(c) { this.customs = this.customs.filter(x => x.id !== c.id); },
+  copy() { try { navigator.clipboard.writeText(this.oneLiner); } catch (e) {} this.copied = true; setTimeout(() => this.copied = false, 1800); },
+  say(t) { clearTimeout(this.noteTimer); this.note = t; this.noteTimer = setTimeout(() => this.note = null, 2600); },
+});
+</script>
+
+<script>
+/** Option C: each project's Production is its own page (/projects/coins/production), linked from its /projects row. */
+window.optionC = () => window.extend(window.prodBase(), { view: 'page' });
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+<style>
+  html, body { overflow-x: hidden; }
+  [x-cloak] { display: none !important; }
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible, [tabindex]:focus-visible { outline: 2px solid #0ea5e9; outline-offset: 2px; }
+  .no-scrollbar { scrollbar-width: none; } .no-scrollbar::-webkit-scrollbar { display: none; }
+</style>
+</head>
+<body class="font-sans bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100 antialiased" x-data="optionC()" @keydown.escape.window="drawer = false">
+
+<!-- Mockup state switcher (not part of the design) -->
+<div class="fixed inset-x-0 top-0 z-[60] h-10 bg-neutral-900 text-neutral-100 dark:bg-white dark:text-neutral-900 flex items-center gap-3 px-3 text-xs overflow-x-auto no-scrollbar">
+  <span class="shrink-0 font-semibold">Option C · own page</span>
+  <div role="tablist" aria-label="Page" class="flex shrink-0 items-center gap-1"><span class="opacity-60">page:</span>
+    <template x-for="m in [['list','/projects'],['page','/projects/coins/production']]" :key="m[0]">
+      <button role="tab" type="button" @click="view = m[0]" :aria-selected="view === m[0]" class="shrink-0 rounded-md px-2 py-1 font-mono" :class="view === m[0] ? 'bg-white text-neutral-900 dark:bg-neutral-900 dark:text-white font-medium' : 'opacity-70 hover:opacity-100'" x-text="m[1]"></button>
+    </template></div>
+  <div role="tablist" aria-label="Form state" class="flex shrink-0 items-center gap-1">
+    <span class="opacity-60">form:</span>
+    <template x-for="m in [['new','new'],['edit','edit (saved)']]" :key="m[0]">
+      <button role="tab" type="button" @click="setForm(m[0])" :aria-selected="form === m[0]" class="shrink-0 rounded-md px-2 py-1" :class="form === m[0] ? 'bg-white text-neutral-900 dark:bg-neutral-900 dark:text-white font-medium' : 'opacity-70 hover:opacity-100'" x-text="m[1]"></button>
+    </template>
+  </div>
+  <div role="tablist" aria-label="Test result" class="flex shrink-0 items-center gap-1">
+    <span class="opacity-60">test returns:</span>
+    <template x-for="m in ['pass','refused','unreachable']" :key="m">
+      <button role="tab" type="button" @click="setOutcome(m)" :aria-selected="outcome === m" class="shrink-0 rounded-md px-2 py-1" :class="outcome === m ? 'bg-white text-neutral-900 dark:bg-neutral-900 dark:text-white font-medium' : 'opacity-70 hover:opacity-100'" x-text="m"></button>
+    </template>
+  </div>
+  <a href="index.html" class="shrink-0 ml-auto underline underline-offset-4 opacity-80 hover:opacity-100">All options</a>
+</div>
+
+
+<!-- Mobile top bar -->
+<div class="lg:hidden sticky top-10 z-30 flex items-center gap-3 border-b border-neutral-200 dark:border-neutral-800 bg-white/90 dark:bg-neutral-900/90 backdrop-blur px-4 h-14 mt-10">
+  <button type="button" @click="drawer = true" aria-label="Open project menu" aria-controls="sidebar" :aria-expanded="drawer" class="rounded-lg p-2 -ml-2 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+    <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+  <span class="font-semibold">Story board</span>
+  <span class="text-sm text-neutral-500 truncate">· <span x-text="view === 'page' ? 'coins · Production' : 'Manage projects'"></span></span>
+</div>
+
+
+<div x-show="drawer" x-cloak @click="drawer = false" class="fixed inset-0 top-10 z-40 bg-neutral-950/40 lg:hidden"></div>
+
+<!-- Sidebar (design A shell, from SB-7 option A) -->
+<aside id="sidebar" aria-label="Projects" :class="drawer ? 'translate-x-0' : '-translate-x-full'" class="fixed top-10 bottom-0 left-0 z-50 w-72 lg:w-64 lg:translate-x-0 transition-transform bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-800 flex flex-col">
+  <div class="flex items-center justify-between px-5 pt-5 pb-3">
+    <div class="flex items-center gap-2">
+      <span class="grid place-items-center size-7 rounded-lg bg-neutral-800 text-white dark:bg-white dark:text-neutral-900 text-xs font-bold">SB</span>
+      <span class="font-semibold">Story board</span>
+    </div>
+    <button type="button" @click="drawer = false" aria-label="Close project menu" class="lg:hidden rounded-lg p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+      <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="px-4 pb-3">
+    <button type="button" class="w-full flex items-center gap-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 px-3 py-2 text-sm text-neutral-500 hover:border-neutral-300 dark:hover:border-neutral-700">
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <span class="flex-1 text-left">Find a story</span>
+      <kbd class="rounded border border-neutral-200 dark:border-neutral-700 px-1.5 text-[11px] font-sans">⌘K</kbd>
+    </button>
+  </div>
+  <nav class="flex-1 overflow-y-auto px-3 pb-3 text-sm" aria-label="Project switcher">
+    <a href="#" class="w-full flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      <span class="flex-1 text-left font-medium">All projects</span>
+      <span class="text-xs text-neutral-500 tabular-nums">1,092</span>
+    </a>
+    <p class="mt-5 mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-neutral-400">Projects</p>
+    <ul class="space-y-0.5">
+      <li><a href="#" @click.prevent="drawer = false" class="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
+        <span class="size-2 rounded-full bg-emerald-500" title="State ok"></span><span class="flex-1 text-left truncate">coins</span><span class="text-xs text-neutral-500 tabular-nums">946</span></a></li>
+      <li><a href="#" @click.prevent="drawer = false" class="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
+        <span class="size-2 rounded-full bg-emerald-500" title="State ok"></span><span class="flex-1 text-left truncate">client-dashboard</span><span class="text-xs text-neutral-500 tabular-nums">97</span></a></li>
+      <li><a href="#" @click.prevent="drawer = false" class="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
+        <span class="size-2 rounded-full bg-emerald-500" title="State ok"></span><span class="flex-1 text-left truncate">asset-track</span><span class="text-xs text-neutral-500 tabular-nums">11</span></a></li>
+      <li><a href="#" @click.prevent="drawer = false" class="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
+        <span class="size-2 rounded-full bg-emerald-500" title="State ok"></span><span class="flex-1 text-left truncate">rent-track</span><span class="text-xs text-neutral-500 tabular-nums">15</span></a></li>
+      <li><a href="#" @click.prevent="drawer = false" class="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
+        <span class="size-2 rounded-full bg-emerald-500" title="State ok"></span><span class="flex-1 text-left truncate">story-board</span><span class="text-xs text-neutral-500 tabular-nums">23</span></a></li>
+    </ul>
+  </nav>
+  <div class="border-t border-neutral-200 dark:border-neutral-800 p-3">
+    <a href="#" aria-current="page" class="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm bg-neutral-100 dark:bg-neutral-800">
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/></svg>
+      <span class="flex-1 text-left font-medium">Manage projects</span>
+    </a>
+  </div>
+</aside>
+
+<main class="lg:pl-64 lg:pt-10 min-h-screen">
+  <div class="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
+    
+<div x-show="view === 'page'">
+  <nav class="text-xs text-zinc-500 dark:text-zinc-400" aria-label="Breadcrumb"><a href="#" @click.prevent="view = 'list'" class="hover:underline underline-offset-4">Manage projects</a> <span aria-hidden="true">/</span> coins <span aria-hidden="true">/</span> <span class="text-zinc-800 dark:text-zinc-200">Production</span></nav>
+  <header class="mt-1 flex flex-wrap items-end justify-between gap-3">
+    <div class="min-w-0">
+      <h1 class="text-2xl font-semibold tracking-tight">coins · Production</h1>
+      <p class="mt-1 max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">A read-only link to coins' production database, and the numbers the board reads from it. The board can only run SELECT — it proves that on every save and every read.</p>
+    </div>
+    <p class="text-sm"><span class="inline-flex items-center gap-1.5 text-xs whitespace-nowrap" x-show="connected"><span class="size-1.5 rounded-full bg-emerald-500" aria-hidden="true"></span>Read-only · <span x-text="enabledCount"></span> metrics</span>
+<span class="inline-flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400" x-show="!connected"><span class="size-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600" aria-hidden="true"></span>Not set up</span></p>
+  </header>
+
+  <div class="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem] xl:grid-cols-[minmax(0,1fr)_20rem]">
+    <div class="min-w-0 space-y-8">
+      <section aria-label="Step 1" class="space-y-3">
+        <div class="flex items-center gap-3"><span class="grid size-6 shrink-0 place-items-center rounded-full bg-zinc-800 text-white dark:bg-white dark:text-zinc-900 text-xs font-semibold">1</span><h2 class="font-semibold">Create a read-only user</h2><span x-show="connected" class="text-xs text-emerald-700 dark:text-emerald-400">done</span></div>
+        
+<div class="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/60 p-3">
+  <div class="flex items-start justify-between gap-3">
+    <p class="text-sm"><span class="font-medium">Create the read-only user</span><span class="block text-xs text-zinc-500 dark:text-zinc-400">Run once as an admin on the production server, with your own password in place of …</span></p>
+    <button type="button" @click="copy()" class="rounded-md border border-zinc-300 dark:border-zinc-700 px-2.5 py-1 text-xs font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-60 shrink-0" :aria-label="copied ? 'Copied' : 'Copy SQL'"><span x-text="copied ? 'Copied' : 'Copy'"></span></button>
+  </div>
+  <pre class="mt-2 whitespace-pre-wrap break-all font-mono text-xs leading-5 text-zinc-800 dark:text-zinc-200"><code>CREATE USER 'board_ro'@'%' IDENTIFIED BY '…'; GRANT SELECT ON coins.* TO 'board_ro'@'%';</code></pre>
+  <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Swap <span class="font-mono">'%'</span> for this machine's address if you can. The board refuses any user that can do more than SELECT.</p>
+</div>
+      </section>
+
+      <section aria-label="Step 2" class="space-y-4">
+        <div class="flex flex-wrap items-center gap-3"><span class="grid size-6 shrink-0 place-items-center rounded-full bg-zinc-800 text-white dark:bg-white dark:text-zinc-900 text-xs font-semibold">2</span><h2 class="font-semibold">Connection</h2><span x-show="connected" class="text-xs text-zinc-500 dark:text-zinc-400">last verified 2 min ago</span></div>
+        <div class="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-5 space-y-4">
+          
+<div class="grid gap-4 grid-cols-1 sm:grid-cols-6">
+  <div class="sm:col-span-4">
+    <label for="c-host" class="block text-sm font-medium">Host <span class="text-red-600" aria-hidden="true">*</span></label>
+    <input id="c-host" type="text" x-model="conn.host" placeholder="db.example.com" autocomplete="off" spellcheck="false" class="mt-1 w-full min-w-0 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm font-mono">
+  </div>
+  <div class="sm:col-span-2">
+    <label for="c-port" class="block text-sm font-medium">Port</label>
+    <input id="c-port" type="number" inputmode="numeric" x-model="conn.port" class="mt-1 w-full min-w-0 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm font-mono tabular-nums">
+  </div>
+  <div class="sm:col-span-3">
+    <label for="c-db" class="block text-sm font-medium">Database <span class="text-red-600" aria-hidden="true">*</span></label>
+    <input id="c-db" type="text" x-model="conn.database" placeholder="coins" autocomplete="off" spellcheck="false" class="mt-1 w-full min-w-0 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm font-mono">
+  </div>
+  <div class="sm:col-span-3">
+    <label for="c-user" class="block text-sm font-medium">Username <span class="text-red-600" aria-hidden="true">*</span></label>
+    <input id="c-user" type="text" x-model="conn.username" placeholder="board_ro" autocomplete="off" spellcheck="false" class="mt-1 w-full min-w-0 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm font-mono">
+  </div>
+  <div class="sm:col-span-4">
+    <label for="c-pass" class="block text-sm font-medium">Password <span x-show="!connected" class="text-red-600" aria-hidden="true">*</span></label>
+    <input id="c-pass" type="password" x-model="conn.password" autocomplete="new-password" aria-describedby="c-pass-hint"
+      :placeholder="connected ? 'saved — leave blank to keep' : ''" class="mt-1 w-full min-w-0 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm">
+    <p id="c-pass-hint" class="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400" x-text="connected ? 'Stored encrypted. It is never shown again, only replaced.' : 'Stored encrypted in the board database.'"></p>
+  </div>
+  <div class="sm:col-span-2 flex items-start gap-3 sm:pt-7">
+    <button type="button" role="switch" :aria-checked="conn.ssl ? 'true' : 'false'" aria-label="Use SSL" @click="conn.ssl = !conn.ssl"
+  class="relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors" :class="conn.ssl ? 'bg-zinc-800 dark:bg-white' : 'bg-zinc-300 dark:bg-zinc-700'">
+  <span aria-hidden="true" class="absolute top-0.5 left-0.5 size-5 rounded-full bg-white shadow transition-transform dark:bg-zinc-900" :class="conn.ssl ? 'translate-x-5' : ''"></span></button>
+    <div class="text-sm leading-6"><span class="font-medium">SSL</span> <span class="text-zinc-500 dark:text-zinc-400" x-text="conn.ssl ? 'on' : 'off'"></span></div>
+  </div>
+</div>
+          
+<div class="flex flex-wrap items-center gap-2 ">
+  <button type="button" @click="run('test')" :disabled="test === 'running'" class="rounded-lg border border-zinc-300 dark:border-zinc-700 px-4 py-2 text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-60">
+    <span x-show="!(test === 'running' && action === 'test')">Test connection</span><span x-show="test === 'running' && action === 'test'" x-cloak>Testing…</span></button>
+  <button type="button" @click="run('save')" :disabled="test === 'running'" class="rounded-lg bg-zinc-800 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-60 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200">
+    <span x-show="!(test === 'running' && action === 'save')">Save connection</span><span x-show="test === 'running' && action === 'save'" x-cloak>Checking…</span></button>
+  <p class="basis-full text-xs text-zinc-500 dark:text-zinc-400">Saving runs the same check. A user that can write is refused and nothing is stored.</p>
+</div>
+          
+<div role="status" aria-live="polite" class="min-h-[1rem]">
+  <div x-show="test === 'running'" x-cloak class="flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-800 px-3 py-3 text-sm text-zinc-600 dark:text-zinc-300">
+    <svg class="size-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity=".25" stroke-width="3"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3"/></svg>
+    Connecting to <span class="font-mono text-xs break-all" x-text="hostLabel"></span>… (gives up after 5 s)
+  </div>
+
+  <div x-show="test === 'pass'" x-cloak class="rounded-lg border border-emerald-500/40 bg-emerald-500/5 px-3 py-3 text-sm">
+    <p class="font-medium" x-text="action === 'save' ? 'Connection saved — read-only confirmed' : 'Read-only connection works'"></p>
+    <ul class="mt-2 space-y-1.5 text-zinc-700 dark:text-zinc-300">
+      <li class="flex gap-2"><svg class="size-4 shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg><span>Reachable · <span class="font-mono text-xs break-all" x-text="hostLabel"></span> · <span x-text="conn.ssl ? 'SSL' : 'no SSL'"></span></span></li>
+      <li class="flex gap-2"><svg class="size-4 shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg><span class="min-w-0">Grants <span class="font-medium">SELECT only</span><span class="block font-mono text-xs text-zinc-500 dark:text-zinc-400 break-all" x-text="window.GRANT_OK"></span></span></li>
+      <li class="flex gap-2"><svg class="size-4 shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg><span>MySQL 8.0.39 · <span class="tabular-nums">84 ms</span></span></li>
+    </ul>
+  </div>
+
+  <div x-show="test === 'refused'" x-cloak class="rounded-lg border border-red-500/40 bg-red-500/5 px-3 py-3 text-sm">
+    <p class="font-medium text-red-700 dark:text-red-400">This user can write (INSERT) — create a SELECT-only user.</p>
+    <ul class="mt-2 space-y-1.5 text-zinc-700 dark:text-zinc-300">
+      <li class="flex gap-2"><svg class="size-4 shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg><span>Reachable · <span class="font-mono text-xs break-all" x-text="hostLabel"></span></span></li>
+      <li class="flex gap-2"><svg class="size-4 shrink-0 mt-0.5 text-red-600 dark:text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg><span class="min-w-0">Grants include <span class="font-medium">INSERT</span><span class="block font-mono text-xs text-zinc-500 dark:text-zinc-400 break-all" x-text="window.GRANT_BAD"></span></span></li>
+      <li class="flex gap-2"><span class="size-4 shrink-0 mt-0.5 grid place-items-center text-zinc-400" aria-hidden="true">–</span><span>MySQL 8.0.39 · <span class="tabular-nums">91 ms</span></span></li>
+    </ul>
+    <p class="mt-2 text-zinc-600 dark:text-zinc-400" x-text="action === 'save' ? 'Nothing was saved.' : 'Saving would be refused.'"></p>
+  </div>
+
+  <div x-show="test === 'unreachable'" x-cloak class="rounded-lg border border-amber-500/50 bg-amber-500/5 px-3 py-3 text-sm">
+    <p class="font-medium">Unreachable — no answer from <span class="font-mono text-xs break-all" x-text="hostLabel"></span> after 5.0 s.</p>
+    <ul class="mt-2 space-y-1.5 text-zinc-700 dark:text-zinc-300">
+      <li class="flex gap-2"><svg class="size-4 shrink-0 mt-0.5 text-red-600 dark:text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg><span>Not reachable, so grants and version were not checked</span></li>
+    </ul>
+    <p class="mt-2 text-zinc-600 dark:text-zinc-400">Check the host and port, and that the database server accepts connections from this machine.<span x-show="action === 'save'"> Nothing was saved.</span></p>
+  </div>
+</div>
+        </div>
+      </section>
+
+      <section aria-label="Step 3" class="space-y-4">
+        <div class="flex flex-wrap items-center gap-3"><span class="grid size-6 shrink-0 place-items-center rounded-full bg-zinc-800 text-white dark:bg-white dark:text-zinc-900 text-xs font-semibold">3</span><h2 class="font-semibold">Metrics</h2><span class="rounded bg-amber-500/15 px-1.5 py-0.5 text-[11px] font-medium text-amber-800 dark:text-amber-300 ring-1 ring-inset ring-amber-500/40">example values</span></div>
+        
+<div x-show="!connected" class="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 px-4 py-6 text-center">
+  <p class="text-sm font-medium">Metrics come after the connection</p>
+  <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Save a connection that passes the read-only check. Its tables and columns then load here for the pickers.</p>
+</div>
+        <div x-show="connected" class="space-y-6">
+          <p class="text-xs text-zinc-500 dark:text-zinc-400">"Today" is since 00:00 in the board's timezone (<span class="font-mono" x-text="tz"></span>), sent to production as UTC: <span class="font-mono" x-text="since"></span>.</p>
+          <div><h3 class="mb-2 text-sm font-medium">Presets</h3>
+<div class="rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+  <div class="hidden md:grid grid-cols-[3.5rem_10rem_1fr_7.5rem] gap-3 bg-zinc-50 dark:bg-zinc-950/60 px-3 py-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+    <span>On</span><span>Metric</span><span>Reads from</span><span class="text-right">Test</span>
+  </div>
+  <ul class="divide-y divide-zinc-100 dark:divide-zinc-800">
+    <template x-for="p in presets" :key="p.key">
+      <li class="grid grid-cols-[auto_1fr] md:grid-cols-[3.5rem_9rem_minmax(0,1fr)_6.5rem] gap-x-3 gap-y-2 px-3 py-3 items-start">
+        <div class="pt-0.5"><button type="button" role="switch" :aria-checked="p.on ? 'true' : 'false'" :aria-label="'Use ' + p.label" @click="p.on = !p.on"
+  class="relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors" :class="p.on ? 'bg-zinc-800 dark:bg-white' : 'bg-zinc-300 dark:bg-zinc-700'">
+  <span aria-hidden="true" class="absolute top-0.5 left-0.5 size-5 rounded-full bg-white shadow transition-transform dark:bg-zinc-900" :class="p.on ? 'translate-x-5' : ''"></span></button></div>
+        <div class="min-w-0"><p class="text-sm font-medium" :class="p.on ? '' : 'text-zinc-500 dark:text-zinc-400'" x-text="p.label"></p>
+          <p class="text-xs text-zinc-500 dark:text-zinc-400" x-text="p.hint"></p></div>
+        <div class="col-span-2 md:col-span-1 min-w-0 space-y-2" x-show="p.on">
+          
+<div class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-2 gap-3">
+  <div>
+    <label :for="'c-t-' + p.key" class="block text-xs font-medium text-zinc-600 dark:text-zinc-400">Table</label>
+    <select :id="'c-t-' + p.key" x-model="p.table" @change="pickTable(p)" class="mt-1 w-full min-w-0 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-1.5 text-sm font-mono">
+      <template x-for="t in tables()" :key="t"><option :value="t" x-text="t" :selected="t === p.table"></option></template>
+    </select>
+  </div>
+  <div x-show="p.fields.includes('ts')">
+    <label :for="'c-c-' + p.key" class="block text-xs font-medium text-zinc-600 dark:text-zinc-400">Timestamp column</label>
+    <select :id="'c-c-' + p.key" x-model="p.ts" class="mt-1 w-full min-w-0 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-1.5 text-sm font-mono" :disabled="!tsCols(p).length">
+      <template x-for="c in tsCols(p)" :key="c"><option :value="c" x-text="c" :selected="c === p.ts"></option></template>
+      <option x-show="!tsCols(p).length" value="">no timestamp columns</option>
+    </select>
+  </div>
+  <div x-show="p.fields.includes('distinct')">
+    <label :for="'c-d-' + p.key" class="block text-xs font-medium text-zinc-600 dark:text-zinc-400">Count distinct</label>
+    <select :id="'c-d-' + p.key" x-model="p.distinct" class="mt-1 w-full min-w-0 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-1.5 text-sm font-mono">
+      <option value="">every row</option>
+      <template x-for="c in idCols(p)" :key="c"><option :value="c" x-text="c" :selected="c === p.distinct"></option></template>
+    </select>
+  </div>
+</div>
+          <pre class="whitespace-pre-wrap break-all font-mono text-xs text-zinc-500 dark:text-zinc-400" x-text="sqlFor(p)"></pre>
+        </div>
+        <p class="col-span-2 md:col-span-1 text-xs text-zinc-400" x-show="!p.on">Off — not read or shown.</p>
+        <div class="col-span-2 md:col-span-1 flex md:flex-col md:items-end items-center gap-2" x-show="p.on">
+          <button type="button" @click="testPreset(p)" :disabled="p.state === 'running'" class="rounded-md border border-zinc-300 dark:border-zinc-700 px-2.5 py-1 text-xs font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-60">Test</button>
+<span role="status" aria-live="polite" class="text-sm tabular-nums">
+  <span x-show="p.state === 'running'" x-cloak class="text-zinc-500">Running…</span>
+  <span x-show="p.state === 'ok'" x-cloak><span class="font-semibold" x-text="p.value"></span> <span class="text-xs text-zinc-500" x-text="'· ' + p.ms + ' ms'"></span></span>
+  <span x-show="p.state === 'err'" x-cloak class="text-red-600 dark:text-red-400 text-xs">Pick a timestamp column first.</span>
+</span>
+        </div>
+      </li>
+    </template>
+  </ul>
+</div></div>
+          <div><h3 class="mb-2 text-sm font-medium">Custom SQL</h3><div class="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 sm:p-4">
+<ul class="space-y-3">
+  <template x-for="c in customs" :key="c.id">
+    <li class="rounded-lg border p-3" :class="c.state === 'refused' ? 'border-red-500/40' : 'border-zinc-200 dark:border-zinc-800'">
+      <div class="grid gap-3 grid-cols-1">
+        <div class="flex items-end gap-2">
+          <div class="flex-1 min-w-0">
+            <label :for="'c-n-' + c.id" class="block text-xs font-medium text-zinc-600 dark:text-zinc-400">Name</label>
+            <input :id="'c-n-' + c.id" type="text" x-model="c.name" placeholder="Paid subscribers" class="mt-1 w-full min-w-0 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm">
+          </div>
+          <button type="button" @click="dropCustom(c)" class="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800" :aria-label="'Delete metric ' + (c.name || 'untitled')">
+            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+        </div>
+        <div>
+          <label :for="'c-q-' + c.id" class="block text-xs font-medium text-zinc-600 dark:text-zinc-400">SQL — one SELECT that returns one number</label>
+          <textarea :id="'c-q-' + c.id" x-model="c.sql" rows="4" spellcheck="false" @input="c.state = null"
+            class="mt-1 w-full min-w-0 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm font-mono text-xs leading-5" :aria-invalid="c.state === 'refused'"></textarea>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+          <button type="button" @click="testCustom(c)" :disabled="c.state === 'running'" class="rounded-md border border-zinc-300 dark:border-zinc-700 px-2.5 py-1 text-xs font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-60">Test</button>
+          <span role="status" aria-live="polite" class="text-sm min-w-0">
+            <span x-show="c.state === 'running'" x-cloak class="text-zinc-500">Running…</span>
+            <span x-show="c.state === 'ok'" x-cloak class="tabular-nums"><span class="font-semibold" x-text="c.value"></span> <span class="text-xs text-zinc-500" x-text="'· ' + c.ms + ' ms'"></span></span>
+            <span x-show="c.state === 'refused'" x-cloak class="text-red-700 dark:text-red-400" x-text="c.err"></span>
+          </span>
+        </div>
+      </div>
+    </li>
+  </template>
+</ul>
+<button type="button" @click="addCustom()" class="mt-3 text-sm font-medium underline-offset-4 hover:underline">+ Add custom metric</button></div></div>
+          <div class="flex justify-end"><button type="button" @click="say('Metrics saved')" class="rounded-lg bg-zinc-800 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-60 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200">Save metrics</button></div>
+        </div>
+      </section>
+    </div>
+
+    <aside class="min-w-0 space-y-4 lg:sticky lg:top-16 lg:self-start">
+      
+<div class="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+  <div class="flex flex-wrap items-center justify-between gap-2"><h2 class="text-sm font-semibold">Preview</h2><span class="rounded bg-amber-500/15 px-1.5 py-0.5 text-[11px] font-medium text-amber-800 dark:text-amber-300 ring-1 ring-inset ring-amber-500/40">example values</span></div>
+  <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">What SB-18's dashboard will show for coins, from the last Test.</p>
+  <div x-show="!connected" class="mt-3 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 px-3 py-5 text-center text-xs text-zinc-500">No metrics yet</div>
+  <div x-show="connected" class="mt-3 grid grid-cols-2 gap-2">
+    <template x-for="p in presets.filter(x => x.on)" :key="p.key">
+      <div class="rounded-lg bg-zinc-50 dark:bg-zinc-950/60 px-3 py-2.5 min-w-0">
+        <p class="text-xs text-zinc-500 dark:text-zinc-400 truncate" x-text="p.label"></p>
+        <p class="text-xl font-semibold tabular-nums" x-text="p.state === 'ok' ? p.value : '—'"></p>
+      </div>
+    </template>
+    <template x-for="c in customs.filter(x => x.state === 'ok')" :key="c.id">
+      <div class="rounded-lg bg-zinc-50 dark:bg-zinc-950/60 px-3 py-2.5 min-w-0">
+        <p class="text-xs text-zinc-500 dark:text-zinc-400 truncate" x-text="c.name || 'Untitled'"></p>
+        <p class="text-xl font-semibold tabular-nums" x-text="c.value"></p>
+      </div>
+    </template>
+  </div>
+</div>
+      <div x-show="connected" class="rounded-xl border border-red-500/30 p-4">
+        <h2 class="text-sm font-semibold">Remove connection</h2>
+        <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Deletes the saved credentials and metrics from the board.</p>
+        <button type="button" @click="removing = true" class="mt-3 rounded-lg px-3 py-1.5 -ml-3 text-sm font-medium text-red-600 hover:bg-red-500/10">Remove connection…</button>
+      </div>
+    </aside>
+  </div>
+</div>
+    
+<div x-show="view === 'list'" x-cloak>
+  
+<header>
+  <h1 class="text-2xl font-semibold tracking-tight">Manage projects</h1>
+  <p class="mt-1 max-w-2xl text-sm text-zinc-500 dark:text-zinc-400">Turn a project off to hide it everywhere and stop refreshing it. Its data is kept. These settings live in the board's own database — nothing is written to your projects.</p>
+</header>
+  
+<div class="mt-6 rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+  <div class="hidden gap-4 border-b border-zinc-200 px-5 py-3 text-xs font-medium text-zinc-500 md:grid md:grid-cols-[4rem_1.3fr_0.8fr_4rem_4rem_11rem_5.5rem] dark:border-zinc-800 dark:text-zinc-400">
+    <span>Shown</span><span>Project</span><span>Ref</span><span>State</span><span class="text-right">Stories</span><span>Production</span><span class="sr-only">Actions</span>
+  </div>
+  <ul class="divide-y divide-zinc-100 dark:divide-zinc-800">
+    <li data-project-row="coins">
+      <div class="grid grid-cols-[auto_1fr_auto] items-center gap-x-4 gap-y-1 px-5 py-4 md:grid-cols-[4rem_1.3fr_0.8fr_4rem_4rem_11rem_5.5rem]">
+        <span role="switch" aria-checked="true" aria-label="Show coins" class="relative inline-flex h-6 w-11 shrink-0 rounded-full bg-zinc-800 dark:bg-white"><span aria-hidden="true" class="absolute top-0.5 left-0.5 size-5 translate-x-5 rounded-full bg-white shadow dark:bg-zinc-900"></span></span>
+        <div class="min-w-0"><p class="font-medium">coins</p><p class="truncate font-mono text-xs text-zinc-500 dark:text-zinc-400">~/Code/coins</p></div>
+        <button type="button" class="justify-self-end rounded-lg px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-500/10 md:order-last" @click="say('Remove project: unchanged from SB-12')">Remove<span class="sr-only"> coins</span></button>
+        <span class="col-start-2 font-mono text-xs text-zinc-500 md:col-start-auto dark:text-zinc-400">origin/main</span>
+        <span class="col-start-2 inline-flex items-center gap-1.5 text-xs md:col-start-auto"><span class="size-1.5 rounded-full bg-emerald-500" aria-hidden="true"></span> ok</span>
+        <span class="col-start-2 text-xs tabular-nums text-zinc-600 md:col-start-auto md:text-right md:text-sm dark:text-zinc-400">946<span class="md:hidden"> stories</span></span>
+        <div class="col-start-2 md:col-start-auto min-w-0"><a href="#" @click.prevent="view = 'page'; scrollTo(0, 0)" class="flex w-full items-center gap-2 rounded-lg px-2 py-1 -mx-2 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+  <span class="min-w-0 flex-1"><span class="inline-flex items-center gap-1.5 text-xs whitespace-nowrap" x-show="connected"><span class="size-1.5 rounded-full bg-emerald-500" aria-hidden="true"></span>Read-only · <span x-text="enabledCount"></span> metrics</span>
+<span class="inline-flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400" x-show="!connected"><span class="size-1.5 rounded-full bg-zinc-300 dark:bg-zinc-600" aria-hidden="true"></span>Not set up</span></span><span aria-hidden="true">→</span><span class="sr-only"> coins production settings</span></a></div>
+      </div>
+    </li>
+    <li data-project-row="client-dashboard">
+      <div class="grid grid-cols-[auto_1fr_auto] items-center gap-x-4 gap-y-1 px-5 py-4 md:grid-cols-[4rem_1.3fr_0.8fr_4rem_4rem_11rem_5.5rem]">
+        <span role="switch" aria-checked="true" aria-label="Show client-dashboard" class="relative inline-flex h-6 w-11 shrink-0 rounded-full bg-zinc-800 dark:bg-white"><span aria-hidden="true" class="absolute top-0.5 left-0.5 size-5 translate-x-5 rounded-full bg-white shadow dark:bg-zinc-900"></span></span>
+        <div class="min-w-0"><p class="font-medium">client-dashboard</p><p class="truncate font-mono text-xs text-zinc-500 dark:text-zinc-400">~/Code/client-dashboard</p></div>
+        <button type="button" class="justify-self-end rounded-lg px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-500/10 md:order-last" @click="say('Remove project: unchanged from SB-12')">Remove<span class="sr-only"> client-dashboard</span></button>
+        <span class="col-start-2 font-mono text-xs text-zinc-500 md:col-start-auto dark:text-zinc-400">origin/main</span>
+        <span class="col-start-2 inline-flex items-center gap-1.5 text-xs md:col-start-auto"><span class="size-1.5 rounded-full bg-emerald-500" aria-hidden="true"></span> ok</span>
+        <span class="col-start-2 text-xs tabular-nums text-zinc-600 md:col-start-auto md:text-right md:text-sm dark:text-zinc-400">97<span class="md:hidden"> stories</span></span>
+        <div class="col-start-2 md:col-start-auto min-w-0"><a href="#" @click.prevent="say('Mockup: only coins is wired. Each project has its own page.')" class="text-xs font-medium underline-offset-4 hover:underline">Set up →<span class="sr-only"> client-dashboard production</span></a></div>
+      </div>
+    </li>
+    <li data-project-row="asset-track">
+      <div class="grid grid-cols-[auto_1fr_auto] items-center gap-x-4 gap-y-1 px-5 py-4 md:grid-cols-[4rem_1.3fr_0.8fr_4rem_4rem_11rem_5.5rem]">
+        <span role="switch" aria-checked="true" aria-label="Show asset-track" class="relative inline-flex h-6 w-11 shrink-0 rounded-full bg-zinc-800 dark:bg-white"><span aria-hidden="true" class="absolute top-0.5 left-0.5 size-5 translate-x-5 rounded-full bg-white shadow dark:bg-zinc-900"></span></span>
+        <div class="min-w-0"><p class="font-medium">asset-track</p><p class="truncate font-mono text-xs text-zinc-500 dark:text-zinc-400">~/Code/asset-track</p></div>
+        <button type="button" class="justify-self-end rounded-lg px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-500/10 md:order-last" @click="say('Remove project: unchanged from SB-12')">Remove<span class="sr-only"> asset-track</span></button>
+        <span class="col-start-2 font-mono text-xs text-zinc-500 md:col-start-auto dark:text-zinc-400">origin/main</span>
+        <span class="col-start-2 inline-flex items-center gap-1.5 text-xs md:col-start-auto"><span class="size-1.5 rounded-full bg-emerald-500" aria-hidden="true"></span> ok</span>
+        <span class="col-start-2 text-xs tabular-nums text-zinc-600 md:col-start-auto md:text-right md:text-sm dark:text-zinc-400">11<span class="md:hidden"> stories</span></span>
+        <div class="col-start-2 md:col-start-auto min-w-0"><a href="#" @click.prevent="say('Mockup: only coins is wired. Each project has its own page.')" class="text-xs font-medium underline-offset-4 hover:underline">Set up →<span class="sr-only"> asset-track production</span></a></div>
+      </div>
+    </li>
+    <li data-project-row="rent-track">
+      <div class="grid grid-cols-[auto_1fr_auto] items-center gap-x-4 gap-y-1 px-5 py-4 md:grid-cols-[4rem_1.3fr_0.8fr_4rem_4rem_11rem_5.5rem]">
+        <span role="switch" aria-checked="true" aria-label="Show rent-track" class="relative inline-flex h-6 w-11 shrink-0 rounded-full bg-zinc-800 dark:bg-white"><span aria-hidden="true" class="absolute top-0.5 left-0.5 size-5 translate-x-5 rounded-full bg-white shadow dark:bg-zinc-900"></span></span>
+        <div class="min-w-0"><p class="font-medium">rent-track</p><p class="truncate font-mono text-xs text-zinc-500 dark:text-zinc-400">~/Code/rent-track</p></div>
+        <button type="button" class="justify-self-end rounded-lg px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-500/10 md:order-last" @click="say('Remove project: unchanged from SB-12')">Remove<span class="sr-only"> rent-track</span></button>
+        <span class="col-start-2 font-mono text-xs text-zinc-500 md:col-start-auto dark:text-zinc-400">origin/main</span>
+        <span class="col-start-2 inline-flex items-center gap-1.5 text-xs md:col-start-auto"><span class="size-1.5 rounded-full bg-emerald-500" aria-hidden="true"></span> ok</span>
+        <span class="col-start-2 text-xs tabular-nums text-zinc-600 md:col-start-auto md:text-right md:text-sm dark:text-zinc-400">15<span class="md:hidden"> stories</span></span>
+        <div class="col-start-2 md:col-start-auto min-w-0"><a href="#" @click.prevent="say('Mockup: only coins is wired. Each project has its own page.')" class="text-xs font-medium underline-offset-4 hover:underline">Set up →<span class="sr-only"> rent-track production</span></a></div>
+      </div>
+    </li>
+    <li data-project-row="story-board">
+      <div class="grid grid-cols-[auto_1fr_auto] items-center gap-x-4 gap-y-1 px-5 py-4 md:grid-cols-[4rem_1.3fr_0.8fr_4rem_4rem_11rem_5.5rem]">
+        <span role="switch" aria-checked="true" aria-label="Show story-board" class="relative inline-flex h-6 w-11 shrink-0 rounded-full bg-zinc-800 dark:bg-white"><span aria-hidden="true" class="absolute top-0.5 left-0.5 size-5 translate-x-5 rounded-full bg-white shadow dark:bg-zinc-900"></span></span>
+        <div class="min-w-0"><p class="font-medium">story-board</p><p class="truncate font-mono text-xs text-zinc-500 dark:text-zinc-400">~/Code/story-board</p></div>
+        <button type="button" class="justify-self-end rounded-lg px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-500/10 md:order-last" @click="say('Remove project: unchanged from SB-12')">Remove<span class="sr-only"> story-board</span></button>
+        <span class="col-start-2 font-mono text-xs text-zinc-500 md:col-start-auto dark:text-zinc-400">origin/main</span>
+        <span class="col-start-2 inline-flex items-center gap-1.5 text-xs md:col-start-auto"><span class="size-1.5 rounded-full bg-emerald-500" aria-hidden="true"></span> ok</span>
+        <span class="col-start-2 text-xs tabular-nums text-zinc-600 md:col-start-auto md:text-right md:text-sm dark:text-zinc-400">23<span class="md:hidden"> stories</span></span>
+        <div class="col-start-2 md:col-start-auto min-w-0"><a href="#" @click.prevent="say('Mockup: only coins is wired. Each project has its own page.')" class="text-xs font-medium underline-offset-4 hover:underline">Set up →<span class="sr-only"> story-board production</span></a></div>
+      </div>
+    </li>
+  </ul>
+</div>
+  
+<div class="mt-8 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900 opacity-70">
+  <h2 class="font-medium">Add project</h2>
+  <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Unchanged from SB-12 (path, name, ref).</p>
+</div>
+</div>
+    <p class="mt-10 text-xs text-zinc-400">Mockup · SB-17 option C · all numbers, hosts and timings are example values · <a href="index.html" class="underline underline-offset-4">all options</a></p>
+  </div>
+</main>
+
+<!-- Remove connection: board/confirm-modal (SB-12), Alpine only -->
+<div x-show="removing" x-cloak class="fixed inset-0 z-[80] grid place-items-center p-4" @keydown.escape.window="removing = false">
+  <div class="absolute inset-0 bg-neutral-950/50" @click="removing = false"></div>
+  <div role="alertdialog" aria-modal="true" aria-labelledby="rm-title" class="relative w-full max-w-md rounded-xl bg-white dark:bg-zinc-900 p-5 shadow-xl">
+    <h2 id="rm-title" class="font-semibold">Remove coins's production connection?</h2>
+    <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">Its saved credentials and <span x-text="enabledCount"></span> metrics are deleted from the board. Nothing in coins's production database is touched, and the <span class="font-mono text-xs">board_ro</span> user still exists there.</p>
+    <div class="mt-5 flex justify-end gap-2">
+      <button type="button" @click="removing = false" class="rounded-lg border border-zinc-300 dark:border-zinc-700 px-4 py-2 text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-60">Cancel</button>
+      <button type="button" @click="removing = false; setForm('new'); say('Production connection removed')" class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">Remove connection</button>
+    </div>
+  </div>
+</div>
+
+<div class="pointer-events-none fixed inset-x-0 bottom-5 z-[70] flex justify-center px-4" role="status" aria-live="polite">
+  <div x-show="note" x-cloak x-transition.opacity class="rounded-lg bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 px-4 py-2.5 text-sm shadow-lg" x-text="note"></div>
+</div>
+</body>
+</html>

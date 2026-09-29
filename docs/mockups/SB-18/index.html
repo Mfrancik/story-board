@@ -1,0 +1,92 @@
+<!-- SB-18 mockups — landing page for the three options. -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SB-18 production mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { darkMode: 'media', theme: { extend: { fontFamily: { sans: ['"Instrument Sans"', 'system-ui', 'sans-serif'] } } } };
+</script>
+<style>a:focus-visible { outline: 2px solid #0ea5e9; outline-offset: 2px; }</style>
+</head>
+<body class="font-sans bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100 antialiased">
+<main class="mx-auto max-w-6xl px-4 sm:px-6 py-10">
+  <p class="font-mono text-xs text-neutral-500">SB-18 · design mockup gate</p>
+  <h1 class="mt-1 text-2xl font-semibold tracking-tight">Production dashboard: three layouts</h1>
+  <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400 max-w-3xl">All three show <span class="font-mono text-xs">/prod</span> inside the design-A shell from SB-7. The sidebar gains a <strong>Production</strong> link, shown active, with a connected count (3/4). Every number is an <strong>example value</strong>, sized for small apps. coins has 4 preset metrics and 1 custom one (Listings live). client-dashboard has 3 metrics and was connected on Sep 25, so its "vs 7 days ago" shows —. asset-track is unreachable: its last good values are greyed, marked "read 3 h ago", and shown with the error. rent-track is listed under "not connected". Refresh works on each project: the section shows a skeleton, then comes back "read just now". Hover a trend line to see a day's value. The dark strip at the top switches to "client-dashboard still loading" (skeleton) and to the empty state. You can also add <span class="font-mono text-xs">#loading</span> or <span class="font-mono text-xs">#empty</span> to the URL.</p>
+
+  <div class="mt-8 grid gap-4 lg:grid-cols-3">
+    <!-- A -->
+    <a href="option-a.html" class="group flex flex-col rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 hover:border-neutral-300 dark:hover:border-neutral-700">
+      <div class="aspect-[16/10] rounded-lg bg-neutral-100 dark:bg-neutral-800 p-3 flex gap-2" aria-hidden="true">
+        <div class="w-1/5 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+        <div class="flex-1 space-y-1.5">
+          <div class="h-1.5 w-10 rounded bg-sky-500"></div>
+          <div class="grid grid-cols-5 gap-1"><div class="h-7 rounded bg-white dark:bg-neutral-900"></div><div class="h-7 rounded bg-white dark:bg-neutral-900"></div><div class="h-7 rounded bg-white dark:bg-neutral-900"></div><div class="h-7 rounded bg-white dark:bg-neutral-900"></div><div class="h-7 rounded bg-white dark:bg-neutral-900"></div></div>
+          <div class="h-1.5 w-10 rounded bg-orange-500"></div>
+          <div class="grid grid-cols-5 gap-1"><div class="h-7 rounded bg-white dark:bg-neutral-900"></div><div class="h-7 rounded bg-white dark:bg-neutral-900"></div><div class="h-7 rounded bg-white dark:bg-neutral-900"></div></div>
+          <div class="h-1.5 w-10 rounded bg-emerald-500"></div>
+          <div class="grid grid-cols-5 gap-1 opacity-50"><div class="h-7 rounded bg-white dark:bg-neutral-900"></div><div class="h-7 rounded bg-white dark:bg-neutral-900"></div><div class="h-7 rounded bg-white dark:bg-neutral-900"></div></div>
+        </div>
+      </div>
+      <h2 class="mt-4 font-semibold">Option A: KPI tiles per project</h2>
+      <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">Each project is a section with its own header (name, status, read time, Refresh). Under it, each metric is a tile with a large value, both changes on their own lines, a 30-day line and "read 2 min ago". The grid is 5 tiles wide on desktop and 2 on a phone. It uses the same stat-card look as Home's "In flight" row.</p>
+      <p class="mt-2 text-sm"><span class="font-medium">Good:</span> <span class="text-neutral-600 dark:text-neutral-400">the easiest to read for one project. Each number has room, and error and loading states belong clearly to one section.</span></p>
+      <p class="mt-1 text-sm"><span class="font-medium">Costs:</span> <span class="text-neutral-600 dark:text-neutral-400">comparing projects means scanning between sections. The page gets tall as projects and metrics grow: about 1,600 px on a phone for three projects.</span></p>
+      <p class="mt-auto pt-3 text-sm font-medium group-hover:underline underline-offset-4">Open option A →</p>
+    </a>
+    <!-- B -->
+    <a href="option-b.html" class="group flex flex-col rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 hover:border-neutral-300 dark:hover:border-neutral-700">
+      <div class="aspect-[16/10] rounded-lg bg-neutral-100 dark:bg-neutral-800 p-3 flex gap-2" aria-hidden="true">
+        <div class="w-1/5 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+        <div class="flex-1 rounded bg-white dark:bg-neutral-900 p-1.5 space-y-1">
+          <div class="grid grid-cols-6 gap-1"><div class="h-1 rounded bg-neutral-300 dark:bg-neutral-600"></div><div class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></div></div>
+          <div class="grid grid-cols-6 gap-1 items-end"><div class="h-1.5 rounded bg-sky-500"></div><div class="h-4 border-b-2 border-sky-500"></div><div class="h-4 border-b-2 border-sky-500"></div><div class="h-4 border-b-2 border-sky-500"></div><div class="h-4 border-b-2 border-sky-500"></div><div class="h-4 border-b-2 border-sky-500"></div></div>
+          <div class="grid grid-cols-6 gap-1 items-end"><div class="h-1.5 rounded bg-orange-500"></div><div class="h-4 border-b-2 border-orange-500"></div><div></div><div class="h-4 border-b-2 border-orange-500"></div><div class="h-4 border-b-2 border-orange-500"></div><div></div></div>
+          <div class="grid grid-cols-6 gap-1 items-end opacity-50"><div class="h-1.5 rounded bg-emerald-500"></div><div class="h-4 border-b-2 border-neutral-400"></div><div></div><div class="h-4 border-b-2 border-neutral-400"></div><div class="h-4 border-b-2 border-neutral-400"></div><div></div></div>
+          <div class="h-1 w-1/2 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+        </div>
+      </div>
+      <h2 class="mt-4 font-semibold">Option B: comparison table</h2>
+      <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">One table: projects as rows, and Total users, New today, Active today, Logged in today and Custom as columns. Each cell holds the value, "vs yest." and "vs 7 d ago", a sparkline and the read time. The row header holds the status, error and Refresh. A metric a project does not read says "not tracked". rent-track sits in a "Not connected" group at the foot of the table. Below 768 px, each row becomes a card with one line per metric.</p>
+      <p class="mt-2 text-sm"><span class="font-medium">Good:</span> <span class="text-neutral-600 dark:text-neutral-400">the densest view. Everything fits in about one desktop screen, and you can compare "active today" across apps by reading down a column.</span></p>
+      <p class="mt-1 text-sm"><span class="font-medium">Costs:</span> <span class="text-neutral-600 dark:text-neutral-400">cells are small, so the changes use short labels. The Custom column holds a different metric on each row, so reading down it compares nothing. Every new custom metric either shares that column or adds a new one. The phone layout is effectively a second design to build.</span></p>
+      <p class="mt-auto pt-3 text-sm font-medium group-hover:underline underline-offset-4">Open option B →</p>
+    </a>
+    <!-- C -->
+    <a href="option-c.html" class="group flex flex-col rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 hover:border-neutral-300 dark:hover:border-neutral-700">
+      <div class="aspect-[16/10] rounded-lg bg-neutral-100 dark:bg-neutral-800 p-3 flex gap-2" aria-hidden="true">
+        <div class="w-1/5 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+        <div class="flex-1 space-y-1">
+          <div class="flex gap-1"><div class="h-1.5 w-6 rounded-full bg-neutral-700 dark:bg-neutral-300"></div><div class="h-1.5 w-6 rounded-full bg-white dark:bg-neutral-900"></div><div class="h-1.5 w-6 rounded-full bg-white dark:bg-neutral-900"></div></div>
+          <div class="h-16 rounded bg-white dark:bg-neutral-900 p-1.5">
+            <svg viewBox="0 0 100 40" class="h-full w-full" preserveAspectRatio="none"><path d="M0 14 L30 12 L60 10 L100 7" fill="none" stroke="#2a78d6" stroke-width="2" vector-effect="non-scaling-stroke"/><path d="M85 30 L100 29" fill="none" stroke="#eb6834" stroke-width="2" vector-effect="non-scaling-stroke"/><path d="M0 36 L50 35 L100 34" fill="none" stroke="#1baf7a" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>
+          </div>
+          <div class="rounded bg-white dark:bg-neutral-900 p-1 space-y-0.5"><div class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></div></div>
+        </div>
+      </div>
+      <h2 class="mt-4 font-semibold">Option C: metric focus</h2>
+      <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">Choose a metric with the pills: Total users, New today, Active today, Logged in today or Listings live. A headline number totals it across your apps ("521 total users across 3 apps"). Below it, one 30-day chart shows every project's line, with a legend and labels at the line ends. A toggle switches to "Each on its own scale", three small charts side by side. The table underneath has a row per project: value, both changes, a sparkline, the read time and Refresh.</p>
+      <p class="mt-2 text-sm"><span class="font-medium">Good:</span> <span class="text-neutral-600 dark:text-neutral-400">the only option that answers "how are my apps doing together". Growth is easy to compare over time, and the headline gives one number to check each day.</span></p>
+      <p class="mt-1 text-sm"><span class="font-medium">Costs:</span> <span class="text-neutral-600 dark:text-neutral-400">you see one metric at a time, so reading all of coins takes five clicks. On one shared scale, coins (412) flattens the small apps (23), which is why the per-project scale toggle exists. A custom metric that only one project has makes a chart with a single line. The big chart is the most code to build.</span></p>
+      <p class="mt-auto pt-3 text-sm font-medium group-hover:underline underline-offset-4">Open option C →</p>
+    </a>
+  </div>
+
+  <section class="mt-8 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5">
+    <h2 class="font-medium">The same in every option</h2>
+    <ul class="mt-2 list-disc pl-5 text-sm text-neutral-600 dark:text-neutral-400 space-y-1">
+      <li>Changes are signed and carry an arrow (▲ +9, ▼ −8, ±0), so direction never depends on colour alone. "—" means there is no snapshot for that day.</li>
+      <li>Each project keeps one colour everywhere: coins blue, client-dashboard orange, asset-track aqua. These are the first three slots of the dataviz reference palette, checked with the validator (all pairs, light and dark). Aqua is under 3:1 contrast on white, so it is never the only label.</li>
+      <li>Trend lines are inline SVG with no chart library: 2 px lines, a ringed end dot, a 10% area fill, and a hover readout for each day. A stale (unreachable) value is grey in A and B. In C it is a hollow end dot, because the history is still good and only today's value is old.</li>
+      <li>Worth deciding at build time: "New today", "Active today" and "Logged in today" are counts so far today, compared with yesterday's full day (the 23:55 snapshot). Around 14:00, "▼ −8 vs yesterday" is normal and does not mean a bad day.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>
