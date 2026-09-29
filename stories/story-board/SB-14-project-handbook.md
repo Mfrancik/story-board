@@ -79,8 +79,9 @@ exactly what the owner asked to see.
 ## Design mockup gate
 - Mockups: docs/mockups/SB-14/option-{a,b}.html (made at build start; they must sit inside the design-A
   shell).
-- Chosen option: _pending_
-- Why I chose it: _pending_
+- Chosen option: a
+- Why I chose it: owner pick 2026-09-29 (/build mockup gate): section tabs across the top above one
+  full-width reading card, kit badges inline, decisions open in the design-A centered modal.
 
 ## Do NOT touch
 - Any registered project's files, `~/Code/dev-standards` (read only through `GitReader`).
@@ -122,7 +123,7 @@ exactly what the owner asked to see.
 
 ## Definition of done
 - [ ] Acceptance criteria pass (show Pest output)
-- [ ] Visual story: mockup gate cleared — chosen option + reason recorded above
+- [x] Visual story: mockup gate cleared — chosen option + reason recorded above
 - [ ] Journey test(s) green end-to-end (n/a: no journey)
 - [ ] Logging events in place per standard
 - [ ] Status flipped to `built` in the same commit as the build (stories/README.md §Status)

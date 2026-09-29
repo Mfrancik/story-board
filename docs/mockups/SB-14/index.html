@@ -1,0 +1,60 @@
+<!-- SB-14 mockups — landing page for the two options. -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SB-14 handbook mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { darkMode: 'media', theme: { extend: { fontFamily: { sans: ['"Instrument Sans"', 'system-ui', 'sans-serif'] } } } };
+</script>
+<style>a:focus-visible { outline: 2px solid #0ea5e9; outline-offset: 2px; }</style>
+</head>
+<body class="font-sans bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100 antialiased">
+<main class="mx-auto max-w-4xl px-4 sm:px-6 py-10">
+  <p class="font-mono text-xs text-neutral-500">SB-14 · design mockup gate</p>
+  <h1 class="mt-1 text-2xl font-semibold tracking-tight">Project handbook: two layouts</h1>
+  <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400 max-w-2xl">Both sit inside the design-A shell from SB-7 and show <span class="font-mono text-xs">/p/coins/handbook</span> with real data: coins at origin/main <span class="font-mono text-xs">23679a5</span>, the kit at <span class="font-mono text-xs">~/Code/dev-standards</span> HEAD <span class="font-mono text-xs">29b7281</span>. The dark strip at the top of each page switches between three states: coins, coins with the kit not found, and asset-track (the empty states).</p>
+
+  <div class="mt-8 grid gap-4 md:grid-cols-2">
+    <a href="option-a.html" class="group block rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 hover:border-neutral-300 dark:hover:border-neutral-700">
+      <div class="aspect-[16/9] rounded-lg bg-neutral-100 dark:bg-neutral-800 p-3 flex gap-2" aria-hidden="true">
+        <div class="w-1/5 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+        <div class="flex-1 space-y-2">
+          <div class="flex gap-1"><div class="h-2.5 w-8 rounded bg-neutral-700 dark:bg-neutral-300"></div><div class="h-2.5 w-8 rounded bg-neutral-300 dark:bg-neutral-600"></div><div class="h-2.5 w-8 rounded bg-neutral-300 dark:bg-neutral-600"></div><div class="h-2.5 w-8 rounded bg-neutral-300 dark:bg-neutral-600"></div></div>
+          <div class="h-[70%] rounded bg-white dark:bg-neutral-900 p-2 space-y-1.5"><div class="h-1.5 w-full rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1.5 w-full rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1.5 w-2/3 rounded bg-neutral-200 dark:bg-neutral-700"></div></div>
+        </div>
+      </div>
+      <h2 class="mt-4 font-semibold">Option A: section tabs</h2>
+      <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">A row of section tabs (Rules, Lessons, Standards, Runbook, Decisions, Skills) above one full-width reading card. Kit badges sit inline next to each file: a dot on each standards sub-tab, a chip in the file header, and a chip on each skill card. Lessons and runbook entries are an accordion, and a decision opens in the design-A centred modal.</p>
+      <p class="mt-3 text-sm font-medium group-hover:underline underline-offset-4">Open option A →</p>
+    </a>
+    <a href="option-b.html" class="group block rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 hover:border-neutral-300 dark:hover:border-neutral-700">
+      <div class="aspect-[16/9] rounded-lg bg-neutral-100 dark:bg-neutral-800 p-3 flex gap-2" aria-hidden="true">
+        <div class="w-1/5 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+        <div class="w-[14%] space-y-1 pt-1"><div class="h-1.5 rounded bg-neutral-300 dark:bg-neutral-600"></div><div class="h-1.5 rounded bg-neutral-700 dark:bg-neutral-300"></div><div class="h-1.5 rounded bg-neutral-300 dark:bg-neutral-600"></div><div class="h-1.5 rounded bg-neutral-300 dark:bg-neutral-600"></div></div>
+        <div class="flex-1 rounded bg-white dark:bg-neutral-900 p-2 space-y-1.5"><div class="h-1.5 w-full rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1.5 w-full rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1.5 w-2/3 rounded bg-neutral-200 dark:bg-neutral-700"></div></div>
+        <div class="w-1/5 rounded bg-white dark:bg-neutral-900 p-1.5 space-y-1"><div class="flex h-1.5 overflow-hidden rounded"><span class="w-1/4 bg-emerald-500"></span><span class="w-1/3 bg-amber-500"></span><span class="w-1/12 bg-red-600"></span><span class="flex-1 bg-zinc-400"></span></div><div class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></div></div>
+      </div>
+      <h2 class="mt-4 font-semibold">Option B: document reader with a drift rail</h2>
+      <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">A left in-page nav lists the sections and, under the open one, its files or lesson numbers. The centre reads like a document: every lesson is open, and a decision opens in the reading pane with a back link. A right "Kit drift" rail sums up every badge on one card (a bar and counts, then each standards file and kit skill), and each row jumps to its file.</p>
+      <p class="mt-3 text-sm font-medium group-hover:underline underline-offset-4">Open option B →</p>
+    </a>
+  </div>
+
+  <section class="mt-8 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5">
+    <h2 class="font-medium">The trade-off</h2>
+    <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">A is compact and fits the dashboard's tab rhythm, but drift is spread across the tabs, so you open Standards and Skills to see what differs. B shows the whole drift picture from any section and reads long files better, but it has three columns: the rail drops to a collapsible summary below 1280px, and the nav becomes a select on a phone.</p>
+    <h3 class="mt-4 text-sm font-medium">Worth knowing before you pick</h3>
+    <ul class="mt-1 list-disc pl-5 text-sm text-neutral-600 dark:text-neutral-400 space-y-1">
+      <li>Badge colours reuse existing tokens: built (same as kit), warning (changed), danger (missing), cancelled (project only).</li>
+      <li>coins' runbook is 20,185 lines (974 entries), so both options show entries in batches rather than the whole file at once.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

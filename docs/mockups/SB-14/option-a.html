@@ -1,0 +1,551 @@
+<!-- SB-14 option A — Project handbook. Static mockup inside the SB-7 design-A shell; real data from coins origin/main 23679a5 and the kit HEAD 29b7281, 2026-09-29. -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SB-14 option A — Handbook tabs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'media',
+    theme: { extend: { fontFamily: { sans: ['"Instrument Sans"', 'system-ui', 'sans-serif'] } } }
+  };
+</script>
+<script>// ---- Real data, read with `git show` / `git ls-tree` at coins origin/main 23679a5 and the kit
+// (~/Code/dev-standards) HEAD 29b7281 on 2026-09-29. Lessons and decisions are injected verbatim. ----
+window.HB = {
+  lessons: [{"n": 16, "date": "2026-09-23", "name": "Pint rewrites `{@see method()}` into a dead class pointer", "symptom": "a docblock's `{@see order()}` came back from Pint as `{@see Order()}` (OFR-6), the same trap already held in session memory, and a third instance had sat on main since MKT-20 (`{@see RoomFilters()}` for `roomFilters()` in ListBuyNowRoomRequest). Every gate stays green, and Scramble can publish the dead pointer.", "cause": "a formatter's rewrite that changes meaning was guarded only by memory and a RUNBOOK entry, which a builder never reads at the moment it matters.", "enf": "check → preflight.sh \"no Pint-mangled {@see}\" (a capitalised name followed by `()` is never a real target). The live instance was fixed. The RUNBOOK entry (OFR-6) keeps the fix recipe.", "scope": "Promote to central"}, {"n": 15, "date": "2026-09-09", "name": "A convention guard with a hand-maintained population fails open", "symptom": "`Contact` shipped `/contacts/{contact}` on the global auto-increment PK in CON-3 and CON-5 propagated it to the merged room's row links, while `TenantNumberConventionTest` stayed green for seven weeks. The rule it violates (L-5) was already written at THREE rungs — the standards rule, a CRITICAL audit bullet, and the ledger — and none of them fired. Found by the owner asking, not by the system.", "cause": "the guard's population was a hand-typed dataset (`['Coin', 'CoinSet']`) with a comment asking the next author to add theirs, and its second assertion discovered only models that had ALREADY adopted the trait. Both fail open: a new tenant-owned model that gains a URL and never adopts the trait is invisible to a check that only inspects adopters. **A guard whose population is a list somebody must remember to update is ", "enf": "check → `tests/Feature/Tenancy/TenantNumberConventionTest.php` (population derived from `app('router')->getRoutes()`; a tenant-owned model resolving a URL by its global PK fails by default, and exempting one requires a `TENANT_URL_EXEMPTIONS` entry naming the ", "scope": "Promote to central"}, {"n": 14, "date": "2026-08-26", "name": "A solved problem that stays local recurs", "symptom": "two bugs the owner found by USING the app, whose fixes already existed in the repo. `@close` (reset a modal on any dismissal) was in 1 of 20 blade files that render a `flux:modal`, with a comment nearly stating the rule — so the add-coin modal reopened on step 2 holding the last coin's data (INTAKE-31). And `StrikeDesignations`, extracted by INTAKE-17 with a docblock reading \"a copied vocabulary is a vocabulary that ", "cause": "nothing forces a fix that would apply to sibling call sites to become a rule. The knowledge stays in the one file that has it, stated in prose a docblock cannot enforce, and the next call site repeats the bug. Measured: 12 vocabularies are defined in more than one place on main, and at least 15 open backlog entries are \"the same fact in two places\" — this is the platform's dominant bug class, well ahead of logic erro", "enf": "check → `preflight.sh` \"duplicate vocabulary\" + `bin/duplicate-vocabulary.py` (warn-only against `PF_VOCAB_BASELINE`, so it stops regrowth without failing red on pre-existing drift); audit → `.claude/agents/preflight.md` \"Pattern not promoted\"; rule → `docs/st", "scope": "Promote to central"}, {"n": 13, "date": "2026-08-23", "name": "A proof of arrival is not a proof of no loss: a move-check guards both sides", "symptom": "PRF-2's first bulk rewrite commit (`1960cb1c`, discarded) replaced all 160 receiving feature docs with \"row cell text + Changes section\" — 56,785 lines deleted — and `bin/index-rewrite-check.py check` printed `0 lost` over it. The check proved every sentence removed from the indexes had arrived under `docs/features/**`; it never asked what the receiving docs had before. The damage was caught by the main session runni", "cause": "in `append_moved()` the inner loop `for text in texts:` shadowed `text`, the just-read destination document, so the file was rewritten from the last moved paragraph instead of from the doc. The deeper cause is the check's shape: a move has two ends, and a one-sided check (\"did it arrive\") is satisfied by any operation that writes the moved text somewhere — including one that destroys the destination. A class: any mig", "enf": "`bin/index-rewrite-check.py check` now proves the receiving side too — every sentence every `docs/features/**` file had at `<before>` is still in THAT file at `<after>` (per file, stricter than \"somewhere\"), plus a `git diff --numstat` count of feature-doc fil", "scope": "Promote to central"}, {"n": 12, "date": "2026-08-22", "name": "A cost assumption must be a gate, not a comment", "symptom": "`preflight.sh`'s audit pack inlined both index docs under a comment that read \"Index docs inline: small, and they are how a scoped audit reasons about the codebase\". Measured 2026-08-22 the pack was 901 KB, 93% of it those two docs. The harness persists any tool result over ~50 KB to a file and hands the agent a 2 KB preview, so the pack had not arrived in one call for weeks: every real audit `head`-ed or `sed`-slice", "cause": "a claim about cost (\"small\") written as prose next to the thing it described, with no number, no check, and no record across runs. The comment was true the day it was written and nothing could make it false out loud: the index docs grow by design on every story, the threshold that mattered (the harness's 50 KB) lived in a different system, and the meter that could have shown the drift forgot each figure as soon as it", "enf": "check → `preflight.sh` gate `audit-pack size` (builds the header, FAILs over `PF_PACK_HEADER_MAX` = 48000, names the largest section and the remedy; `./preflight.sh audit-pack-size` runs it alone, `tests/Feature/Tooling/AuditPackTest.php` proves it) — the comm", "scope": "Promote to central"}, {"n": 11, "date": "2026-08-22", "name": "The modal pops, then the data loads", "symptom": "clicking \"Add a coin\" on a set slot did nothing for the whole round trip, then the picker modal appeared with its list already rendered. Owner: \"immediately when the user clicks, a modal should pop up… that delayed response waiting for a load then a modal popping up feels outdated. modal needs to pop, then data can load.\"", "cause": "gating a modal's VISIBILITY on the server round trip that loads its CONTENT. Livewire makes `Flux::modal(...)->show()` from PHP the path of least resistance, so the shell's appearance inherits the data's latency — and every modal built that way ships the same wait. The class of mistake is conflating \"the modal is open\" (pure UI state, client-side per CLAUDE.md's Livewire/Alpine split) with \"the modal's data is ready\"", "enf": "rule → design-standards §Canonical interaction patterns \"Modal opening (pop-first)\"; audit → preflight agent design checklist (round-trip-gated modal = WARN/CRITICAL). No deterministic check on purpose: whether a given `Flux::modal()->show()` is a user-trigger", "scope": "Promote to central"}, {"n": 10, "date": "2026-08-21", "name": "A red gate is not always a verdict, and story IDs allocated from a stale tree collide", "symptom": "three `preflight.sh` runs in one evening reported `HARD GATES: FAIL` for reasons that had nothing to do with the code. Two failed `git tree clean` and `migrations current` because they ran on a deliberately uncommitted tree before the build commit; one failed `on feature branch` because it was auditing `main` while standing on `main`. In every case the substantive gates — pint, phpstan, both pest suites — were green,", "cause": "two faces of one thing — a signal computed from the wrong context. **The renumbering half has teeth that this entry alone does not show: see L-9 case (4).** A blanket `sed` over the two mixed files leaves the build byte-identical in behaviour and every gate green — tests, pint, phpstan, preflight — and the damage is a confidently wrong pointer that surfaces months later when someone traces a comment to the wrong stor", "enf": "habit → read a preflight FAIL by gate, never by the summary line, and state in the turn's report which failures are artifacts of the run's circumstances and which are about the code; a run on `main` or on an uncommitted tree has known-failing gates and saying ", "scope": "Promote to central"}, {"n": 9, "date": "2026-08-21", "name": "A passing check tells you what it looked at, not that the thing is right", "symptom": "four failures in one evening across three concurrent sessions, none of which any gate caught, because in every case a real check ran, passed, and was pointed slightly away from the failure. (1) VIEW-16 removed `pinned_set`/`next_hole` from `/api/v1/dashboard`; the mobile Home tab still read them, `PinnedSetCard` returned `null` — correct behaviour for \"nothing pinned\" — and the module silently vanished. Four safety n", "cause": "a check's silence is evidence only about the dimension it inspects, but it is read as evidence about the thing. Git compares lines, not symbols. A flatness assertion measures N, not the constant. A type test validates against a generated file, not the source of truth. An optional key is satisfied by absence. None of these checks was weak or broken — each was measuring the wrong axis, and each passed with total confid", "enf": "rule → this entry plus the RUNBOOK cases (2026-08-21 ×3: the bare-array/openapi schema deletion, the `has-[]`-on-a-test-marker trap, the stale-generated-artefact type test). Habit, stated as three post-merge questions that cost seconds: after a merge, run `php", "scope": "Promote to central"}, {"n": 8, "date": "2026-08-13", "name": "A tree needs artifacts git does not carry; gate every one of them", "symptom": "ADMIN-5's `./preflight.sh` returned `HARD GATES: FAIL` on the browser gate — 13 collector-app tests down with `NAN` image aspect ratios and 403s from `ServeFile`, none of them near the story being built. It read as a regression in the diff and was investigated as one: a storage-leftovers theory, a missing-media-fixtures theory, and finally a control worktree built from plain `main` that failed the identical 13. The c", "cause": "a working tree needs four artifacts git does not carry — `vendor`, `node_modules`, `.env` and `public/storage` — and only the first three were gated. The fourth therefore became the one a fresh `git worktree add` silently went without, because the provisioning list lived in whoever set the tree up rather than in the repo. The class is not \"someone forgot `storage:link`\": it is that any required-but-gitignored artifac", "enf": "check → `preflight.sh` gate `storage linked` (`test -d public/storage`, ~0.00s, placed with the other provisioning gates so it fails in seconds rather than behind the 7-minute browser gate). The gate echoes its own remedy (`run: php artisan storage:link`), whi", "scope": "Promote to central"}, {"n": 7, "date": "2026-08-12", "name": "A browser check whose screenshots nobody opens is not a browser check", "symptom": "SHARE-15's browser coverage was assertion-level only — hooks present/absent, text present/absent, no JS errors — and its six screenshots were never opened by anyone, which is how a member-rail caption overhanging its 60px rail reached production (fixed 2026-08-12, `7aa447d4`). The same day, AUC-15's endless-scroll browser test was **green against a harness quirk**: `visit()->on()->mobile()` returned a pending page th", "cause": "assertions can only test the doubts you already had, and a screenshot that is written but never opened is a file, not evidence. The mockup gate (L-1) governs the design BEFORE code and the browser test governs behaviour a feature test cannot reach — but nothing in the loop forced anyone to *look at the rendered result*, so \"the browser gate is green\" was being read as \"someone saw it\". A class: any verification artif", "enf": "rule → CLAUDE.md step 5 \"browser check\" means the agent OPENS the screenshots it produced and reports what it saw (layout, overflow, seams, spacing), not merely that the file was written; process → /document's Testing & verification section states plainly whet", "scope": "Promote to central"}, {"n": 6, "date": "2026-08-11", "name": "Scramble publishes our comments as public API documentation", "symptom": "`composer run openapi` ships project-internal reasoning into `openapi.json` where clients read it — a note naming the story that owns a field, or why a decision was made. Fixed three separate times (`ea49ade1`, `50701651` on API Resources; API-12's `DashboardController` on an operation) and never logged, so each session rediscovered it. A THIRD PUBLISHED PLACEMENT surfaced at VAR-7 (2026-09-10) — the rule array of a ", "cause": "Scramble derives public documentation from source comments, and THREE placements are published while the neighbouring ones are not — a comment above a field in an API Resource's `toArray()` becomes that field's `description`; a comment above an entry in a **form request's `rules()` array** becomes that REQUEST field's `description` (found by VAR-7, 2026-09-10, reading the spec diff exactly as this lesson's process sa", "enf": "rule → **on an API controller, publishable API documentation goes in the METHOD docblock and everything else in the CLASS docblock; on an API Resource, internal reasoning goes in the class docblock and never above a field in `toArray()`; on a form request, the", "scope": "Project only"}, {"n": 5, "date": "2026-07-22", "name": "Tenant URLs expose a per-tenant number, never the global PK", "symptom": "coins and sets exposed their global auto-increment primary key in URLs (/coins/1234), leaking cross-tenant scale; PTN-1/PTN-2 replaced it with a per-tenant tenant_number, and this should be the standing pattern for every future URL-exposed tenant entity.", "cause": "a new tenant-owned entity reachable by a route defaults to Eloquent's global PK as its route key — nothing forces the tenant-relative display-number pattern for the next such entity. A class (any future URL-exposed tenant model), not a one-off.", "enf": "check → tests/Feature/Tenancy/TenantNumberConventionTest.php (URL-exposed tenant models return getRouteKeyName()='tenant_number'; every HasTenantNumber adopter composes BelongsToTenant + SoftDeletes + the column); audit → /preflight DB/codebase pillar (CRITICA", "scope": "Project only"}, {"n": 4, "date": "2026-07-19", "name": "Light color schemes only; don't infer dark mode", "symptom": "while producing the collection-view mockups I built a dark \"Obsidian\" (option-c) direction for all three views; the user wanted light schemes only and had to correct it, picking the light \"Ledger\" palette everywhere.", "cause": "the palette/mode policy was stated conditionally (\"dark mode not supported unless the brief says so\"), so an ambiguous scope signal (\"§9 calls for dark mode\") got read as license to build dark — a whole class of shipping an unrequested theme/mode instead of asking.", "enf": "rule → design-standards.md §Tokens \"Light mode only\"; audit → /preflight Design pillar (WARN). No deterministic check — the Flux starter ships `.dark` scaffolding in `resources/css/app.css`, so a grep gate would false-positive on vendor/starter code (cf. L-3's", "scope": "Project only"}, {"n": 3, "date": "2026-07-19", "name": "Concurrent agents in one working tree corrupt branch/commit state", "symptom": "during Wave 0, two agents built in the same git working tree; the CAT-1 agent installed Filament, rewrote commit hashes, and switched the checked-out branch out from under the TEN-2 agent, landing TEN-2's ADR commit on the CAT-1 branch.", "cause": "multiple agents performing git operations (checkout, commit, branch-switch, staging) in one shared working directory, with no per-agent isolation of checkout, index, or branch. A whole class, not just a misplaced ADR.", "enf": "rule → CLAUDE.md §Hard rules \"One working tree per agent\". (No deterministic preflight check: the corruption is orchestration-level — how sessions are launched — not a committed artifact preflight can inspect.)", "scope": "Promote to central"}, {"n": 2, "date": "2026-07-17", "name": "Docs restating machine-readable facts drift", "symptom": "22 of 47 story files said `Status: draft` while their features ran in production; nothing owned updating the copy and nothing compared it to git.", "cause": "a doc asserts a fact about the repo that a machine can already read (git, phpunit.xml, .env, migrations) with no owner and no check — the copy drifts from its source silently. Class, not just story status.", "enf": "check → preflight.sh story-status gate (build commit on main vs `Status: built`); rule → codebase-standards.md §Docs assert facts; process+template → /story DoD checkbox, CLAUDE.md step 6 commit format, /preflight Phase 1 + report template. Vocabulary locked i", "scope": "Promote to central"}, {"n": 1, "date": "2026-07-12", "name": "Mockup approval gate for visual work", "symptom": "visual/layout/styling decisions made ad hoc during implementation — no approved direction, no record of the choice or its reason.", "cause": "no gate forced a visual direction to be chosen and approved BEFORE code, so design intent was decided implicitly in code and drifted across projects.", "enf": "rule → design-standards.md §Mockup approval gate; process+template → /story (step 5, Design mockup gate section, DoD checkbox); audit → /preflight Design pillar (WARN).", "scope": "Promote to central"}]
+,
+  decisions: ["2026-09-29-the-product-endpoint-answers-any-number-with-its-family-never-a-redirect", "2026-09-29-the-phones-bullion-writes-share-the-web-modals-actions", "2026-09-29-the-phone-product-page-is-the-webs-family-read-laid-out-by-size", "2026-09-29-the-phone-bullion-room-groups-by-the-web-shelfs-own-engine", "2026-09-29-the-per-test-catalog-seed-is-one-call-form-not-a-describe-block", "2026-09-29-the-js-error-exemption-is-proven-on-a-test-registered-fixture-page", "2026-09-29-the-infrastructure-label-needs-every-failure-to-be-infra", "2026-09-29-the-failure-classifier-lives-in-python-for-prf-8-to-reuse", "2026-09-29-the-connection-budget-assumes-three-slots-and-warns-only", "2026-09-29-the-catalog-snapshot-is-found-by-schema-fingerprint-and-replayed-only-onto-empty-tables", "2026-09-29-the-browser-suite-forgives-one-exact-javascript-error-sentence", "2026-09-29-tests-replay-the-real-seeders-output-rather-than-a-faster-seeder", "2026-09-29-preflight-history-is-buffered-and-written-once-per-run", "2026-09-29-catalog-replay-inserts-with-foreign-key-checks-off", "2026-09-29-a-test-needs-the-catalog-if-it-fails-without-it-or-passes-vacuously", "2026-09-29-a-bullion-holding-is-one-scroll-and-the-gate-removes-sections", "2026-09-28-the-two-showcase-kinds-never-share-a-coin-and-the-writer-not-the-index-enforces-it", "2026-09-28-the-tag-list-is-its-own-endpoint-with-a-usage-count", "2026-09-28-the-tab-header-is-spread-onto-each-tab-root-not-set-stack-wide", "2026-09-28-the-specialty-chips-are-a-bootstrap-vocabulary-from-one-query", "2026-09-28-the-sold-coin-cleanup-runs-at-deploy-as-a-data-migration-over-the-live-door", "2026-09-28-the-showcase-size-is-published-as-a-string-enum", "2026-09-28-the-showcase-grid-drag-is-drawn-on-gesture-handler-not-a-library", "2026-09-28-the-shared-link-list-serves-each-live-links-url", "2026-09-28-the-settings-gate-table-is-one-json-both-test-suites-read", "2026-09-28-the-series-panel-answers-in-the-browser-and-the-footer-waits", "2026-09-28-the-photo-becomes-upright-once-at-the-shutter", "2026-09-28-the-phone-showcase-shelf-is-a-grid-and-the-note-moves-into-a-sheet", "2026-09-28-the-phone-profile-editor-has-one-optimistic-writer-and-the-last-answer-lands", "2026-09-28-the-phone-note-row-draws-the-uncropped-grid-conversion-until-a-sized-cut-exists", "2026-09-28-the-phone-hides-passkeys-until-the-build-carries-a-real-domain", "2026-09-28-the-phone-collecting-copy-is-a-json-pinned-to-the-web-source", "2026-09-28-the-phone-chart-sends-no-range-until-a-window-is-chosen", "2026-09-28-the-phone-bullion-room-is-a-desk-head-over-metal-sections", "2026-09-28-the-image-picker-plugin-is-listed-explicitly-so-its-strings-are-ours", "2026-09-28-the-held-only-rule-branches-once-on-the-set-and-the-dealer-gate-lives-in-create-set", "2026-09-28-the-dealer-store-reads-the-dealers-storefront-not-the-market-rooms-query", "2026-09-28-the-dealer-sold-ledger-carries-no-price-no-buyer-and-no-id", "2026-09-28-the-dealer-listings-api-takes-the-stores-filters-and-keeps-its-row-shape", "2026-09-28-the-buying-defaults-api-speaks-the-web-forms-controls-through-extracted-classes", "2026-09-28-the-app-icon-is-one-svg-rendered-by-chromium-into-every-png", "2026-09-28-the-api-seals-the-pickers-cursor-to-the-profile-and-kind-that-began-the-walk", "2026-09-28-the-api-account-writes-share-the-webs-rule-traits-not-its-writer", "2026-09-28-phone-2fa-setup-is-a-link-and-a-key-not-a-qr", "2026-09-28-past-impersonation-sign-ins-are-matched-from-the-log-in-php-not-sql", "2026-09-28-one-presenter-serves-the-dealer-page-its-tab-its-preview-and-the-api", "2026-09-28-founder-is-set-only-by-a-command-and-held-to-one-account-by-a-locked-read", "2026-09-28-every-issue-slot-keeps-its-caption-when-it-fills", "2026-09-28-every-dealer-set-window-is-drawn-with-the-tab-in-one-native-dialog", "2026-09-28-design-coverage-with-proofs-keeps-proofs-in-the-design-population", "2026-09-28-dealer-shelf-picks-borrows-each-tenant-for-its-own-half", "2026-09-28-dealer-sets-reuse-the-profile-set-switch-and-position-with-their-own-order", "2026-09-28-dealer-page-cards-open-the-markets-quick-modals", "2026-09-28-coverage-counts-and-generation-share-one-census", "2026-09-28-cdn-at-sale-is-stamped-from-the-pricing-cards-guide-figure", "2026-09-28-builder-counts-are-memoised-per-request-not-cached-across-requests", "2026-09-28-auto-fill-and-upgrade-are-removed-as-concepts-not-hidden", "2026-09-28-an-identity-switch-is-marked-by-a-process-flag-not-the-session", "2026-09-28-admin-role-member-status-and-founder-are-three-independent-facts", "2026-09-28-admin-lists-open-newest-first", "2026-09-28-a-sold-coin-leaves-every-set-through-the-reconcile-manual-placements-included", "2026-09-28-a-slot-lock-lives-on-the-placement-row-and-is-set-by-target-state", "2026-09-28-a-showcase-row-names-its-kind-and-one-method-says-which-coins-each-takes", "2026-09-28-a-sets-designations-are-the-union-its-slots-could-carry", "2026-09-28-a-set-stored-before-set-37-is-read-as-a-coverage-not-migrated", "2026-09-28-a-mode-switch-shows-its-skeleton-on-the-press-with-no-delay", "2026-09-28-a-dealers-sale-is-a-settled-platform-order-line", "2026-09-28-a-dealers-profile-address-301s-only-for-a-visitor-who-can-open-the-dealer-page", "2026-09-28-a-dealers-personal-collection-publishes-on-the-dealer-page-switch", "2026-09-28-a-dealer-set-is-a-set-purpose-not-a-set-kind", "2026-09-28-a-date-coverage-slot-is-a-year-in-criteria-pinned-to-its-strike", "2026-09-28-a-complete-series-set-is-one-series-over-its-whole-run", "2026-09-27-trust-badges-are-live-and-measured-only-on-what-is-decided", "2026-09-27-trophy-case-progress-is-asked-of-each-badges-own-check", "2026-09-27-the-visitors-page-and-api-read-one-builder-of-plain-arrays", "2026-09-27-the-visitors-api-names-sets-and-coins-by-number-not-id", "2026-09-27-the-tenant-console-reads-an-account-by-acting-as-it", "2026-09-27-the-tenant-console-hosts-the-row-actions-and-chains-only-their-landing", "2026-09-27-the-silver-eagle-set-is-open-ended-in-name-but-not-in-slots", "2026-09-27-the-showcase-picker-leads-with-the-chosen-pieces-pinned-in-its-cursor", "2026-09-27-the-profile-tab-opens-sets-and-pieces-over-the-tabs", "2026-09-27-the-profile-tab-is-one-cache-family-and-never-flips-visibility-optimistically", "2026-09-27-the-profile-preview-wraps-the-strangers-resource", "2026-09-27-the-member-timeline-pages-three-sources-on-one-keyset", "2026-09-27-the-member-timeline-keeps-older-milestones-below-a-gap", "2026-09-27-the-market-defaults-off-so-the-beta-policy-can-omit-orders", "2026-09-27-the-launch-switches-are-baked-into-the-reviewed-binary", "2026-09-27-the-hidden-route-guard-runs-once-at-the-signed-in-root", "2026-09-27-the-beta-period-is-a-platform-settings-row-not-a-feature-default", "2026-09-27-the-badge-notice-rides-the-next-request-behind-a-user-row-flag", "2026-09-27-showcase-row-breaks-are-decided-in-php-and-shown-by-container-queries", "2026-09-27-show-badges-is-a-profile-option-born-with-the-page-that-obeys-it", "2026-09-27-see-all-badges-opens-the-private-case-for-the-owner-and-an-earned-list-for-a-visitor", "2026-09-27-profile-copy-link-is-noted-by-event-not-by-a-direct-call", "2026-09-27-profile-coin-opens-ride-the-coin-windows-existing-event", "2026-09-27-privacy-names-greysheet-through-a-one-sentence-sweep-exemption", "2026-09-27-order-delivered-is-raised-by-confirm-delivery-after-its-conditional-write-wins", "2026-09-27-one-unique-index-over-a-derived-label-key-holds-both-badge-rules", "2026-09-27-one-public-link-resolver-for-the-page-the-api-and-the-preview", "2026-09-27-once-a-day-activity-is-unique-on-a-generated-subject-key", "2026-09-27-milestones-are-rails-with-even-stops-and-one-number-per-tile", "2026-09-27-member-status-drives-numbers-and-admin-access-and-numbers-recalibrate-inside-the-founders-window", "2026-09-27-member-numbers-are-given-after-commit-and-guarded-by-the-unique-index", "2026-09-27-legal-documents-are-one-markdown-file-with-hand-parsed-front-matter", "2026-09-27-editor-switches-are-drawn-in-alpine-and-saved-through-an-ordered-queue", "2026-09-27-collection-badges-are-checked-by-one-waiting-job-per-collection-and-a-nightly-net", "2026-09-27-a-visits-source-comes-from-the-referrer-only", "2026-09-27-a-visitors-place-comes-from-a-local-geolite2-file", "2026-09-27-a-visit-is-located-after-the-upsert-only-when-it-inserted", "2026-09-27-a-visit-is-counted-in-one-raw-insert-on-duplicate-key-update", "2026-09-27-a-profiles-set-publishes-what-the-owner-is-collecting", "2026-09-27-a-profile-visitor-is-a-daily-salted-hash-with-no-cookie", "2026-09-27-a-link-preview-is-drawn-with-gd-at-a-versioned-address", "2026-09-27-a-landmarks-look-is-read-at-draw-time-and-it-replaces-set-complete-only-on-an-exact-slot-match", "2026-09-27-a-landmark-is-a-template-or-a-vam-checklist-and-the-model-holds-exactly-one", "2026-09-27-a-hidden-top-rung-hides-the-whole-ladder-on-the-profile", "2026-09-27-a-badges-private-reference-is-hidden-on-the-model-not-left-out-per-payload", "2026-09-27-a-badge-notification-stores-the-trophy-case-path-behind-a-stand-in-route", "2026-09-26-two-writers-of-is-public-and-one-visibility-summary", "2026-09-26-the-viewers-product-picture-is-not-a-view"]
+,
+  decisionTotal: 1747,
+  kit: { path: '~/Code/dev-standards', ref: 'HEAD', sha: '29b7281' },
+
+  rules: `
+<h1>CLAUDE.md — Project Operating Manual<\/h1>
+<p>Lean by design. Detail lives in the standards docs below — read them at the trigger points listed. Every rule here is stable; do not edit without asking.<\/p>
+<h2>Stack (fixed — do not substitute)<\/h2>
+<ul><li>Laravel 12 · PHP 8.3+ · <strong>MySQL 8 in every environment, never SQLite<\/strong><\/li>
+<li>Livewire 3 (+ Alpine.js for pure-UI interactions) · Tailwind CSS<\/li>
+<li>Filament for all admin panels · Pest for tests · Pint for formatting<\/li><\/ul>
+<h2>The loop (every feature, no exceptions)<\/h2>
+<ol start="0"><li>Idea mid-anything that isn't a blocker → <code>/feature<\/code> it and keep building. Ideas are captured, never discussed mid-build. Log: <code>docs/BACKLOG.md<\/code>, swept by <code>/story<\/code> on every brain dump.<\/li>
+<li><code>/story<\/code> — turn the idea into a build-ready story with executable acceptance criteria. Get my approval. Build in a fresh session from the saved story.<\/li>
+<li>Plan before code. Show me the plan for anything non-trivial.<\/li>
+<li>Build the story. One story at a time.<\/li>
+<li><code>/preflight<\/code> — must return GO before the story is called done. Gates run in <code>preflight.sh<\/code>; the audit runs in a read-only subagent, <strong>scoped to the diff plus the index docs<\/strong>. Once per phase it runs <code>full<\/code> (unscoped) with <code>/lesson retro<\/code> — that sweep is what catches codebase-wide duplication and drift a diff cannot see.
+<p><strong>Batch exception (owner-approved 2026-08-29):<\/strong> a <code>/build<\/code> batch runs preflight per its skill — once on the integrated result, plus at most one mid-batch run after a high-risk story, always via <code>.claude/browser-lock.sh<\/code>.<\/p><\/li>
+<li>Verify with evidence: Pest output + browser check. Never assert "it works."<\/li>
+<li>Commit as <code>&lt;type&gt;(&lt;STORY-ID&gt;): &lt;subject&gt;<\/code>. <code>feat|fix|test<\/code> are <strong>build commits<\/strong> — they flip the story's <code>Status:<\/code> to <code>built<\/code> in that same commit.<\/li>
+<li><code>/document<\/code> — feature doc, index, ADR/runbook, brief, journey, backlog. A story without docs is not done. <strong>The writing runs in the <code>documenter<\/code> subagent, never inline.<\/strong> Documentation is the last step, so it lands where session context is largest — measured at 260k on ACQ-15.<\/li><\/ol>`,
+
+  rulesAsset: `
+<h1>Asset Track<\/h1>
+<p>A Laravel 10 application for tracking net worth across multiple entities, asset types, accounts, wallets, and liabilities.<\/p>
+<h2>⚠️ CRITICAL RULES — READ FIRST<\/h2>
+<p>NEVER SEND ANY REAL DATA TO AN LLM, ALWAYS CHANGE ANY REAL NUMBER TO A FAKE NUMBER, WE CAN USE EXTREMELY LARGE ABSURD NUMBERS TO EXAGGERATE EVERYTHING.<\/p>
+<h3>Database Protection (MANDATORY)<\/h3>
+<p>These commands are FORBIDDEN and must NEVER be used: …<\/p>`,
+
+  // Standards: the kit has four files. coins has three, each a different blob from the kit's.
+  standards: [
+    { file: 'codebase-standards.md', badge: 'changed', lines: 153, kitLines: 95,
+      html: `<h1>Codebase &amp; Database Standards<\/h1><p>Read before writing any PHP or touching the database. These are the choices Laravel leaves open, pinned down. Where this doc is silent, follow Laravel's own conventions exactly.<\/p>
+<h2>Architecture<\/h2><ul><li><strong>Skinny controllers.<\/strong> Controllers validate (via Form Request), call an Action, return a response. No business logic, no queries.<\/li>
+<li><strong>Actions<\/strong> in <code>app/Actions/&lt;Domain&gt;/<\/code> — one class, one verb, one <code>handle()<\/code> method (<code>CreateInvoice<\/code>, <code>ArchiveUser<\/code>). All business logic lives here so it's testable and reusable from controllers, Livewire, jobs, and commands alike.<\/li>
+<li><strong>Form Requests<\/strong> for all validation of controller input. Livewire components validate with <code>#[Validate]<\/code> attributes or <code>rules()<\/code>.<\/li>
+<li><strong>No raw SQL<\/strong> unless Eloquent/Query Builder genuinely can't express it — and then it gets a comment justifying why.<\/li>
+<li>Query performance: eager-load relationships used in views (<code>with()<\/code>); no queries inside Blade loops. N+1s found in review are bugs.<\/li><\/ul>
+<h2>Database (MySQL 8 — every environment)<\/h2><p>…<\/p><h2>Docs assert facts — never restate what a machine can read<\/h2><p>…<\/p><h2>One fact, one home — and a solved problem becomes a rule<\/h2><p>…<\/p>` },
+    { file: 'design-standards.md', badge: 'changed', lines: 242, kitLines: 98,
+      html: `<h1>Design Standards<\/h1><p>Read before any UI work. Goal: every screen looks like it came from the same hand, and the agent never freestyles visual decisions.<\/p>
+<h2>Mockup approval gate (visual work stops here until I choose)<\/h2><p>Any story involving visual design, new layout, or significant styling changes must clear this gate BEFORE a single line of implementation code is written:<\/p>
+<ol><li>Produce <strong>2–3 distinct design directions<\/strong> as static mockups — self-contained HTML files. Save to <code>docs/mockups/&lt;story-id&gt;/option-a.html<\/code>, <code>option-b.html<\/code>.<\/li>
+<li><strong>Open every option in my browser<\/strong> for side-by-side comparison. Never just report file paths.<\/li>
+<li><strong>Wait for me to pick.<\/strong> No implementation code before I have chosen a direction.<\/li><\/ol>
+<h2>Reuse before build (the anti-duplication law)<\/h2><p>…<\/p><h2>Facts stay, sentences go (what earns an info mark)<\/h2><p>…<\/p>` },
+    { file: 'logging-standards.md', badge: 'changed', lines: 71, kitLines: 61,
+      html: `<h1>Logging Standards<\/h1><p>Read before building any feature logic. The goal: any single request can be traced end-to-end months later, and every feature doc's Observability section points at real, greppable log events.<\/p>
+<h2>Channel setup (config/logging.php)<\/h2><ul><li>Default channel: <code>stack<\/code> → [<code>daily<\/code>, plus <code>slack<\/code>/Sentry for error+ in prod].<\/li><li>The <code>daily<\/code> channel uses the <strong>JSON formatter<\/strong> — structured logs, not prose, so they're machine-searchable.<\/li><\/ul>
+<h2>Correlation ID (the backbone)<\/h2><ul><li>Middleware <code>AssignRequestId<\/code> runs on every request: reuse inbound <code>X-Request-Id<\/code> or generate a <strong>ULID<\/strong>, then <code>Log::withContext(['request_id' =&gt; $id])<\/code>. ADR <code>docs/decisions/2026-08-08-the-correlation-id-is-a-ulid-not-a-uuid.md<\/code>.<\/li><\/ul><h2>Event naming convention<\/h2><p>…<\/p>` },
+    { file: 'disposal-standards.md', badge: 'missing', lines: 0, kitLines: 263,
+      kitHtml: `<h1>Disposal Standards — worktrees, test databases, logs<\/h1><p>Read before running concurrent builds, and before writing anything that creates a worktree or a database. Every concurrent agent build creates per-agent artifacts; until this doc existed, nothing removed them. These rules say where disposal happens, what must be true before anything is destroyed, and what enforces each one.<\/p><h2>Why this exists (measured on a live project, 2026-09-20)<\/h2><p>…<\/p>` },
+  ],
+
+  // Skills: kit skills first, then project-only. Blob comparison of SKILL.md against the kit.
+  skills: [
+    { name: 'build', from: 'kit', badge: 'changed', desc: 'Orchestrate a batch of approved stories end-to-end: mockups first, then subagent builds in isolated worktrees…' },
+    { name: 'document', from: 'kit', badge: 'changed', desc: 'Capture how a just-built feature works - feature doc in docs/features/, docs/INDEX.md entry, ADRs, RUNBOOK…' },
+    { name: 'feature', from: 'kit', badge: 'same', desc: 'The idea log. Invoked as /feature — with text after it the user is capturing an idea…' },
+    { name: 'lesson', from: 'kit', badge: 'same', desc: 'Convert a corrected mistake into enforcement, pushed up the ladder - preflight.sh check, then audit rule…' },
+    { name: 'preflight', from: 'kit', badge: 'changed', desc: 'Verify the project is ready to build on - run ./preflight.sh hard gates, then delegate the quality audit…' },
+    { name: 'story', from: 'kit', badge: 'same', desc: 'Turn any freeform feature or journey description into small build-ready user stories…' },
+    { name: 'fluxui-development', from: 'project', badge: 'project', desc: 'Use this skill for Flux UI development in Livewire applications only…' },
+    { name: 'fortify-development', from: 'project', badge: 'project', desc: 'ACTIVATE when the user works on authentication in Laravel…' },
+    { name: 'laravel-best-practices', from: 'project', badge: 'project', desc: 'Apply this skill whenever writing, reviewing, or refactoring Laravel PHP code…' },
+    { name: 'livewire-development', from: 'project', badge: 'project', desc: 'Use for any task or question involving Livewire…' },
+    { name: 'pest-testing', from: 'project', badge: 'project', desc: 'Use this skill for Pest PHP testing in Laravel projects only…' },
+    { name: 'scout-development', from: 'project', badge: 'project', desc: 'Develops full-text search with Laravel Scout…' },
+    { name: 'tailwindcss-development', from: 'project', badge: 'project', desc: "Always invoke when the user's message includes 'tailwind' in any form…" },
+  ],
+  skillsAsset: [
+    { name: 'build', from: 'kit', badge: 'missing', desc: 'In the kit, not in asset-track.' },
+    { name: 'document', from: 'kit', badge: 'changed', desc: 'Capture how a just-built feature works…' },
+    { name: 'feature', from: 'kit', badge: 'missing', desc: 'In the kit, not in asset-track.' },
+    { name: 'lesson', from: 'kit', badge: 'changed', desc: 'Convert a corrected mistake into enforcement…' },
+    { name: 'preflight', from: 'kit', badge: 'changed', desc: 'Verify the project is ready to build on…' },
+    { name: 'story', from: 'kit', badge: 'changed', desc: 'Turn any freeform feature or journey description into small build-ready user stories…' },
+    { name: 'ui-ux-pro-max', from: 'project', badge: 'project', desc: 'UI/UX design intelligence for web and mobile…' },
+  ],
+
+  // docs/RUNBOOK.md: 974 entries, 20,185 lines. The newest entries, verbatim headings.
+  runbook: [
+    ['2026-09-26', 'An Admin security change mail that nobody made; a login-burst test that never reaches 10 (NOTIFY-3)'],
+    ['2026-09-26', 'Queue stalled: clear the withoutOverlapping mutex for queue:work (NOTIFY-2)'],
+    ['2026-09-26', 'Nightwatch setup, and every request stalls ~0.5 s when it is half-configured (OPS-1)'],
+    ['2026-09-26', 'A spent PCGS quota read as "Couldn\'t reach the grading service" all day (OPS-3)'],
+    ['2026-09-25', 'A `.dark` override of a `--shadow-*` token changes nothing (VIEW-46)'],
+    ['2026-09-25', 'A browser test reads a toggle\'s colour or shadow mid-hover after clicking it (VIEW-46)'],
+    ['2026-09-25', 'The dashboard\'s query count grows with the number of notes in Recently added (VIEW-42)'],
+    ['2026-09-23', 'After "Send counter" the countered band is in the DOM but invisible (OFR-7)'],
+    ['2026-09-23', 'A strict-mode text assertion matches two elements because a hidden box repeats the name (OFR-7)'],
+    ['2026-09-23', 'A docblock\'s `{@see order()}` turns into `{@see Order()}` after Pint (OFR-6)'],
+    ['2026-09-23', 'A browser test\'s "expires in 3h" reads "2h" (OFR-4)'],
+    ['2026-09-22', 'A new migration on `offers` sorts before the migration that creates the table (OFR-3)'],
+    ['2026-09-21', 'Larastan reports three unrelated errors after a docblock edit on `Coin.php` (VAR-19)'],
+    ['2026-09-21', 'A banknote shows a Greysheet price nobody typed (GS-50)'],
+  ],
+  runbookTotal: 974,
+  runbookLines: 20185,
+  runbookSecond: `<p><strong>Symptom:<\/strong> a "The queue has stopped draining" admin email (or <code>admin_notification.queue_check.stalled<\/code> at warning every five minutes, with a growing <code>oldest_age_s<\/code>); mail, exports and other queued work stop arriving.<\/p>
+<p><strong>Root cause (likeliest):<\/strong> there is no queue daemon. <code>routes/console.php<\/code> runs <code>queue:work --stop-when-empty --max-time=55<\/code> every minute with <code>withoutOverlapping()<\/code>, whose mutex lives 24 h by default. A worker killed mid-run never releases it, so every later tick sees the lock and skips the worker for up to a day.<\/p>
+<p><strong>Fix:<\/strong> confirm no worker is running (<code>ps aux | grep "[q]ueue:work"<\/code>), confirm the lock is held, then clear only that mutex. Prefer this to <code>schedule:clear-cache<\/code>, which deletes <strong>every<\/strong> scheduled task's mutex.<\/p>
+<p><strong>Log trail:<\/strong> <code>admin_notification.queue_check.stalled<\/code> → <code>admin_notification.dispatch.sent<\/code> → <code>admin_notification.queue_check.healthy<\/code>.<\/p>`,
+
+  // One real decision body, shown when the newest one is opened.
+  decisionBody: `<h1>The product endpoint answers any number with its family, and never redirects<\/h1>
+<p><em>Date: 2026-09-29 · Story: MOB-66 · Status: accepted<\/em><\/p>
+<h2>Context<\/h2><p><code>GET /v1/bullion/products/{n}<\/code> takes the web page's number (NAV-7). On the web, <code>CoinDoor::fromBullionNumber()<\/code> resolves that number and <strong>301s<\/strong> a retired one onto the surviving address. A number keyed on a size row also names only part of a family.<\/p>
+<h2>Decision<\/h2><ul><li><code>TenantBullionNumber::withTrashed()<\/code>, so a <strong>retired number answers 200<\/strong> with its family.<\/li><li>A number on a described stack answers the family its line derives to (<code>Coin::bullionProduct()<\/code>).<\/li><li>Otherwise it returns null, which gives a 404 with API-1's <code>not_found<\/code> envelope and an <code>api.bullion.product.not_found<\/code> log line.<\/li><\/ul>
+<h2>Alternatives rejected<\/h2><ul><li><strong>Reuse <code>CoinDoor::fromBullionNumber()<\/code>.<\/strong> It throws a web redirect, which is meaningless to a JSON client.<\/li><li><strong>Answer a retired number with a 301 or 308.<\/strong> The phone has no address bar to heal.<\/li><li><strong>404 a retired number.<\/strong> An old product row cached on a phone would dead-end.<\/li><\/ul>`,
+};
+
+// Badge tokens. Each maps to an existing theme token: built (emerald), warning (amber), danger (red), cancelled (zinc).
+window.BADGE = {
+  same:    { label: 'Same as kit',             chip: 'bg-emerald-500/10 text-emerald-700 ring-emerald-500/30 dark:text-emerald-300', dot: 'bg-emerald-500' },
+  changed: { label: 'Changed in this project', chip: 'bg-amber-500/10 text-amber-700 ring-amber-500/30 dark:text-amber-300',       dot: 'bg-amber-500' },
+  missing: { label: 'Missing',                 chip: 'bg-red-600/10 text-red-700 ring-red-600/30 dark:text-red-400',                dot: 'bg-red-600' },
+  project: { label: 'Project only',            chip: 'bg-zinc-400/10 text-zinc-600 ring-zinc-400/40 dark:text-zinc-300',            dot: 'bg-zinc-400' },
+};
+
+/** Title from a decision file name: drop the date, turn dashes into spaces. */
+window.decisionTitle = f => { const t = f.replace(/^\d{4}-\d{2}-\d{2}-/, '').replace(/-/g, ' '); return t.charAt(0).toUpperCase() + t.slice(1); };
+window.decisionDate = f => (f.match(/^\d{4}-\d{2}-\d{2}/) || [''])[0];
+
+/** The page's Alpine state. Pure UI: in the build, each section's content arrives through Livewire when its tab is first opened. */
+window.handbook = () => ({
+  mode: 'ok',            // mockup state: ok | nokit | asset
+  section: 'lessons',
+  std: 0,
+  showKit: false,
+  open: {},              // expanded lessons
+  q: '',
+  page: 1,
+  doc: null,             // an opened decision file
+  drawer: false,
+  rq: '',                // runbook filter
+  B: window.BADGE,
+  get project() { return this.mode === 'asset' ? 'asset-track' : 'coins'; },
+  get kitOk() { return this.mode !== 'nokit'; },
+  get lessons() { return this.mode === 'asset' ? [] : HB.lessons; },
+  get standards() {
+    return this.mode === 'asset'
+      ? HB.standards.map(s => ({ ...s, badge: 'missing', lines: 0, kitHtml: s.kitHtml || s.html }))
+      : HB.standards;
+  },
+  get hasStandards() { return this.standards.some(s => s.badge !== 'missing'); },
+  get skills() { return this.mode === 'asset' ? HB.skillsAsset : HB.skills; },
+  get rules() { return this.mode === 'asset' ? HB.rulesAsset : HB.rules; },
+  get runbook() { return this.mode === 'asset' ? [] : HB.runbook.filter(r => !this.rq || r[1].toLowerCase().includes(this.rq.toLowerCase())); },
+  get filtered() {
+    if (this.mode === 'asset') return [];
+    const q = this.q.trim().toLowerCase();
+    return q ? HB.decisions.filter(f => f.toLowerCase().includes(q)) : HB.decisions;
+  },
+  get total() { return this.mode === 'asset' ? 0 : (this.q.trim() ? this.filtered.length : HB.decisionTotal); },
+  get pages() { return Math.max(1, Math.ceil(this.total / 50)); },
+  get pageItems() { return this.filtered.slice((this.page - 1) * 50, this.page * 50); },
+  get canNext() { return this.page * 50 < this.filtered.length; },
+  fmt(n) { return n.toLocaleString('en-US'); },
+  count(list, b) { return list.filter(x => x.badge === b).length; },
+  get drift() {
+    const all = [...this.standards, ...this.skills.filter(s => s.from === 'kit' || s.badge === 'project')];
+    return { same: this.count(all, 'same'), changed: this.count(all, 'changed'), missing: this.count(all, 'missing'), project: this.count(all, 'project') };
+  },
+  go(s) { this.section = s; this.doc = null; this.drawer = false; this.$nextTick(() => { const el = document.getElementById('reader'); if (el && window.innerWidth < 1024) el.scrollIntoView({ block: 'start' }); }); },
+  openStd(i) { this.section = 'standards'; this.std = i; this.showKit = false; this.doc = null; },
+  setMode(m) { this.mode = m; this.q = ''; this.page = 1; this.doc = null; this.std = 0; this.showKit = false; },
+});
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+<style>
+  html, body { overflow-x: hidden; }
+  [x-cloak] { display: none !important; }
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-visible { outline: 2px solid #0ea5e9; outline-offset: 2px; }
+  .no-scrollbar { scrollbar-width: none; } .no-scrollbar::-webkit-scrollbar { display: none; }
+  .prose code::before, .prose code::after { content: none; }
+  .prose code { font-weight: 500; font-size: .85em; background: rgb(0 0 0 / .05); padding: .1em .35em; border-radius: .3em; }
+  @media (prefers-color-scheme: dark) { .prose code { background: rgb(255 255 255 / .08); } }
+</style>
+</head>
+<body class="font-sans bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100 antialiased" x-data="handbook()" @keydown.escape.window="doc = null; drawer = false">
+
+<!-- Mockup state switcher (not part of the design) -->
+<div class="fixed inset-x-0 top-0 z-[60] h-10 bg-neutral-900 text-neutral-100 dark:bg-white dark:text-neutral-900 flex items-center gap-2 px-3 text-xs overflow-x-auto no-scrollbar">
+  <span class="shrink-0 font-semibold">Option A · state:</span>
+  <div role="tablist" aria-label="Mockup state" class="flex gap-1">
+    <template x-for="m in [['ok','coins'],['nokit','coins · kit not found'],['asset','asset-track (empty)']]" :key="m[0]">
+      <button role="tab" type="button" @click="setMode(m[0])" :aria-selected="mode === m[0]" class="shrink-0 rounded-md px-2 py-1"
+        :class="mode === m[0] ? 'bg-white text-neutral-900 dark:bg-neutral-900 dark:text-white font-medium' : 'opacity-70 hover:opacity-100'" x-text="m[1]"></button>
+    </template>
+  </div>
+  <a href="index.html" class="hidden sm:inline ml-auto shrink-0 underline underline-offset-4 opacity-80 hover:opacity-100">All options</a>
+</div>
+
+<!-- Mobile top bar -->
+<div class="lg:hidden sticky top-10 z-30 flex items-center gap-3 border-b border-neutral-200 dark:border-neutral-800 bg-white/90 dark:bg-neutral-900/90 backdrop-blur px-4 h-14 mt-10">
+  <button type="button" @click="drawer = true" aria-label="Open project menu" aria-controls="sidebar" :aria-expanded="drawer" class="rounded-lg p-2 -ml-2 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+    <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+  <span class="font-semibold">Story board</span>
+  <span class="text-sm text-neutral-500 truncate">· <span x-text="project"></span> · Handbook</span>
+</div>
+
+<!-- Drawer backdrop -->
+<div x-show="drawer" x-cloak @click="drawer = false" class="fixed inset-0 top-10 z-40 bg-neutral-950/40 lg:hidden"></div>
+
+<!-- Sidebar (design A shell, from SB-7 option A) -->
+<aside id="sidebar" aria-label="Projects" :class="drawer ? 'translate-x-0' : '-translate-x-full'" class="fixed top-10 bottom-0 left-0 z-50 w-72 lg:w-64 lg:translate-x-0 transition-transform bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-800 flex flex-col">
+  <div class="flex items-center justify-between px-5 pt-5 pb-3">
+    <div class="flex items-center gap-2">
+      <span class="grid place-items-center size-7 rounded-lg bg-neutral-800 text-white dark:bg-white dark:text-neutral-900 text-xs font-bold">SB</span>
+      <span class="font-semibold">Story board</span>
+    </div>
+    <button type="button" @click="drawer = false" aria-label="Close project menu" class="lg:hidden rounded-lg p-1.5 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+      <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="px-4 pb-3">
+    <button type="button" class="w-full flex items-center gap-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 px-3 py-2 text-sm text-neutral-500 hover:border-neutral-300 dark:hover:border-neutral-700">
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <span class="flex-1 text-left">Find a story</span>
+      <kbd class="rounded border border-neutral-200 dark:border-neutral-700 px-1.5 text-[11px] font-sans">⌘K</kbd>
+    </button>
+  </div>
+  <nav class="flex-1 overflow-y-auto px-3 pb-3 text-sm" aria-label="Project switcher">
+    <a href="#" class="w-full flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      <span class="flex-1 text-left font-medium">All projects</span>
+      <span class="text-xs text-neutral-500 tabular-nums">1,044</span>
+    </a>
+    <p class="mt-5 mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-neutral-400">Projects</p>
+    <ul class="space-y-0.5">
+      <template x-for="p in [['coins',921,4],['client-dashboard',97,0],['asset-track',11,0],['rent-track',15,0]]" :key="p[0]">
+        <li><button type="button" @click="p[0] === 'asset-track' ? setMode('asset') : (p[0] === 'coins' && mode === 'asset' ? setMode('ok') : null); drawer = false"
+          :aria-current="p[0] === project ? 'page' : 'false'"
+          :class="p[0] === project ? 'bg-neutral-100 dark:bg-neutral-800 font-medium' : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50'"
+          class="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm">
+          <span class="size-2 rounded-full bg-emerald-500" title="State ok"></span>
+          <span class="flex-1 text-left truncate" x-text="p[0]"></span>
+          <span x-show="p[2]" class="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-1.5 text-[11px] text-emerald-700 dark:text-emerald-300"><span class="size-1.5 rounded-full bg-emerald-500"></span><span x-text="p[2]"></span></span>
+          <span class="text-xs text-neutral-500 tabular-nums" x-text="p[1]"></span>
+        </button></li>
+      </template>
+    </ul>
+  </nav>
+  <div class="border-t border-neutral-200 dark:border-neutral-800 p-3">
+    <a href="#" class="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/></svg>
+      <span class="flex-1 text-left font-medium">Manage projects</span>
+    </a>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="lg:pl-64 lg:pt-10 min-h-screen">
+  <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-10 py-6 lg:py-10">
+    <!-- Project header (SB-10) -->
+    <header class="flex flex-wrap items-end justify-between gap-3">
+      <div class="min-w-0">
+        <p class="text-xs text-neutral-500"><a href="#" class="hover:underline underline-offset-4">All projects</a> <span aria-hidden="true">/</span> <span x-text="project"></span></p>
+        <h1 class="mt-1 text-2xl font-semibold tracking-tight flex items-center gap-2"><span x-text="project"></span> <span class="size-2 rounded-full bg-emerald-500" title="State ok"></span></h1>
+        <p class="mt-1 text-sm text-neutral-500"><span class="font-mono text-xs" x-text="'~/Code/' + project"></span> · origin/main · <span class="font-mono text-xs" x-text="mode === 'asset' ? 'd2b8b7c' : '23679a5'"></span></p>
+      </div>
+      <p class="text-sm text-neutral-500 flex items-center gap-2">Refreshed 2 min ago <span aria-hidden="true">·</span>
+        <button type="button" class="font-medium text-neutral-800 dark:text-white underline-offset-4 hover:underline">Refresh</button></p>
+    </header>
+
+    <!-- Page tabs: Dashboard | Handbook -->
+    <nav aria-label="Project pages" class="mt-5 border-b border-neutral-200 dark:border-neutral-800 flex gap-6 text-sm">
+      <a href="#" class="-mb-px border-b-2 border-transparent pb-3 text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200">Dashboard</a>
+      <a href="#" aria-current="page" class="-mb-px border-b-2 border-neutral-800 dark:border-white pb-3 font-medium">Handbook</a>
+    </nav>
+
+    <!-- Kit not found (AC: badges hidden, every section still renders) -->
+    <div x-show="!kitOk" x-cloak role="status" class="mt-5 flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm">
+      <svg class="size-5 shrink-0 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg>
+      <div>
+        <p class="font-medium text-amber-800 dark:text-amber-200">Kit not found at <span class="font-mono text-xs">~/Code/dev-standards</span> — comparison unavailable</p>
+        <p class="mt-0.5 text-amber-800/80 dark:text-amber-200/80">Everything below is read from <span x-text="project"></span> as usual. Point <span class="font-mono text-xs">BOARD_KIT_PATH</span> at the kit's checkout to see which files differ.</p>
+      </div>
+    </div>
+    <!-- ===== OPTION A: horizontal section tabs, full-width reader, badges inline ===== -->
+    <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
+      <div role="tablist" aria-label="Handbook sections" class="-mx-4 px-4 sm:mx-0 sm:px-0 flex gap-1 overflow-x-auto no-scrollbar max-w-full">
+        <template x-for="t in [
+            ['rules','Rules',null],
+            ['lessons','Lessons',lessons.length],
+            ['standards','Standards',standards.length],
+            ['runbook','Runbook',mode === 'asset' ? 0 : 974],
+            ['decisions','Decisions',total],
+            ['skills','Skills',skills.length]]" :key="t[0]">
+          <button type="button" role="tab" :aria-selected="section === t[0]" @click="go(t[0])"
+            class="shrink-0 inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm"
+            :class="section === t[0] ? 'bg-neutral-800 text-white dark:bg-white dark:text-neutral-900 font-medium' : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'">
+            <span x-text="t[1]"></span>
+            <span x-show="t[2] !== null" class="text-xs tabular-nums" :class="section === t[0] ? 'opacity-70' : 'text-neutral-400'" x-text="t[2] === null ? '' : fmt(t[2])"></span>
+          </button>
+        </template>
+      </div>
+      <p x-show="kitOk" class="text-xs text-neutral-500 flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span>vs kit <span class="font-mono">~/Code/dev-standards</span> · <span class="font-mono">29b7281</span></span>
+        <span class="inline-flex items-center gap-1"><span class="size-1.5 rounded-full bg-amber-500"></span><span x-text="drift.changed"></span> changed</span>
+        <span class="inline-flex items-center gap-1"><span class="size-1.5 rounded-full bg-red-600"></span><span x-text="drift.missing"></span> missing</span>
+        <span class="inline-flex items-center gap-1"><span class="size-1.5 rounded-full bg-zinc-400"></span><span x-text="drift.project"></span> project only</span>
+      </p>
+    </div>
+
+    <section id="reader" class="mt-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
+
+      <!-- RULES -->
+      <div x-show="section === 'rules'">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-200 dark:border-neutral-800 px-5 py-3">
+          <p class="font-mono text-xs text-neutral-500">CLAUDE.md</p>
+          <p class="text-xs text-neutral-500">Not compared with the kit — every project rewrites it.</p>
+        </div>
+        <article class="prose prose-neutral dark:prose-invert prose-h1:text-2xl prose-h1:font-semibold prose-h1:tracking-tight prose-h2:text-lg max-w-3xl px-5 sm:px-8 py-6" x-html="rules"></article>
+      </div>
+
+      <!-- LESSONS -->
+      <div x-show="section === 'lessons'" x-cloak>
+        <template x-if="lessons.length">
+          <div>
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-200 dark:border-neutral-800 px-5 py-3">
+              <p class="font-mono text-xs text-neutral-500">docs/LESSONS.md</p>
+              <p class="text-xs text-neutral-500"><span x-text="lessons.length"></span> lessons · newest first ·
+                <button type="button" class="font-medium text-neutral-700 dark:text-neutral-300 hover:underline underline-offset-4" @click="lessons.forEach(l => open[l.n] = !Object.values(open).some(v => v))">Expand all</button></p>
+            </div>
+            <ul class="divide-y divide-neutral-100 dark:divide-neutral-800">
+              <template x-for="l in lessons" :key="l.n">
+                <li>
+                  <button type="button" @click="open[l.n] = !open[l.n]" :aria-expanded="!!open[l.n]"
+                    class="w-full text-left grid grid-cols-[3rem_1fr_auto] sm:grid-cols-[3.5rem_6.5rem_1fr_auto] items-center gap-x-3 gap-y-1 px-5 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/60">
+                    <span class="font-mono text-xs font-medium text-neutral-500" x-text="'L-' + l.n"></span>
+                    <span class="hidden sm:block text-xs text-neutral-500 tabular-nums" x-text="l.date"></span>
+                    <span class="text-sm font-medium" x-text="l.name"></span>
+                    <span class="row-span-2 sm:row-span-1 flex items-center gap-2">
+                      <span class="hidden md:inline rounded-full px-2 py-0.5 text-[11px] ring-1 ring-inset"
+                        :class="l.scope === 'Project only' ? 'ring-neutral-300 dark:ring-neutral-700 text-neutral-600 dark:text-neutral-300' : 'ring-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300'" x-text="l.scope"></span>
+                      <svg class="size-4 text-neutral-400 transition-transform" :class="open[l.n] && 'rotate-180'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                    </span>
+                    <span class="sm:hidden col-start-2 text-xs text-neutral-500 tabular-nums" x-text="l.date + ' · ' + l.scope"></span>
+                  </button>
+                  <dl x-show="open[l.n]" class="px-5 pb-4 sm:pl-[8.75rem] grid gap-3 text-sm leading-relaxed">
+                    <div><dt class="text-xs font-semibold uppercase tracking-wider text-neutral-500">Symptom</dt><dd class="mt-1" x-text="l.symptom + (l.symptom.length >= 420 ? '…' : '')"></dd></div>
+                    <div><dt class="text-xs font-semibold uppercase tracking-wider text-neutral-500">Root cause</dt><dd class="mt-1" x-text="l.cause + (l.cause.length >= 420 ? '…' : '')"></dd></div>
+                    <div><dt class="text-xs font-semibold uppercase tracking-wider text-neutral-500">Enforced at</dt><dd class="mt-1 text-neutral-600 dark:text-neutral-400" x-text="l.enf + (l.enf.length >= 260 ? '…' : '')"></dd></div>
+                  </dl>
+                </li>
+              </template>
+            </ul>
+          </div>
+        </template>
+        <template x-if="!lessons.length">
+          <div class="px-5 py-14 text-center">
+            <svg class="mx-auto size-10 text-neutral-300 dark:text-neutral-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h4"/></svg>
+            <p class="mt-3 font-medium"><span x-text="project"></span> has no <span class="font-mono text-sm">docs/LESSONS.md</span></p>
+            <p class="mt-1 text-sm text-neutral-500 max-w-md mx-auto">Lessons appear here once the project records its first <span class="font-mono text-xs">## L-1</span> entry. Running <span class="font-mono text-xs">/lesson</span> in <span x-text="project"></span> creates the file.</p>
+          </div>
+        </template>
+      </div>
+
+      <!-- STANDARDS -->
+      <div x-show="section === 'standards'" x-cloak>
+        <div role="tablist" aria-label="Standards files" class="flex gap-5 overflow-x-auto no-scrollbar border-b border-neutral-200 dark:border-neutral-800 px-5 text-sm">
+          <template x-for="(s, i) in standards" :key="s.file">
+            <button type="button" role="tab" :aria-selected="std === i" @click="openStd(i)"
+              class="-mb-px shrink-0 inline-flex items-center gap-2 border-b-2 py-3"
+              :class="std === i ? 'border-neutral-800 dark:border-white font-medium' : 'border-transparent text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200'">
+              <span x-show="kitOk" class="size-1.5 rounded-full" :class="B[s.badge].dot" :title="B[s.badge].label"></span>
+              <span x-text="s.file.replace('-standards.md', '')"></span>
+            </button>
+          </template>
+        </div>
+        <template x-for="(s, i) in standards" :key="'b' + s.file">
+          <div x-show="std === i">
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-2 px-5 py-3 border-b border-neutral-100 dark:border-neutral-800">
+              <p class="font-mono text-xs text-neutral-500" x-text="'docs/standards/' + s.file"></p>
+              <span x-show="kitOk" class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset" :class="B[s.badge].chip"><span class="size-1.5 rounded-full" :class="B[s.badge].dot"></span><span x-text="B[s.badge].label"></span></span>
+              <span x-show="kitOk && s.badge === 'changed'" class="text-xs text-neutral-500 tabular-nums" x-text="s.lines + ' lines · kit ' + s.kitLines"></span>
+              <button x-show="kitOk && s.badge === 'changed'" type="button" @click="showKit = !showKit" class="ml-auto rounded-lg px-3 py-1.5 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800" x-text="showKit ? 'Hide the kit’s version' : 'Read the kit’s version below'"></button>
+            </div>
+            <template x-if="s.badge !== 'missing'">
+              <div>
+                <article class="prose prose-neutral dark:prose-invert prose-h1:text-2xl prose-h1:font-semibold prose-h1:tracking-tight prose-h2:text-lg max-w-3xl px-5 sm:px-8 py-6" x-html="s.html"></article>
+                <div x-show="showKit" class="border-t-4 border-double border-neutral-200 dark:border-neutral-800 bg-neutral-50/60 dark:bg-neutral-950/40">
+                  <p class="px-5 sm:px-8 pt-5 text-xs font-semibold uppercase tracking-wider text-neutral-500">The kit's version · <span class="font-mono normal-case tracking-normal" x-text="'~/Code/dev-standards/docs/standards/' + s.file"></span></p>
+                  <article class="prose prose-neutral dark:prose-invert prose-h1:text-2xl prose-h1:font-semibold prose-h1:tracking-tight prose-h2:text-lg max-w-3xl px-5 sm:px-8 py-5" x-html="s.html.replace(/<h2>(?!Architecture|Mockup|Channel)[^<]*<\/h2><p>…<\/p>/g, '')"></article>
+                </div>
+              </div>
+            </template>
+            <template x-if="s.badge === 'missing'">
+              <div class="px-5 py-12 text-center">
+                <svg class="mx-auto size-10 text-neutral-300 dark:text-neutral-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 14l4 4M14 14l-4 4"/></svg>
+                <p class="mt-3 font-medium"><span x-text="project"></span> has no <span class="font-mono text-sm" x-text="'docs/standards/' + s.file"></span></p>
+                <p class="mt-1 text-sm text-neutral-500" x-show="kitOk">The kit has it (<span x-text="s.kitLines"></span> lines).</p>
+                <button x-show="kitOk" type="button" @click="showKit = !showKit" class="mt-4 rounded-lg border border-neutral-200 dark:border-neutral-700 px-3 py-1.5 text-sm font-medium hover:bg-neutral-50 dark:hover:bg-neutral-800" x-text="showKit ? 'Hide the kit’s version' : 'Read the kit’s version'"></button>
+                <article x-show="showKit" class="mt-6 text-left mx-auto prose prose-neutral dark:prose-invert prose-h1:text-2xl prose-h1:font-semibold prose-h1:tracking-tight prose-h2:text-lg max-w-3xl rounded-lg bg-neutral-50 dark:bg-neutral-950/50 p-5" x-html="s.kitHtml"></article>
+              </div>
+            </template>
+          </div>
+        </template>
+      </div>
+
+      <!-- RUNBOOK -->
+      <div x-show="section === 'runbook'" x-cloak>
+        <template x-if="mode !== 'asset'">
+          <div>
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200 dark:border-neutral-800 px-5 py-3">
+              <p class="font-mono text-xs text-neutral-500">docs/RUNBOOK.md <span class="font-sans">· 974 entries · 20,185 lines</span></p>
+              <label class="relative w-full sm:w-72">
+                <span class="sr-only">Filter runbook entries</span>
+                <svg class="absolute left-2.5 top-2.5 size-4 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+                <input type="search" x-model="rq" placeholder="Filter entries by heading" class="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/40">
+              </label>
+            </div>
+            <ul class="divide-y divide-neutral-100 dark:divide-neutral-800">
+              <template x-for="(r, i) in runbook" :key="r[1]">
+                <li x-data="{ o: i === 1 }">
+                  <button type="button" @click="o = !o" :aria-expanded="o" class="w-full text-left flex items-start gap-3 px-5 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/60">
+                    <span class="shrink-0 w-24 text-xs text-neutral-500 tabular-nums pt-0.5" x-text="r[0]"></span>
+                    <span class="flex-1 text-sm font-medium" x-text="r[1]"></span>
+                    <svg class="size-4 shrink-0 mt-0.5 text-neutral-400 transition-transform" :class="o && 'rotate-180'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                  </button>
+                  <div x-show="o" class="prose prose-sm prose-neutral dark:prose-invert max-w-3xl px-5 pb-5 sm:pl-[8.25rem]" x-html="i === 1 ? HB.runbookSecond : '<p class=\'text-neutral-500\'>Symptom, root cause, fix and log trail, rendered from the file.</p>'"></div>
+                </li>
+              </template>
+            </ul>
+            <p class="border-t border-neutral-200 dark:border-neutral-800 px-5 py-3 text-xs text-neutral-500">Showing the newest 14 of 974 entries · <button type="button" class="font-medium text-neutral-700 dark:text-neutral-300 hover:underline underline-offset-4">Show 50 more</button></p>
+          </div>
+        </template>
+        <template x-if="mode === 'asset'">
+          <div class="px-5 py-14 text-center">
+            <p class="font-medium">asset-track has no <span class="font-mono text-sm">docs/RUNBOOK.md</span></p>
+            <p class="mt-1 text-sm text-neutral-500">Solved bugs appear here once <span class="font-mono text-xs">/document</span> writes the first runbook entry.</p>
+          </div>
+        </template>
+      </div>
+
+      <!-- DECISIONS -->
+      <div x-show="section === 'decisions'" x-cloak>
+        <template x-if="mode !== 'asset'">
+          <div>
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200 dark:border-neutral-800 px-5 py-3">
+              <label class="relative w-full sm:w-96">
+                <span class="sr-only">Filter decisions by file name</span>
+                <svg class="absolute left-2.5 top-2.5 size-4 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+                <input type="search" x-model="q" @input="page = 1" placeholder="Filter by file name, e.g. bullion" class="w-full rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/40">
+              </label>
+              <p class="text-xs text-neutral-500 tabular-nums" x-text="total ? (fmt((page - 1) * 50 + 1) + '–' + fmt(Math.min(page * 50, total)) + ' of ' + fmt(total) + ' files') : 'No files match'"></p>
+            </div>
+            <ul class="divide-y divide-neutral-100 dark:divide-neutral-800">
+              <template x-for="f in pageItems" :key="f">
+                <li><button type="button" @click="doc = f" class="w-full text-left grid sm:grid-cols-[6.5rem_1fr] gap-x-3 gap-y-0.5 px-5 py-2.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/60">
+                  <span class="text-xs text-neutral-500 tabular-nums pt-0.5" x-text="decisionDate(f)"></span>
+                  <span class="min-w-0"><span class="block text-sm font-medium" x-text="decisionTitle(f)"></span>
+                  <span class="block font-mono text-[11px] text-neutral-400 truncate" x-text="f + '.md'"></span></span>
+                </button></li>
+              </template>
+            </ul>
+            <div x-show="!total" class="px-5 py-10 text-center text-sm text-neutral-500">No decision file names contain “<span x-text="q"></span>”. <button type="button" @click="q = ''" class="font-medium text-neutral-800 dark:text-white hover:underline underline-offset-4">Clear the filter</button></div>
+            <div x-show="total" class="flex items-center justify-between border-t border-neutral-200 dark:border-neutral-800 px-5 py-3 text-sm">
+              <button type="button" @click="page--" :disabled="page === 1" class="rounded-lg px-3 py-1.5 font-medium hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-40 disabled:hover:bg-transparent">← Previous</button>
+              <span class="text-xs text-neutral-500 tabular-nums" x-text="'Page ' + page + ' of ' + pages"></span>
+              <button type="button" @click="page++" :disabled="!canNext" class="rounded-lg px-3 py-1.5 font-medium hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-40 disabled:hover:bg-transparent">Next →</button>
+            </div>
+          </div>
+        </template>
+        <template x-if="mode === 'asset'">
+          <div class="px-5 py-14 text-center">
+            <p class="font-medium">asset-track has no <span class="font-mono text-sm">docs/decisions/</span></p>
+            <p class="mt-1 text-sm text-neutral-500">Decision records appear here once <span class="font-mono text-xs">/document</span> writes the first ADR.</p>
+          </div>
+        </template>
+      </div>
+
+      <!-- SKILLS -->
+      <div x-show="section === 'skills'" x-cloak class="p-5 space-y-8">
+        <template x-for="g in [['kit','From the kit'],['project','Project only']]" :key="g[0]">
+          <div>
+            <h2 class="text-sm font-semibold uppercase tracking-wider text-neutral-500"><span x-text="g[1]"></span> <span class="font-normal tabular-nums" x-text="'· ' + skills.filter(s => s.from === g[0]).length"></span></h2>
+            <ul class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <template x-for="s in skills.filter(s => s.from === g[0])" :key="s.name">
+                <li class="rounded-lg border p-4" :class="s.badge === 'missing' && kitOk ? 'border-dashed border-red-600/40' : 'border-neutral-200 dark:border-neutral-800'">
+                  <div class="flex flex-wrap items-center justify-between gap-2">
+                    <span class="font-mono text-sm font-medium" x-text="s.name"></span>
+                    <span x-show="kitOk" class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset" :class="B[s.badge].chip"><span class="size-1.5 rounded-full" :class="B[s.badge].dot"></span><span x-text="B[s.badge].label"></span></span>
+                  </div>
+                  <p class="mt-1.5 text-xs text-neutral-500" x-text="s.desc"></p>
+                </li>
+              </template>
+            </ul>
+          </div>
+        </template>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- Decision modal (the design-A centred modal) -->
+<div x-show="doc" x-cloak class="fixed inset-0 z-[70] flex items-end sm:items-center justify-center sm:p-6">
+  <div class="absolute inset-0 bg-neutral-950/50 backdrop-blur-[2px]" @click="doc = null"></div>
+  <div role="dialog" aria-modal="true" aria-labelledby="docTitle" class="relative w-full max-w-3xl h-[88vh] flex flex-col rounded-t-2xl sm:rounded-2xl bg-white dark:bg-neutral-900 shadow-2xl ring-1 ring-neutral-200 dark:ring-neutral-800">
+    <header class="flex items-start gap-3 border-b border-neutral-200 dark:border-neutral-800 px-5 sm:px-6 py-4">
+      <div class="min-w-0 flex-1">
+        <p class="font-mono text-xs text-neutral-500 break-all" x-text="'coins · docs/decisions/' + doc + '.md'"></p>
+        <h2 id="docTitle" class="mt-1 text-lg font-semibold tracking-tight" x-text="doc && decisionTitle(doc)"></h2>
+      </div>
+      <button type="button" @click="doc = null" aria-label="Close decision" class="shrink-0 rounded-lg p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800">
+        <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </header>
+    <div class="flex-1 overflow-y-auto px-5 sm:px-8 py-6">
+      <template x-if="doc === HB.decisions[0]"><article class="prose prose-neutral dark:prose-invert prose-h1:text-2xl prose-h1:font-semibold prose-h1:tracking-tight prose-h2:text-lg max-w-none" x-html="HB.decisionBody.replace(/<h1>.*?<\/h1>/, '')"></article></template>
+      <template x-if="doc && doc !== HB.decisions[0]">
+        <div class="space-y-3" aria-label="Loading">
+          <p class="text-xs text-neutral-500">Read from git when opened. (Mockup: only the newest decision has its body filled in.)</p>
+          <div class="h-3 w-1/3 rounded bg-neutral-200 dark:bg-neutral-800 animate-pulse"></div>
+          <div class="h-3 w-full rounded bg-neutral-100 dark:bg-neutral-800 animate-pulse"></div>
+          <div class="h-3 w-5/6 rounded bg-neutral-100 dark:bg-neutral-800 animate-pulse"></div>
+          <div class="h-3 w-2/3 rounded bg-neutral-100 dark:bg-neutral-800 animate-pulse"></div>
+        </div>
+      </template>
+    </div>
+  </div>
+</div>
+</body>
+</html>
