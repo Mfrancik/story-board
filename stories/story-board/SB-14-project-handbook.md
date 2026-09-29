@@ -1,5 +1,5 @@
 # SB-14 — Project handbook: rules, lessons and how each project differs from the kit
-Status: approved         Journey: none
+Status: built            Journey: none
 Source: owner 2026-09-29 (/story): *"a section wehre i can view project specific things such as lessons
 we've added, or certain rules if those are already organized well. often times dev standards package may
 have different things project to project."*

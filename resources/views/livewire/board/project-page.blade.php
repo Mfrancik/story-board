@@ -54,6 +54,9 @@
         </div>
     </header>
 
+    {{-- Dashboard | Handbook (SB-14). --}}
+    <x-board.project-tabs :project="$model->name" current="dashboard" />
+
     @if ($notice)
         <p role="status" class="mt-3 rounded-md border border-built/50 bg-built/10 px-3 py-2 text-sm">{{ $notice }}</p>
     @endif

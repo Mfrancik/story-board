@@ -5,6 +5,7 @@ use App\Http\Middleware\EnsureProjectIsShown;
 use App\Http\Middleware\RedirectProjectFilter;
 use App\Livewire\Board\Home;
 use App\Livewire\Board\ManageProjects;
+use App\Livewire\Board\ProjectHandbook;
 use App\Livewire\Board\ProjectPage;
 use App\Livewire\Board\StoryPage;
 use App\Models\Story;
@@ -18,6 +19,12 @@ Route::livewire('/', Home::class)->middleware(RedirectProjectFilter::class)->nam
 Route::livewire('/p/{project:name}', ProjectPage::class)
     ->middleware(EnsureProjectIsShown::class)
     ->name('projects.show');
+
+// One project's handbook (SB-14): its rules, lessons, standards, runbook, decisions and skills,
+// with each standards file and kit skill badged against the dev-standards kit.
+Route::livewire('/p/{project:name}/handbook', ProjectHandbook::class)
+    ->middleware(EnsureProjectIsShown::class)
+    ->name('projects.handbook');
 
 // One story above its mockups (SB-4). Only a well-formed story ID reaches the component.
 Route::livewire('/p/{project:name}/s/{storyId}', StoryPage::class)
