@@ -43,9 +43,9 @@ exactly what the owner asked to see.
 - Comparing `CLAUDE.md` to the kit (every project rewrites it, so the badge would always say changed).
 
 ## Acceptance criteria (executable — these become the Pest test names)
-- Given coins, when `/p/coins/handbook` loads, then Lessons lists 17 entries, newest first, each with
+- Given coins, when `/p/coins/handbook` loads, then Lessons lists 16 entries, newest first, each with
   its number, date and name.
-- Given client-dashboard, then Lessons lists 6 entries. Given rent-track, then it lists 3.
+- Given client-dashboard, then Lessons lists 5 entries. Given rent-track, then it lists 2.
 - Given asset-track, which has no `docs/LESSONS.md` and no `docs/standards/`, then Lessons says
   "asset-track has no docs/LESSONS.md" and Standards shows the same kind of empty state. The page still
   returns 200.
@@ -95,12 +95,12 @@ exactly what the owner asked to see.
 - Pest: write the failing tests from the acceptance criteria FIRST, then build. The fixtures are a
   fixture project repo and a fixture kit repo (via `GitFixture`), never the real kit.
 - Journey test: none.
-- Browser check: `/p/coins/handbook` shows 17 lessons and standards badged "Changed in this project".
+- Browser check: `/p/coins/handbook` shows 16 lessons and standards badged "Changed in this project".
   `/p/asset-track/handbook` shows the empty states.
 - Checked against real data (2026-09-29; `git ls-tree` / `git show` at each `origin/main`, the kit at
   `~/Code/dev-standards` HEAD):
-  - `## L-` entries: coins 17, client-dashboard 6, rent-track 3. asset-track has no `docs/LESSONS.md`.
-  - `docs/decisions/*.md` files: coins 1,747, client-dashboard 34, rent-track 6, asset-track none.
+  - `## L-<n>` entries: coins 16, client-dashboard 5, rent-track 2 (corrected at build, owner-approved 2026-09-29: the first count included the commented format template, which is not an entry). asset-track has no `docs/LESSONS.md`.
+  - `docs/decisions/*.md` files: coins 1,747, client-dashboard 34, rent-track 6, asset-track none (counts include `docs/decisions/README.md`). The kit also has `docs/standards/disposal-standards.md`, which coins lacks, so it is badged "Missing" for coins.
   - Each standards file compared with the kit:
 
     | Project | codebase | design | logging |
