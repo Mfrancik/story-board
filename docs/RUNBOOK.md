@@ -10,6 +10,12 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-09-29 — Preflight tab 404s, or shows no runs, for a project that has a cost CSV
+Symptom: during SB-16's real-data check, `/p/story-board/preflight` returned 404 even though `~/.claude/projects/-Users-mikefrancik-Code-story-board/preflight-cost.csv` holds 9 runs. Separately, a registered project whose path differs in case from Claude's folder showed the empty state.
+Root cause: the 404 happens because story-board is not a registered project in the dev DB. `EnsureProjectIsShown` refuses any unregistered or disabled name, and the page has nothing to key on. The case mismatch happens because the registered path `/Users/mikefrancik/code/story-board` encodes to `-Users-mikefrancik-code-story-board`, while Claude named the folder after the path it saw, `…-Code-…`.
+Fix: register the project (`/projects` → Add, or `board:project`). Folder matching in `ReadPreflightHistory::files()` is case-insensitive, so the case mismatch is handled (SB-16, `baeeeb7`). If runs are still missing, compare the empty state's "looked in" paths with `ls ~/.claude/projects | grep <name>`. Only the exact name, `--claude-plans`, and `--claude-worktrees-*` folders count.
+Log trail: `board.project_page_refused` for the 404. `board.preflight_history_viewed` with `runs: 0`, and `board.preflight_history_unreadable` if the root itself is missing.
+
 ## 2026-09-29 — PHPStan rejects a story collection passed to `ReadProjectProgress::rollup()`
 Symptom: `vendor/bin/phpstan analyse` failed on `ReadProjectStories` after `rollup()` was extracted. It reported an Eloquent collection where `iterable<stdClass>` was expected.
 Root cause: grouping an Eloquent `Collection` of `Story` models gives nested model collections, and the rows built from them are plain objects, not models. PHPStan correctly refuses to treat that as `iterable<stdClass>`.
