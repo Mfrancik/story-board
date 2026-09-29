@@ -38,6 +38,9 @@
     --color-ok: var(--color-emerald-500);
     --color-pending: var(--color-zinc-400);
 
+    /* The one data series of a chart (SB-16 preflight trend lines, points and the hovered row's tint). */
+    --color-series: var(--color-sky-600);
+
     --color-accent: var(--color-neutral-800);
     --color-accent-content: var(--color-neutral-800);
     --color-accent-foreground: var(--color-white);
@@ -45,6 +48,7 @@
 
 @layer theme {
     .dark {
+        --color-series: var(--color-sky-400);
         --color-accent: var(--color-white);
         --color-accent-content: var(--color-white);
         --color-accent-foreground: var(--color-neutral-800);

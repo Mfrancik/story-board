@@ -1,5 +1,5 @@
 # SB-16 — Preflight history
-Status: approved       Journey: none
+Status: built          Journey: none
 Source: owner 2026-09-29 (/story), from the "what else" list: *"approve the preflight cost trend, i want this
 to show us things like the tests that ran, failures, which fialures, time it took to run, etc.. and i want to
 see in a table so i can go down the timeline to see progression of it."* Owner answer on test data: *"I dont

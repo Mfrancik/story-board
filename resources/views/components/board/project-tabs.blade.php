@@ -1,11 +1,11 @@
-{{-- The page tabs under a project's header (SB-14, design A): Dashboard (SB-10) | Handbook | Stories (SB-15). Real links,
+{{-- The page tabs under a project's header (SB-14, design A): Dashboard (SB-10) | Handbook | Stories (SB-15) | Preflight (SB-16). Real links,
      one URL each, so a tab can be opened in a new window and Back works as expected. --}}
 @props(['project', 'current'])
 @php
     $tabs = ['dashboard' => ['Dashboard', route('projects.show', $project)], 'handbook' => ['Handbook', route('projects.handbook', $project)],
-        'stories' => ['Stories', route('projects.stories', $project)]];
+        'stories' => ['Stories', route('projects.stories', $project)], 'preflight' => ['Preflight', route('projects.preflight', $project)]];
 @endphp
-<nav aria-label="Project pages" data-project-tabs {{ $attributes->class('mt-5 flex gap-6 border-b border-zinc-200 text-sm dark:border-zinc-800') }}>
+<nav aria-label="Project pages" data-project-tabs {{ $attributes->class('mt-5 flex gap-4 sm:gap-6 border-b border-zinc-200 text-sm dark:border-zinc-800') }}>
     @foreach ($tabs as $key => [$label, $url])
         <a href="{{ $url }}" wire:navigate data-project-tab="{{ $key }}" @if ($key === $current) aria-current="page" @endif
             @class([

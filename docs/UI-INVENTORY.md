@@ -36,10 +36,11 @@ Every reusable component. Consult BEFORE building any new UI (design-standards
 | board/switch | Blade | On/off `role="switch"` button showing the stored state; the caller's `wire:click` writes it; disables while `target` runs | ManageProjects |
 | board/confirm-modal | Blade | Alpine confirmation for a destructive action: `show` var, `title` slot, body, Cancel + red `confirm` button running `action` | ManageProjects (Remove) |
 | ProjectStories | Livewire (Board) | A project's stories by initiative (SB-15): initiatives on the left, stories tagged by status on the right; Alpine filters and Expand all; rows open StoryModal | `/p/{project}/stories` |
-| board/project-header | Blade | A project sub-page's header (breadcrumb, name, state, ref; slot extends the ref line) above project-tabs | ProjectHandbook, ProjectStories |
+| board/project-header | Blade | A project sub-page's header (breadcrumb, name, state, ref; slot extends the ref line) above project-tabs | ProjectHandbook, ProjectStories, ProjectPreflight |
 | ProjectHandbook | Livewire (Board) | A project's handbook (SB-14): section tabs over one reading card; each section loads on first open; kit badges; decisions in a modal | `/p/{project}/handbook` |
-| board/project-tabs | Blade | Dashboard / Handbook / Stories page tabs under a project's header | ProjectPage, project-header |
+| board/project-tabs | Blade | Dashboard / Handbook / Stories / Preflight page tabs under a project's header | ProjectPage, project-header |
 | board/kit-badge | Blade | How a file compares with the kit: Same as kit, Changed in this project, Missing, Project only; `dot` for a sub-tab | ProjectHandbook (standards, skills) |
 | board/handbook-empty | Blade | Empty state naming the project and the missing file, with a one-line hint slot | ProjectHandbook sections |
 | board/prose | Blade | Rendered markdown (from RenderStory::toHtml) in the reading width | ProjectHandbook sections, decision modal |
 | LiveSessions | Livewire (Board) | Live now (SB-11): a card per active Claude Code session with checkout, branch, age and linked stories; `wire:poll.30s` on the panel only | Home, ProjectPage |
+| ProjectPreflight | Livewire (Board) | A project's preflight runs (SB-16): trend figures and two SVG line charts over a ledger table; Alpine filters and hover (`preflightHistory` in resources/js) | `/p/{project}/preflight` |
