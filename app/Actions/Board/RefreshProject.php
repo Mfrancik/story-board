@@ -16,6 +16,12 @@ use Illuminate\Support\Facades\Log;
 class RefreshProject
 {
     /**
+     * Longer than the worst case of every git timeout in one refresh (30 + 60 +
+     * 30 + 60 s = 180 s), so the lock cannot expire while its refresh still runs.
+     */
+    private const LOCK_SECONDS = 300;
+
+    /**
      * @param  GitReader  $git  the only way the board touches a project
      */
     public function __construct(private GitReader $git) {}
@@ -30,7 +36,7 @@ class RefreshProject
     {
         // Two page loads a second apart would otherwise run two fetches and two
         // snapshot swaps against the same rows; the second one simply stands down.
-        $lock = Cache::lock("board:refresh:{$project->id}", 180);
+        $lock = Cache::lock("board:refresh:{$project->id}", self::LOCK_SECONDS);
         if (! $lock->get()) {
             Log::info('board.refresh_skipped', ['project' => $project->name, 'reason' => 'already running']);
 
