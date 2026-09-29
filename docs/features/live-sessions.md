@@ -93,7 +93,7 @@ session ID, so neither reaches the HTML.
 ## Configuration
 `config/board.php` (new in this story, created with owner approval):
 `sessions_path` = env `BOARD_SESSIONS_PATH`, default `$HOME/.claude/projects`. The "No Claude Code
-sessions folder found" empty state names the path and this variable. SB-14 will add `kit_path` and
+sessions folder found" empty state names the path and this variable. SB-14 added `kit_path` and
 `kit_ref` to the same file.
 
 **Tests:** `tests/TestCase.php:setUp()` points `board.sessions_path` at an empty temp folder for every

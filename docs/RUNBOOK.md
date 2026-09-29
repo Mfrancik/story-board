@@ -10,6 +10,12 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-09-29 — Handbook lesson counts were one too high (17/6/3, not 16/5/2)
+Symptom: SB-14's first real-data counts of `## L-<n>` entries (coins 17, client-dashboard 6, rent-track 3) were each one more than the ledgers actually hold.
+Root cause: the kit's `docs/LESSONS.md` carries its entry format as a commented-out `## L-<n>` template inside `<!-- -->`. A line-based `^## L-` match counts it as an entry. A heading inside a code fence would be miscounted the same way.
+Fix: `app/Actions/Board/ReadHandbook.php:parseLessons()` strips HTML comments and tracks ``` / ~~~ fence state before matching `## L-`. The story's counts were corrected to 16/5/2 before the build, with owner approval (`1e727bb`; SB-14, `95314c6`). Pinned by `ProjectHandbookTest` "ignores `## L-` headings inside HTML comments and code fences". Count kit ledgers with a parser that skips comments and fences, never with `grep -c '^## L-'`.
+Log trail: none; a count mismatch. `board.handbook_viewed` with `section=lessons` marks the read.
+
 ## 2026-09-29 — Board tests read the developer's real `~/.claude/projects`
 Symptom: once SB-11 added the Live now panel and the sidebar badge, every board page scanned the transcripts root. Existing suites that never mention sessions (home, project page, app shell) would have read the developer's real session files, so results depended on which terminals were open.
 Root cause: `board.sessions_path` defaults to `$HOME/.claude/projects`, and the panel and badge render on every board page. Any test that renders a page reads the configured root.
