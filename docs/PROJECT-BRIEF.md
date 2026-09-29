@@ -1,5 +1,5 @@
 # Project brief — story-board
-Last refreshed: 2026-09-29 (SB-14)
+Last refreshed: 2026-09-29 (SB-15)
 
 ## What it is, and for whom
 A localhost Laravel app for one owner. It reads the `stories/` folder of every project that uses
@@ -41,6 +41,7 @@ from the kit.
 | Manage projects: `/projects` switch on/off, add by folder, remove behind a confirmation | active (SB-12) | [doc](features/manage-projects.md) |
 | Live sessions: Live now panel on both dashboards (30 s poll) and sidebar live badge | active (SB-11) | [doc](features/live-sessions.md) |
 | Project handbook: `/p/{project}/handbook` rules, lessons, standards, runbook, decisions, skills; kit badges | active (SB-14) | [doc](features/project-handbook.md) |
+| Stories by initiative: `/p/{project}/stories` two panes, status tags, Alpine filter chips, Expand all | active (SB-15) | [doc](features/stories-by-initiative.md) |
 
 ## Journeys
 None yet. Every SB story so far is `Journey: none`.
@@ -48,7 +49,7 @@ None yet. Every SB story so far is `Journey: none`.
 ## Stories
 - **built**: SB-2 registry and reader · SB-3 what needs me · SB-4 story and mockups · SB-5 not on main ·
   SB-7 app shell · SB-8 story modal · SB-9 all-projects dashboard · SB-10 single-project dashboard ·
-  SB-11 live sessions · SB-12 manage projects · SB-14 project handbook
+  SB-11 live sessions · SB-12 manage projects · SB-14 project handbook · SB-15 stories by initiative
 - **approved**: SB-13 pick a mockup
 - **draft (parked)**: SB-6 the board on an always-live domain
 
@@ -79,12 +80,14 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
   [ADR-023](decisions/ADR-023-live-sessions-read-transcript-metadata-defensively.md)
 - Handbook sections load on first open via renderless calls and stay in Alpine; no re-render →
   [ADR-024](decisions/ADR-024-handbook-sections-load-lazily-and-stay-client-side.md)
+- The Stories page is one query fed to `ReadProjectProgress::rollup()`, and it filters rows with one CSS class, not
+  Alpine per row → [ADR-025](decisions/ADR-025-stories-page-reuses-the-progress-rollup-over-one-query.md), [ADR-026](decisions/ADR-026-stories-page-filters-rows-with-css-not-alpine.md)
 - The board never writes to a project (owner ruling); its only writes are its own database.
 - Preflight audit scope, audit cost record, build-artifact disposal (kit) → ADR-001 to ADR-003
 
 ## Current phase and what's next
-Phase 2: UI organisation (SB-7 to SB-14). Phase 1 (SB-2 to SB-5) is built and retro'd. SB-7 to SB-12
-and SB-14 have shipped. Next: SB-13 (pick a mockup, reuses `board/confirm-modal`), then the phase-2
+Phase 2: UI organisation (SB-7 to SB-15). Phase 1 (SB-2 to SB-5) is built and retro'd. SB-7 to SB-12,
+SB-14 and SB-15 have shipped. Next: SB-13 (pick a mockup, reuses `board/confirm-modal`), then the phase-2
 retro and full preflight sweep. SB-6 (hosted) stays parked. F-2 (a timeline of what was built) is in
 the backlog.
 
@@ -97,7 +100,10 @@ the backlog.
 - Untracked stories and mockups are listed but cannot be shown (not in git). Off-main rows with
   malformed IDs cannot open the modal (owner decision pending). `?v=` links break at the next refresh.
 - Layout classes still use the raw `zinc-*` palette; only status and state colours are theme tokens.
-- Initiative rows on the project page open nothing; the project page has no initiative or search filter.
+- Initiative rows on the project dashboard open nothing; the Stories tab is where to see an initiative's stories.
+  Nothing on the board searches stories by ID or title.
+- The Stories page groups initiative names case-sensitively, but the dashboard (MySQL) groups them
+  case-insensitively. Names that differ only by case would split on one and merge on the other.
 - `/projects` has no auth and can add and delete projects; safe only while localhost-only. A project's
   path and ref cannot be edited (remove and re-add).
 - Live sessions rely on an undocumented format and file mtime (10 min); the sidebar badge does not poll.

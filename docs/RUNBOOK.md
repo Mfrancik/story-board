@@ -10,6 +10,12 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-09-29 — PHPStan rejects a story collection passed to `ReadProjectProgress::rollup()`
+Symptom: `vendor/bin/phpstan analyse` failed on `ReadProjectStories` after `rollup()` was extracted. It reported an Eloquent collection where `iterable<stdClass>` was expected.
+Root cause: grouping an Eloquent `Collection` of `Story` models gives nested model collections, and the rows built from them are plain objects, not models. PHPStan correctly refuses to treat that as `iterable<stdClass>`.
+Fix: `->toBase()` before grouping in `ReadProjectStories::handle()`, and `rollup()` typed as `iterable<stdClass>` (SB-15). Any new caller must pass plain rows, for example a `toBase()` aggregate.
+Log trail: none; static analysis.
+
 ## 2026-09-29 — Handbook lesson counts were one too high (17/6/3, not 16/5/2)
 Symptom: SB-14's first real-data counts of `## L-<n>` entries (coins 17, client-dashboard 6, rent-track 3) were each one more than the ledgers actually hold.
 Root cause: the kit's `docs/LESSONS.md` carries its entry format as a commented-out `## L-<n>` template inside `<!-- -->`. A line-based `^## L-` match counts it as an entry. A heading inside a code fence would be miscounted the same way.

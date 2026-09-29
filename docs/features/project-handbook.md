@@ -68,8 +68,9 @@ are empty, contain `..`, `/` or `\`, start with `-`, or do not end in `.md`, **b
 because route middleware never sees update requests (ADR-019 amendment). A project switched off or
 removed mid-visit logs a refusal and redirects home, and the pending call returns nothing.
 
-**Page tabs.** `resources/views/components/board/project-tabs.blade.php` puts Dashboard | Handbook
-links under the project header on both `/p/{project}` and the handbook. They are real links
+**Page tabs.** `resources/views/components/board/project-tabs.blade.php` puts Dashboard | Handbook | Stories
+links under the project header on `/p/{project}`, the handbook and the Stories page. Since SB-15, the handbook's
+header is the shared `board/project-header` component, which also renders the tabs. They are real links
 (`wire:navigate`), so each tab has its own URL.
 
 ## Data model

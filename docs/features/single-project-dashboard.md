@@ -53,7 +53,8 @@ whatever the number of initiatives:
   match the tiles), `total`, `built`, `open` (draft plus approved, `ReadProjectProgress::OPEN`) and
   `parked`. Stories with no initiative (sitting directly in `stories/`) become a row named `null`,
   shown as "No initiative". Order: most open work first, ties A–Z with the unnamed row after the
-  named ones.
+  named ones. That fold is `ReadProjectProgress::rollup()`, public since SB-15 so the
+  [Stories page](stories-by-initiative.md) reuses the same counts and order (ADR-025).
 - `offMain()`: off-main rows counted by `location_kind`.
 
 **The view.** `resources/views/livewire/board/project-page.blade.php`, top to bottom:
