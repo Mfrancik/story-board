@@ -52,7 +52,10 @@ class StoryPage extends Component
     {
         abort_unless($project->is_enabled, 404);
         $version = request()->query('v');
-        abort_if($version !== null && ! ctype_digit((string) $version), 404);
+        if ($version !== null && ! ctype_digit((string) $version)) {
+            Log::warning('board.version_rejected', ['project' => $project->name, 'story' => $storyId, 'v' => $version]);
+            abort(404);
+        }
 
         $story = $this->resolve($project, $storyId, $version === null ? null : (int) $version);
         $this->project = $project;

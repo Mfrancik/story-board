@@ -8,7 +8,7 @@
     $servable = ($story->mockups['dir'] ?? null) === "docs/mockups/{$story->story_id}" && $options !== [] && $story->isInGit();
     $errors = count($story->parse_errors);
     // Mockup-only off-main rows have no status of their own; that is not an error.
-    $showStatus = ! str_starts_with($story->path, 'docs/mockups/') && ($errors > 0 || ! in_array($story->status, ['draft', 'approved', 'built'], true));
+    $showStatus = ! $story->isMockupOnly() && ($errors > 0 || ! in_array($story->status, ['draft', 'approved', 'built'], true));
 @endphp
 <div wire:key="row-{{ $story->id }}" data-row="{{ $story->story_id }}" @if ($group === 'pick') data-pick-row="{{ $story->story_id }}" @endif
     x-data="{ open: false }">
@@ -29,7 +29,7 @@
             {{-- SB-5: where this version lives, and what it says there. --}}
             <span data-offmain-row="{{ $story->story_id }}" class="col-span-2 flex flex-wrap items-center gap-1.5 text-xs text-warning sm:order-5 sm:col-span-4">
                 <span class="break-all font-mono">{{ $story->location }}</span>
-                @if (str_starts_with($story->path, 'docs/mockups/'))
+                @if ($story->isMockupOnly())
                     <span class="rounded bg-zinc-100 px-1.5 py-0.5 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">mockups only</span>
                 @elseif ($story->status)
                     <x-board.status-chip :status="$story->status" :errors="$errors" />
@@ -41,7 +41,7 @@
 
     <div x-show="open" x-cloak class="space-y-3 border-t border-zinc-100 bg-zinc-50/60 px-3 py-3 dark:border-zinc-800 dark:bg-zinc-950/40">
         <div class="flex flex-wrap items-center gap-1.5 text-xs">
-            @if ($story->status !== null || ! str_starts_with($story->path, 'docs/mockups/'))<x-board.status-chip :status="$story->status" :errors="$errors" />@endif
+            @if ($story->status !== null || ! $story->isMockupOnly())<x-board.status-chip :status="$story->status" :errors="$errors" />@endif
             @if ($story->initiative)<span class="rounded bg-zinc-100 px-1.5 py-0.5 dark:bg-zinc-800">initiative: {{ $story->initiative }}</span>@endif
             @if ($story->journey)<span class="rounded bg-zinc-100 px-1.5 py-0.5 dark:bg-zinc-800">journey: {{ $story->journey }}</span>@endif
             @if ($story->depends_on !== [])<span class="rounded bg-zinc-100 px-1.5 py-0.5 dark:bg-zinc-800">depends on {{ implode(', ', $story->depends_on) }}</span>@endif
@@ -86,7 +86,7 @@
             </div>
         @endif
 
-        @if ($story->story_id && preg_match('/^[A-Z]{2,}-[0-9]+[a-z]?$/', $story->story_id))
+        @if ($story->hasPage())
             <a href="{{ route('stories.show', ['project' => $story->project->name, 'storyId' => $story->story_id, ...($story->location_kind ? ['v' => $story->id] : [])]) }}" wire:navigate
                 class="inline-block text-sm font-medium underline">Open full page →</a>
         @endif

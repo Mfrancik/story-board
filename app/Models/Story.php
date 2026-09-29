@@ -128,4 +128,21 @@ class Story extends Model
 
         return route('mockups.file', $this->location_kind === null ? $params : [...$params, 'v' => $this->id]);
     }
+
+    /**
+     * Whether this row stands for a mockup directory alone (no story file beside it
+     * in that location): it has no status of its own, and that is not an error.
+     */
+    public function isMockupOnly(): bool
+    {
+        return str_starts_with($this->path, 'docs/mockups/');
+    }
+
+    /**
+     * Whether the story ID is well formed (CLAUDE.md step 6), so it can have a page.
+     */
+    public function hasPage(): bool
+    {
+        return $this->story_id !== null && preg_match('/^[A-Z]{2,}-[0-9]+[a-z]?$/D', $this->story_id) === 1;
+    }
 }

@@ -7,6 +7,7 @@ use App\Exceptions\MockupNotFoundException;
 use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Serves raw mockup bytes from a project's ref (SB-4), always sandboxed.
@@ -38,7 +39,10 @@ class MockupFileController extends Controller
         abort_unless($project->is_enabled, 404);
         // `v` names an off-main version (SB-5); anything but a positive integer is not one.
         $version = $request->query('v');
-        abort_if($version !== null && ! ctype_digit((string) $version), 404);
+        if ($version !== null && ! ctype_digit((string) $version)) {
+            Log::warning('board.version_rejected', ['project' => $project->name, 'story' => $storyId, 'v' => $version]);
+            abort(404);
+        }
 
         try {
             $bytes = $read->handle($project, $storyId, $file, $version === null ? null : (int) $version);

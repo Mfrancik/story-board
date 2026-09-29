@@ -4,6 +4,7 @@ use App\Actions\Board\ListWhatNeedsMe;
 use App\Livewire\Board\Home;
 use App\Models\Project;
 use App\Models\Story;
+use Illuminate\Support\Facades\Log;
 use Livewire\Livewire;
 use Tests\Support\GitFixture;
 
@@ -100,4 +101,46 @@ it('labels a mockup-only row as mockups only, not as a missing status', function
     Livewire::test(Home::class)->call('toggleSection', 'offmain')
         ->assertSee('mockups only')
         ->assertDontSeeHtml('data-status-chip=""');
+});
+
+it('refuses and logs a v that is not a row id, on the page and the mockup route', function (string $url) {
+    Log::spy();
+
+    $this->get($url)->assertNotFound();
+
+    Log::shouldHaveReceived('warning')->withArgs(fn ($event) => $event === 'board.version_rejected')->once();
+})->with(['/p/fx/s/FX-9?v=1x', '/p/fx/m/FX-9/option-a.html?v=../1', '/p/fx/s/FX-9?v=-1']);
+
+it('refuses a version that belongs to another project', function () {
+    $other = new GitFixture;
+    $other->story('FX-9', 'draft')->pushBranch('docs/other');
+    $otherProject = Project::factory()->create(['name' => 'other', 'path' => $other->project, 'indexed_at' => now()]);
+    $this->artisan('board:refresh', ['project' => 'other'])->assertSuccessful();
+    $foreign = Story::offMain()->where('project_id', $otherProject->id)->where('story_id', 'FX-9')->sole();
+
+    $this->get("/p/fx/s/FX-9?v={$foreign->id}")->assertNotFound();
+    $this->get(route('mockups.file', ['project' => 'fx', 'storyId' => 'FX-9', 'file' => 'option-a.html', 'v' => $foreign->id]))->assertNotFound();
+
+    $other->destroy();
+});
+
+it('shows an untracked version without reading its text', function () {
+    $this->fixture->syncProject()->untracked($this->fixture->project, 'stories/demo/FX-40-new.md', "# FX-40 — Untracked story\nStatus: draft\n\nSECRET-BODY\n");
+    $this->artisan('board:refresh', ['project' => 'fx'])->assertSuccessful();
+    $row = Story::offMain()->where('story_id', 'FX-40')->sole();
+
+    $this->get("/p/fx/s/FX-40?v={$row->id}")
+        ->assertOk()
+        ->assertSee('Untracked in')
+        ->assertSee('not in git')
+        ->assertDontSee('SECRET-BODY');
+});
+
+it('labels a version on a branch checked out in a worktree by that worktree', function () {
+    $worktree = $this->fixture->addWorktree('fx-wt', 'docs/FX-2-local');
+    file_put_contents($worktree.'/stories/demo/FX-2-story.md', str_replace('Status: draft', 'Status: approved', file_get_contents($worktree.'/stories/demo/FX-2-story.md')));
+    $this->fixture->git($worktree, 'commit', '--quiet', '-am', 'docs(FX-2): approve');
+    $this->artisan('board:refresh', ['project' => 'fx'])->assertSuccessful();
+
+    $this->get('/p/fx/s/FX-2')->assertSee('Approved in worktree '.realpath($worktree).' — not on main');
 });
