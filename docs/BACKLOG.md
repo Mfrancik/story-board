@@ -53,6 +53,12 @@ Scope: PROMOTE
 
 Retro finding (owner-approved capture): three times this phase the cost label read "audit opus" or "opus+sonnet" when the preflight audit ran on Sonnet. The meter counts every subagent that ran in its window, so a documenter subagent (session model) was reported as the audit tier. It should count only `preflight`-type subagents toward the audit tier. Fix in the kit, proven with bin/preflight-ab.sh.
 
+### F-4 — 2026-09-29 — Per-initiative story breakdown with built crossed out · Story: SB-15
+Area: single-project dashboard (SB-10) · Progress by initiative
+Scope: PROJECT
+
+I would like to see a breakdown of all similar stories somewher, so for instance all the brand stories in a section and i can go through and see whats built (crossed out), pending, etc...
+
 ## Cut
 
 ### F-1 — 2026-09-29 — Kit parser misses bold Chosen option picks

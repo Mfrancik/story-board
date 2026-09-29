@@ -1,0 +1,96 @@
+<!-- SB-15 mockups — landing page for the three options. -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SB-15 stories mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { darkMode: 'media', theme: { extend: { fontFamily: { sans: ['"Instrument Sans"', 'system-ui', 'sans-serif'] } } } };
+</script>
+<style>a:focus-visible { outline: 2px solid #0ea5e9; outline-offset: 2px; }</style>
+</head>
+<body class="font-sans bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100 antialiased">
+<main class="mx-auto max-w-6xl px-4 sm:px-6 py-10">
+  <p class="font-mono text-xs text-neutral-500">SB-15 · design mockup gate</p>
+  <h1 class="mt-1 text-2xl font-semibold tracking-tight">Stories by initiative: three layouts</h1>
+  <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400 max-w-3xl">All three sit inside the design-A shell from SB-7, under the new tab bar (Dashboard | Handbook | <strong>Stories</strong>). They show <span class="font-mono text-xs">/p/coins/stories</span> with real data: all 946 on-ref coins stories in 57 initiatives, read from the dev DB on 2026-09-29. Sections are in SB-10's order (most open work first), and stories are in natural ID order. Each page has working filter chips (Built, To do, Draft, Cancelled, Other), Expand all / Collapse all, and a note when you click a story; in the build, that click opens the SB-8 modal. The dark strip at the top switches between coins, the first-load skeleton and the empty state. A dashed "Other project: rent-track" panel at the bottom shows the grey tags (<span class="font-mono text-xs">done</span>, <span class="font-mono text-xs">in</span>, "no status").</p>
+  <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400 max-w-3xl">Things to try: open <strong>branding</strong> (7 built, 3 draft), open <strong>acquisition</strong> (ACQ-22, 23 and 24 are struck through), open <strong>mobile</strong> (83 stories), find <strong>import</strong> (the parked initiative), then turn Built off.</p>
+
+  <div class="mt-8 grid gap-4 lg:grid-cols-3">
+    <!-- A -->
+    <a href="option-a.html" class="group flex flex-col rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 hover:border-neutral-300 dark:hover:border-neutral-700">
+      <div class="aspect-[16/10] rounded-lg bg-neutral-100 dark:bg-neutral-800 p-3 flex gap-2" aria-hidden="true">
+        <div class="w-1/5 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+        <div class="flex-1 rounded bg-white dark:bg-neutral-900 p-1.5 space-y-1">
+          <div class="flex items-center gap-1.5"><div class="h-1.5 w-8 rounded bg-neutral-300 dark:bg-neutral-600"></div><div class="flex h-1 w-10 overflow-hidden rounded"><span class="w-1/5 bg-emerald-500"></span><span class="w-2/5 bg-sky-500"></span><span class="flex-1 bg-amber-500"></span></div></div>
+          <div class="flex items-center gap-1.5"><div class="h-1.5 w-8 rounded bg-neutral-700 dark:bg-neutral-300"></div><div class="flex h-1 w-10 overflow-hidden rounded"><span class="w-3/4 bg-emerald-500"></span><span class="flex-1 bg-amber-500"></span></div></div>
+          <div class="ml-3 space-y-0.5"><div class="h-1 w-4/5 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1 w-3/4 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1 w-4/5 rounded bg-neutral-200 dark:bg-neutral-700"></div></div>
+          <div class="flex items-center gap-1.5"><div class="h-1.5 w-8 rounded bg-neutral-300 dark:bg-neutral-600"></div><div class="flex h-1 w-10 overflow-hidden rounded"><span class="w-5/6 bg-emerald-500"></span><span class="flex-1 bg-zinc-400"></span></div></div>
+          <div class="flex items-center gap-1.5"><div class="h-1.5 w-8 rounded bg-neutral-300 dark:bg-neutral-600"></div><div class="flex h-1 w-10 overflow-hidden rounded"><span class="w-full bg-emerald-500"></span></div></div>
+          <div class="flex items-center gap-1.5"><div class="h-1.5 w-8 rounded bg-neutral-300 dark:bg-neutral-600"></div><div class="flex h-1 w-10 overflow-hidden rounded"><span class="w-full bg-emerald-500"></span></div></div>
+        </div>
+      </div>
+      <h2 class="mt-4 font-semibold">Option A: accordion list</h2>
+      <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">One slim row per initiative, with a chevron, the name, a "parked" tag, an inline mini status bar, the per-status counts and the total. A row opens in place into a compact ID | title | tag list, and its header sticks while you scroll a long section such as mobile. Several sections can be open at once.</p>
+      <p class="mt-2 text-sm"><span class="font-medium">Good:</span> <span class="text-neutral-600 dark:text-neutral-400">closest to the story's wording ("openable sections"), and it follows SB-10's Progress by initiative row design, so the two pages read alike. At coins' scale, 57 rows fit in about 2,300 px, and the bars make "what's left" easy to scan.</span></p>
+      <p class="mt-1 text-sm"><span class="font-medium">Costs:</span> <span class="text-neutral-600 dark:text-neutral-400">39 of the 57 initiatives have no open work, so the long tail is a lot of green. With Expand all, the page is 946 rows long.</span></p>
+      <p class="mt-auto pt-3 text-sm font-medium group-hover:underline underline-offset-4">Open option A →</p>
+    </a>
+    <!-- B -->
+    <a href="option-b.html" class="group flex flex-col rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 hover:border-neutral-300 dark:hover:border-neutral-700">
+      <div class="aspect-[16/10] rounded-lg bg-neutral-100 dark:bg-neutral-800 p-3 flex gap-2" aria-hidden="true">
+        <div class="w-1/5 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+        <div class="flex-1 grid grid-cols-3 gap-1 content-start">
+          <div class="rounded bg-white dark:bg-neutral-900 p-1 flex gap-1"><span class="size-3 rounded-full border-2 border-emerald-500"></span><span class="h-1 mt-1 flex-1 rounded bg-neutral-200 dark:bg-neutral-700"></span></div>
+          <div class="rounded bg-white dark:bg-neutral-900 p-1 flex gap-1 ring-1 ring-neutral-700 dark:ring-neutral-300"><span class="size-3 rounded-full border-2 border-amber-500"></span><span class="h-1 mt-1 flex-1 rounded bg-neutral-200 dark:bg-neutral-700"></span></div>
+          <div class="rounded bg-white dark:bg-neutral-900 p-1 flex gap-1"><span class="size-3 rounded-full border-2 border-sky-500"></span><span class="h-1 mt-1 flex-1 rounded bg-neutral-200 dark:bg-neutral-700"></span></div>
+          <div class="col-span-3 rounded bg-white dark:bg-neutral-900 ring-1 ring-neutral-700 dark:ring-neutral-300 p-1.5 grid grid-cols-2 gap-x-2 gap-y-0.5"><span class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></span><span class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></span><span class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></span><span class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></span></div>
+          <div class="rounded bg-white dark:bg-neutral-900 p-1 flex gap-1"><span class="size-3 rounded-full border-2 border-emerald-500"></span><span class="h-1 mt-1 flex-1 rounded bg-neutral-200 dark:bg-neutral-700"></span></div>
+          <div class="rounded bg-white dark:bg-neutral-900 p-1 flex gap-1"><span class="size-3 rounded-full border-2 border-emerald-500"></span><span class="h-1 mt-1 flex-1 rounded bg-neutral-200 dark:bg-neutral-700"></span></div>
+          <div class="rounded bg-white dark:bg-neutral-900 p-1 flex gap-1"><span class="size-3 rounded-full border-2 border-emerald-500"></span><span class="h-1 mt-1 flex-1 rounded bg-neutral-200 dark:bg-neutral-700"></span></div>
+        </div>
+      </div>
+      <h2 class="mt-4 font-semibold">Option B: card grid</h2>
+      <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">Each initiative is a card with a donut ring split by status, the percentage built in the middle, and the counts below. Opening a card puts a full-width panel under that card's row. The panel lists the stories in two columns on wide screens. The grid has 4 columns on a very wide screen, 3 on desktop, 2 on a tablet and 1 on a phone.</p>
+      <p class="mt-2 text-sm"><span class="font-medium">Good:</span> <span class="text-neutral-600 dark:text-neutral-400">the most visual of the three. The rings show which initiatives are nearly done at a glance, and an open panel has room for long titles.</span></p>
+      <p class="mt-1 text-sm"><span class="font-medium">Costs:</span> <span class="text-neutral-600 dark:text-neutral-400">at 57 cards, it is the tallest of the three (19 rows at 3 across, 57 cards stacked on a phone). The order reads across and then down, which follows SB-10's ranking less clearly than a list. Expand all puts a panel under every row, which gets noisy. The ring is a new visual element that no other page uses.</span></p>
+      <p class="mt-auto pt-3 text-sm font-medium group-hover:underline underline-offset-4">Open option B →</p>
+    </a>
+    <!-- C -->
+    <a href="option-c.html" class="group flex flex-col rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5 hover:border-neutral-300 dark:hover:border-neutral-700">
+      <div class="aspect-[16/10] rounded-lg bg-neutral-100 dark:bg-neutral-800 p-3 flex gap-2" aria-hidden="true">
+        <div class="w-1/5 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+        <div class="w-1/4 rounded bg-white dark:bg-neutral-900 p-1 space-y-1">
+          <div class="h-1.5 rounded bg-neutral-700 dark:bg-neutral-300"></div><div class="h-1.5 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1.5 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1.5 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1.5 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1.5 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+        </div>
+        <div class="flex-1 rounded bg-white dark:bg-neutral-900 p-1.5 space-y-1">
+          <div class="flex h-1 overflow-hidden rounded"><span class="w-1/5 bg-emerald-500"></span><span class="w-2/5 bg-sky-500"></span><span class="flex-1 bg-amber-500"></span></div>
+          <div class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1 rounded bg-neutral-200 dark:bg-neutral-700"></div><div class="h-1 w-2/3 rounded bg-neutral-200 dark:bg-neutral-700"></div>
+        </div>
+      </div>
+      <h2 class="mt-4 font-semibold">Option C: dense two-pane</h2>
+      <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">On the left is a sticky, scrollable list of all 57 initiatives. Each shows its open / total count (e.g. payments 20 / 24) and a hairline status bar. The chosen initiative fills the right pane with a header bar, its counts and its stories. Expand all switches the right pane to one long list grouped by initiative, with sticky group headers, and the left list jumps to a group. On a phone, the left list becomes a select.</p>
+      <p class="mt-2 text-sm"><span class="font-medium">Good:</span> <span class="text-neutral-600 dark:text-neutral-400">handles coins' scale best. All 57 initiatives stay visible in one scroll area, and moving between them takes one click with no jump in the page. The open / all numbers put open work first, like SB-10.</span></p>
+      <p class="mt-1 text-sm"><span class="font-medium">Costs:</span> <span class="text-neutral-600 dark:text-neutral-400">only one section is open at a time unless you use Expand all. That fits "open branding" less literally than an accordion does. The sections do not collapse on their own, so Expand all / Collapse all switches between two views. On a phone, the select hides the overview of all initiatives.</span></p>
+      <p class="mt-auto pt-3 text-sm font-medium group-hover:underline underline-offset-4">Open option C →</p>
+    </a>
+  </div>
+
+  <section class="mt-8 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-5">
+    <h2 class="font-medium">The trade-off at coins' scale</h2>
+    <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400 max-w-4xl">coins has many initiatives, and most of them are finished. 39 of 57 have no open work, and 844 of 946 stories are built. A shows the most on one screen and is the most literal match for the story. B looks the best but grows the tallest. C is the fastest to move around in, but it swaps "open several sections" for "choose one". For a small project such as rent-track (1 initiative) or asset-track (4), all three work well. For rent-track, C's left pane would be almost empty.</p>
+    <h3 class="mt-4 text-sm font-medium">The same in every option</h3>
+    <ul class="mt-1 list-disc pl-5 text-sm text-neutral-600 dark:text-neutral-400 space-y-1">
+      <li>Tag colours reuse the status tokens: built emerald, to do (approved) sky, draft amber. Cancelled is a new muted variant: an outlined tag, with the ID and title struck through. Any other value gets a grey tag showing its raw text. The danger tone on Home and on story rows is unchanged.</li>
+      <li>Filtering never changes a section's counts. When filters hide part of an open section, it says "N hidden by the filters", and a section with every row hidden disappears. "24 of 57 initiatives" is shown next to Expand all.</li>
+      <li>Everything is Alpine. The whole story list is rendered once, so opening a section or changing a filter never makes a server call.</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>
