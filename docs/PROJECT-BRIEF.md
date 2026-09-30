@@ -1,5 +1,5 @@
 # Project brief — story-board
-Last refreshed: 2026-09-29 (SB-21)
+Last refreshed: 2026-09-29 (SB-24)
 
 ## What it is, and for whom
 A localhost Laravel app for one owner. It reads the `stories/` folder of every project that uses
@@ -10,7 +10,8 @@ daily history. Work not on the ref yet (unmerged branches, worktrees, untracked 
 labelled with where it lives, and never counts as status. Live Claude Code sessions are shown from
 their transcript metadata (never their messages). Each project's handbook shows how it has drifted
 from the kit. Each project's preflight runs are read from the cost CSVs the kit's meter leaves under
-`~/.claude/projects`.
+`~/.claude/projects`. Each project's journeys are drawn as a clickable map of screens, generated from its
+journey docs, story files and mockups, with no change to the project.
 
 ## Domain model
 - **Project**: a registered local checkout (`name`, `path`, `ref`, `is_enabled`; off hides it everywhere
@@ -41,6 +42,9 @@ from the kit. Each project's preflight runs are read from the cost CSVs the kit'
   it:` lines and a `git commit --only` of that file (SB-21).
 - **Mockup set** (not stored): an on-ref story whose snapshot mockup dir is `docs/mockups/<ID>` with
   options; state `awaiting | picked | other`, read by `ReadMockupSets`.
+- **Journey map** (not stored): a project's `docs/journeys/*.md` parsed into ordered steps, each with its
+  story, state, route and picture, by `ReadJourneyMap`. **Journey shot**: an SB-22 PNG listed in a working-tree
+  `journey-shots/<j>/manifest.json`, served only by manifest lookup (`ReadJourneyShots`).
 
 ## Features
 | Feature | Status | Doc |
@@ -60,6 +64,7 @@ from the kit. Each project's preflight runs are read from the cost CSVs the kit'
 | Production connection and metrics: read-only prod MySQL per project on `/projects`, presets and custom SQL | active (SB-17) | [doc](features/production-connection.md) |
 | Production dashboard: `/prod` projects × metrics with changes and trends, queued reads, nightly `board:prod-snapshot` | active (SB-18) | [doc](features/production-dashboard.md) |
 | Mockup gallery: `/mockups` cards awaiting-pick first, full-screen viewer, compare, Pick commits the story file | active (SB-21) | [doc](features/mockup-gallery.md) |
+| App map: `/p/{project}/map` journeys as screen flows, Alpine Back/Next, All flows with shared screens, SB-22 shots when present | active (SB-24) | [doc](features/app-map.md) |
 
 ## Journeys
 None yet. Every SB story so far is `Journey: none`.
@@ -68,8 +73,8 @@ None yet. Every SB story so far is `Journey: none`.
 - **built**: SB-2 registry and reader · SB-3 what needs me · SB-4 story and mockups · SB-5 not on main ·
   SB-7 app shell · SB-8 story modal · SB-9 all-projects dashboard · SB-10 single-project dashboard ·
   SB-11 live sessions · SB-12 manage projects · SB-14 project handbook · SB-15 stories by initiative ·
-  SB-16 preflight history · SB-17 production connection · SB-18 production dashboard · SB-21 mockup gallery
-- **approved**: SB-13 pick a mockup (overlaps SB-21's pick; needs rescoping) · SB-24 app map
+  SB-16 preflight history · SB-17 production connection · SB-18 production dashboard · SB-21 mockup gallery · SB-24 app map
+- **approved**: SB-13 pick a mockup (overlaps SB-21's pick; needs rescoping)
 - **draft**: SB-19 preflight columns picker · SB-20 preflight run errors · SB-22 journey shots · SB-23 current pane
 - **draft (parked)**: SB-6 the board on an always-live domain
 
@@ -113,12 +118,15 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
   [ADR-031](decisions/ADR-031-daily-production-snapshot-reads-in-process.md)
 - The board writes to a project only through `StoryPickWriter`: one pick, one file, one local commit, never
   pushed, refusing before any write → [ADR-032](decisions/ADR-032-the-board-writes-narrowly-one-pick-one-file-one-commit.md)
+- The app map is generated on the server from each project's own files; placeholders are one CSS element;
+  shots are a manifest lookup, never a path → [ADR-033](decisions/ADR-033-app-map-is-generated-server-side-from-project-files.md)
 - Preflight audit scope, audit cost record, build-artifact disposal (kit) → ADR-001 to ADR-003
 
 ## Current phase and what's next
-Phase 2: UI organisation. Phase 1 (SB-2 to SB-5) is built and retro'd. SB-7 to SB-12, SB-14 to SB-18
-and SB-21 are built (some on branches awaiting merge). Next: SB-24 (app map, in a parallel build), SB-23
-(Current pane), SB-22; decide SB-13's fate now that SB-21 picks; then the phase-2 retro and full sweep. SB-6 (hosted) stays
+Phase 2: UI organisation. Phase 1 (SB-2 to SB-5) is built and retro'd. SB-7 to SB-12, SB-14 to SB-18,
+SB-21 and SB-24 are built (some on branches awaiting merge). Next: SB-23 (Current pane, reuses
+`ReadJourneyShots`), SB-22 (journey shots; pin the manifest to what the map reads); decide on the
+`--text-thumb` token; decide SB-13's fate now that SB-21 picks; then the phase-2 retro and full sweep. SB-6 (hosted) stays
 parked. Backlog: F-2 (timeline of what was built), F-3 (meter tier labels), F-5 (preflight run record).
 
 ## Known limitations
@@ -149,4 +157,6 @@ parked. Backlog: F-2 (timeline of what was built), F-3 (meter tier labels), F-5 
 - A board pick shows as "Picked X · not pushed" in the gallery at once, but the story modal, story page and
   What needs me show it only after a push and refresh. Its `--no-verify` (skips project hooks) awaits owner
   confirmation. The gallery's Current pane is a placeholder until SB-23.
+- The app map puts every step of every journey in the page (coins: about 3.1 MB). Page weight is its cost driver.
+  Its `--text-thumb` type token awaits owner approval. Shots are read from the working tree, not the ref.
 - Dev server runs on port 8010 (coins holds 8000/8001). No git remote for this repo, by owner ruling.

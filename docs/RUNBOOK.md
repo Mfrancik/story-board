@@ -10,6 +10,12 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-09-29 — Project tabs scrolled 1 px vertically after they were made to scroll sideways
+Symptom: with a fifth tab (App map), the project tab row overflowed a 375 px phone. Making it `overflow-x-auto` fixed the width, but the row then also scrolled up and down by 1 px and showed a vertical scrollbar.
+Root cause: the active tab's underline uses `-mb-px` to sit on the row's `border-b`. Once the row is a scroll container, that 1 px overhang counts as overflow, and `overflow-x-auto` forces `overflow-y` to `auto` too.
+Fix: `pb-px` on the `<nav>` gives the underline room inside the scroll box. Each tab is also `shrink-0` so labels do not squash (`resources/views/components/board/project-tabs.blade.php`, SB-24). Any `-mb-px` tab row inside an overflow container needs the same padding.
+Log trail: none; visual. Found in the 375 px browser check (`tests/Browser/ProjectAppMapTest.php` "fits a 375px phone…").
+
 ## 2026-09-29 — "Same number of queries" tests failed once the sidebar counted mockups
 Symptom: after SB-21 added the sidebar's awaiting-pick count, `ProjectPageTest` "runs the same number of queries whatever the number of initiatives" (and its `ProjectStoriesTest` twin) failed: the first render ran more queries than the second.
 Root cause: an early `ReadMockupSets` cached whole sets. A cold render queried the snapshot and filled the cache, and a warm one skipped the query, so the query count depended on cache state rather than on the page.

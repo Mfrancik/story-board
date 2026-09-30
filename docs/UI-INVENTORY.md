@@ -55,5 +55,5 @@ Every reusable component. Consult BEFORE building any new UI (design-standards
 | MockupViewer | Livewire (Board) | Full-screen mockup viewer (SB-21): title bar, description, Where, Current/A/B/C tabs, width switch, side by side with per-pane picker and swap, Pick with reason | `/mockups/{project}/{story}` |
 | board/mockup-state | Blade | A mockup set's pick state: Awaiting pick (`pick` token), Picked X (`built`, "not pushed" for a local pick), or grey | MockupGallery, MockupViewer |
 | board/mockup-current | Blade | The viewer's Current pane placeholder until SB-23 captures the page as it is today | MockupViewer |
-| ProjectAppMap | Livewire (Board) | App map (SB-24): journeys as screens — All flows lanes with lettered shared screens, one flow's stage + step card + strip; Alpine Back/Next, ← →, full screen (`appMap` in resources/js) | `/p/{project}/map` |
+| ProjectAppMap | Livewire (Board) | App map (SB-24): All flows lanes with lettered shared screens, one flow's stage and strip; Alpine stepping (`appMap`) | `/p/{project}/map` |
 | board/map-screen | Blade | One app-map screen in browser chrome with its route: journey shot, drawn placeholder (`.map-page`), chosen mockup frame, awaiting pick, no mockup, not linked; `size` sm/lg | ProjectAppMap |
