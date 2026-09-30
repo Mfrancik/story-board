@@ -1,5 +1,5 @@
 # SB-22 — Journey tests save a screenshot per step
-Status: draft          Journey: none
+Status: approved         Journey: none
 Source: owner 2026-09-29 (/story): screenshots for the gallery's "current version" (SB-23) and the app map (SB-24)
 come from each project's Playwright journey tests, which already walk the flows with seeded dummy data (owner pick:
 "Journey tests capture them").
