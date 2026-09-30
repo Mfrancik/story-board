@@ -108,3 +108,29 @@ it('opens on All when no set is awaiting a pick', function () {
         ->assertAttribute('[data-filter-status="all"]', 'aria-pressed', 'true')
         ->assertScript(setCardVisible('fx/FX-1'), true);
 });
+
+it('opens on All for a project with nothing awaiting, even when another project has sets awaiting', function () {
+    $this->repo->story('FX-1', 'draft', 'demo', "## Design mockup gate\n- Chosen option: a\n- Why I chose it: owner pick 2026-09-29, fine\n");
+    $this->repo->commitAndPush();
+    $this->artisan('board:refresh', ['project' => 'fx'])->assertSuccessful();
+    $this->repo->syncProject();
+
+    $other = new GitFixture;
+    try {
+        $other->story('FY-1', 'draft', 'demo', "## Design mockup gate\n- Chosen option: _pending_\n- Why I chose it: _pending_\n");
+        $other->write('docs/mockups/FY-1/option-a.html', '<html><body>FY-1 a</body></html>');
+        $other->commitAndPush();
+        Project::factory()->create(['name' => 'fy', 'path' => $other->project, 'indexed_at' => now(), 'refresh_attempted_at' => now(), 'state' => Project::STATE_OK]);
+        $this->artisan('board:refresh', ['project' => 'fy'])->assertSuccessful();
+        $other->syncProject();
+
+        visit('/mockups?project=fx')->resize(1280, 800)
+            ->assertAttribute('[data-filter-status="all"]', 'aria-pressed', 'true')
+            ->assertScript(setCardVisible('fx/FX-1'), true);
+        visit('/mockups')->resize(1280, 800)
+            ->assertAttribute('[data-filter-status="awaiting"]', 'aria-pressed', 'true')
+            ->assertScript(setCardVisible('fy/FY-1'), true);
+    } finally {
+        $other->destroy();
+    }
+});

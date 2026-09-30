@@ -46,7 +46,9 @@ export function mockupFit(width) {
 export function mockupGallery(project, perGroup, sets) {
     return {
         sets,
-        status: sets.some((s) => s.state === 'awaiting') ? 'awaiting' : 'all',
+        // Only the sets the page opens on count: a project with none awaiting starts on All even when
+        // another project has some, or its first view would be the empty state.
+        status: sets.some((s) => s.state === 'awaiting' && (project === '' || s.project === project)) ? 'awaiting' : 'all',
         project,
         q: '',
         expanded: [],
