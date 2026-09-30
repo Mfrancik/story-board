@@ -1,5 +1,5 @@
 # SB-24 — App map
-Status: approved         Journey: none
+Status: built            Journey: none
 Source: owner 2026-09-29 (/story): *"would it be difficult, or cause a lot more work on the other sessions to design a
 wireframe of an app and where it currently stands with dummy data that we can flip through and navigate or see flows
 of how things move? … id want to see a mockup of what that'd look like."* Agreed approach: generated, not hand-drawn —

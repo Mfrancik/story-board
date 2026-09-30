@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\JourneyShotController;
 use App\Http\Controllers\MockupFileController;
 use App\Http\Controllers\MockupSetFileController;
 use App\Http\Middleware\EnsureProjectIsShown;
@@ -9,6 +10,7 @@ use App\Livewire\Board\ManageProjects;
 use App\Livewire\Board\MockupGallery;
 use App\Livewire\Board\MockupViewer;
 use App\Livewire\Board\ProductionDashboard;
+use App\Livewire\Board\ProjectAppMap;
 use App\Livewire\Board\ProjectHandbook;
 use App\Livewire\Board\ProjectPage;
 use App\Livewire\Board\ProjectPreflight;
@@ -43,6 +45,19 @@ Route::livewire('/p/{project:name}/stories', ProjectStories::class)
 Route::livewire('/p/{project:name}/preflight', ProjectPreflight::class)
     ->middleware(EnsureProjectIsShown::class)
     ->name('projects.preflight');
+
+// One project's app map (SB-24): its journeys as screens, built from its journey docs, story files, mockups
+// and — when it has adopted SB-22 — its journey shots. Stepping through a flow is Alpine.
+Route::livewire('/p/{project:name}/map', ProjectAppMap::class)
+    ->middleware(EnsureProjectIsShown::class)
+    ->name('projects.map');
+
+// One journey shot from a project's working tree (SB-24). `file` accepts anything, slashes included, so a
+// traversal reaches ReadJourneyShots and is refused and logged there: only names a manifest lists are served.
+Route::get('/shots/{project:name}/{journey}/{file}', JourneyShotController::class)
+    ->where('file', '.*')
+    ->middleware(EnsureProjectIsShown::class)
+    ->name('shots.file');
 
 // One story above its mockups (SB-4). Only a well-formed story ID reaches the component.
 Route::livewire('/p/{project:name}/s/{storyId}', StoryPage::class)

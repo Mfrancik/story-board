@@ -325,7 +325,7 @@ class ReadMockupSets
                                 'pickable' => $this->picks->refusalFor($markdown) === null,
                                 'chosen' => $gate['chosen'],
                                 'why' => $gate['why'],
-                                'where' => $this->where($markdown),
+                                'where' => self::where($markdown),
                             ];
                         }
                     }
@@ -343,9 +343,10 @@ class ReadMockupSets
 
     /**
      * The route or page the story names: the first path in its `- Routes:` line
-     * (`GET /mockups` → `/mockups`), or null when it names none.
+     * (`GET /mockups` → `/mockups`), or null when it names none. Public so the
+     * app map (SB-24) reads a step's route by the same rule the gallery's Where uses.
      */
-    private function where(string $markdown): ?string
+    public static function where(string $markdown): ?string
     {
         if (! preg_match('/^[ \t]*-[ \t]+Routes[^:\n]*:(.*)$/mi', $markdown, $line)) {
             return null;

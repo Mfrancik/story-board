@@ -36,9 +36,9 @@ Every reusable component. Consult BEFORE building any new UI (design-standards
 | board/switch | Blade | On/off `role="switch"` button showing the stored state; the caller's `wire:click` writes it; disables while `target` runs | ManageProjects, ProductionSettings |
 | board/confirm-modal | Blade | Alpine confirmation for a destructive action: `show` var, `title` slot, body, Cancel + red `confirm` button running `action` | ManageProjects (Remove), ProductionSettings (Remove connection) |
 | ProjectStories | Livewire (Board) | A project's stories by initiative (SB-15): initiatives on the left, stories tagged by status on the right; Alpine filters and Expand all; rows open StoryModal | `/p/{project}/stories` |
-| board/project-header | Blade | A project sub-page's header (breadcrumb, name, state, ref; slot extends the ref line) above project-tabs | ProjectHandbook, ProjectStories, ProjectPreflight |
+| board/project-header | Blade | A project sub-page's header (breadcrumb, name, state, ref; slot extends the ref line) above project-tabs | ProjectHandbook, ProjectStories, ProjectPreflight, ProjectAppMap |
 | ProjectHandbook | Livewire (Board) | A project's handbook (SB-14): section tabs over one reading card; each section loads on first open; kit badges; decisions in a modal | `/p/{project}/handbook` |
-| board/project-tabs | Blade | Dashboard / Handbook / Stories / Preflight page tabs under a project's header | ProjectPage, project-header |
+| board/project-tabs | Blade | Dashboard / Handbook / Stories / Preflight / App map page tabs under a project's header; scrolls sideways on a phone | ProjectPage, project-header |
 | board/kit-badge | Blade | How a file compares with the kit: Same as kit, Changed in this project, Missing, Project only; `dot` for a sub-tab | ProjectHandbook (standards, skills) |
 | board/handbook-empty | Blade | Empty state naming the project and the missing file, with a one-line hint slot | ProjectHandbook sections |
 | board/prose | Blade | Rendered markdown (from RenderStory::toHtml) in the reading width | ProjectHandbook sections, decision modal |
@@ -55,3 +55,5 @@ Every reusable component. Consult BEFORE building any new UI (design-standards
 | MockupViewer | Livewire (Board) | Full-screen mockup viewer (SB-21): title bar, description, Where, Current/A/B/C tabs, width switch, side by side with per-pane picker and swap, Pick with reason | `/mockups/{project}/{story}` |
 | board/mockup-state | Blade | A mockup set's pick state: Awaiting pick (`pick` token), Picked X (`built`, "not pushed" for a local pick), or grey | MockupGallery, MockupViewer |
 | board/mockup-current | Blade | The viewer's Current pane placeholder until SB-23 captures the page as it is today | MockupViewer |
+| ProjectAppMap | Livewire (Board) | App map (SB-24): journeys as screens — All flows lanes with lettered shared screens, one flow's stage + step card + strip; Alpine Back/Next, ← →, full screen (`appMap` in resources/js) | `/p/{project}/map` |
+| board/map-screen | Blade | One app-map screen in browser chrome with its route: journey shot, drawn placeholder (`.map-page`), chosen mockup frame, awaiting pick, no mockup, not linked; `size` sm/lg | ProjectAppMap |

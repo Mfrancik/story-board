@@ -49,6 +49,11 @@
     /* The one data series of a chart — the first palette slot, one chart palette (owner 2026-09-29; SB-16 preflight trend lines, points and the hovered row's tint). */
     --color-series: var(--color-series-1);
 
+    /* Type inside an app-map thumbnail (SB-24): a whole page drawn ~8rem wide, so its route and labels are
+       set at half the xs size, as in the approved mockup. Only for text inside a scaled-down screen. */
+    --text-thumb: 0.5rem;
+    --text-thumb--line-height: 1rem;
+
     --color-accent: var(--color-neutral-800);
     --color-accent-content: var(--color-neutral-800);
     --color-accent-foreground: var(--color-white);
@@ -121,6 +126,29 @@ select:focus[data-flux-control] {
     transform-origin: top left;
     pointer-events: none;
     border: 0;
+}
+
+/* The app map's drawn placeholder page (SB-24): a built screen with no journey shot yet, as a greyscale
+   wireframe — a top bar, a heading and a 3×2 grid of cards — painted by one element's backgrounds. Coins
+   draws hundreds of these per page load, so it is CSS here, not two dozen elements per screen. */
+.map-page {
+    --map-fill: var(--color-zinc-100);
+    --map-ink: var(--color-zinc-300);
+    background-color: var(--color-white);
+    background-image:
+        linear-gradient(var(--map-fill), var(--map-fill)), linear-gradient(var(--map-ink), var(--map-ink)),
+        linear-gradient(var(--map-fill), var(--map-fill)), linear-gradient(var(--map-fill), var(--map-fill)),
+        linear-gradient(var(--map-fill), var(--map-fill)), linear-gradient(var(--map-fill), var(--map-fill)),
+        linear-gradient(var(--map-fill), var(--map-fill)), linear-gradient(var(--map-fill), var(--map-fill));
+    background-position: 0 0, 8% 17%, 8% 39%, 50% 39%, 92% 39%, 8% 86%, 50% 86%, 92% 86%;
+    background-size: 100% 9%, 30% 5%, 27% 28%, 27% 28%, 27% 28%, 27% 28%, 27% 28%, 27% 28%;
+    background-repeat: no-repeat;
+}
+
+.dark .map-page {
+    --map-fill: var(--color-zinc-800);
+    --map-ink: var(--color-zinc-600);
+    background-color: var(--color-zinc-900);
 }
 
 /* The story modal (SB-8, design A): about 90% of the viewport, a bottom sheet a little taller on phones. */
