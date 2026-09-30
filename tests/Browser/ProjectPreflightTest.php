@@ -92,3 +92,200 @@ it('is reached from the project tabs and fits 375px with no sideways scroll', fu
         ->assertScript('document.documentElement.scrollWidth <= window.innerWidth', true)
         ->assertNoJavaScriptErrors();
 });
+
+/*
+ * SB-19: the Columns picker. Pure Alpine over the page's own markup, remembered per project in
+ * this browser's localStorage under PREFLIGHT_COLUMNS_KEY + project name.
+ */
+
+/** The localStorage key prefix the picker saves under; the project's name completes it. */
+const PREFLIGHT_COLUMNS_KEY = 'board.preflight.hidden-columns.';
+
+/** Script: how many of a column's header and cells a person can see (1 header + 5 runs when shown). */
+function preflightColumnShown(string $col): string
+{
+    return "[...document.querySelectorAll('[data-col={$col}]')].filter(e => e.offsetParent !== null).length";
+}
+
+/** Script: every column's header shown, as a comma list of its keys, in table order. */
+const PREFLIGHT_HEADERS = "[...document.querySelectorAll('thead th[data-col]')].filter(e => e.offsetParent !== null).map(e => e.dataset.col).join()";
+
+/** Script: the picker's checkboxes as key:checked:disabled, in list order. */
+const PREFLIGHT_TOGGLES = "[...document.querySelectorAll('[data-col-toggle]')].map(e => e.dataset.colToggle + ':' + (e.checked ? 1 : 0) + ':' + (e.disabled ? 1 : 0)).join()";
+
+const PREFLIGHT_ALL_COLUMNS = 'when,branch,where,mode,wall,turns,tools,tokens,share,pack,tier,tests';
+
+it('Given the Preflight page loads, then a Columns control lists every column except that When is disabled and always ticked', function () {
+    $page = visit('/p/coins/preflight')->resize(1280, 900);
+
+    $page->assertScript("document.querySelector('[data-columns-button]').textContent.replace(/\\s+/g, ' ').trim()", 'Columns')
+        ->assertMissing('[data-columns-panel]')
+        ->click('[data-columns-button]')
+        ->assertVisible('[data-columns-panel]')
+        ->assertScript(PREFLIGHT_TOGGLES, 'when:1:1,branch:1:0,where:1:0,mode:1:0,wall:1:0,turns:1:0,tools:1:0,tokens:1:0,share:1:0,pack:1:0,tier:1:0,tests:1:0')
+        ->assertSeeIn('[data-columns-panel]', 'Tool calls')
+        ->assertSeeIn('[data-columns-panel]', 'Audit tier')
+        // The disabled box says why, where a person hovering it will read it.
+        ->assertAttributeContains('[data-col-option="when"]', 'title', 'always shown')
+        ->assertScript(PREFLIGHT_HEADERS, PREFLIGHT_ALL_COLUMNS)
+        ->assertNoJavaScriptErrors();
+});
+
+it('Given Tokens is unticked, then the Tokens header and every Tokens cell are hidden, without a server request', function () {
+    $page = visit('/p/coins/preflight')->resize(1280, 900);
+
+    $page->assertScript(preflightColumnShown('tokens'), 6);
+    $before = $page->script(PREFLIGHT_FETCHES);
+
+    $page->click('[data-columns-button]')
+        ->click('[data-col-toggle="tokens"]')
+        ->assertScript(preflightColumnShown('tokens'), 0)
+        ->assertScript(PREFLIGHT_HEADERS, 'when,branch,where,mode,wall,turns,tools,share,pack,tier,tests')
+        // Every other column is untouched: each still has its header and its 5 cells.
+        ->assertScript(preflightColumnShown('turns'), 6)
+        ->assertScript(PREFLIGHT_FETCHES, $before)
+        ->assertNoJavaScriptErrors();
+});
+
+it('Given Tokens is ticked again, then the column shows again', function () {
+    $page = visit('/p/coins/preflight')->resize(1280, 900);
+
+    $page->click('[data-columns-button]')
+        ->click('[data-col-toggle="tokens"]')
+        ->assertScript(preflightColumnShown('tokens'), 0)
+        ->click('[data-col-toggle="tokens"]')
+        ->assertScript(preflightColumnShown('tokens'), 6)
+        ->assertScript(PREFLIGHT_HEADERS, PREFLIGHT_ALL_COLUMNS)
+        ->assertScript("document.querySelector('[data-col-toggle=tokens]').checked", true)
+        ->assertNoJavaScriptErrors();
+});
+
+it('Given two columns are hidden, then the control reads "Columns · 2 hidden"', function () {
+    $page = visit('/p/coins/preflight')->resize(1280, 900);
+
+    $page->click('[data-columns-button]')
+        ->click('[data-col-toggle="turns"]')
+        ->assertSeeIn('[data-columns-button]', 'Columns · 1 hidden')
+        ->click('[data-col-toggle="pack"]')
+        ->assertScript("document.querySelector('[data-columns-button]').textContent.replace(/\\s+/g, ' ').trim()", 'Columns · 2 hidden')
+        ->assertNoJavaScriptErrors();
+});
+
+it('Given columns were hidden and the page is reloaded, then the same columns are still hidden', function () {
+    $page = visit('/p/coins/preflight')->resize(1280, 900);
+
+    $page->click('[data-columns-button]')
+        ->click('[data-col-toggle="turns"]')
+        ->click('[data-col-toggle="tools"]')
+        ->click('[data-col-toggle="pack"]')
+        ->refresh()
+        ->assertScript(PREFLIGHT_HEADERS, 'when,branch,where,mode,wall,tokens,share,tier,tests')
+        ->assertScript(preflightColumnShown('tools'), 0)
+        ->assertSeeIn('[data-columns-button]', 'Columns · 3 hidden')
+        ->click('[data-columns-button]')
+        ->assertScript("document.querySelector('[data-col-toggle=tools]').checked", false)
+        ->assertNoJavaScriptErrors();
+});
+
+it('Given hidden columns for coins, when another project\'s Preflight page opens, then all its columns show', function () {
+    $fresh = ['indexed_at' => now(), 'refresh_attempted_at' => now(), 'state' => Project::STATE_OK];
+    Project::factory()->create(['name' => 'acme', 'path' => '/Users/me/Code/acme', ...$fresh]);
+    $this->claude->preflightCsv(SessionFixture::folderFor('/Users/me/Code/acme'), [
+        'ts,branch,mode,wall_s,turns,tool_calls,tokens_in,tokens_out,subagent_tokens,pack_bytes,audit_model',
+        now()->subDay()->utc()->format('Y-m-d\TH:i:s\Z').',main,scoped,60,1,1,100,1,0,0,sonnet',
+    ]);
+    $page = visit('/p/coins/preflight')->resize(1280, 900);
+
+    $page->click('[data-columns-button]')
+        ->click('[data-col-toggle="tokens"]')
+        ->navigate('/p/acme/preflight')
+        ->assertScript(PREFLIGHT_HEADERS, PREFLIGHT_ALL_COLUMNS)
+        ->assertScript("document.querySelector('[data-columns-button]').textContent.replace(/\\s+/g, ' ').trim()", 'Columns')
+        // And coins kept its own choice: the key is per project, not one shared setting.
+        ->navigate('/p/coins/preflight')
+        ->assertScript(preflightColumnShown('tokens'), 0)
+        ->assertNoJavaScriptErrors();
+});
+
+it('Given Reset columns is clicked, then every column shows and the saved choice is cleared', function () {
+    $page = visit('/p/coins/preflight')->resize(1280, 900);
+
+    $page->click('[data-columns-button]')
+        ->click('[data-col-toggle="turns"]')
+        ->click('[data-col-toggle="tier"]')
+        ->assertScript("localStorage.getItem('".PREFLIGHT_COLUMNS_KEY."coins')", '["turns","tier"]')
+        ->click('[data-columns-reset]')
+        ->assertScript(PREFLIGHT_HEADERS, PREFLIGHT_ALL_COLUMNS)
+        ->assertScript("document.querySelector('[data-columns-button]').textContent.replace(/\\s+/g, ' ').trim()", 'Columns')
+        ->assertScript("localStorage.getItem('".PREFLIGHT_COLUMNS_KEY."coins')", null)
+        ->refresh()
+        ->assertScript(PREFLIGHT_HEADERS, PREFLIGHT_ALL_COLUMNS)
+        ->assertNoJavaScriptErrors();
+});
+
+it('Given localStorage throws, then the page renders all columns and the control still hides and shows columns', function () {
+    $page = visit('/p/coins/preflight')->resize(1280, 900);
+    // A saved choice exists, so "all columns" below proves the read failed safe rather than found nothing.
+    $page->click('[data-columns-button]')->click('[data-col-toggle="tokens"]')->assertScript(preflightColumnShown('tokens'), 0);
+
+    // Storage blocked the way a browser blocks it: a SecurityError from every call this page's own
+    // code makes. Flux's `flux.appearance` reads are spared: Flux reads that key with no guard (in
+    // <head> and again on alpine:init), which is vendor code outside this story and would fail
+    // assertNoJavaScriptErrors for a reason that is not ours.
+    $page->page()->context()->addInitScript(<<<'JS'
+        for (const m of ['getItem', 'setItem', 'removeItem']) {
+            const real = Storage.prototype[m];
+            Storage.prototype[m] = function (key, ...rest) {
+                if (String(key).startsWith('flux.')) return real.call(this, key, ...rest);
+                throw new DOMException('The operation is insecure.', 'SecurityError');
+            };
+        }
+    JS);
+
+    $page->refresh()
+        ->assertScript("(() => { try { localStorage.getItem('x'); return 'readable'; } catch (e) { return e.name; } })()", 'SecurityError')
+        ->assertScript(PREFLIGHT_HEADERS, PREFLIGHT_ALL_COLUMNS)
+        ->assertScript(preflightColumnShown('tokens'), 6)
+        ->click('[data-columns-button]')
+        ->click('[data-col-toggle="tokens"]')
+        ->assertScript(preflightColumnShown('tokens'), 0)
+        ->assertSeeIn('[data-columns-button]', 'Columns · 1 hidden')
+        ->click('[data-col-toggle="tokens"]')
+        ->assertScript(preflightColumnShown('tokens'), 6)
+        ->click('[data-col-toggle="pack"]')
+        ->click('[data-columns-reset]')
+        ->assertScript(PREFLIGHT_HEADERS, PREFLIGHT_ALL_COLUMNS)
+        ->assertNoJavaScriptErrors();
+});
+
+it('Given a filter (mode = scoped) and a hidden column, then both apply together', function () {
+    $page = visit('/p/coins/preflight')->resize(1280, 900);
+
+    $page->click('[data-mode-filter="scoped"]')
+        ->click('[data-columns-button]')
+        ->click('[data-col-toggle="tokens"]')
+        ->assertScript(PREFLIGHT_VISIBLE, 'main,feat/GS-29-30-31-fields-decide')
+        ->assertSeeIn('[data-runs-shown]', '2 of 5 runs')
+        // The header plus the two scoped runs' cells; the hidden rows' cells stay hidden too.
+        ->assertScript(preflightColumnShown('turns'), 3)
+        ->assertScript(preflightColumnShown('tokens'), 0)
+        // The trend strip still follows the filter, not the columns.
+        ->assertSeeIn('[data-trend="runs"] [data-current]', '1')
+        ->click('[data-mode-filter="all"]')
+        ->assertScript(preflightColumnShown('turns'), 6)
+        ->assertScript(preflightColumnShown('tokens'), 0)
+        ->assertNoJavaScriptErrors();
+});
+
+it('Given a 375 px viewport, then the Columns list opens without horizontal page scroll', function () {
+    $page = visit('/p/coins/preflight')->resize(375, 812);
+
+    $page->click('[data-columns-button]')
+        ->assertVisible('[data-columns-panel]')
+        ->assertScript('document.documentElement.scrollWidth <= window.innerWidth', true)
+        ->assertScript("(() => { const r = document.querySelector('[data-columns-panel]').getBoundingClientRect(); return r.left >= 0 && r.right <= window.innerWidth; })()", true)
+        ->click('[data-col-toggle="branch"]')
+        ->assertScript(preflightColumnShown('branch'), 0)
+        ->assertScript('document.documentElement.scrollWidth <= window.innerWidth', true)
+        ->assertNoJavaScriptErrors();
+});

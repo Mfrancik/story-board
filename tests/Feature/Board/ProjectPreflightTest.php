@@ -307,3 +307,33 @@ it('adds a Preflight tab to the project tabs, marked current on this page', func
         ->toMatch('/data-project-tab="preflight"/')
         ->not->toMatch('/data-project-tab="preflight"[^>]*aria-current/');
 });
+
+it('Given the page loads, then every th and td of the ledger carries its data-col key, in the order the Columns control lists them (SB-19)', function () {
+    $this->claude->preflightCsv($this->folder, [
+        PREFLIGHT_OLD_HEADER,
+        '2026-09-12T18:53:34Z,a,scoped,187,14,13,100,1,0,0,sonnet',
+        '2026-09-11T18:53:34Z,b,full,187,14,13,100,1,0,0,opus+sonnet',
+    ]);
+    $keys = ['when', 'branch', 'where', 'mode', 'wall', 'turns', 'tools', 'tokens', 'share', 'pack', 'tier', 'tests'];
+
+    $html = $this->get('/p/story-board/preflight')->assertOk()->getContent();
+
+    preg_match('/<thead\b.*?<\/thead>/s', $html, $thead);
+    preg_match_all('/<th\b([^>]*)>/', $thead[0] ?? '', $ths);
+    $headerKeys = array_map(fn (string $attrs) => preg_match('/data-col="([a-z]+)"/', $attrs, $m) ? $m[1] : null, $ths[1]);
+    expect($headerKeys)->toBe($keys);
+
+    preg_match_all('/<tr\b[^>]*data-run="\d+"[^>]*>(.*?)<\/tr>/s', $html, $rows);
+    expect($rows[1])->toHaveCount(2);
+    foreach ($rows[1] as $row) {
+        preg_match_all('/<td\b([^>]*)>/', $row, $tds);
+        $cellKeys = array_map(fn (string $attrs) => preg_match('/data-col="([a-z]+)"/', $attrs, $m) ? $m[1] : null, $tds[1]);
+        expect($cellKeys)->toBe($keys);
+    }
+
+    // The picker offers the same keys in the same order, and nothing on it talks to the server.
+    preg_match_all('/data-col-toggle="([a-z]+)"/', $html, $toggles);
+    expect($toggles[1])->toBe($keys)
+        ->and($html)->not->toMatch('/data-col-toggle="[a-z]+"[^>]*wire:/')
+        ->and($html)->toMatch('/data-col-toggle="when"[^>]*disabled/');
+});

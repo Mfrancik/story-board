@@ -1,10 +1,49 @@
 /** A day in ms: the trend windows and the charts' 30-day mark count in days. */
 const DAY = 86400000;
 
+/** Where the Columns picker (SB-19) saves a project's hidden columns: this prefix + the project's name. */
+const COLUMNS_KEY = 'board.preflight.hidden-columns.';
+
+/**
+ * The hidden columns saved for `key`, keeping only keys that can still be hidden. Storage is a
+ * per-viewer convenience: private windows and blocked site data make it throw, and an old or
+ * hand-edited value may not parse, so any failure means "nothing saved" and every column shows.
+ *
+ * @param {string} key
+ * @param {string[]} hideable
+ * @returns {string[]}
+ */
+function readHiddenColumns(key, hideable) {
+    try {
+        const saved = JSON.parse(window.localStorage.getItem(key) ?? '[]');
+        return Array.isArray(saved) ? hideable.filter((c) => saved.includes(c)) : [];
+    } catch {
+        return [];
+    }
+}
+
+/**
+ * Save the hidden columns for `key`, or drop the key when none are hidden, so "all shown" and
+ * "never chosen" are the same state. A failed write is ignored: the choice still applies on this
+ * page, it just won't survive a reload.
+ *
+ * @param {string} key
+ * @param {string[]} hidden
+ */
+function writeHiddenColumns(key, hidden) {
+    try {
+        if (hidden.length) window.localStorage.setItem(key, JSON.stringify(hidden));
+        else window.localStorage.removeItem(key);
+    } catch {
+        // Storage unavailable: nothing to recover, and nothing the server needs to know (no log by design).
+    }
+}
+
 /**
  * The Preflight tab's client side (SB-16, option A): filters, trend figures, two inline-SVG line
- * charts and the row/chart hover link, all over the runs the server put in the page. Pure UI: the
- * CSVs are read once on page load, and nothing here calls the server.
+ * charts and the row/chart hover link, all over the runs the server put in the page, plus the
+ * Columns picker (SB-19) that hides ledger columns and remembers them per project in this browser.
+ * Pure UI: the CSVs are read once on page load, and nothing here calls the server.
  *
  * The figures and formats mirror App\Actions\Board\ReadPreflightHistory, which renders the same
  * values into the page first; this recomputes them only when a filter narrows the runs.
@@ -12,8 +51,10 @@ const DAY = 86400000;
  * @param {Array<{id:number, ts:number, branch:?string, where:string, mode:?string, wall:?number, tokens:?number, flagged:boolean}>} runs newest first
  * @param {number} now the server's "now" in ms, so the 30-day windows match the server-rendered figures
  * @param {string} main the `where` of a run in the project's own checkout
+ * @param {string} project the project's name, which keys its saved columns so each project keeps its own
+ * @param {string[]} hideable the `data-col` keys the picker may hide, in table order (every column but When)
  */
-export function preflightHistory(runs, now, main) {
+export function preflightHistory(runs, now, main, project, hideable) {
     // One series colour per chart; literal class names so Tailwind generates them.
     const GRID = 'stroke-zinc-100 dark:stroke-zinc-800';
     const BASE = 'stroke-zinc-300 dark:stroke-zinc-700';
@@ -25,6 +66,7 @@ export function preflightHistory(runs, now, main) {
     // The x domain spans every run, not just the visible ones, so a filter never rescales time.
     const first = runs.length ? Math.min(...runs.map((r) => r.ts)) : now - 60 * DAY;
     const domain0 = Math.min(first, now - 30 * DAY) - DAY / 2;
+    const columnsKey = COLUMNS_KEY + project;
 
     return {
         runs,
@@ -34,6 +76,8 @@ export function preflightHistory(runs, now, main) {
         hoverId: null,
         hoverChart: null,
         w: { wall: 0, tokens: 0 },
+        colsOpen: false,
+        hiddenCols: readHiddenColumns(columnsKey, hideable),
 
         /** Watch each chart's width: the SVGs are drawn at their real size so the text never stretches. */
         init() {
@@ -58,6 +102,24 @@ export function preflightHistory(runs, now, main) {
         /** Visible runs whose audit tier is not the pinned one (the "check the tier" flags). */
         get flaggedCount() { return this.visible.filter((r) => r.flagged).length; },
         modeCount(m) { return m === 'all' ? this.runs.length : this.runs.filter((r) => r.mode === m).length; },
+
+        // ---- columns picker (SB-19): independent of the filters, which scope rows, not columns ----
+        /** Whether column `col` is shown. A key outside `hideable` (When) always is. */
+        shown(col) { return !this.hiddenCols.includes(col); },
+        get hiddenCount() { return this.hiddenCols.length; },
+        get columnsLabel() { return this.hiddenCount ? `Columns · ${this.hiddenCount} hidden` : 'Columns'; },
+        /** Flip one column and save the choice. Rebuilt from `hideable` so the saved list stays in table order. */
+        toggleColumn(col) {
+            if (!hideable.includes(col)) return;
+            const hide = this.shown(col);
+            this.hiddenCols = hideable.filter((c) => (c === col ? hide : this.hiddenCols.includes(c)));
+            writeHiddenColumns(columnsKey, this.hiddenCols);
+        },
+        /** Show every column and forget the saved choice for this project. */
+        resetColumns() {
+            this.hiddenCols = [];
+            writeHiddenColumns(columnsKey, []);
+        },
 
         // ---- formatting (the same rules as ReadPreflightHistory::wall/tokens) ----
         fmtWall(s) {

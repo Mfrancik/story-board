@@ -7,6 +7,10 @@
     Every run is in this markup once, rendered by the server (dates in UTC until Alpine rewrites them in the viewer's
     zone). The filters, figures, charts and hover are Alpine (resources/js/preflight-history.js) over the same runs,
     passed in as data, so nothing on this page calls the server after it loads.
+
+    SB-19 adds the Columns picker to the filter row: every th and td carries its `data-col` key, and a column the
+    viewer unticks is hidden by Alpine (x-show) and remembered in this browser only. When is the timeline's key and
+    cannot be hidden.
 --}}
 @use('App\Actions\Board\ReadPreflightHistory', 'History')
 @php
@@ -24,9 +28,14 @@
         'tokens' => ['Median tokens', fn ($f) => History::tokens($f['tokens'])],
     ];
     $num = fn (?int $n) => $n === null ? '—' : number_format($n);
+    // The ledger's columns in table order: each key is the `data-col` on its th and tds and a checkbox in the picker.
+    $columns = ['when' => 'When', 'branch' => 'Branch', 'where' => 'Where', 'mode' => 'Mode', 'wall' => 'Wall', 'turns' => 'Turns',
+        'tools' => 'Tool calls', 'tokens' => 'Tokens', 'share' => 'Subagent', 'pack' => 'Pack', 'tier' => 'Audit tier', 'tests' => 'Tests'];
+    // When stays: without it the rows are figures with no place on the timeline.
+    $hideable = array_values(array_diff(array_keys($columns), ['when']));
 @endphp
 <main class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-10 lg:py-10"
-    @if ($count > 0) x-data="preflightHistory(@js($data), {{ $now->getTimestampMs() }}, @js(History::MAIN))" @endif>
+    @if ($count > 0) x-data="preflightHistory(@js($data), {{ $now->getTimestampMs() }}, @js(History::MAIN), @js($model->name), @js($hideable))" @endif>
 
     <x-board.project-header :model="$model" page="Preflight" current="preflight">
         @if ($count > 0)
@@ -80,6 +89,32 @@
                         <option value="worktrees">Worktrees</option>
                     </select>
                 </label>
+                {{-- Columns picker (SB-19): a popover of checkboxes. Anchored to its button (x-anchor flips and shifts it to
+                     stay on screen at 375px). Toggling is Alpine only; the choice is saved per project in this browser. --}}
+                <div class="relative" x-on:keydown.escape="colsOpen = false">
+                    <button type="button" data-columns-button x-ref="colsButton" x-on:click="colsOpen = ! colsOpen" x-bind:aria-expanded="colsOpen" aria-expanded="false" aria-controls="preflight-columns"
+                        class="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium whitespace-nowrap hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700">
+                        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 5h16v14H4zM9.5 5v14M14.5 5v14"/></svg>
+                        <span x-text="columnsLabel">Columns</span>
+                    </button>
+                    <div id="preflight-columns" data-columns-panel x-show="colsOpen" x-cloak x-on:click.outside="colsOpen = false" x-anchor.bottom-start.offset.4="$refs.colsButton"
+                        role="group" aria-label="Columns shown" class="absolute z-20 w-56 rounded-lg border border-zinc-200 bg-white p-1 text-sm shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
+                        @foreach ($columns as $col => $label)
+                            <label data-col-option="{{ $col }}" @if ($col === 'when') title="When is always shown: it places each run on the timeline" @endif
+                                @class(['flex items-center gap-2 rounded-md px-2 py-1.5', 'cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800' => $col !== 'when', 'text-zinc-400 dark:text-zinc-500' => $col === 'when'])>
+                                @if ($col === 'when')
+                                    <input type="checkbox" data-col-toggle="when" checked disabled class="size-4 accent-accent">
+                                @else
+                                    <input type="checkbox" data-col-toggle="{{ $col }}" checked x-bind:checked="shown(@js($col))" x-on:change="toggleColumn(@js($col))" class="size-4 accent-accent">
+                                @endif
+                                {{ $label }}
+                            </label>
+                        @endforeach
+                        <div class="mt-1 border-t border-zinc-100 px-2 pt-1.5 pb-1 dark:border-zinc-800">
+                            <button type="button" data-columns-reset x-on:click="resetColumns()" class="text-xs text-zinc-500 underline underline-offset-4 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Reset columns</button>
+                        </div>
+                    </div>
+                </div>
                 <button type="button" x-show="filtered" x-cloak x-on:click="reset()" class="text-xs text-zinc-500 underline underline-offset-4 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Clear filters</button>
                 <p data-runs-shown class="ml-auto text-xs text-zinc-500 tabular-nums dark:text-zinc-400"><span x-text="visible.length">{{ $count }}</span> of {{ $count }} runs</p>
             </div>
@@ -121,21 +156,23 @@
 
             {{-- The ledger: every run, newest first. Scrolls inside its own box on narrow screens and past most of the viewport. --}}
             <div x-show="visible.length" data-ledger class="max-h-[70vh] overflow-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-                <table class="w-full min-w-5xl text-sm">
+                {{-- The full ledger keeps its approved 5xl floor. With columns hidden it shrinks to its content so the table
+                     really narrows, and the box still scrolls sideways if that is wider than the screen. --}}
+                <table class="w-full min-w-5xl text-sm" x-bind:class="{ 'min-w-5xl': ! hiddenCount, 'min-w-max': hiddenCount }">
                     <thead class="sticky top-0 z-10 bg-zinc-50/95 text-xs text-zinc-500 backdrop-blur dark:bg-zinc-950/95 dark:text-zinc-400">
                         <tr class="border-b border-zinc-200 whitespace-nowrap dark:border-zinc-800">
-                            <th scope="col" class="sticky left-0 bg-zinc-50 px-3 py-2 text-left font-medium dark:bg-zinc-950">When</th>
-                            <th scope="col" class="px-3 py-2 text-left font-medium">Branch</th>
-                            <th scope="col" class="px-3 py-2 text-left font-medium">Where</th>
-                            <th scope="col" class="px-3 py-2 text-left font-medium">Mode</th>
-                            <th scope="col" class="px-3 py-2 text-right font-medium">Wall</th>
-                            <th scope="col" class="px-3 py-2 text-right font-medium">Turns</th>
-                            <th scope="col" class="px-3 py-2 text-right font-medium">Tool calls</th>
-                            <th scope="col" class="px-3 py-2 text-right font-medium">Tokens</th>
-                            <th scope="col" class="px-3 py-2 text-right font-medium" title="Share of the tokens spent inside subagents">Subagent</th>
-                            <th scope="col" class="px-3 py-2 text-right font-medium">Pack</th>
-                            <th scope="col" class="px-3 py-2 text-left font-medium">Audit tier</th>
-                            <th scope="col" class="bg-zinc-100 px-3 py-2 text-right font-medium text-zinc-300 dark:bg-zinc-900 dark:text-zinc-600">Tests <span class="block text-xs font-normal">needs F-5</span></th>
+                            <th scope="col" data-col="when" class="sticky left-0 bg-zinc-50 px-3 py-2 text-left font-medium dark:bg-zinc-950">When</th>
+                            <th scope="col" data-col="branch" x-show="shown('branch')" class="px-3 py-2 text-left font-medium">Branch</th>
+                            <th scope="col" data-col="where" x-show="shown('where')" class="px-3 py-2 text-left font-medium">Where</th>
+                            <th scope="col" data-col="mode" x-show="shown('mode')" class="px-3 py-2 text-left font-medium">Mode</th>
+                            <th scope="col" data-col="wall" x-show="shown('wall')" class="px-3 py-2 text-right font-medium">Wall</th>
+                            <th scope="col" data-col="turns" x-show="shown('turns')" class="px-3 py-2 text-right font-medium">Turns</th>
+                            <th scope="col" data-col="tools" x-show="shown('tools')" class="px-3 py-2 text-right font-medium">Tool calls</th>
+                            <th scope="col" data-col="tokens" x-show="shown('tokens')" class="px-3 py-2 text-right font-medium">Tokens</th>
+                            <th scope="col" data-col="share" x-show="shown('share')" class="px-3 py-2 text-right font-medium" title="Share of the tokens spent inside subagents">Subagent</th>
+                            <th scope="col" data-col="pack" x-show="shown('pack')" class="px-3 py-2 text-right font-medium">Pack</th>
+                            <th scope="col" data-col="tier" x-show="shown('tier')" class="px-3 py-2 text-left font-medium">Audit tier</th>
+                            <th scope="col" data-col="tests" x-show="shown('tests')" class="bg-zinc-100 px-3 py-2 text-right font-medium text-zinc-300 dark:bg-zinc-900 dark:text-zinc-600">Tests <span class="block text-xs font-normal">needs F-5</span></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -145,16 +182,16 @@
                                 <td data-col="when" class="sticky left-0 bg-white px-3 py-1.5 whitespace-nowrap tabular-nums group-hover:bg-zinc-50 dark:bg-zinc-900 dark:group-hover:bg-zinc-800">
                                     <time datetime="{{ $r['ts']->toIso8601ZuluString() }}"><span x-text="day({{ $i }})">{{ $r['ts']->format('M j') }}</span> <span class="text-zinc-400" x-text="time({{ $i }})">{{ $r['ts']->format('H:i') }}</span></time>
                                 </td>
-                                <td data-col="branch" class="px-3 py-1.5"><span class="block max-w-68 truncate font-mono text-xs" title="{{ $r['branch'] }}">{{ $r['branch'] ?? '—' }}</span></td>
-                                <td data-col="where" class="px-3 py-1.5 whitespace-nowrap text-zinc-500 dark:text-zinc-400">{{ $r['where'] }}</td>
-                                <td data-col="mode" @class(['px-3 py-1.5', 'text-zinc-400' => $r['mode'] === null])>{{ $r['mode'] ?? '—' }}</td>
-                                <td data-col="wall" class="px-3 py-1.5 text-right font-medium tabular-nums">{{ History::wall($r['wall']) }}</td>
-                                <td data-col="turns" class="px-3 py-1.5 text-right tabular-nums">{{ $num($r['turns']) }}</td>
-                                <td data-col="tools" class="px-3 py-1.5 text-right tabular-nums">{{ $num($r['tools']) }}</td>
-                                <td data-col="tokens" class="px-3 py-1.5 text-right font-medium tabular-nums" title="{{ $num($r['tokens_in']) }} in, {{ $num($r['tokens_out']) }} out">{{ History::tokens($r['tokens']) }}</td>
-                                <td data-col="share" class="px-3 py-1.5 text-right tabular-nums">{{ $r['share'] === null ? '—' : $r['share'].'%' }}</td>
-                                <td data-col="pack" class="px-3 py-1.5 text-right whitespace-nowrap text-zinc-500 tabular-nums dark:text-zinc-400">{{ History::pack($r['pack']) }}</td>
-                                <td data-col="tier" class="px-3 py-1.5">
+                                <td data-col="branch" x-show="shown('branch')" class="px-3 py-1.5"><span class="block max-w-68 truncate font-mono text-xs" title="{{ $r['branch'] }}">{{ $r['branch'] ?? '—' }}</span></td>
+                                <td data-col="where" x-show="shown('where')" class="px-3 py-1.5 whitespace-nowrap text-zinc-500 dark:text-zinc-400">{{ $r['where'] }}</td>
+                                <td data-col="mode" x-show="shown('mode')" @class(['px-3 py-1.5', 'text-zinc-400' => $r['mode'] === null])>{{ $r['mode'] ?? '—' }}</td>
+                                <td data-col="wall" x-show="shown('wall')" class="px-3 py-1.5 text-right font-medium tabular-nums">{{ History::wall($r['wall']) }}</td>
+                                <td data-col="turns" x-show="shown('turns')" class="px-3 py-1.5 text-right tabular-nums">{{ $num($r['turns']) }}</td>
+                                <td data-col="tools" x-show="shown('tools')" class="px-3 py-1.5 text-right tabular-nums">{{ $num($r['tools']) }}</td>
+                                <td data-col="tokens" x-show="shown('tokens')" class="px-3 py-1.5 text-right font-medium tabular-nums" title="{{ $num($r['tokens_in']) }} in, {{ $num($r['tokens_out']) }} out">{{ History::tokens($r['tokens']) }}</td>
+                                <td data-col="share" x-show="shown('share')" class="px-3 py-1.5 text-right tabular-nums">{{ $r['share'] === null ? '—' : $r['share'].'%' }}</td>
+                                <td data-col="pack" x-show="shown('pack')" class="px-3 py-1.5 text-right whitespace-nowrap text-zinc-500 tabular-nums dark:text-zinc-400">{{ History::pack($r['pack']) }}</td>
+                                <td data-col="tier" x-show="shown('tier')" class="px-3 py-1.5">
                                     <span class="inline-flex items-center gap-1 whitespace-nowrap">
                                         @if ($r['tier'] === null)
                                             <span class="text-zinc-400">—</span>
@@ -167,7 +204,7 @@
                                         @endif
                                     </span>
                                 </td>
-                                <td data-col="tests" class="bg-zinc-50 px-3 py-1.5 text-right text-zinc-300 dark:bg-zinc-950/40 dark:text-zinc-600">—</td>
+                                <td data-col="tests" x-show="shown('tests')" class="bg-zinc-50 px-3 py-1.5 text-right text-zinc-300 dark:bg-zinc-950/40 dark:text-zinc-600">—</td>
                             </tr>
                         @endforeach
                     </tbody>
