@@ -148,8 +148,16 @@ class ReadProductionProject
         $day = self::today();
         $rows = [];
         foreach ($readings as $key => $reading) {
+            // A metric removed on /projects while its read was in flight has no row left to snapshot.
+            if (! isset($ids[$key])) {
+                continue;
+            }
             $rows[] = ['project_id' => $project->id, 'prod_metric_id' => $ids[$key], 'day' => $day,
                 'value' => $reading->value, 'read_at' => now()];
+        }
+
+        if ($rows === []) {
+            return;
         }
 
         // The latest read of the day wins: same metric and day updates the row instead of adding one.
