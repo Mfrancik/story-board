@@ -1,5 +1,5 @@
 # SB-21 — Mockup gallery
-Status: draft          Journey: none
+Status: approved         Journey: none
 Source: owner 2026-09-29 (/story): *"for any mockup, i have a mockup gallery button i go to, and that gives me a full
 screen view with a small title and description, tells me where, shows me a current version (if that exists, then i
 can see the two mockups side by side in a single screen."* The "current version" pane is SB-23; this story is the
