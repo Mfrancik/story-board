@@ -1,11 +1,12 @@
 # Project brief — story-board
-Last refreshed: 2026-09-29 (SB-17)
+Last refreshed: 2026-09-29 (SB-18)
 
 ## What it is, and for whom
 A localhost Laravel app for one owner. It reads the `stories/` folder of every project that uses
 the dev-standards kit and shows, in one place, what state each project's stories are in. It reads
 from git, at each project's ref (default `origin/main`), and never writes to a project (owner
-ruling). It can also read a project's production MySQL database, read-only, for headline numbers. Work not on the ref yet (unmerged branches, worktrees, untracked files) is shown beside it,
+ruling). It can also read a project's production MySQL database, read-only, for headline numbers, shown side by side on `/prod` with
+daily history. Work not on the ref yet (unmerged branches, worktrees, untracked files) is shown beside it,
 labelled with where it lives, and never counts as status. Live Claude Code sessions are shown from
 their transcript metadata (never their messages). Each project's handbook shows how it has drifted
 from the kit.
@@ -27,7 +28,8 @@ from the kit.
   through `GitReader` to badge each project's standards and skills.
 - **ProdConnection**: a project's one read-only production MySQL connection (credentials encrypted with
   APP_KEY, `use_ssl`, `verified_at`). **ProdMetric**: a preset (table/column in `config`) or custom single
-  `SELECT`, `key` stable across saves, `position`, `is_enabled`.
+  `SELECT`, `key` stable across saves, `position`, `is_enabled`. **ProdSnapshot**: one value per metric per
+  local day (`board.timezone`), upserted by every good read; the last read's outcome is a cache entry.
 - **ProductionReader**: the only code that opens a production connection. It uses runtime PDO, a
   read-only 5 s session and a `SHOW GRANTS` proof on every open.
 - **GitReader**: the only code that runs git. Read-only subcommands only, plus `worktree list` and
@@ -47,6 +49,7 @@ from the kit.
 | Live sessions: Live now panel on both dashboards (30 s poll) and sidebar live badge | active (SB-11) | [doc](features/live-sessions.md) |
 | Project handbook: `/p/{project}/handbook` rules, lessons, standards, runbook, decisions, skills; kit badges | active (SB-14) | [doc](features/project-handbook.md) |
 | Production connection and metrics: read-only prod MySQL per project on `/projects`, presets and custom SQL | active (SB-17) | [doc](features/production-connection.md) |
+| Production dashboard: `/prod` projects × metrics with changes and trends, queued reads, nightly `board:prod-snapshot` | active (SB-18) | [doc](features/production-dashboard.md) |
 
 ## Journeys
 None yet. Every SB story so far is `Journey: none`.
@@ -54,9 +57,9 @@ None yet. Every SB story so far is `Journey: none`.
 ## Stories
 - **built**: SB-2 registry and reader · SB-3 what needs me · SB-4 story and mockups · SB-5 not on main ·
   SB-7 app shell · SB-8 story modal · SB-9 all-projects dashboard · SB-10 single-project dashboard ·
-  SB-11 live sessions · SB-12 manage projects · SB-14 project handbook · SB-17 production connection
-- **approved**: SB-13 pick a mockup · SB-15 stories by initiative · SB-16 preflight history ·
+  SB-11 live sessions · SB-12 manage projects · SB-14 project handbook · SB-17 production connection ·
   SB-18 production dashboard
+- **approved**: SB-13 pick a mockup · SB-15 stories by initiative · SB-16 preflight history
 - **draft (parked)**: SB-6 the board on an always-live domain
 
 SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this repo.
@@ -89,20 +92,25 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
 - Production is read only through `ProductionReader`: raw PDO outside `config/`, a read-only session,
   `SHOW GRANTS` proof on every open and an SQL guard. This amends "git only" →
   [ADR-029](decisions/ADR-029-production-reads-go-through-one-read-only-gateway.md)
+- `/prod` keeps each project's last read outcome in the cache and settles rows by read count; the
+  nightly snapshot reads in-process, and the scheduler is documented, not bundled →
+  [ADR-030](decisions/ADR-030-production-read-outcome-lives-in-the-cache-and-rows-settle-by-read-count.md),
+  [ADR-031](decisions/ADR-031-daily-production-snapshot-reads-in-process.md)
 - The board never writes to a project (owner ruling); its only writes are its own database.
 - Preflight audit scope, audit cost record, build-artifact disposal (kit) → ADR-001 to ADR-003
 
 ## Current phase and what's next
 Phase 2: UI organisation (SB-7 to SB-14). Phase 1 (SB-2 to SB-5) is built and retro'd. SB-7 to SB-12
-and SB-14 have shipped, and SB-17 (production connection) with them. Next: SB-18 (production dashboard
-and daily snapshots, on `ProductionReader::readEnabledMetrics()`), SB-13, SB-15, SB-16, then the phase-2
-retro and full preflight sweep. SB-6 (hosted) stays parked. F-2 (a timeline of what was built) is in
+and SB-14 have shipped, and SB-17/SB-18 (production connection and dashboard) with them. Next: SB-13,
+SB-15, SB-16 (point its `series` token at SB-18's `series-1` at integration), then the phase-2 retro and
+full preflight sweep. SB-6 (hosted) stays parked. F-2 (a timeline of what was built) is in
 the backlog.
 
 ## Known limitations
 - Laravel 13 / Livewire 4 are installed (starter kit), while `CLAUDE.md` says 12 / 3. Flagged, unchanged.
-- Refresh needs a queue worker; `composer run dev` starts one, a bare `artisan serve` does not. A
-  failing project is retried at most every 5 minutes.
+- Refresh and `/prod` reads need a queue worker; `composer run dev` starts one, a bare `artisan serve` does
+  not. A failing project is retried at most every 5 minutes. The nightly production snapshot also needs
+  `php artisan schedule:work`, which `composer run dev` does **not** start.
 - Until the kit parser reads `Chosen option: **B**` (F-1), "Awaiting a pick" over-reports and the story
   page quotes such a choice without marking a frame.
 - Untracked stories and mockups are listed but cannot be shown (not in git). Off-main rows with
@@ -116,5 +124,6 @@ the backlog.
 - The handbook has no tab counts or drift summary, renders the runbook whole, and compares against the
   kit checkout's last-fetched ref. Its real-data browser check is pending on the owner's side.
 - Production SSL is encrypted but not certificate-verified. Rotating APP_KEY breaks stored credentials.
-  The real coins production check awaits the owner's read-only user.
+  The real coins production check (SB-17 and SB-18) awaits the owner's read-only user. `/prod` has no
+  auth either.
 - Dev server runs on port 8010 (coins holds 8000/8001). No git remote for this repo, by owner ruling.

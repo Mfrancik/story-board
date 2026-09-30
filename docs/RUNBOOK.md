@@ -10,6 +10,18 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-09-29 — No production snapshot for a day
+Symptom: a project's trend line on `/prod` has a gap for a day, and the change against that day shows "—", although the connection was fine.
+Root cause: nobody opened `/prod` that day, and `board:prod-snapshot` (scheduled 23:55 in `board.timezone`) never ran. `composer run dev` starts the server, queue worker, pail and Vite, **not the scheduler**.
+Fix: run `php artisan schedule:work` beside `composer run dev` (owner chose doc-only, no `composer.json` change; SB-18, `74e1732`, ADR-031). To fill today by hand, run `php artisan board:prod-snapshot`. Past days cannot be back-filled: production is read as of now.
+Log trail: no `board.prod_snapshot_run` that night. If it ran but a project failed: `board.prod_snapshot_run failed>0` and that project's `board.prod_read_failed reason=<code>`.
+
+## 2026-09-29 — Production dashboard tests: queued reads that never ran
+Symptom: while writing SB-18's tests, rows stayed on the skeleton, a second read was silently dropped, or an in-order text assertion failed on text that was plainly on the page.
+Root cause: three separate traps. (1) A `ShouldBeUnique` job run by hand (`$job->handle(...)`) never releases its unique lock, so the next dispatch for that project is dropped as a duplicate. (2) `dispatchSync` through a `Queue::fake()` never runs the job. (3) Livewire `call()` responses are JSON-escaped, so `assertSeeInOrder` on the response misses text with quotes, dashes or `<`.
+Fix: the helpers `runProdReads()` / `workProdQueue()` run each pushed `ReadProductionMetrics` and then release its lock with `(new UniqueLock(app(Cache::class)))->release($job)` (`tests/Feature/Board/ProductionDashboardTest.php`, `tests/Browser/ProductionDashboardTest.php`; SB-18, `74e1732`). In-order checks use a regex on `->html()`. Apply the same lock release to any unique job a test runs by hand.
+Log trail: none for (2) and (3). For (1), no second `board.prod_read` after a Refresh in the test log.
+
 ## 2026-09-29 — A production metric using SLEEP() "succeeded" instead of timing out
 Symptom: while writing SB-17's timeout test, `SELECT SLEEP(10)` on a session with `max_execution_time = 5000` came back after about 5 s with value `1` and no error. The metric looked fine.
 Root cause: MySQL interrupts `SLEEP()` at the limit and returns 1. It does not raise error 3024 the way a real long-running SELECT does. A three-way cross join of `information_schema.COLLATIONS` finishes in about 2.5 s, so it does not trip the limit either.
