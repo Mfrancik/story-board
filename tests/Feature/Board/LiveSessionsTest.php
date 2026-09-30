@@ -292,3 +292,141 @@ it('opens the SB-8 modal when a linked story is clicked', function () {
         ->assertSeeHtml('aria-haspopup="dialog"')
         ->assertSeeHtml("\$dispatch('board-story'");
 });
+
+/*
+ * SB-25: a live card links only the stories its session is working on. Untracked rows
+ * carry the branch of the checkout they sit in, so the SB-11 branch fallback used to hand
+ * every untracked story in the main checkout to every session on `main`.
+ */
+
+/** An untracked story row as IndexOffMain writes it: tagged with its checkout's branch and root. */
+function untrackedRow(Project $project, string $id, string $root, string $branch): Story
+{
+    return Story::factory()->for($project)->create([
+        'story_id' => $id, 'title' => "Untracked {$id}", 'status' => 'draft',
+        'location_kind' => Story::KIND_UNTRACKED, 'location' => "untracked in {$root}", 'branch' => $branch,
+    ]);
+}
+
+it('shows "No story linked" for a session on main in the main checkout with untracked stories in that checkout', function () {
+    untrackedRow($this->coins, 'ADMIN-16', $this->repo->project, 'main');
+    untrackedRow($this->coins, 'BRAND-10', $this->repo->project, 'main');
+    $this->sessions->session($this->repo->project, 'main', 'dddddddd-0000-0000-0000-000000000001');
+
+    $this->get('/')->assertOk()
+        ->assertSee('main checkout')
+        ->assertSee('No story linked')
+        ->assertDontSeeHtml('data-live-story=');
+});
+
+it('shows "No story linked" for a session on main in a worktree with untracked stories in the main checkout', function () {
+    untrackedRow($this->coins, 'ADMIN-16', $this->repo->project, 'main');
+    $this->sessions->session($this->repo->project.'/.claude/worktrees/prf7ch', 'main', 'dddddddd-0000-0000-0000-000000000002');
+
+    $this->get('/')->assertOk()
+        ->assertSee('worktree prf7ch')
+        ->assertSee('No story linked')
+        ->assertDontSeeHtml('data-live-story=');
+});
+
+it('links an untracked story in worktree W to a session on feat/x (no ID) in W', function () {
+    $w = $this->repo->project.'/.claude/worktrees/w';
+    untrackedRow($this->coins, 'ADMIN-23', $w, 'feat/x');
+    $this->sessions->session($w.'/app', 'feat/x', 'dddddddd-0000-0000-0000-000000000003');
+
+    $this->get('/')->assertOk()
+        ->assertSee('worktree w')
+        ->assertSeeHtml('data-live-story="coins/ADMIN-23"')
+        ->assertDontSee('No story linked');
+});
+
+it('does not link an untracked story in a different checkout also tagged feat/x to a session on feat/x (no ID) in worktree W', function () {
+    $w = $this->repo->project.'/.claude/worktrees/w';
+    untrackedRow($this->coins, 'ADMIN-23', $w, 'feat/x');
+    // A sibling whose path shares W's prefix: `/…/w` must not match `/…/wx`.
+    untrackedRow($this->coins, 'ADMIN-24', $w.'x', 'feat/x');
+    untrackedRow($this->coins, 'BRAND-9', $this->repo->project, 'feat/x');
+    $this->sessions->session($w, 'feat/x', 'dddddddd-0000-0000-0000-000000000004');
+
+    $this->get('/')->assertOk()
+        ->assertSeeHtml('data-live-story="coins/ADMIN-23"')
+        ->assertDontSeeHtml('data-live-story="coins/ADMIN-24"')
+        ->assertDontSeeHtml('data-live-story="coins/BRAND-9"');
+});
+
+it('links a branch row (not untracked) on feat/x to a session on feat/x as before', function () {
+    Story::factory()->for($this->coins)->create([
+        'story_id' => 'BUL-71', 'title' => 'Bullion branch row', 'status' => 'draft',
+        'location_kind' => Story::KIND_BRANCH, 'location' => 'branch feat/x', 'branch' => 'feat/x',
+    ]);
+    // Anywhere in the project: branch and worktree rows are not tied to the session's folder.
+    $this->sessions->session($this->repo->project.'/.claude/worktrees/elsewhere', 'feat/x', 'dddddddd-0000-0000-0000-000000000005');
+
+    $this->get('/')->assertOk()
+        ->assertSeeHtml('data-live-story="coins/BUL-71"')
+        ->assertDontSee('No story linked');
+});
+
+it('still applies rule 1 to a session on main whose branch name contains no ID when the project\'s ref is origin/main', function (string $ref) {
+    $this->coins->update(['ref' => $ref]);
+    Story::factory()->for($this->coins)->create([
+        'story_id' => 'BUL-72', 'location_kind' => Story::KIND_BRANCH, 'location' => 'branch main', 'branch' => 'main',
+    ]);
+    untrackedRow($this->coins, 'ADMIN-16', $this->repo->project, 'main');
+    $this->sessions->session($this->repo->project, 'main', 'dddddddd-0000-0000-0000-000000000006');
+
+    $this->get('/')->assertOk()
+        ->assertSee('No story linked')
+        ->assertDontSeeHtml('data-live-story=');
+})->with(['origin/main', 'main']);
+
+it('links SB-9 by step 1, unchanged, for a session on feat/SB-9-thing', function () {
+    $this->repo->story('SB-9', 'approved', 'board')->commitAndPush();
+    $this->artisan('board:refresh', ['project' => 'coins'])->assertSuccessful();
+    // An untracked row elsewhere on the same branch must not replace or join the step-1 link.
+    untrackedRow($this->coins, 'ADMIN-16', $this->repo->project, 'feat/SB-9-thing');
+    $this->sessions->session($this->repo->project.'/.claude/worktrees/sb9', 'feat/SB-9-thing', 'dddddddd-0000-0000-0000-000000000007');
+
+    $this->get('/')->assertOk()
+        ->assertSeeHtml('data-live-story="coins/SB-9"')
+        ->assertDontSeeHtml('data-live-story="coins/ADMIN-16"');
+});
+
+it('links SB-9 by step 1 on the default branch too', function () {
+    $this->repo->story('SB-9', 'approved', 'board')->commitAndPush();
+    $this->artisan('board:refresh', ['project' => 'coins'])->assertSuccessful();
+    // A branch literally named after the ref's branch plus an ID still names its work.
+    $this->coins->update(['ref' => 'origin/SB-9']);
+    $this->sessions->session($this->repo->project, 'SB-9', 'dddddddd-0000-0000-0000-000000000008');
+
+    $this->get('/')->assertOk()->assertSeeHtml('data-live-story="coins/SB-9"');
+});
+
+it('logs board.session_links_filtered at debug with project, branch and the count dropped, and no story content, when rule 1 or rule 2 drops rows', function () {
+    Log::spy();
+    untrackedRow($this->coins, 'ADMIN-16', $this->repo->project, 'main');
+    untrackedRow($this->coins, 'BRAND-10', $this->repo->project, 'main');
+    $w = $this->repo->project.'/.claude/worktrees/w';
+    untrackedRow($this->coins, 'ADMIN-23', $w, 'feat/x');
+    untrackedRow($this->coins, 'ADMIN-24', $this->repo->project, 'feat/x');
+    $this->sessions->session($this->repo->project, 'main', 'dddddddd-0000-0000-0000-000000000009');
+    $this->sessions->session($w, 'feat/x', 'dddddddd-0000-0000-0000-000000000010');
+
+    $this->get('/')->assertOk();
+
+    $metadataOnly = fn (array $c) => array_keys($c) === ['project', 'branch', 'rule', 'dropped']
+        && ! str_contains((string) json_encode($c), 'ADMIN') && ! str_contains((string) json_encode($c), 'Untracked');
+    Log::shouldHaveReceived('debug')->withArgs(fn ($e, $c = []) => $e === 'board.session_links_filtered' && $metadataOnly($c)
+        && $c['project'] === 'coins' && $c['branch'] === 'main' && $c['rule'] === 'default_branch' && $c['dropped'] === 2)->once();
+    Log::shouldHaveReceived('debug')->withArgs(fn ($e, $c = []) => $e === 'board.session_links_filtered' && $metadataOnly($c)
+        && $c['project'] === 'coins' && $c['branch'] === 'feat/x' && $c['rule'] === 'untracked_checkout' && $c['dropped'] === 1)->once();
+});
+
+it('does not log board.session_links_filtered when no row is dropped', function () {
+    Log::spy();
+    $this->sessions->session($this->repo->project, 'main', 'dddddddd-0000-0000-0000-000000000011');
+
+    $this->get('/')->assertOk()->assertSee('No story linked');
+
+    Log::shouldNotHaveReceived('debug', fn ($e, $c = []) => $e === 'board.session_links_filtered');
+});

@@ -1,5 +1,5 @@
 # SB-25 — Live cards stop borrowing every untracked story
-Status: approved          Journey: none
+Status: built            Journey: none
 Source: owner 2026-09-29, on the coins Live panel: *"i see all these, what are they"* — two coins sessions on
 `main` (main checkout, worktree `prf7ch`) each listed ADMIN-16, ADMIN-23, ADMIN-24, BRAND-10, BRAND-9…, all
 "Not on main · untracked in /Users/mikefrancik/Code/coins". Owner: *"lets fix it, you can write a story for it"*.

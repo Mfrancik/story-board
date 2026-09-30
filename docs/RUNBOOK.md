@@ -10,6 +10,12 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-09-30 — Live cards on `main` list every untracked story in the main checkout
+Symptom: two coins sessions on `main` (main checkout and worktree `prf7ch`) each listed ADMIN-16, ADMIN-23, BRAND-9… on their Live now card, all "Not on main · untracked in /Users/mikefrancik/Code/coins".
+Root cause: `IndexOffMain` tags an untracked file with the branch of the checkout it sits in, so every untracked story in the main checkout had `branch = main`. `ListLiveSessions::links()` step 2 links off-main rows by branch alone, so any session on `main`, in any folder, claimed all of them. A "cwd sits under the row's root" check would not have been enough: worktrees live under the main checkout.
+Fix: `ListLiveSessions::branchRows()` skips the fallback on the project's default branch, and links an untracked row only when its root equals the session's own (deepest) checkout root (SB-25, `f747e88`, ADR-034).
+Log trail: `board.session_links_filtered` (debug) with `rule` `default_branch` or `untracked_checkout` and `dropped`. Before the fix there was no trace; the card itself was the symptom.
+
 ## 2026-09-29 — Project tabs scrolled 1 px vertically after they were made to scroll sideways
 Symptom: with a fifth tab (App map), the project tab row overflowed a 375 px phone. Making it `overflow-x-auto` fixed the width, but the row then also scrolled up and down by 1 px and showed a vertical scrollbar.
 Root cause: the active tab's underline uses `-mb-px` to sit on the row's `border-b`. Once the row is a scroll container, that 1 px overhang counts as overflow, and `overflow-x-auto` forces `overflow-y` to `auto` too.

@@ -1,5 +1,5 @@
 # Live sessions
-Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-11
+Status: active   ·   Last updated: 2026-09-30   ·   Stories: SB-11, SB-25
 
 ## Overview
 A "Live now" panel on `/` and `/p/{project}`, and a live badge in the sidebar, show which Claude Code
@@ -44,8 +44,24 @@ Manage projects (SB-12) drops out of the panel on the next poll.
   1. Every token in the branch matching `[A-Z]{2,}-[0-9]+[a-z]?` that also passes `Story::ID_PATTERN`
      and resolves through `FindStoryVersion` (ref version first, the same as the SB-8 modal). This can link
      several stories, one button per ID. Matching is case-sensitive, so `bul-65` links nothing.
-  2. Otherwise, off-main rows whose `branch` is the branch or `origin/<branch>`. `IndexOffMain` stores
-     remote-only branches under their remote name. Rows without a page are dropped, and each ID appears once.
+  2. Otherwise, `branchRows()`: off-main rows whose `branch` is the branch or `origin/<branch>`.
+     `IndexOffMain` stores remote-only branches under their remote name. Rows without a page are dropped,
+     and each ID appears once. Two rules then narrow it (SB-25), because `IndexOffMain` tags an untracked
+     file with the branch of the checkout it sits in, so without them every session on `main`, in any
+     folder, claimed every untracked story in the main checkout:
+     - **Rule 1, default branch.** If the branch equals `defaultBranch()` (`projects.ref` with a leading
+       `origin/` stripped; no other remote prefix is handled), step 2 returns nothing. The default branch
+       collects every checkout's leftovers; it is not a unit of work. Step 1 still runs first, so an
+       ID-bearing default branch still links.
+     - **Rule 2, own checkout.** A row of kind `untracked` links only if its root (parsed by
+       `untrackedRoot()` from `location` = `untracked in <root>`; any other shape never links) equals the
+       session's own checkout root. `checkoutRoot()` picks the **deepest** of the project path, its
+       registered locations and `<path>/.claude/worktrees/<name>` (derived from the cwd, so a worktree
+       works before a refresh registers it) that contains the cwd, on whole path segments (`/a/b` never
+       claims `/a/bc`). `samePath()` compares case-sensitively, trailing slashes trimmed, both as typed
+       and via `realpath` because `IndexOffMain` stores the root resolved (macOS `/var` is
+       `/private/var`). Branch and worktree rows are committed to the branch and still link by branch alone.
+       Deliberately stricter than "cwd sits under the root": see ADR-034.
   3. Otherwise, nothing: "No story linked". A null branch or a detached `HEAD` stops at this step.
 - For each linked row, `firstSentence()` takes the first sentence of the `## Story` section, read through
   `RenderStory::read()` at the row's SHA and stripped of `*`/`` ` ``. It is cached for a day under the
@@ -106,6 +122,7 @@ test. A test that needs sessions sets it to a `Tests\Support\SessionFixture` roo
 | `board.session_unreadable` | warning | `SessionReader::unreadable()` | `file` (basename only), `reason` (`outside_root` \| `unopenable` \| `no_valid_line`) |
 | `board.sessions_root_missing` | warning | `SessionReader::scan()` | `path` |
 | `board.session_ignored` | debug | `ListLiveSessions::matched()` | `cwd`, `reason` (`unregistered` \| `disabled`), `project` |
+| `board.session_links_filtered` | debug | `ListLiveSessions::logFiltered()` | `project`, `branch`, `rule` (`default_branch` \| `untracked_checkout`), `dropped` (distinct story IDs). Only when `dropped > 0`; never IDs or text (SB-11 privacy rule) |
 
 `board.session_unreadable` is logged once per file per mtime, for 10 minutes. Without that, the 30 s poll
 would repeat the warning. Each line carries `request_id`.
@@ -116,7 +133,9 @@ would repeat the warning. Each line carries `request_id`.
 - **A session is missing:** look for `board.session_ignored` with its `cwd`. `unregistered` means no
   project path or location contains it. The fix is `board:project alias`, or registering the project.
 - **Wrong or no story:** the branch has no upper-case ID, and no off-main row carries that branch yet
-  (the off-main index updates only on refresh).
+  (the off-main index updates only on refresh). If rows exist but the card is empty, look for
+  `board.session_links_filtered`: `default_branch` means the session is on the project's default branch;
+  `untracked_checkout` means the untracked files sit in a different checkout from the session's cwd.
 
 ## Testing & verification
 - `tests/Feature/Board/LiveSessionsTest.php`: one `it()` per acceptance criterion, plus extras: matching
@@ -127,12 +146,18 @@ would repeat the warning. Each line carries `request_id`.
 - `tests/Browser/LiveSessionsTest.php`: a fixture coins worktree session shows with its badge and
   option-b thumbnail. A forced `$refresh` leaves the card height unchanged, and clicking the story opens
   the modal. `/p/asset-track` at 375 px shows "No live sessions" without sideways scroll.
+- SB-25 adds one `it()` per acceptance criterion (rule 1 in the main checkout and a worktree, rule 2 in
+  and across checkouts, branch rows unchanged, `origin/main` ref, step 1 unchanged, the log), plus two
+  extras: step 1 still links on the default branch, and no `board.session_links_filtered` when nothing
+  is dropped.
 - Fixtures are hand-written JSONL in a temp root (`tests/Support/SessionFixture.php`), never the real
   `~/.claude`.
 - The two older "does not render Live now until SB-11" tests in `AllProjectsDashboardTest` and
   `ProjectPageTest` are now order checks (Live now sits between What needs me and In flight).
 - **Pending (owner-side):** the story's browser check against a real, running coins session: `/` shows it
   within 30 s with the right branch and worktree. This has not been done yet.
+- **Pending (owner-side, SB-25):** with a coins session on `main` and untracked stories in `~/Code/coins`,
+  `/p/coins` shows "No story linked" instead of the ADMIN/BRAND list.
 
 ## Key decisions & tradeoffs
 - The board reads Claude Code's undocumented transcript files defensively, rather than having the kit's
@@ -141,6 +166,9 @@ would repeat the warning. Each line carries `request_id`.
   closed terminal stays on for up to 10 minutes.
 - Only the scan is cached, so switching a project off hides its sessions at the next poll, with no
   cache flush.
+- The fallback never runs on the default branch, and an untracked row belongs only to the checkout it
+  sits in, not to a worktree nested under it →
+  [ADR-034](../decisions/ADR-034-live-cards-link-untracked-stories-only-from-their-own-checkout.md).
 - Case-sensitive IDs follow SB-3's ID rule, even though some real branches use lower case
   (`integrate/bul-65-66-mob-46`).
 
@@ -151,9 +179,14 @@ would repeat the warning. Each line carries `request_id`.
 - A panel can be up to 20 s (cache) plus 30 s (poll) behind a session's first activity.
 - A branch pushed or created after the last refresh links through step 2 only after the next off-main
   refresh indexes it.
+- Rule 1 strips only `origin/`. A project whose ref is `upstream/main` (or any other remote) is not
+  recognised as on its default branch, and a `main` session there borrows untracked rows again.
+- A session on the default branch never shows its own untracked stories, even in the checkout that holds
+  them. Put the work on a branch (or name the ID in it) to get a link.
 - Only `~/.claude/projects/<folder>/<id>.jsonl` is scanned. Subagent transcripts are ignored by design.
 - Every test inherits the empty sessions root from `TestCase`. A new board test that expects sessions
   must set `board.sessions_path` itself.
 
 ## Change history
 2026-09-29 — Live now panel on `/` and `/p/{project}`, sidebar live badge, `SessionReader`, `ListLiveSessions`, `config/board.php` (SB-11, `76ec1eb`)
+2026-09-30 — Fallback skips the default branch; untracked rows link only to a session in their own checkout; `board.session_links_filtered` (SB-25, `f747e88`)

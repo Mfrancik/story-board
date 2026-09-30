@@ -21,6 +21,9 @@ class ListLiveSessions
     /** Where a project's own worktrees live (`<path>/.claude/worktrees/<name>`). */
     private const WORKTREES_DIR = '/.claude/worktrees/';
 
+    /** How IndexOffMain names an untracked row's checkout: `untracked in <root>`. */
+    private const UNTRACKED_PREFIX = 'untracked in ';
+
     /** A day: a story line is read at a fixed SHA, so it never changes; the TTL only bounds the cache. */
     private const LINE_CACHE_SECONDS = 86400;
 
@@ -61,7 +64,7 @@ class ListLiveSessions
                 'checkout' => $checkout,
                 'branch' => $session['branch'],
                 'active_at' => Carbon::createFromTimestamp($session['mtime']),
-                'stories' => $this->links($model, $session['branch']),
+                'stories' => $this->links($model, $session['branch'], $session['cwd']),
             ];
         }
 
@@ -171,13 +174,19 @@ class ListLiveSessions
     }
 
     /**
-     * The stories a branch is building, in the story's order: every upper-case ID
-     * in the name that exists in the project (on the ref or off main); otherwise
-     * the off-main rows committed on that branch; otherwise none.
+     * The stories a session is building, in the story's order: every upper-case ID
+     * in its branch name that exists in the project (on the ref or off main);
+     * otherwise, unless the branch is the project's default branch, the off-main
+     * rows on that branch, untracked ones only from the checkout the session runs
+     * in (SB-25); otherwise none.
      *
+     * Side effects: logs `board.session_links_filtered` (debug) when the default-branch
+     * or checkout rule drops fallback rows.
+     *
+     * @param  string  $cwd  the session's working directory, which ties it to one checkout
      * @return list<array{story: Story, line: string|null, thumb: string|null, chosen: string|null}>
      */
-    private function links(Project $project, ?string $branch): array
+    private function links(Project $project, ?string $branch, string $cwd): array
     {
         // No branch recorded, or a detached HEAD: nothing names the work.
         if ($branch === null || $branch === 'HEAD') {
@@ -194,15 +203,10 @@ class ListLiveSessions
         }
 
         if ($rows === []) {
-            // IndexOffMain stores a pushed-only branch under its remote name.
-            $rows = Story::where('project_id', $project->id)->offMain()
-                ->whereIn('branch', [$branch, "origin/{$branch}"])
-                ->orderBy('story_id')->get()
-                ->filter(fn (Story $s) => $s->hasPage())
-                ->unique('story_id')->values()->all();
+            $rows = $this->branchRows($project, $branch, $cwd);
         }
 
-        return array_values(array_map(function (Story $row) use ($project) {
+        return array_map(function (Story $row) use ($project) {
             $row->setRelation('project', $project);
             $chosen = $row->mockups['chosen'] ?? null;
             $hasChosen = is_string($chosen) && in_array($chosen, $row->mockups['options'] ?? [], true);
@@ -213,7 +217,123 @@ class ListLiveSessions
                 'thumb' => $hasChosen ? $row->mockupUrl("option-{$chosen}.html") : null,
                 'chosen' => $hasChosen ? $chosen : null,
             ];
-        }, $rows));
+        }, $rows);
+    }
+
+    /**
+     * The fallback for a branch that names no story: the off-main rows on that
+     * branch, narrowed by the two SB-25 rules. Logs `board.session_links_filtered`
+     * (debug, metadata only) when a rule drops rows, so the panel's choice can be traced.
+     *
+     * @return list<Story>
+     */
+    private function branchRows(Project $project, string $branch, string $cwd): array
+    {
+        // IndexOffMain stores a pushed-only branch under its remote name.
+        $rows = Story::where('project_id', $project->id)->offMain()
+            ->whereIn('branch', [$branch, "origin/{$branch}"])
+            ->orderBy('story_id')->get()
+            ->filter(fn (Story $s) => $s->hasPage());
+
+        // Rule 1: the default branch is where every checkout's leftovers sit, not a
+        // unit of work. Untracked files in the main checkout are tagged with its branch,
+        // so a session on `main` would otherwise claim every one of them.
+        if ($branch === $this->defaultBranch($project)) {
+            $this->logFiltered($project, $branch, 'default_branch', $rows->unique('story_id')->count());
+
+            return [];
+        }
+
+        // Rule 2: an untracked row is tagged with its checkout's branch, and two
+        // checkouts can share a branch name, so only the checkout the session runs in
+        // proves the file is its work. That is the session's own checkout, not any
+        // folder above it: a worktree nested under the main checkout does not inherit
+        // the main checkout's files. Branch and worktree rows are committed to the
+        // branch itself and still link by branch alone.
+        $checkout = $this->checkoutRoot($project, $cwd);
+        $kept = $rows->filter(fn (Story $s) => $s->location_kind !== Story::KIND_UNTRACKED
+            || $this->samePath($checkout, $this->untrackedRoot($s)));
+        $dropped = $rows->unique('story_id')->count() - $kept->unique('story_id')->count();
+        $this->logFiltered($project, $branch, 'untracked_checkout', $dropped);
+
+        return array_values($kept->unique('story_id')->all());
+    }
+
+    /**
+     * The project's default branch: the branch its ref names, remote prefix dropped
+     * (`origin/main` → `main`), since sessions record local branch names.
+     */
+    private function defaultBranch(Project $project): string
+    {
+        return str_starts_with($project->ref, 'origin/') ? substr($project->ref, strlen('origin/')) : $project->ref;
+    }
+
+    /**
+     * The checkout root an untracked row sits in, from IndexOffMain's `untracked in <root>`
+     * location. Null when the location is not in that shape.
+     */
+    private function untrackedRoot(Story $row): ?string
+    {
+        $location = (string) $row->location;
+        if (! str_starts_with($location, self::UNTRACKED_PREFIX)) {
+            return null;
+        }
+
+        $root = rtrim(substr($location, strlen(self::UNTRACKED_PREFIX)), '/');
+
+        return $root === '' ? null : $root;
+    }
+
+    /**
+     * The root of the checkout a session runs in: the deepest of the project's path,
+     * its registered locations and its `.claude/worktrees/<name>` folders that the cwd
+     * equals or sits under. Matched on whole path segments, so `/a/b` never claims
+     * `/a/bc`. The session is already matched to this project, so one always contains it;
+     * the cwd itself is the fallback.
+     */
+    private function checkoutRoot(Project $project, string $cwd): string
+    {
+        $cwd = rtrim($cwd, '/');
+        $main = rtrim($project->path, '/');
+        $roots = [$main, ...$project->locations->map(fn ($l) => rtrim($l->path, '/'))->all()];
+        // Worktrees made after the last refresh are not registered locations yet.
+        if (str_starts_with($cwd, $main.self::WORKTREES_DIR)) {
+            $roots[] = $main.self::WORKTREES_DIR.strtok(substr($cwd, strlen($main.self::WORKTREES_DIR)), '/');
+        }
+
+        $best = null;
+        foreach ($roots as $root) {
+            $inside = $cwd === $root || str_starts_with($cwd, $root.'/');
+            if ($inside && ($best === null || strlen($root) > strlen($best))) {
+                $best = $root;
+            }
+        }
+
+        return $best ?? $cwd;
+    }
+
+    /**
+     * Whether a checkout root is the root an untracked row names. IndexOffMain stores
+     * the root resolved (`realpath`: macOS `/var` is `/private/var`), while projects and
+     * sessions carry paths as typed, so the resolved form is compared too. Case-sensitive,
+     * as git and IndexOffMain are.
+     */
+    private function samePath(string $checkout, ?string $root): bool
+    {
+        return $root !== null && ($checkout === $root || (realpath($checkout) ?: $checkout) === $root);
+    }
+
+    /**
+     * Log that a SB-25 rule dropped fallback rows: counts only, never a story's ID or
+     * text, per SB-11's rule that nothing of a session's work leaves the panel.
+     */
+    private function logFiltered(Project $project, string $branch, string $rule, int $dropped): void
+    {
+        if ($dropped > 0) {
+            Log::debug('board.session_links_filtered', [
+                'project' => $project->name, 'branch' => $branch, 'rule' => $rule, 'dropped' => $dropped,
+            ]);
+        }
     }
 
     /**

@@ -57,7 +57,7 @@ journey docs, story files and mockups, with no change to the project.
 | Story modal: `?story=<project>/<ID>` on `/` and `/p/{project}`; Back closes | active (SB-8) | [doc](features/story-modal.md) |
 | Single-project dashboard: `/p/{project}` header and refresh, scoped cards, Progress by initiative | active (SB-10) | [doc](features/single-project-dashboard.md) |
 | Manage projects: `/projects` switch on/off, add by folder, remove behind a confirmation | active (SB-12) | [doc](features/manage-projects.md) |
-| Live sessions: Live now panel on both dashboards (30 s poll) and sidebar live badge | active (SB-11) | [doc](features/live-sessions.md) |
+| Live sessions: Live now panel on both dashboards (30 s poll) and sidebar live badge | active (SB-11, SB-25) | [doc](features/live-sessions.md) |
 | Project handbook: `/p/{project}/handbook` rules, lessons, standards, runbook, decisions, skills; kit badges | active (SB-14) | [doc](features/project-handbook.md) |
 | Stories by initiative: `/p/{project}/stories` two panes, status tags, Alpine filter chips, Expand all | active (SB-15) | [doc](features/stories-by-initiative.md) |
 | Preflight history: `/p/{project}/preflight` ledger of runs from the cost CSVs, trend figures, two SVG charts, Alpine filters | active (SB-16) | [doc](features/preflight-history.md) |
@@ -73,7 +73,7 @@ None yet. Every SB story so far is `Journey: none`.
 - **built**: SB-2 registry and reader · SB-3 what needs me · SB-4 story and mockups · SB-5 not on main ·
   SB-7 app shell · SB-8 story modal · SB-9 all-projects dashboard · SB-10 single-project dashboard ·
   SB-11 live sessions · SB-12 manage projects · SB-14 project handbook · SB-15 stories by initiative ·
-  SB-16 preflight history · SB-17 production connection · SB-18 production dashboard · SB-21 mockup gallery · SB-24 app map
+  SB-16 preflight history · SB-17 production connection · SB-18 production dashboard · SB-21 mockup gallery · SB-24 app map · SB-25 live cards link own stories
 - **approved**: SB-13 pick a mockup (overlaps SB-21's pick; needs rescoping)
 - **draft**: SB-19 preflight columns picker · SB-20 preflight run errors · SB-22 journey shots · SB-23 current pane
 - **draft (parked)**: SB-6 the board on an always-live domain
@@ -102,7 +102,9 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
 - Manage projects re-navigates after every write; Add reuses `RegisterProject` and re-runs its checks
   → [ADR-021](decisions/ADR-021-manage-projects-re-navigates-so-the-sidebar-follows.md), [ADR-022](decisions/ADR-022-add-project-classifies-refusals-by-re-running-checks.md)
 - Live sessions read Claude Code's undocumented transcripts defensively, not via a kit hook →
-  [ADR-023](decisions/ADR-023-live-sessions-read-transcript-metadata-defensively.md)
+  [ADR-023](decisions/ADR-023-live-sessions-read-transcript-metadata-defensively.md); a live card never
+  falls back on the default branch and links untracked stories only from its own checkout →
+  [ADR-034](decisions/ADR-034-live-cards-link-untracked-stories-only-from-their-own-checkout.md)
 - Handbook sections load on first open via renderless calls and stay in Alpine; no re-render →
   [ADR-024](decisions/ADR-024-handbook-sections-load-lazily-and-stay-client-side.md)
 - The Stories page is one query fed to `ReadProjectProgress::rollup()`, and it filters rows with one CSS class, not
@@ -124,7 +126,7 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
 
 ## Current phase and what's next
 Phase 2: UI organisation. Phase 1 (SB-2 to SB-5) is built and retro'd. SB-7 to SB-12, SB-14 to SB-18,
-SB-21 and SB-24 are built (some on branches awaiting merge). Next: SB-23 (Current pane, reuses
+SB-21, SB-24 and SB-25 are built (some on branches awaiting merge). Next: SB-23 (Current pane, reuses
 `ReadJourneyShots`), SB-22 (journey shots; pin the manifest to what the map reads); decide on the
 `--text-thumb` token; decide SB-13's fate now that SB-21 picks; then the phase-2 retro and full sweep. SB-6 (hosted) stays
 parked. Backlog: F-2 (timeline of what was built), F-3 (meter tier labels), F-5 (preflight run record).
@@ -147,6 +149,7 @@ parked. Backlog: F-2 (timeline of what was built), F-3 (meter tier labels), F-5 
   only while localhost-only, and SB-6 must add auth first. A project's
   path and ref cannot be edited (remove and re-add).
 - Live sessions rely on an undocumented format and file mtime (10 min); the sidebar badge does not poll.
+  A session on the default branch links only stories named in its branch; its untracked stories never link.
 - The handbook has no tab counts or drift summary, renders the runbook whole, and compares against the
   kit checkout's last-fetched ref. Its real-data browser check is pending on the owner's side.
 - Production SSL is encrypted but not certificate-verified. Rotating APP_KEY breaks stored credentials.
