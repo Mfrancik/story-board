@@ -52,8 +52,8 @@ Every reusable component. Consult BEFORE building any new UI (design-standards
 | board/sparkline | Blade | Inline-SVG 30-day trend line, gaps for missing days, end dot, Alpine hover readout; no chart library | prod-stat |
 | ProjectPreflight | Livewire (Board) | A project's preflight runs (SB-16): trend figures and two SVG line charts over a ledger table; Alpine filters and hover (`preflightHistory` in resources/js) | `/p/{project}/preflight` |
 | MockupGallery | Livewire (Board) | Mockup gallery (SB-21): every set as a live-thumbnail card grouped by project, awaiting first; Alpine status/project/search filters, Show all per project | `/mockups` |
-| MockupViewer | Livewire (Board) | Full-screen mockup viewer (SB-21): title bar, description, Where, Current/A/B/C tabs, width switch, side by side with per-pane picker and swap, Pick with reason | `/mockups/{project}/{story}` |
+| MockupViewer | Livewire (Board) | Full-screen mockup viewer (SB-21): title bar, description, Where, Current/A/B/C tabs (opens Current vs option when a shot exists), width switch, side by side with per-pane picker and swap, Pick with reason | `/mockups/{project}/{story}` |
 | board/mockup-state | Blade | A mockup set's pick state: Awaiting pick (`pick` token), Picked X (`built`, "not pushed" for a local pick), or grey | MockupGallery, MockupViewer |
-| board/mockup-current | Blade | The viewer's Current pane placeholder until SB-23 captures the page as it is today | MockupViewer |
+| board/mockup-current | Blade | Viewer's Current pane (SB-23): the matching journey shot with capture time and stale label, else new-page or uncovered state; props `current`, `project` | MockupViewer |
 | ProjectAppMap | Livewire (Board) | App map (SB-24): All flows lanes with lettered shared screens, one flow's stage and strip; Alpine stepping (`appMap`) | `/p/{project}/map` |
 | board/map-screen | Blade | One app-map screen in browser chrome with its route: journey shot, drawn placeholder (`.map-page`), chosen mockup frame, awaiting pick, no mockup, not linked; `size` sm/lg | ProjectAppMap |

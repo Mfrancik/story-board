@@ -68,7 +68,7 @@ only when a project adopts SB-22's journey shots. The layout is mockup option A 
 5. **Shared screens** (`share()`). A route visited by more than one journey gets a letter (A…Z, then AA)
    in order of first appearance. Its uses are listed in the side list (`data-shared-list`).
 
-**Shots** (`app/Actions/Board/ReadJourneyShots.php`, owned here, and SB-23 will reuse it):
+**Shots** (`app/Actions/Board/ReadJourneyShots.php`, owned here, and SB-23's Current pane reuses it):
 - `handle(Project)` globs `storage/app/journey-shots/*/manifest.json` in the project's **working tree**,
   read-only. It returns `journeyFolder => list<JourneyShot>`, memoised per project path. A project that
   never adopted SB-22 has none.

@@ -1,5 +1,5 @@
 # Mockup gallery
-Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-21
+Status: active   ·   Last updated: 2026-09-30   ·   Stories: SB-21, SB-23
 
 ## Overview
 `/mockups` lists every mockup set across the enabled projects as live-thumbnail cards, with the sets
@@ -9,6 +9,9 @@ by path and a pick meant editing the story file by hand. Nothing showed which se
 The pick is also the board's **first write into a registered project**. It is narrowed to two lines of
 one file and one local commit ([ADR-032](../decisions/ADR-032-the-board-writes-narrowly-one-pick-one-file-one-commit.md)).
 The layout is mockup option A (grid + lightbox).
+The viewer's **Current** pane (SB-23) shows the page as it is today, from the project's newest matching
+journey shot, so the owner sees the delta rather than a mockup alone. When a shot exists the viewer opens
+straight into Current vs an option.
 
 ## How it works
 **Routes** (`routes/web.php`):
@@ -59,9 +62,16 @@ the empty state (`data-mockups-empty`), which says mockups come from `docs/mocku
   the position among the project's sets. The description comes from `ReadMockupSets::describe()`: the set's
   `index.html` `<meta name="description">`, else the first paragraph of the story's `## Story`. **Where**
   reads "not named in the story" when the story has no Routes path.
-- **Tabs and width.** Tabs are Current / A / B / C. Current is the `board/mockup-current` placeholder until SB-23.
-  Switching tabs swaps an iframe `src` in Alpine, with no page load. The width switch is 1280 / 768 / 375,
+- **Tabs and width.** Tabs are Current / A / B / C. Current is `board/mockup-current` (see **Current pane**
+  below). Switching tabs swaps an iframe `src` in Alpine, with no page load. The width switch is 1280 / 768 / 375,
   and the frame keeps its real viewport width, so the mockup's own breakpoints apply.
+- **Opening state.** The server decides it, so the page and its log line agree. With a shot, the viewer opens
+  in compare: Current left, the first option right (option a, or the picked option if there is one; the same
+  `firstOption()` the single view uses). Without a shot it opens as SB-21 did: one option, compare off, and
+  compare defaults to the first option vs the next. The values reach Alpine as `compare`/`left`/`right` in
+  `mockupViewer(cfg)` (`resources/js/mockup-gallery.js`) and sit on the root as `data-compare-open`,
+  `data-default-left`, `data-default-right`. The pane pickers label Current by state ("Current · today's
+  page", "· none (new page)", "· no journey shot").
 - **Side by side.** Two panes, each with its own picker, plus **⇄ Swap**. Below 768 px the panes stack
   (`grid-rows-2`, then `md:grid-cols-2`) and Swap is the "toggle". That follows the mockup; it is not a
   one-pane-at-a-time switch. The panes are `x-if`, so their frames load only while compare is open
@@ -73,6 +83,41 @@ the empty state (`data-mockups-empty`), which says mockups come from `docs/mocku
   `StoryPickWriter::pick()`, and always calls `forget()`. The result is a success toast ("… committed on
   <branch> (not pushed)"), or `refusal` shown in the dialog (`data-pick-refusal`). `hydrate()` re-checks the
   project is still shown on every update (ADR-019 amendment).
+
+**Current pane** (`app/Actions/Board/ReadCurrentVersion.php:handle()`, rendered by
+`resources/views/components/board/mockup-current.blade.php`). It takes the set's Where and snapshot sha and
+returns one of three states, never a blank pane:
+- `shot`: a journey shot matched. Shots come only through SB-24's `ReadJourneyShots::handle()` (the
+  manifest whitelist) and are served by the existing `shots.file` route; no new route, and the reader is
+  unchanged. The pane shows the image with route, capture time (UTC) and short commit. `stale` is true when
+  `captured_at` is more than `STALE_DAYS` (14) days ago, shown as "captured <M j, Y>, may be out of date" on
+  the `warning` token.
+- `new`: no shot, and the project's route files define no route matching the Where. "No current version —
+  new page".
+- `uncovered`: no shot, and a route matches, or the routes could not be read, or none were parsed, or the
+  story names no route. "No journey test covers this route yet"; with no Where the second line says the
+  story names no route. "New page" is claimed only when routes were read, at least one was found, and none
+  matches.
+
+Matching (`newest()`, `matches()`): query, fragment and trailing slash are stripped. An exact match wins;
+else either side may be a pattern, so `/p/{project}/preflight` matches `/p/coins/preflight` both ways.
+`{param}` and bound `{project:name}` stand for one segment, `{x?}` for zero or one. Among hits the newest
+`captured_at` across all journeys wins; a tie keeps the earlier manifest entry (the desktop one), and an
+undated shot counts as the oldest.
+
+**Does the page exist?** (`app/Actions/Board/ReadProjectRoutes.php`). It lists the project's `routes/*.php`
+at the set's commit through `GitReader` (`listFiles` + `showMany`, read-only) and tokenises them with
+`token_get_all()`. It never executes them: the board does not run a project's code, so `artisan route:list`
+was not an option ([ADR-036](../decisions/ADR-036-new-page-is-read-statically-from-route-files.md)).
+`parse()` follows `prefix()` chains into nested `group(function () { … })` closures and reads
+`Route::get/post/put/patch/delete/options/any/match/view/redirect/permanentRedirect/livewire/resource/route`
+and `Volt::route` (anything called with `::` or `->`); `resource` expands to index, show, create and edit.
+`routes/api.php` gets Laravel's default `api` prefix. A URI built from a variable or concatenation is
+skipped. The URI list is cached as `board:project-routes:{project_id}:{sha}` for a day, and it is read only
+when no shot matched.
+
+`MockupViewer` keeps the `ReadCurrentVersion` result in a private `$current`, so `mount()` (log line) and
+`render()` (page) share one read, and a refused manifest entry logs once per request, not twice.
 
 **Writing the pick** (`app/Services/StoryPickWriter.php:pick()`). Guards run in this order. Each one logs
 `board.mockup_pick_refused` and throws `StoryPickRefusedException` before anything is written:
@@ -112,8 +157,10 @@ frame-ancestors 'self'`. Unlike SB-4's route, this CSP does **not** include `all
 
 ## Data model
 No schema change. Reads `projects` and on-ref `stories` rows (`mockups` JSON `dir`/`options`/`chosen`,
-`status`, `path`, `sha`, `dated_on`). Two cache keys, `board:mockup-gates:{id}:{sha}` and
-`board:mockup-local:{id}`. Writes one story file in a project's checkout (the pick only).
+`status`, `path`, `sha`, `dated_on`). Three cache keys: `board:mockup-gates:{id}:{sha}`,
+`board:mockup-local:{id}` and `board:project-routes:{id}:{sha}` (SB-23). The Current pane reads each
+project's working-tree `storage/app/journey-shots/<j>/manifest.json` (via `ReadJourneyShots`) and its
+`routes/*.php` at the set's commit. Writes one story file in a project's checkout (the pick only).
 
 ## Interfaces
 - `ReadMockupSets::handle(?Project): list<MockupSet>`, plus `find()`, `awaitingCount()`, `countFor()`,
@@ -124,22 +171,33 @@ No schema change. Reads `projects` and on-ref `stories` rows (`mockups` JSON `di
 - `GitReader::showMany(path, ref, files): array<path, ?bytes>` (one `cat-file --batch`). It refuses a path
   containing a newline. `GitReader::run()` gained an optional stdin `$input`. Both are reads only, and the
   allow-list is unchanged.
+- `ReadCurrentVersion::handle(Project, ?string $where, string $sha): CurrentVersion`
+  (`array{state: 'shot'|'new'|'uncovered', where, shot: JourneyShot|null, stale: bool}`), plus
+  `newest()` and the static `matches()`. Constants `SHOT`, `NEW_PAGE`, `UNCOVERED`, `STALE_DAYS`.
+- `ReadProjectRoutes::handle(Project, string $sha): list<string>|null` (null = unreadable) and the pure
+  `parse(string $php, string $file): list<string>`.
+- `<x-board.mockup-current :current :project>`: takes the `CurrentVersion` array and the project name.
 - `MockupViewer::pick(string $option, string $reason)` is the only Livewire action. `$project`, `$story` and
   `$refusal` are `#[Locked]`.
 - Test hooks: `data-set`, `data-state`, `data-filter-status`, `data-filter-project`, `data-show-all-sets`,
   `data-mockups-empty`, `data-viewer`, `data-viewer-frame`, `data-viewer-description`, `data-viewer-where`,
   `data-option-tab`, `data-width`, `data-compare-toggle`, `data-compare-pane`, `data-compare-swap`,
-  `data-pick`, `data-pick-dialog`, `data-pick-refusal`, `data-current-placeholder`, `data-sidebar-mockups`,
+  `data-pick`, `data-pick-dialog`, `data-pick-refusal`, `data-current-placeholder` (empty states),
+  `data-current-pane="<state>"`, `data-current-stale`, `data-compare-open`, `data-default-left`,
+  `data-default-right`, `data-sidebar-mockups`,
   `data-awaiting-count`, `data-project-mockups`, `data-open-gallery`.
 
 ## Configuration
-None of its own. Frames lean on `PHP_CLI_SERVER_WORKERS` like the story page.
+None of its own. Frames lean on `PHP_CLI_SERVER_WORKERS` like the story page. The stale threshold is the
+constant `ReadCurrentVersion::STALE_DAYS`, not config.
 
 ## Observability
 | Event | Level | Where | Context |
 |---|---|---|---|
 | `board.mockups_viewed` | info | `MockupGallery::mount()` | `sets`, `awaiting`, `project` (starting filter or null) |
-| `board.mockup_viewed` | info | `MockupViewer::mount()` | `project`, `story`, `option`, `compare` |
+| `board.mockup_viewed` | info | `MockupViewer::mount()` | `project`, `story`, `option`, `compare` (true when it opened on Current vs an option), `current` (a shot matched) |
+| `board.project_routes_unreadable` | warning | `ReadProjectRoutes::handle()` | `project`, `ref`, `error` |
+| `board.journey_shot_refused` | warning | `ReadJourneyShots` (SB-24's, reused) | `project`, `path`, `reason` |
 | `board.mockup_picked` | info | `StoryPickWriter::pick()` | `project`, `story`, `option`, `commit` |
 | `board.mockup_pick_refused` | warning | `StoryPickWriter::pick()`, `MockupViewer::pick()` | `project`, `story`, `reason` |
 | `board.mockup_file_refused` | warning | `ReadMockupSetFile` | `project`, `path` |
@@ -151,7 +209,10 @@ Every line carries `request_id`. A healthy viewer open logs one `mockup_viewed` 
 per visible frame, each in its own request. If a pick went wrong, find its `mockup_pick_refused` line: the
 `reason` is the same sentence the dialog showed. A `mockup_file_refused` is a URL the board never builds.
 When `mockup_sets_unreadable` fires, sets still list from the snapshot but lose reasons and Where until
-git reads again.
+git reads again. Current pane: `current: false` with a shot you expected means no manifest route matched
+the Where (compare the story's `- Routes:` path with the manifest's `route`), or the entry was refused
+(`journey_shot_refused`, see the app-map doc). A `project_routes_unreadable` means the pane fell back to
+"No journey test covers this route yet" instead of claiming a new page.
 
 ## Testing & verification
 - `tests/Feature/Board/MockupGalleryTest.php` has one `it()` per gallery/viewer acceptance criterion. It
@@ -162,7 +223,15 @@ git reads again.
   project off, symlink, commit failure restoring the file, and Why line insertion.
 - `tests/Browser/MockupGalleryTest.php` walks gallery → viewer → switch option → compare → 375 px stack →
   Esc, and picks b in a fixture checkout.
+- `tests/Feature/Board/MockupCurrentTest.php` (SB-23) has one `it()` per Current-pane criterion, against a
+  fixture manifest and PNGs in a temp project path. It also covers pattern matching and newest-wins, exact
+  over pattern, no Where, unreadable routes, and `ReadProjectRoutes::parse()` (groups, closures, api prefix).
+- The browser suite also opens a set whose route has a shot and checks Current (the decoded image) left and
+  option a right.
 - Picks are never tested on a real project.
+- **Pending real-data check (SB-23):** after `JOURNEY_SHOTS=1` on coins (needs SB-22 synced from the kit),
+  `/mockups` → a coins set → the compare shows Current vs option.
+- JS changes in `mockup-gallery.js` need `npm run build` before the browser suite sees them (RUNBOOK).
 
 ## Key decisions & tradeoffs
 - The board writes, narrowly: one gateway, two lines, one file, one local commit, never pushed, and
@@ -173,6 +242,11 @@ git reads again.
   commit-msg or pre-commit hook for story files, drop the flag.
 - Only git results are cached; set rows are read fresh on every call. Caching whole sets made the query
   count differ between cold and warm loads, which broke the "same number of queries" tests (see RUNBOOK).
+- "New page" is read statically from the project's route files, and claimed only on positive evidence;
+  anything unknown is "uncovered" → [ADR-036](../decisions/ADR-036-new-page-is-read-statically-from-route-files.md).
+- The Current pane shows the real screenshot in full colour, unlike the mockup's greyed stand-in, because
+  colour changes are part of what the owner compares (owner call; one class, `grayscale opacity-80`, to
+  change). The empty states stay grey and dashed so "before" never reads as an option.
 - Local picks are checked only for awaiting sets, so the extra git cost is bounded by what is actually waiting.
 - Files are allowed by exact match against the listing rather than by path validation. This is stricter
   than SB-4's `isPlainRelativePath()` and needs no traversal rules.
@@ -188,7 +262,13 @@ git reads again.
   Chosen value that is not a placeholder.
 - If the checkout is behind the ref, the pick is refused only when the ref already has a letter. Other
   changes on the ref can conflict with the pick commit on pull.
-- The Current tab is a placeholder until SB-23.
+- **Staleness is days only.** The story also asked for "older than the ref by more than N commits". That
+  needs `git rev-list --count`, which is not on `GitReader`'s allow-list, and `GitReader` was Do-NOT-touch.
+- **Route reading has blind spots.** Routes registered in service providers, in loops, with variable or
+  concatenated URIs, or by packages are not seen, so an existing page can show as "new page". Checked on
+  coins: 220 URIs read, and `/grading` correctly reads as new.
+- Shots come from the project's **working tree** while routes are read at the set's commit, so a shot can
+  be newer or older than the code the set was read at. The capture date and commit on the pane say which.
 - The frame CSP has no `allow-popups`, so a mockup's `target=_blank` links do nothing.
 - Every thumbnail is a live iframe and a PHP request. The 12-per-group cap is what keeps `/mockups` usable.
 - SB-13 ("Pick a mockup from the board", approved) overlaps this story's pick. It has not been rescoped.
@@ -198,3 +278,4 @@ git reads again.
 `GitReader::showMany()`; `StoryPickWriter`; sidebar/project page/modal entry points (SB-21, `486be22`)
 2026-09-29 — Gallery opens on "Awaiting pick", falling back to All when none await (SB-21, `b1a3ab7`)
 2026-09-29 — Opening status counts only the project the page opens on, so `?project=X` with nothing awaiting in X opens on All (SB-21, `680b4db`)
+2026-09-30 — Current pane: newest matching journey shot with capture time and stale label, new-page and uncovered states, opens Current vs option when a shot exists; `ReadCurrentVersion`, `ReadProjectRoutes`; `mockup_viewed` gains `current` (SB-23, `079a2c1`)
