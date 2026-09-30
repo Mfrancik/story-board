@@ -1,0 +1,76 @@
+<!-- SB-21 mockups — landing page for the three options. -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SB-21 mockup gallery mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config = { darkMode: 'media', theme: { extend: { fontFamily: { sans: ['"Instrument Sans"', 'system-ui', 'sans-serif'] } } } };</script>
+<style>a:focus-visible { outline: 2px solid #0ea5e9; outline-offset: 2px; }</style>
+</head>
+<body class="font-sans bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 antialiased">
+<main class="mx-auto max-w-6xl px-4 sm:px-6 py-10">
+  <p class="font-mono text-xs text-zinc-500">SB-21 · design mockup gate</p>
+  <h1 class="mt-1 text-2xl font-semibold tracking-tight">Mockup gallery: three directions</h1>
+  <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400 max-w-3xl">What you asked for: "for any mockup, i have a mockup gallery button i go to, and that gives me a full screen view with a small title and description, tells me where, shows me a current version (if that exists), then i can see the two mockups side by side in a single screen." All three put a <strong>Mockups</strong> link in the design-A sidebar with the number waiting for a pick, and each adds a second way in from somewhere you already are. They use the real sets: story-board's SB-3 to SB-18 (picked, with the reason from each story's gate) plus SB-21 itself, and coins' newest seven of 263. VAR-19 and SCOPE-7 are awaiting a pick, SCOPE-9 is a new page with no current version, and SCOPE-5 was "neither". The option panes load the real option files. coins' files load from <span class="font-mono text-xs">~/Code/coins</span> beside this repo. <strong>Current</strong> is a drawn grey stand-in for the screenshot the build would capture. The dark strip at the top of each option switches between its states. Picking is visual only: it shows the toast SB-13 would send.</p>
+
+  <div class="mt-8 grid gap-4 lg:grid-cols-3">
+    <a href="option-a.html" class="group flex flex-col rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 hover:border-zinc-300 dark:hover:border-zinc-700">
+      <div class="aspect-[16/10] rounded-lg bg-zinc-100 dark:bg-zinc-800 p-3 flex gap-2" aria-hidden="true">
+        <div class="w-1/5 rounded bg-zinc-200 dark:bg-zinc-700"></div>
+        <div class="flex-1 grid grid-cols-3 gap-1.5 content-start">
+          <div class="h-9 rounded bg-white dark:bg-zinc-900 ring-1 ring-amber-400"></div><div class="h-9 rounded bg-white dark:bg-zinc-900"></div><div class="h-9 rounded bg-white dark:bg-zinc-900"></div>
+          <div class="h-9 rounded bg-white dark:bg-zinc-900"></div><div class="h-9 rounded bg-white dark:bg-zinc-900"></div><div class="h-9 rounded bg-white dark:bg-zinc-900"></div>
+          <div class="col-span-3 mt-1 flex gap-1 rounded bg-zinc-800 dark:bg-black p-1"><div class="h-7 flex-1 rounded bg-zinc-500"></div><div class="h-7 flex-1 rounded bg-white"></div></div>
+        </div>
+      </div>
+      <h2 class="mt-4 font-semibold">Option A: grid + lightbox</h2>
+      <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">A /mockups page of cards with live thumbnails, grouped by project, with sets awaiting a pick first. Filters for status and project, and search. A card opens a full-screen lightbox: title, description and Where on top, then Current / A / B / C tabs and a width switch. <strong>Side by side</strong> splits the lightbox into two panes, each with its own picker and a swap. The pick buttons sit along the bottom. You can also get in from the story modal's new "Open in mockup gallery".</p>
+      <p class="mt-2 text-sm"><span class="font-medium">Good:</span> <span class="text-zinc-600 dark:text-zinc-400">the closest match to what you described: gallery, then full screen, then compare. You can spot a set by sight, and ← → steps through every set without closing the lightbox.</span></p>
+      <p class="mt-1 text-sm"><span class="font-medium">Costs:</span> <span class="text-zinc-600 dark:text-zinc-400">one live iframe per card is heavy at coins' 263 sets, so it needs paging (only the newest are shown). The thumbnails are small at 1280 scale, so they tell sets apart more than they show detail.</span></p>
+      <p class="mt-auto pt-3 text-sm font-medium group-hover:underline underline-offset-4">Open option A →</p>
+    </a>
+    <a href="option-b.html" class="group flex flex-col rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 hover:border-zinc-300 dark:hover:border-zinc-700">
+      <div class="aspect-[16/10] rounded-lg bg-zinc-100 dark:bg-zinc-800 p-3 flex gap-2" aria-hidden="true">
+        <div class="w-1/6 rounded bg-zinc-200 dark:bg-zinc-700"></div>
+        <div class="w-1/4 rounded bg-white dark:bg-zinc-900 p-1 space-y-1"><div class="h-1.5 rounded bg-amber-400"></div><div class="h-1.5 rounded bg-zinc-200 dark:bg-zinc-700"></div><div class="h-1.5 rounded bg-zinc-800 dark:bg-zinc-300"></div><div class="h-1.5 rounded bg-zinc-200 dark:bg-zinc-700"></div><div class="h-1.5 rounded bg-zinc-200 dark:bg-zinc-700"></div><div class="h-1.5 rounded bg-zinc-200 dark:bg-zinc-700"></div></div>
+        <div class="flex-1 flex flex-col gap-1"><div class="h-2 w-2/3 rounded bg-zinc-300 dark:bg-zinc-600"></div><div class="flex-1 flex gap-1"><div class="flex-1 rounded bg-zinc-400/60"></div><div class="flex-1 rounded bg-white dark:bg-zinc-900"></div></div><div class="h-2 rounded bg-amber-200 dark:bg-amber-500/30"></div></div>
+      </div>
+      <h2 class="mt-4 font-semibold">Option B: library + stage</h2>
+      <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">A list with no thumbnails (ID, title, the path and A B C chips, the picked one filled) sits beside a stage. The stage has a toolbar: tabs for Current, each option and Compare, plus width and <strong>Full screen</strong>, which hides the sidebar and the list. Compare splits the stage and adds swap and "scroll together". The pick sits in an amber bar under the stage. J / K moves through the list. You can also get in from the story page's "Open in Mockups".</p>
+      <p class="mt-2 text-sm"><span class="font-medium">Good:</span> <span class="text-zinc-600 dark:text-zinc-400">scales to 263 sets because text rows are cheap, and only one or two frames are ever loaded. The fastest way to work down a queue of picks. Everything, including the reason, stays on one screen.</span></p>
+      <p class="mt-1 text-sm"><span class="font-medium">Costs:</span> <span class="text-zinc-600 dark:text-zinc-400">nothing visual until you pick a row. Full screen is a step rather than the default. On a phone it is two screens, the list and then the stage.</span></p>
+      <p class="mt-auto pt-3 text-sm font-medium group-hover:underline underline-offset-4">Open option B →</p>
+    </a>
+    <a href="option-c.html" class="group flex flex-col rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 hover:border-zinc-300 dark:hover:border-zinc-700">
+      <div class="aspect-[16/10] rounded-lg bg-zinc-200 dark:bg-black p-3 flex flex-col gap-1.5" aria-hidden="true">
+        <div class="h-1.5 w-1/3 rounded bg-zinc-400 dark:bg-zinc-600"></div>
+        <div class="relative flex-1 rounded bg-white dark:bg-zinc-900 overflow-hidden"><div class="absolute inset-y-0 left-0 w-1/2 bg-zinc-400/60"></div><div class="absolute inset-y-0 left-1/2 w-0.5 bg-sky-500"></div><div class="absolute left-1/2 top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-500"></div></div>
+        <div class="flex justify-center gap-1"><div class="h-4 w-7 rounded-sm bg-zinc-400/60"></div><div class="h-4 w-7 rounded-sm bg-white ring-1 ring-sky-500 dark:bg-zinc-900"></div><div class="h-4 w-7 rounded-sm bg-white dark:bg-zinc-900"></div><div class="h-4 w-7 rounded-sm bg-white dark:bg-zinc-900"></div></div>
+      </div>
+      <h2 class="mt-4 font-semibold">Option C: filmstrip + slider</h2>
+      <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Each set is a row with a filmstrip: Current first, then every option. <strong>Present</strong> opens an edge-to-edge presentation. You swipe or press ← → between versions, press ↑ ↓ between stories, and a thumbnail strip runs along the bottom. <strong>Slider</strong> lays one version over another with a divider you drag. <strong>Side by side</strong> is there when you want both whole. "Present the 3 awaiting a pick" runs a queue. You can also get in from a Home "Mockups to pick" card.</p>
+      <p class="mt-2 text-sm"><span class="font-medium">Good:</span> <span class="text-zinc-600 dark:text-zinc-400">the slider shows exactly what changed from today's page to an option, in one frame. Before and after sit in every row. Swiping works well on a phone.</span></p>
+      <p class="mt-1 text-sm"><span class="font-medium">Costs:</span> <span class="text-zinc-600 dark:text-zinc-400">the slider only reads well when both versions share a layout. Two different directions just look cut in half, which is why side by side is there too. A row per set makes a long page. To click inside a page you turn on "Click inside the page", because swipe owns the pointer.</span></p>
+      <p class="mt-auto pt-3 text-sm font-medium group-hover:underline underline-offset-4">Open option C →</p>
+    </a>
+  </div>
+
+  <section class="mt-8 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
+    <h2 class="font-medium">The same in every option</h2>
+    <ul class="mt-2 list-disc pl-5 text-sm text-zinc-600 dark:text-zinc-400 space-y-1">
+      <li>Each set shows one status, always in words: <span class="font-medium">Awaiting pick</span> (amber), <span class="font-medium">Picked A/B/C</span> with the reason from the story's gate, or <span class="font-medium">Neither · parked</span>.</li>
+      <li>Where is the route plus a plain note ("/p/coins/preflight (Preflight tab)", "/mockups (new page)"). A set with no page yet shows "No current version — new page" instead of Current.</li>
+      <li>Frames render a page at 1280, 768 or 375 and scale it to fit. They never enlarge, so a phone-width page sits centred at real size. "Open file ↗" opens the raw option file.</li>
+      <li>Picking follows SB-13: the board sends the pick and your one-line reason to the session that owns the story, and never writes the repo itself. "Neither" parks the set.</li>
+      <li>Scope note: the draft SB-21 story leaves out the <strong>Current</strong> pane (that is SB-23, fed by SB-22's journey shots) and picking from the board (picks stay in /story and /build for now). Both are drawn here so you can see the whole flow. If they stay out, the Current tab and the pick bar are the pieces that come off, and the layouts do not change.</li>
+      <li>Worth deciding at build time: where the Current screenshot comes from. It could be a headless capture of the live route when the set is read, or an upload. Sets whose files do not follow <span class="font-mono text-xs">option-x.html</span> (COIN-11's rounds, VIEW-35's sticker files) show the extras as "+ other files".</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>

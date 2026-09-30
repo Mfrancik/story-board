@@ -1,0 +1,67 @@
+<!-- SB-24 mockups — landing page for the three App map options. -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SB-24 app map mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { darkMode: 'media', theme: { extend: { fontFamily: { sans: ['"Instrument Sans"', 'system-ui', 'sans-serif'] } } } };
+</script>
+<style>a:focus-visible { outline: 2px solid #0ea5e9; outline-offset: 2px; }</style>
+</head>
+<body class="font-sans bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 antialiased">
+<main class="mx-auto max-w-6xl px-4 sm:px-6 py-10">
+  <p class="font-mono text-xs text-zinc-500">SB-24 · design mockup gate</p>
+  <h1 class="mt-1 text-2xl font-semibold tracking-tight">App map: three directions</h1>
+  <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400 max-w-3xl">All three add an <strong>App map</strong> tab to the project page, inside the design-A shell. The map is generated from each project's <span class="font-mono text-xs">docs/journeys/&lt;slug&gt;.md</span>. The journeys, step names, story IDs and built/pending states are real, read on Sep 29. coins has 5 flows, client-dashboard 2 (all built), asset-track 2 (nothing built, both share their first two screens), rent-track 1, and story-board none (the empty state). Switch project in the sidebar. The journey tests don't save screenshots yet (a separate story adds that), so every built screen is a drawn greyscale wireframe marked <em>screenshot placeholder</em>. A pending step shows its chosen mockup (violet), "awaiting pick" (amber, e.g. AUC-17), or "no mockup yet" (e.g. the IMP-1 to IMP-6 import flow). SELL-24 shows the "built, no screenshot yet" state.</p>
+
+  <div class="mt-8 grid gap-4 lg:grid-cols-3">
+    <a href="option-a.html" class="group flex flex-col rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 hover:border-zinc-300 dark:hover:border-zinc-700">
+      <div class="aspect-[16/10] rounded-lg bg-zinc-100 dark:bg-zinc-800 p-3 flex flex-col gap-2" aria-hidden="true">
+        <div class="flex-1 flex gap-2"><div class="flex-[3] rounded bg-white dark:bg-zinc-900 ring-1 ring-zinc-300 dark:ring-zinc-700"></div><div class="flex-1 rounded bg-white dark:bg-zinc-900"></div></div>
+        <div class="flex items-center gap-1">
+          <div class="h-6 flex-1 rounded bg-zinc-300 dark:bg-zinc-600"></div><span class="text-[8px] text-zinc-400">→</span>
+          <div class="h-6 flex-1 rounded bg-zinc-300 dark:bg-zinc-600 ring-2 ring-zinc-800 dark:ring-white"></div><span class="text-[8px] text-zinc-400">→</span>
+          <div class="h-6 flex-1 rounded border border-dashed border-amber-400"></div><span class="text-[8px] text-zinc-400">→</span>
+          <div class="h-6 flex-1 rounded bg-zinc-300 dark:bg-zinc-600"></div>
+        </div>
+      </div>
+      <h2 class="mt-4 font-semibold">Option A: storyboard strip</h2>
+      <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">A comic-strip of each flow: the screens in a row joined by arrows, a large stage above with Back and Next, and a full-screen view. "All flows" stacks every journey as a swimlane. Lettered rings and a side list mark the screens flows share.</p>
+      <p class="mt-auto pt-3 text-sm font-medium group-hover:underline underline-offset-4">Open option A →</p>
+    </a>
+    <a href="option-b.html" class="group flex flex-col rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 hover:border-zinc-300 dark:hover:border-zinc-700">
+      <div class="aspect-[16/10] rounded-lg bg-zinc-100 dark:bg-zinc-800 p-3 relative overflow-hidden" aria-hidden="true">
+        <svg class="absolute inset-0 w-full h-full" viewBox="0 0 160 100" preserveAspectRatio="none"><path d="M30 22 C50 22,50 22,70 22" stroke="#2a78d6" stroke-width="1.5" fill="none"/><path d="M30 58 C50 58,55 26,70 26" stroke="#eb6834" stroke-width="1.5" fill="none"/><path d="M92 24 C110 24,110 60,125 60" stroke="#2a78d6" stroke-width="1.5" fill="none"/><path d="M92 28 C105 28,110 80,125 80" stroke="#eb6834" stroke-width="1.5" stroke-dasharray="3 2" fill="none"/></svg>
+        <div class="absolute left-[6%] top-[12%] w-[14%] h-[20%] rounded bg-white dark:bg-zinc-900 ring-1 ring-zinc-300 dark:ring-zinc-700"></div>
+        <div class="absolute left-[6%] top-[48%] w-[14%] h-[20%] rounded bg-white dark:bg-zinc-900 ring-1 ring-zinc-300 dark:ring-zinc-700"></div>
+        <div class="absolute left-[44%] top-[12%] w-[14%] h-[24%] rounded bg-white dark:bg-zinc-900 ring-2 ring-zinc-800 dark:ring-white"></div>
+        <div class="absolute left-[78%] top-[50%] w-[14%] h-[20%] rounded bg-white dark:bg-zinc-900 ring-1 ring-zinc-300 dark:ring-zinc-700"></div>
+        <div class="absolute left-[78%] top-[72%] w-[14%] h-[20%] rounded border border-dashed border-amber-400"></div>
+      </div>
+      <h2 class="mt-4 font-semibold">Option B: flow map</h2>
+      <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">One canvas with every screen in the project drawn once. Each journey is a coloured line through it, so shared screens are where the lines meet. Click a flow to trace it or play it, and click a screen to open it large with Back and Next along that flow.</p>
+      <p class="mt-auto pt-3 text-sm font-medium group-hover:underline underline-offset-4">Open option B →</p>
+    </a>
+    <a href="option-c.html" class="group flex flex-col rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 hover:border-zinc-300 dark:hover:border-zinc-700">
+      <div class="aspect-[16/10] rounded-lg bg-zinc-100 dark:bg-zinc-800 p-3 flex gap-2" aria-hidden="true">
+        <div class="w-1/5 rounded bg-white dark:bg-zinc-900 p-1 space-y-1"><div class="h-1 rounded bg-zinc-300 dark:bg-zinc-600"></div><div class="h-1 w-3/4 rounded bg-zinc-800 dark:bg-white"></div><div class="h-1 rounded bg-zinc-300 dark:bg-zinc-600"></div><div class="h-1 w-2/3 rounded bg-zinc-300 dark:bg-zinc-600"></div></div>
+        <div class="flex-1 flex flex-col items-center gap-1.5">
+          <div class="w-full flex-1 rounded-t-md bg-zinc-700 p-1"><div class="h-full rounded-sm bg-white dark:bg-zinc-900 relative"><div class="absolute right-[12%] top-[40%] w-[26%] h-[14%] rounded-sm ring-2 ring-sky-500 bg-sky-500/10"></div></div></div>
+          <div class="flex gap-1"><span class="size-1.5 rounded-full bg-emerald-500"></span><span class="h-1.5 w-3 rounded-full bg-emerald-500"></span><span class="size-1.5 rounded-full bg-emerald-500"></span><span class="size-1.5 rounded-full bg-amber-400"></span></div>
+        </div>
+      </div>
+      <h2 class="mt-4 font-semibold">Option C: click-through prototype</h2>
+      <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">The flow plays like a prototype in a laptop frame. A pulsing hotspot on each screen leads to the next step, with progress dots, auto-play and a flow list at the side. "Screens × flows" is the overview: a grid of every screen against every flow, with the shared rows shaded.</p>
+      <p class="mt-auto pt-3 text-sm font-medium group-hover:underline underline-offset-4">Open option C →</p>
+    </a>
+  </div>
+  <p class="mt-8 text-xs text-zinc-400">Static mockups · no dependency on the running app · light and dark follow your system · each works at 375 px.</p>
+</main>
+</body>
+</html>

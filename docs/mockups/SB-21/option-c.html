@@ -1,0 +1,361 @@
+<!-- SB-21 option C — Mockup gallery: every set as a filmstrip (Current first, then each option), opening a
+     presentation mode you swipe through, with a slider-overlay compare (drag the divider) and a side-by-side
+     fallback. Static mockup inside the SB-7 design-A shell. Real mockup sets from story-board and coins;
+     "Current" screenshots are drawn stand-ins. -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SB-21 option C — Filmstrip + slider</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config = { darkMode: 'media', theme: { extend: { fontFamily: { sans: ['"Instrument Sans"', 'system-ui', 'sans-serif'] } } } };</script>
+<style>
+  html, body { overflow-x: hidden; }
+  [hidden] { display: none !important; }
+  button:focus-visible, a:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid #0ea5e9; outline-offset: 2px; }
+  .no-scrollbar { scrollbar-width: none; } .no-scrollbar::-webkit-scrollbar { display: none; }
+  #track { transition: transform .3s ease; }
+  @media (prefers-reduced-motion: reduce) { #track { transition: none; } }
+</style>
+</head>
+<body class="font-sans bg-zinc-50 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100">
+
+<!-- Mockup state switcher (not part of the design) -->
+<div id="strip" class="fixed inset-x-0 top-0 z-[90] flex h-10 items-center gap-2 overflow-x-auto bg-zinc-900 px-3 text-xs text-zinc-100 no-scrollbar dark:bg-white dark:text-zinc-900"></div>
+
+<div class="sticky top-10 z-30 mt-10 flex h-14 items-center gap-3 border-b border-zinc-200 bg-white/90 px-4 backdrop-blur lg:hidden dark:border-zinc-800 dark:bg-zinc-900/90">
+  <button id="menu-btn" type="button" onclick="drawer(true)" aria-label="Open project menu" aria-controls="sidebar" aria-expanded="false" class="-ml-2 rounded-lg p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+    <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <span class="font-semibold">Story board</span><span id="mtitle" class="truncate text-sm text-zinc-500">· Mockups</span>
+</div>
+<div id="scrim" hidden onclick="drawer(false)" class="fixed inset-0 top-10 z-40 bg-zinc-950/40 lg:hidden"></div>
+<aside id="sidebar" aria-label="Projects" class="fixed bottom-0 left-0 top-10 z-50 flex w-72 -translate-x-full flex-col border-r border-zinc-200 bg-white transition-transform lg:w-64 lg:translate-x-0 dark:border-zinc-800 dark:bg-zinc-900"></aside>
+
+<main class="min-h-screen lg:pl-64 lg:pt-10"><div id="main" class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-10 lg:py-10"></div></main>
+
+<!-- Presentation mode -->
+<div id="pres" hidden role="dialog" aria-modal="true" aria-labelledby="p-title" class="fixed inset-x-0 bottom-0 top-10 z-[70] flex flex-col bg-zinc-200 dark:bg-black"></div>
+<div id="sheet" hidden class="fixed inset-0 z-[80] flex items-end justify-center bg-zinc-950/50 sm:items-center" onclick="if (event.target === this) closeSheet()"></div>
+<div id="toast" hidden role="status" class="fixed bottom-4 left-1/2 z-[95] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-lg bg-zinc-900 px-4 py-3 text-sm text-white shadow-lg dark:bg-white dark:text-zinc-900"></div>
+
+<script>
+// ===== SB-21 shared mockup data + helpers (inlined identically into option-a/b/c) =====
+// Data is the real shape of docs/mockups/ in story-board and in coins (read 2026-09-29).
+// story-board sets iframe their real option files through ../SB-xx/; coins sets iframe the coins
+// checkout at ../../../../coins/docs/mockups/ (works when both repos sit side by side in ~/Code).
+const EMBED = window.top !== window.self; // shown inside another SB-21 option: draw skeletons, never nest iframes
+const sbp = (id, k) => id === 'SB-21' ? `option-${k}.html` : `../${id}/option-${k}.html`;
+const cnp = (id, k) => `../../../../coins/docs/mockups/${id}/option-${k}.html`;
+function set(project, id, title, desc, where, whereNote, kind, current, status, picked, reason, names, extra) {
+  const path = project === 'coins' ? cnp : sbp;
+  return { project, id, title, desc, where, whereNote, kind, current, status, picked, reason, extra: extra || [],
+    opts: names.map((n, i) => { const k = 'abcdefg'[i]; return { k, name: n, src: path(id, k) }; }) };
+}
+const SETS = [
+  set('story-board', 'SB-21', 'Mockup gallery', "Every story's mockups in one place: full screen, with the current page beside an option.", '/mockups', 'new page · sidebar → Mockups', 'tiles', null, 'awaiting', null, null, ['Grid + lightbox', 'Library + stage', 'Filmstrip + slider']),
+  set('story-board', 'SB-18', 'Production dashboard', "Live metrics from each connected app's production database, compared across projects.", '/prod', 'sidebar → Production', 'table', '29 Sep, 14:02', 'picked', 'b', 'No reason given. Direction: comparison table, projects as rows, metrics as columns; cards below 768 px.', ['KPI tiles per project', 'Comparison table', 'Metric focus']),
+  set('story-board', 'SB-17', 'Production connection and metrics', "Connect a project's production database and choose which metrics to read.", '/projects', 'Production column on each row', 'table', '29 Sep, 14:02', 'picked', 'a', 'No reason given. Direction: inline row, a panel opens under the project row.', ['Inline row', 'Side drawer', 'Own page']),
+  set('story-board', 'SB-16', 'Preflight history', 'Every preflight run for a project: time, tokens and cost over time.', '/p/coins/preflight', 'Preflight tab', 'table', '29 Sep, 14:02', 'picked', 'a', 'No reason given. Direction: dense ledger, figures and both charts on top, one wide table.', ['Dense ledger', 'Timeline', 'Split view']),
+  set('story-board', 'SB-15', 'Stories by initiative', "A project's stories grouped by initiative, with filter chips above.", '/p/coins/stories', 'Stories tab', 'twopane', '29 Sep, 14:02', 'picked', 'c', 'No reason given. Direction: initiatives on the left with counts, stories on the right.', ['Accordion list', 'Card grid', 'Dense two-pane']),
+  set('story-board', 'SB-14', 'Project handbook', 'Rules, lessons and how each project differs from the kit.', '/p/coins/handbook', 'Handbook tab', 'doc', '29 Sep, 14:02', 'picked', 'a', 'Section tabs above one full-width reading card; decisions open in the centered modal.', ['Section tabs', 'Handbook reader']),
+  set('story-board', 'SB-7', 'App shell and project switcher', 'The sidebar, the project switcher and the pages it leads to.', '/ and /p/coins', 'every page', 'tiles', '29 Sep, 14:02', 'picked', 'a', '"A is the best design."', ['Sidebar command center', 'Top bar + ⌘K', 'Flow board']),
+  set('story-board', 'SB-4', 'Story and mockup view', "A story's text with its mockups side by side.", '/p/coins/s/SELL-45', 'story full page', 'doc', '29 Sep, 14:02', 'picked', 'b', '"Story above the mockups gives the frames the full width."', ['Beside', 'Above']),
+  set('story-board', 'SB-3', 'What needs me (home)', 'The home page lists what is waiting on the owner.', '/', 'home', 'tiles', '29 Sep, 14:02', 'picked', 'a', '"A is fine, but I\'d like to be able to select things and they open up and give more detail, mockups, etc."', ['Inbox', 'Lanes', 'Queue']),
+  set('coins', 'VAR-19', '"My VAM isn\'t listed"', 'Say which VAM a coin is from the sheet you are already on, when it is not in the dropdown.', 'Add-coin sheet', 'variety row + new modal', 'sheet', '28 Sep, 22:15', 'awaiting', null, null, ['In the caption', 'In the dropdown too', 'Beside the select']),
+  set('coins', 'SCOPE-7', 'The Collecting screen tells the truth', 'Warn before switching a kind off hides pieces you own.', '/settings/collecting', 'Settings → Collecting', 'page', '28 Sep, 22:15', 'awaiting', null, null, ['Two columns, split down the middle', 'One list, self-annotated', 'Disclosure at the point of decision'], ['final.html']),
+  set('coins', 'IMG-19', 'The rectangle cropper', 'A note-shaped crop box you can drag, free and rotate.', 'Photo step → Crop', 'intake, paper money', 'sheet', '28 Sep, 22:15', 'picked', 'a', 'No reason given at the pick (tappable choice). Least new: the coin cropper, widened.', ['The coin cropper, widened', 'Tools on the photo', 'See it on the plate']),
+  set('coins', 'SELL-45', "Selling a coin happens on the coin's own page", "The full sale form opens on the coin's page with that coin in it.", '/coins/{n}', 'Mark sold → modal', 'sheet', '28 Sep, 22:15', 'picked', 'a', '"A is best": the form a seller already knows, minus the explanatory label.', ['The sheet, narrowed', 'Two columns', 'Stepper']),
+  set('coins', 'SCOPE-9', 'Paper money gets its own page', 'Notes move off /coins to their own page; the toolbar closes up.', '/paper-money', 'new page', 'tiles', null, 'picked', 'a', '"Closes up": the toolbar simply closes up where the pills were.', ['Closes up', 'Paper names itself']),
+  set('coins', 'SELL-39', 'A report of what is sitting', 'What is not selling and how long it has sat, to reprice or pull.', '/selling/reports', 'Selling → Reports', 'table', '28 Sep, 22:15', 'picked', 'c', 'Chosen by the owner 2026-09-05: the facing brief.', ['The ageing ledger', 'The banded brief', 'The facing brief']),
+  set('coins', 'SCOPE-5', 'The filter rail offers only what you collect', 'Hide the rail blocks for kinds you do not collect.', '/coins', 'filter rail', 'twopane', '28 Sep, 22:15', 'parked', null, 'Neither: owner ruling 2026-09-12, story parked.', ['Blocks absent', 'Absent, re-balanced']),
+];
+const PROJECTS = [{ key: 'story-board', total: 9, dir: '~/Code/story-board/docs/mockups' }, { key: 'coins', total: 263, dir: '~/Code/coins/docs/mockups' }];
+const awaitingCount = () => SETS.filter(s => s.status === 'awaiting').length;
+const U = k => k === 'current' ? 'Current' : k.toUpperCase();
+const optOf = (s, k) => s.opts.find(o => o.k === k);
+const optName = (s, k) => k === 'current' ? (s.current ? 'Today\'s page' : 'No current version') : `Option ${U(k)} · ${optOf(s, k).name}`;
+
+// ---- Status badges: text always carries the meaning, colour only reinforces it ----
+function badge(s, size = 'text-xs') {
+  if (s.status === 'awaiting') return `<span class="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 ${size} font-medium text-amber-800 dark:bg-amber-500/15 dark:text-amber-300"><span class="size-1.5 rounded-full bg-amber-500"></span>Awaiting pick</span>`;
+  if (s.status === 'parked') return `<span class="inline-flex shrink-0 items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 ${size} font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">Neither · parked</span>`;
+  return `<span class="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 ${size} font-medium text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300"><svg class="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>Picked ${U(s.picked)}</span>`;
+}
+function whereLine(s, cls = 'text-xs') {
+  return `<p class="${cls} min-w-0 truncate text-zinc-500 dark:text-zinc-400">Where: <code class="font-mono text-zinc-800 dark:text-zinc-200">${s.project === 'coins' ? 'coins · ' : ''}${s.where}</code> <span>(${s.whereNote})</span></p>`;
+}
+
+// ---- Frames: a 1280-wide page scaled into any box. Iframes for real option files; drawn boxes for "Current" ----
+const bar = (w, h = 'h-3', c = 'bg-zinc-300 dark:bg-zinc-600') => `<div class="${h} ${w} rounded ${c}"></div>`;
+const card = (h, extra = '') => `<div class="${h} ${extra} rounded-xl border border-zinc-300 bg-white dark:border-zinc-700 dark:bg-zinc-900"></div>`;
+function skel(kind) {
+  const rows = n => [...Array(n)].map((_, i) => `<div class="flex items-center gap-6 px-5 py-4">${bar('w-24')}${bar(i % 3 ? 'w-72' : 'w-96')}${bar('w-16', 'h-3', 'bg-zinc-200 dark:bg-zinc-700')}<div class="ml-auto">${bar('w-20', 'h-3', 'bg-zinc-200 dark:bg-zinc-700')}</div></div>`).join('');
+  const main = {
+    table: `${bar('w-72', 'h-7', 'bg-zinc-400 dark:bg-zinc-500')}<div class="mt-8 grid grid-cols-4 gap-4">${card('h-28').repeat(4)}</div>${card('mt-6 h-48')}<div class="mt-6 divide-y divide-zinc-200 rounded-xl border border-zinc-300 bg-white dark:divide-zinc-800 dark:border-zinc-700 dark:bg-zinc-900">${rows(7)}</div>`,
+    tiles: `${bar('w-80', 'h-7', 'bg-zinc-400 dark:bg-zinc-500')}${bar('mt-3 w-[32rem]', 'h-3', 'bg-zinc-200 dark:bg-zinc-700')}<div class="mt-8 grid grid-cols-3 gap-5">${card('h-56').repeat(6)}</div>`,
+    twopane: `${bar('w-72', 'h-7', 'bg-zinc-400 dark:bg-zinc-500')}<div class="mt-8 flex gap-5"><div class="w-72 space-y-3">${card('h-14').repeat(6)}</div><div class="flex-1 divide-y divide-zinc-200 rounded-xl border border-zinc-300 bg-white dark:divide-zinc-800 dark:border-zinc-700 dark:bg-zinc-900">${rows(9)}</div></div>`,
+    doc: `${bar('w-72', 'h-7', 'bg-zinc-400 dark:bg-zinc-500')}<div class="mt-6 flex gap-6">${bar('w-20')}${bar('w-24')}${bar('w-16')}${bar('w-20')}</div><div class="mt-6 space-y-4 rounded-xl border border-zinc-300 bg-white p-8 dark:border-zinc-700 dark:bg-zinc-900">${[...Array(10)].map((_, i) => bar(['w-full', 'w-11/12', 'w-4/5', 'w-2/3'][i % 4])).join('')}</div>`,
+    sheet: `${bar('w-60', 'h-7', 'bg-zinc-400 dark:bg-zinc-500')}<div class="mx-auto mt-10 w-[40rem] space-y-5 rounded-2xl border border-zinc-300 bg-white p-8 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">${bar('w-48', 'h-5')}${[...Array(5)].map(() => `<div>${bar('w-24', 'h-2.5', 'bg-zinc-200 dark:bg-zinc-700')}${card('mt-2 h-10')}</div>`).join('')}<div class="flex justify-end gap-3">${bar('w-24', 'h-10', 'bg-zinc-200 dark:bg-zinc-700')}${bar('w-32', 'h-10', 'bg-zinc-500')}</div></div>`,
+    page: `${bar('w-60', 'h-7', 'bg-zinc-400 dark:bg-zinc-500')}<div class="mt-8 max-w-3xl space-y-4">${[...Array(5)].map(() => `<div class="flex items-center justify-between rounded-xl border border-zinc-300 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900"><div class="space-y-2">${bar('w-40')}${bar('w-72', 'h-2.5', 'bg-zinc-200 dark:bg-zinc-700')}</div>${bar('w-12', 'h-6', 'bg-zinc-400 dark:bg-zinc-500 rounded-full')}</div>`).join('')}</div>`,
+  }[kind];
+  return `<div class="flex h-full bg-zinc-100 dark:bg-zinc-950"><div class="w-64 shrink-0 space-y-4 border-r border-zinc-300 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">${bar('w-32', 'h-6', 'bg-zinc-400 dark:bg-zinc-500')}${card('h-9')}${[...Array(8)].map((_, i) => bar(i === 1 ? 'w-full' : 'w-40', 'h-4', 'bg-zinc-200 dark:bg-zinc-700')).join('')}</div><div class="flex-1 overflow-hidden p-10">${main}</div></div>`;
+}
+// A drawn "screenshot" of today's page, or the new-page placeholder. Grey on purpose: it is the before.
+function shot(s, compact = false) {
+  if (!s.current) return `<div class="absolute inset-0 grid place-items-center border-2 border-dashed border-zinc-300 bg-zinc-50 p-3 text-center dark:border-zinc-700 dark:bg-zinc-900">
+    <div><svg class="mx-auto size-6 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 9v6M9 12h6"/></svg>
+    <p class="mt-1.5 text-sm font-medium">No current version — new page</p>
+    ${compact ? '' : `<p class="mt-0.5 text-xs text-zinc-500"><code class="font-mono">${s.where}</code> does not exist yet. Compare two options instead.</p>`}</div></div>`;
+  return `<div class="sf absolute inset-0 overflow-hidden" data-w="1280"><div class="sf-in origin-top-left grayscale opacity-80">${skel(s.kind)}</div></div>
+    <span class="pointer-events-none absolute bottom-2 left-2 max-w-[90%] truncate rounded bg-zinc-900/80 px-1.5 py-0.5 text-[11px] text-white">Screenshot · ${s.where} · ${s.current}</span>`;
+}
+// Stand-in when a real file cannot be embedded (inside another SB-21 option, to avoid iframes in iframes).
+function stand(s, k) {
+  return `<div class="sf absolute inset-0 overflow-hidden" data-w="1280"><div class="sf-in origin-top-left">${skel(s.kind)}</div></div>
+    <span class="pointer-events-none absolute left-2 top-2 rounded bg-sky-600 px-1.5 py-0.5 text-[11px] font-medium text-white">Option ${U(k)}</span>`;
+}
+// k = 'current' | 'a' | 'b' …; w = the page width the frame renders at; live = the iframe takes clicks.
+function frame(s, k, { w = 1280, live = false, compact = false } = {}) {
+  if (k === 'current') return shot(s, compact);
+  if (EMBED) return stand(s, k);
+  const o = optOf(s, k);
+  return `<div class="sf absolute inset-0 overflow-hidden bg-white dark:bg-zinc-900" data-w="${w}">
+    <iframe class="sf-in origin-top-left border-0 bg-white ${live ? '' : 'pointer-events-none'} ${w < 1280 ? 'ring-1 ring-zinc-300 dark:ring-zinc-700' : ''}" src="${o.src}" title="${s.id} option ${U(k)}: ${o.name}" loading="lazy" ${live ? '' : 'tabindex="-1" aria-hidden="true"'}></iframe></div>`;
+}
+// Scale every .sf child to its box: never enlarge; centre a narrow page (375/768) in a wide box.
+function fit(root = document) {
+  root.querySelectorAll('.sf').forEach(el => {
+    const w = +el.dataset.w, inner = el.querySelector('.sf-in');
+    if (!inner || !el.clientWidth) return;
+    const s = Math.min(1, el.clientWidth / w);
+    inner.style.width = w + 'px';
+    inner.style.height = (el.clientHeight / s) + 'px';
+    inner.style.transform = `translateX(${Math.max(0, (el.clientWidth - w * s) / 2)}px) scale(${s})`;
+  });
+}
+window.addEventListener('resize', () => fit());
+
+// ---- The design-A shell (SB-7): sidebar gains "Mockups", with the awaiting-pick count ----
+const ico = {
+  grid: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+  prod: '<path d="M3 20h18M5 16l4-5 4 3 6-8"/>',
+  mock: '<rect x="3" y="4" width="8" height="16" rx="1.5"/><rect x="13" y="4" width="8" height="16" rx="1.5"/>',
+};
+const svg = (p, c = 'size-4') => `<svg class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">${p}</svg>`;
+function sidebar(active, highlight = false) {
+  const link = (key, label, icon, right) => `<a href="#" ${active === key ? 'aria-current="page"' : ''} onclick="${key === 'mockups' ? "go('gallery');return false" : 'return false'}" class="mt-0.5 flex w-full items-center gap-3 rounded-lg px-3 py-2 ${active === key ? 'bg-zinc-100 font-medium dark:bg-zinc-800' : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/50'} ${highlight && key === 'mockups' ? 'ring-2 ring-sky-500' : ''}">${svg(icon)}<span class="flex-1 text-left font-medium">${label}</span>${right}</a>`;
+  const proj = (n, c) => `<li><a href="#" onclick="return false" class="flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"><span class="size-2 rounded-full bg-emerald-500" title="State ok"></span><span class="flex-1 truncate text-left">${n}</span><span class="text-xs tabular-nums text-zinc-500">${c}</span></a></li>`;
+  return `<div class="flex items-center justify-between px-5 pb-3 pt-5"><div class="flex items-center gap-2"><span class="grid size-7 place-items-center rounded-lg bg-zinc-800 text-xs font-bold text-white dark:bg-white dark:text-zinc-900">SB</span><span class="font-semibold">Story board</span></div>
+    <button type="button" onclick="drawer(false)" aria-label="Close project menu" class="rounded-lg p-1.5 hover:bg-zinc-100 lg:hidden dark:hover:bg-zinc-800">${svg('<path d="M6 6l12 12M18 6L6 18"/>', 'size-5')}</button></div>
+  <div class="px-4 pb-3"><button type="button" class="flex w-full items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950">${svg('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>')}<span class="flex-1 text-left">Find a story</span><kbd class="rounded border border-zinc-200 px-1.5 font-sans text-[11px] dark:border-zinc-700">⌘K</kbd></button></div>
+  <nav class="flex-1 overflow-y-auto px-3 pb-3 text-sm" aria-label="Project switcher">
+    ${link('all', 'All projects', ico.grid, '<span class="text-xs tabular-nums text-zinc-500">1,090</span>')}
+    ${link('prod', 'Production', ico.prod, '<span class="text-xs tabular-nums text-zinc-500">3/4</span>')}
+    ${link('mockups', 'Mockups', ico.mock, `<span class="rounded-full bg-amber-100 px-1.5 text-xs font-medium tabular-nums text-amber-800 dark:bg-amber-500/15 dark:text-amber-300" title="${awaitingCount()} awaiting your pick">${awaitingCount()}</span>`)}
+    <p class="mb-1 mt-5 px-3 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Projects</p>
+    <ul class="space-y-0.5">${proj('coins', 946)}${proj('client-dashboard', 97)}${proj('asset-track', 11)}${proj('rent-track', 15)}${proj('story-board', 21)}</ul>
+  </nav>
+  <div class="border-t border-zinc-200 p-3 dark:border-zinc-800"><a href="#" onclick="return false" class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800/50">${svg('<path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/>')}<span class="flex-1 text-left font-medium">Manage projects</span></a></div>`;
+}
+function drawer(open) { document.getElementById('sidebar').classList.toggle('-translate-x-full', !open); document.getElementById('scrim').hidden = !open; document.getElementById('menu-btn').setAttribute('aria-expanded', open); }
+function toast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg; t.hidden = false;
+  clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; }, 4000);
+}
+// The pick itself (SB-13): the board never writes the repo; it sends the pick to the session that owns the story.
+function recordPick(s, k, why) {
+  s.status = 'picked'; s.picked = k; s.reason = why.trim() || 'No reason given.';
+  toast(`Pick sent: ${s.id} option ${U(k)}. The next session on ${s.project} records it in the story.`);
+}
+const segBtn = (on) => `rounded-md px-2.5 py-1 text-xs font-medium whitespace-nowrap ${on ? 'bg-zinc-800 text-white dark:bg-white dark:text-zinc-900' : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'}`;
+const segWrap = 'inline-flex shrink-0 rounded-lg border border-zinc-200 bg-white p-0.5 dark:border-zinc-800 dark:bg-zinc-900';
+const btn = 'inline-flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-2.5 py-1 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800';
+const btnPrimary = 'inline-flex shrink-0 items-center gap-1.5 rounded-md bg-zinc-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200';
+const WIDTHS = [[1280, 'Desktop'], [768, 'Tablet'], [375, 'Phone']];
+// ===== end shared =====
+
+
+// ===== Option C =====
+const S = { tab: 'gallery', view: 'gallery', i: 1, slide: 0, mode: 'slides', left: 'current', right: 'b', x: 50, w: 1280, interact: false, queue: null };
+const idx = id => SETS.findIndex(s => s.id === id);
+const slidesOf = s => ['current', ...s.opts.map(o => o.k)];
+const chip = 'rounded-md bg-zinc-900/80 px-2 py-0.5 text-[11px] font-medium text-white backdrop-blur';
+
+function strip() {
+  const tabs = [['gallery', 'Gallery'], ['present', 'Present · SB-18 (picked)'], ['present-new', 'Present · SB-21 (new page)'], ['slider', 'Slider · VAR-19 current vs A'], ['sbs', 'Side by side · SB-16 A vs B'], ['entry', 'Entry from Home']];
+  document.getElementById('strip').innerHTML = `<span class="shrink-0 font-semibold">Option C · state:</span>
+    <div role="tablist" aria-label="Mockup state" class="flex shrink-0 gap-1">${tabs.map(([k, l]) => `<button role="tab" type="button" aria-selected="${S.tab === k}" onclick="go('${k}')" class="shrink-0 rounded-md px-2 py-1 opacity-70 hover:opacity-100 aria-selected:bg-white aria-selected:font-medium aria-selected:text-zinc-900 aria-selected:opacity-100 dark:aria-selected:bg-zinc-900 dark:aria-selected:text-white">${l}</button>`).join('')}</div>
+    <span class="shrink-0 opacity-80">· swipe or ← → between versions · ↑ ↓ between stories · drag the divider</span>
+    <a href="index.html" class="ml-auto hidden shrink-0 underline underline-offset-4 opacity-80 hover:opacity-100 sm:inline">All options</a>`;
+}
+function go(k) {
+  S.tab = k; drawer(false); S.queue = null;
+  if (k === 'gallery' || k === 'entry') { S.view = k; closePres(); render(); return; }
+  S.view = 'gallery'; render();
+  if (k === 'present') present(idx('SB-18'), 2);
+  if (k === 'present-new') present(idx('SB-21'), 1);
+  if (k === 'slider') { present(idx('VAR-19'), 0); S.mode = 'slider'; S.left = 'current'; S.right = 'a'; S.x = 50; renderPres(); }
+  if (k === 'sbs') { present(idx('SB-16'), 1); S.mode = 'sbs'; S.left = 'a'; S.right = 'b'; renderPres(); }
+}
+
+// ---------- Gallery: one filmstrip per set ----------
+function film(s) {
+  const i = SETS.indexOf(s);
+  const frames = slidesOf(s).map((k, n) => `<li class="w-56 shrink-0 snap-start sm:w-64"><button type="button" onclick="present(${i},${n})" class="group block w-full text-left">
+      <span class="relative block aspect-[16/10] overflow-hidden rounded-lg border ${k === s.picked ? 'border-emerald-500 ring-1 ring-emerald-500' : 'border-zinc-200 dark:border-zinc-800'} bg-white transition group-hover:shadow-md dark:bg-zinc-900">${frame(s, k, { compact: true })}</span>
+      <span class="mt-1.5 flex items-center gap-1.5 text-xs"><span class="font-medium">${k === 'current' ? 'Current' : U(k)}</span><span class="min-w-0 truncate text-zinc-500">${k === 'current' ? (s.current ? `today · ${s.current}` : 'none, new page') : optOf(s, k).name}</span>${k === s.picked ? '<span class="ml-auto shrink-0 font-medium text-emerald-700 dark:text-emerald-300">✓ picked</span>' : ''}</span>
+    </button></li>`).join('');
+  return `<article class="rounded-xl border ${s.status === 'awaiting' ? 'border-amber-300 dark:border-amber-500/40' : 'border-zinc-200 dark:border-zinc-800'} bg-white p-4 dark:bg-zinc-900">
+    <div class="flex flex-wrap items-start justify-between gap-2">
+      <div class="min-w-0"><p class="flex items-center gap-2"><span class="font-mono text-xs text-zinc-500">${s.id}</span>${badge(s)}</p>
+        <h3 class="mt-0.5 font-medium">${s.title}</h3>${whereLine(s, 'text-xs mt-0.5')}</div>
+      <button type="button" onclick="present(${i},${s.picked ? slidesOf(s).indexOf(s.picked) : 1})" class="${btnPrimary}">${svg('<path d="M7 5l12 7-12 7z"/>', 'size-3.5')} Present</button>
+    </div>
+    <p class="mt-1 line-clamp-2 text-xs text-zinc-500 dark:text-zinc-400">${s.status === 'awaiting' ? s.desc : s.reason}</p>
+    <ul class="-mx-4 mt-3 flex snap-x gap-3 overflow-x-auto px-4 pb-1 no-scrollbar" aria-label="${s.id} versions">${frames}${s.extra.length ? `<li class="grid w-40 shrink-0 place-items-center rounded-lg border border-dashed border-zinc-300 text-xs text-zinc-500 dark:border-zinc-700">+ ${s.extra.join(', ')}</li>` : ''}</ul>
+  </article>`;
+}
+function renderGallery() {
+  const aw = SETS.filter(s => s.status === 'awaiting');
+  return `<header class="flex flex-wrap items-end justify-between gap-3">
+      <div><p class="font-mono text-xs text-zinc-500">/mockups</p><h1 class="mt-1 text-2xl font-semibold tracking-tight">Mockups</h1>
+      <p class="mt-1 text-sm text-zinc-500">Each story's versions in a row: today's page first, then every option.</p></div>
+      <button type="button" onclick="S.queue=SETS.filter(s=>s.status==='awaiting').map(s=>SETS.indexOf(s));present(S.queue[0],1)" class="${btnPrimary} bg-amber-600 hover:bg-amber-500 dark:bg-amber-400 dark:text-zinc-950 dark:hover:bg-amber-300">${svg('<path d="M7 5l12 7-12 7z"/>', 'size-3.5')} Present the ${aw.length} awaiting a pick</button>
+    </header>
+    ${PROJECTS.map(p => { const items = SETS.filter(s => s.project === p.key).sort((a, b) => (a.status === 'awaiting' ? 0 : 1) - (b.status === 'awaiting' ? 0 : 1)); return `<section class="mt-8">
+      <h2 class="flex flex-wrap items-baseline gap-x-2 font-semibold">${p.key}<span class="text-sm font-normal text-zinc-500">· ${p.total} sets${p.total > items.length ? `, newest ${items.length} shown` : ''}</span><span class="ml-auto font-mono text-xs font-normal text-zinc-500">${p.dir}</span></h2>
+      <div class="mt-3 space-y-3">${items.map(film).join('')}</div>
+      ${p.total > items.length ? `<p class="mt-3 text-center"><button type="button" class="${btn}">Show ${p.total - items.length} more</button></p>` : ''}</section>`; }).join('')}`;
+}
+
+// ---------- Entry: Home's "What needs me" gains a mockups card ----------
+function renderEntry() {
+  const aw = SETS.filter(s => s.status === 'awaiting');
+  return `<p class="text-xs text-zinc-500">All projects</p><h1 class="mt-1 text-2xl font-semibold tracking-tight">What needs me</h1>
+    <div class="mt-5 grid gap-4 md:grid-cols-3">
+      <div class="rounded-xl border-2 border-sky-500 bg-white p-4 md:col-span-2 dark:bg-zinc-900">
+        <div class="flex items-center justify-between gap-2"><p class="text-xs font-semibold uppercase tracking-wider text-zinc-400">Mockups to pick</p><span class="rounded-full bg-amber-100 px-2 text-xs font-medium text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">${aw.length}</span></div>
+        <ul class="mt-2 divide-y divide-zinc-200 text-sm dark:divide-zinc-800">${aw.map(s => `<li class="flex items-center gap-2 py-2"><span class="w-16 shrink-0 font-mono text-xs text-zinc-500">${s.id}</span><span class="min-w-0 flex-1 truncate">${s.title}</span><span class="hidden text-xs text-zinc-500 sm:inline">${s.project} · ${s.opts.length} options</span></li>`).join('')}</ul>
+        <div class="mt-3 flex flex-wrap items-center gap-2"><button type="button" onclick="S.queue=SETS.filter(s=>s.status==='awaiting').map(s=>SETS.indexOf(s));present(S.queue[0],1)" class="${btnPrimary}">${svg('<path d="M7 5l12 7-12 7z"/>', 'size-3.5')} Present all ${aw.length}</button><button type="button" onclick="go('gallery')" class="${btn}">Open Mockups</button></div>
+      </div>
+      ${card('h-40', 'opacity-50')}${card('h-40 md:col-span-3', 'opacity-50')}
+    </div>
+    <p class="mt-3 text-xs text-zinc-500">The card sits with Home's other "needs me" cards; the sidebar's Mockups link (ringed) is the way in the rest of the time.</p>`;
+}
+
+// ---------- Presentation ----------
+function present(i, slide = 1) {
+  const s = SETS[i]; S.i = i; S.slide = Math.min(slide, slidesOf(s).length - 1); S.mode = 'slides'; S.interact = false;
+  S.left = s.current ? 'current' : 'a'; S.right = s.picked && s.picked !== S.left ? s.picked : (S.left === 'a' ? 'b' : 'a'); S.x = 50;
+  if (S.tab === 'gallery' || S.tab === 'entry') S.tab = 'present';
+  document.getElementById('pres').hidden = false; document.body.style.overflow = 'hidden'; renderPres(); strip();
+}
+function closePres() { document.getElementById('pres').hidden = true; document.body.style.overflow = ''; closeSheet(); if (!['gallery', 'entry'].includes(S.tab)) S.tab = S.view; strip(); }
+function nextStory(d) {
+  if (S.queue) { const q = S.queue, n = (q.indexOf(S.i) + d + q.length) % q.length; present(q[n], 1); return; }
+  present((S.i + d + SETS.length) % SETS.length, 1);
+}
+function goSlide(n) { const L = slidesOf(SETS[S.i]).length; S.slide = (n + L) % L; renderPres(); }
+function pickRow(side) {
+  const s = SETS[S.i];
+  return `<div class="flex items-center gap-1.5"><span class="w-9 shrink-0 text-[11px] font-medium uppercase tracking-wider text-zinc-500">${side === 'left' ? 'Left' : 'Right'}</span>${slidesOf(s).map(k => `<button type="button" aria-pressed="${S[side] === k}" onclick="S['${side}']='${k}';renderPres()" class="${segBtn(S[side] === k)} border border-zinc-300 dark:border-zinc-700">${k === 'current' ? 'Current' : U(k)}${k === s.picked ? ' ✓' : ''}</button>`).join('')}</div>`;
+}
+function label(s, k) { return k === 'current' ? (s.current ? 'Current' : 'Current · none') : `${U(k)} · ${optOf(s, k).name}${k === s.picked ? ' ✓' : ''}`; }
+function stageHTML() {
+  const s = SETS[S.i], sl = slidesOf(s);
+  if (S.mode === 'slides') return `<div id="viewport" class="relative h-full touch-pan-y overflow-hidden" onpointerdown="swipeDown(event)" onpointerup="swipeUp(event)">
+      <div id="track" class="flex h-full" style="transform:translateX(${-S.slide * 100}%)">${sl.map((k, n) => `<div class="relative h-full w-full shrink-0 px-2 sm:px-12" aria-hidden="${n !== S.slide}"><div class="relative h-full overflow-hidden rounded-lg border ${k === s.picked ? 'border-emerald-500' : 'border-zinc-300 dark:border-zinc-800'} bg-white shadow-sm dark:bg-zinc-900">${frame(s, k, { w: S.w, live: S.interact && n === S.slide })}</div></div>`).join('')}</div>
+      <button type="button" onclick="goSlide(S.slide-1)" aria-label="Previous version" class="absolute left-1 top-1/2 hidden -translate-y-1/2 rounded-full bg-white/90 p-2 shadow sm:block dark:bg-zinc-800/90">${svg('<path d="M15 6l-6 6 6 6"/>')}</button>
+      <button type="button" onclick="goSlide(S.slide+1)" aria-label="Next version" class="absolute right-1 top-1/2 hidden -translate-y-1/2 rounded-full bg-white/90 p-2 shadow sm:block dark:bg-zinc-800/90">${svg('<path d="M9 6l6 6-6 6"/>')}</button>
+    </div>`;
+  if (S.mode === 'sbs') return `<div class="grid h-full grid-rows-2 gap-2 px-2 md:grid-cols-2 md:grid-rows-1 sm:px-4">${['left', 'right'].map(side => `<div class="relative overflow-hidden rounded-lg border ${S[side] === s.picked ? 'border-emerald-500' : 'border-zinc-300 dark:border-zinc-800'} bg-white dark:bg-zinc-900">${frame(s, S[side], { w: S.w, live: true })}<span class="absolute ${S[side] === 'current' && s.current ? 'right-2' : 'left-2'} top-2 ${chip}">${label(s, S[side])}</span></div>`).join('')}</div>`;
+  // Slider overlay: the right version underneath, the left version on top clipped at the divider.
+  return `<div class="h-full px-2 sm:px-4"><div id="sl" class="relative h-full touch-none select-none overflow-hidden rounded-lg border border-zinc-300 bg-white dark:border-zinc-800 dark:bg-zinc-900" onpointerdown="slDown(event)">
+      <div class="absolute inset-0">${frame(s, S.right, { w: S.w })}</div>
+      <div id="sl-top" class="absolute inset-0 bg-white dark:bg-zinc-900" style="clip-path:inset(0 ${100 - S.x}% 0 0)">${frame(s, S.left, { w: S.w })}</div>
+      <div id="sl-line" class="absolute inset-y-0 w-0.5 -translate-x-1/2 bg-sky-500" style="left:${S.x}%">
+        <button type="button" role="slider" aria-label="Divider: left ${label(s, S.left)}, right ${label(s, S.right)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(S.x)}" onkeydown="slKey(event)" class="absolute left-1/2 top-1/2 grid size-9 -translate-x-1/2 -translate-y-1/2 cursor-ew-resize place-items-center rounded-full bg-sky-500 text-white shadow-lg">${svg('<path d="M9 7l-5 5 5 5M15 7l5 5-5 5"/>')}</button></div>
+      <span class="pointer-events-none absolute left-2 top-2 ${chip}">◀ ${label(s, S.left)}</span>
+      <span class="pointer-events-none absolute right-2 top-2 ${chip}">${label(s, S.right)} ▶</span>
+    </div></div>`;
+}
+function renderPres() {
+  const s = SETS[S.i], sl = slidesOf(s), p = document.getElementById('pres'), k = sl[S.slide];
+  const qpos = S.queue ? `${S.queue.indexOf(S.i) + 1} of ${S.queue.length} awaiting` : `${S.i + 1} / ${SETS.length}`;
+  p.innerHTML = `
+  <div class="flex items-start gap-2 px-3 py-2 sm:px-4">
+    <div class="min-w-0 flex-1">
+      <p class="flex min-w-0 items-center gap-2"><span class="shrink-0 whitespace-nowrap font-mono text-xs text-zinc-500"><span class="hidden sm:inline">${s.project} · </span>${s.id}</span><span id="p-title" class="min-w-0 truncate text-sm font-semibold">${s.title}</span>${badge(s)}</p>
+      <p class="truncate text-xs text-zinc-600 dark:text-zinc-400"><span class="hidden sm:inline">${s.desc} · </span>Where: <code class="font-mono text-zinc-800 dark:text-zinc-200">${s.where}</code> (${s.whereNote})</p>
+    </div>
+    <div class="flex shrink-0 items-center gap-0.5 text-xs text-zinc-500">
+      <button type="button" onclick="nextStory(-1)" aria-label="Previous story" class="rounded-md p-1.5 hover:bg-zinc-300/50 dark:hover:bg-zinc-800">${svg('<path d="M6 15l6-6 6 6"/>')}</button>
+      <span class="hidden tabular-nums sm:inline">${qpos}</span>
+      <button type="button" onclick="nextStory(1)" aria-label="Next story" class="rounded-md p-1.5 hover:bg-zinc-300/50 dark:hover:bg-zinc-800">${svg('<path d="M6 9l6 6 6-6"/>')}</button>
+      <button type="button" onclick="closePres()" aria-label="Close presentation (Esc)" class="ml-1 rounded-md p-1.5 hover:bg-zinc-300/50 dark:hover:bg-zinc-800">${svg('<path d="M6 6l12 12M18 6L6 18"/>')}</button>
+    </div>
+  </div>
+  <div class="min-h-0 flex-1">${stageHTML()}</div>
+  <div class="space-y-2 px-3 py-2 sm:px-4">
+    ${S.mode === 'slides'
+      ? `<ol class="flex justify-center gap-2 overflow-x-auto no-scrollbar" aria-label="Versions">${sl.map((kk, n) => `<li><button type="button" onclick="goSlide(${n})" aria-current="${n === S.slide}" class="block w-20 text-left sm:w-28"><span class="relative block aspect-[16/10] overflow-hidden rounded border-2 ${n === S.slide ? 'border-sky-500' : 'border-transparent opacity-70 hover:opacity-100'} bg-white dark:bg-zinc-900">${frame(s, kk, { compact: true })}</span><span class="mt-0.5 block truncate text-[11px] ${n === S.slide ? 'font-medium' : 'text-zinc-500'}">${kk === 'current' ? 'Current' : U(kk)}${kk === s.picked ? ' ✓' : ''}</span></button></li>`).join('')}</ol>`
+      : `<div class="flex flex-col items-center gap-1.5 sm:flex-row sm:justify-center sm:gap-6">${pickRow('left')}${pickRow('right')}</div>`}
+    <div class="flex items-center gap-2 overflow-x-auto no-scrollbar">
+      <div role="group" aria-label="Mode" class="${segWrap}">${[['slides', 'Slides'], ['slider', 'Slider'], ['sbs', 'Side by side']].map(([m, l]) => `<button type="button" aria-pressed="${S.mode === m}" onclick="S.mode='${m}';renderPres()" class="${segBtn(S.mode === m)}">${l}</button>`).join('')}</div>
+      <div role="group" aria-label="Page width" class="${segWrap} hidden md:inline-flex">${WIDTHS.map(([w, l]) => `<button type="button" aria-pressed="${S.w === w}" onclick="S.w=${w};renderPres()" class="${segBtn(S.w === w)}">${l}</button>`).join('')}</div>
+      ${S.mode === 'slides' && k !== 'current' ? `<button type="button" aria-pressed="${S.interact}" onclick="S.interact=!S.interact;renderPres()" class="${btn} hidden sm:inline-flex" title="Off: swipe moves between versions. On: clicks go into the page.">${S.interact ? '☑' : '☐'} Click inside the page</button>` : ''}
+      <span class="ml-auto"></span>
+      ${s.status === 'awaiting'
+        ? (S.mode === 'slides' && k !== 'current' ? `<button type="button" onclick="openSheet('${k}')" class="${btnPrimary} bg-amber-600 hover:bg-amber-500 dark:bg-amber-400 dark:text-zinc-950 dark:hover:bg-amber-300">Pick ${U(k)}</button>` : (S.mode !== 'slides' && S.right !== 'current' ? `<button type="button" onclick="openSheet('${S.right}')" class="${btnPrimary} bg-amber-600 hover:bg-amber-500 dark:bg-amber-400 dark:text-zinc-950 dark:hover:bg-amber-300">Pick ${U(S.right)} (right)</button>` : `<span class="shrink-0 text-xs text-amber-700 dark:text-amber-300">Swipe to an option to pick it</span>`))
+        : `<span class="min-w-0 truncate text-xs text-zinc-600 dark:text-zinc-400">${s.status === 'parked' ? '' : `<strong class="font-medium text-zinc-900 dark:text-zinc-100">Picked ${U(s.picked)}</strong> · `}${s.reason}</span>`}
+    </div>
+  </div>`;
+  requestAnimationFrame(() => fit(p));
+}
+// Swipe between versions (iframes don't take pointer events unless "Click inside the page" is on).
+let sx = null;
+function swipeDown(e) { if (e.target.closest('button')) return; sx = e.clientX; }
+function swipeUp(e) { if (sx === null) return; const d = e.clientX - sx; sx = null; if (Math.abs(d) > 50) goSlide(S.slide + (d < 0 ? 1 : -1)); }
+// Slider divider: drag anywhere on the stage, or focus the handle and use ← →.
+function setX(x) { S.x = Math.max(0, Math.min(100, x)); document.getElementById('sl-top').style.clipPath = `inset(0 ${100 - S.x}% 0 0)`; const l = document.getElementById('sl-line'); l.style.left = S.x + '%'; l.firstElementChild.setAttribute('aria-valuenow', Math.round(S.x)); }
+function slDown(e) {
+  const el = document.getElementById('sl'), r = el.getBoundingClientRect(); el.setPointerCapture(e.pointerId);
+  const mv = ev => setX((ev.clientX - r.left) / r.width * 100); mv(e);
+  el.onpointermove = mv; el.onpointerup = () => { el.onpointermove = null; };
+}
+function slKey(e) { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); e.stopPropagation(); setX(S.x + (e.key === 'ArrowLeft' ? -5 : 5)); } }
+function openSheet(k) {
+  const s = SETS[S.i], sh = document.getElementById('sheet'); sh.hidden = false;
+  sh.innerHTML = `<form onsubmit="event.preventDefault();recordPick(SETS[S.i],'${k}',this.why.value);closeSheet();renderPres();render()" class="w-full max-w-md rounded-t-2xl border border-zinc-200 bg-white p-5 shadow-xl sm:rounded-2xl dark:border-zinc-800 dark:bg-zinc-900">
+    <div class="mx-auto mb-3 h-1 w-10 rounded-full bg-zinc-300 sm:hidden dark:bg-zinc-700"></div>
+    <h3 class="font-semibold">Pick option ${U(k)} for ${s.id}?</h3><p class="mt-1 text-sm text-zinc-500">${optOf(s, k).name}. The pick and your reason go into the story's mockup gate.</p>
+    <label class="mt-4 block text-sm font-medium" for="why">Why this one <span class="font-normal text-zinc-500">(one line, optional)</span></label>
+    <textarea id="why" name="why" rows="2" class="mt-1 w-full rounded-lg border border-zinc-300 bg-white p-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"></textarea>
+    <div class="mt-4 flex justify-end gap-2"><button type="button" onclick="closeSheet()" class="${btn}">Cancel</button><button class="${btnPrimary}">Pick option ${U(k)}</button></div></form>`;
+  sh.querySelector('textarea').focus();
+}
+function closeSheet() { const sh = document.getElementById('sheet'); sh.hidden = true; sh.innerHTML = ''; }
+
+function render() {
+  document.getElementById('sidebar').innerHTML = sidebar(S.view === 'entry' ? 'all' : 'mockups', S.view === 'entry');
+  document.getElementById('main').innerHTML = S.view === 'entry' ? renderEntry() : renderGallery();
+  strip(); requestAnimationFrame(() => fit());
+}
+document.addEventListener('keydown', e => {
+  const open = !document.getElementById('pres').hidden, sheet = !document.getElementById('sheet').hidden;
+  if (e.key === 'Escape') { if (sheet) closeSheet(); else if (open) closePres(); else drawer(false); return; }
+  if (!open || sheet || /SELECT|INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
+  if (S.mode === 'slides' && e.key === 'ArrowRight') goSlide(S.slide + 1);
+  if (S.mode === 'slides' && e.key === 'ArrowLeft') goSlide(S.slide - 1);
+  if (e.key === 'ArrowDown') { e.preventDefault(); nextStory(1); }
+  if (e.key === 'ArrowUp') { e.preventDefault(); nextStory(-1); }
+});
+render();
+if (['#present', '#slider', '#sbs', '#entry'].includes(location.hash)) go(location.hash.slice(1));
+</script>
+</body>
+</html>

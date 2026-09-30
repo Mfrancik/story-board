@@ -1,0 +1,363 @@
+<!-- SB-21 option A — Mockup gallery: grid of live thumbnails, opening a full-screen lightbox with a split compare.
+     Static mockup inside the SB-7 design-A shell. Real mockup sets from story-board and coins; the "Current"
+     screenshots are drawn stand-ins (the build would capture them). Nothing here writes anything. -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SB-21 option A — Grid + lightbox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config = { darkMode: 'media', theme: { extend: { fontFamily: { sans: ['"Instrument Sans"', 'system-ui', 'sans-serif'] } } } };</script>
+<style>
+  html, body { overflow-x: hidden; }
+  [hidden] { display: none !important; }
+  button:focus-visible, a:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid #0ea5e9; outline-offset: 2px; }
+  .no-scrollbar { scrollbar-width: none; } .no-scrollbar::-webkit-scrollbar { display: none; }
+</style>
+</head>
+<body class="font-sans bg-zinc-50 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100">
+
+<!-- Mockup state switcher (not part of the design) -->
+<div id="strip" class="fixed inset-x-0 top-0 z-[90] flex h-10 items-center gap-2 overflow-x-auto bg-zinc-900 px-3 text-xs text-zinc-100 no-scrollbar dark:bg-white dark:text-zinc-900"></div>
+
+<!-- Mobile top bar -->
+<div class="sticky top-10 z-30 mt-10 flex h-14 items-center gap-3 border-b border-zinc-200 bg-white/90 px-4 backdrop-blur lg:hidden dark:border-zinc-800 dark:bg-zinc-900/90">
+  <button id="menu-btn" type="button" onclick="drawer(true)" aria-label="Open project menu" aria-controls="sidebar" aria-expanded="false" class="-ml-2 rounded-lg p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+    <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <span class="font-semibold">Story board</span><span class="truncate text-sm text-zinc-500">· Mockups</span>
+</div>
+<div id="scrim" hidden onclick="drawer(false)" class="fixed inset-0 top-10 z-40 bg-zinc-950/40 lg:hidden"></div>
+<aside id="sidebar" aria-label="Projects" class="fixed bottom-0 left-0 top-10 z-50 flex w-72 -translate-x-full flex-col border-r border-zinc-200 bg-white transition-transform lg:w-64 lg:translate-x-0 dark:border-zinc-800 dark:bg-zinc-900"></aside>
+
+<main class="min-h-screen lg:pl-64 lg:pt-10"><div id="main" class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-10 lg:py-10"></div></main>
+
+<!-- Full-screen lightbox -->
+<div id="viewer" hidden role="dialog" aria-modal="true" aria-labelledby="v-title" class="fixed inset-x-0 bottom-0 top-10 z-[70] flex flex-col bg-zinc-100 dark:bg-zinc-950"></div>
+
+<!-- Pick dialog -->
+<div id="pick" hidden class="fixed inset-0 z-[80] grid place-items-center bg-zinc-950/50 p-4" onclick="if (event.target === this) closePick()"></div>
+
+<div id="toast" hidden role="status" class="fixed bottom-4 left-1/2 z-[95] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-lg bg-zinc-900 px-4 py-3 text-sm text-white shadow-lg dark:bg-white dark:text-zinc-900"></div>
+
+<script>
+// ===== SB-21 shared mockup data + helpers (inlined identically into option-a/b/c) =====
+// Data is the real shape of docs/mockups/ in story-board and in coins (read 2026-09-29).
+// story-board sets iframe their real option files through ../SB-xx/; coins sets iframe the coins
+// checkout at ../../../../coins/docs/mockups/ (works when both repos sit side by side in ~/Code).
+const EMBED = window.top !== window.self; // shown inside another SB-21 option: draw skeletons, never nest iframes
+const sbp = (id, k) => id === 'SB-21' ? `option-${k}.html` : `../${id}/option-${k}.html`;
+const cnp = (id, k) => `../../../../coins/docs/mockups/${id}/option-${k}.html`;
+function set(project, id, title, desc, where, whereNote, kind, current, status, picked, reason, names, extra) {
+  const path = project === 'coins' ? cnp : sbp;
+  return { project, id, title, desc, where, whereNote, kind, current, status, picked, reason, extra: extra || [],
+    opts: names.map((n, i) => { const k = 'abcdefg'[i]; return { k, name: n, src: path(id, k) }; }) };
+}
+const SETS = [
+  set('story-board', 'SB-21', 'Mockup gallery', "Every story's mockups in one place: full screen, with the current page beside an option.", '/mockups', 'new page · sidebar → Mockups', 'tiles', null, 'awaiting', null, null, ['Grid + lightbox', 'Library + stage', 'Filmstrip + slider']),
+  set('story-board', 'SB-18', 'Production dashboard', "Live metrics from each connected app's production database, compared across projects.", '/prod', 'sidebar → Production', 'table', '29 Sep, 14:02', 'picked', 'b', 'No reason given. Direction: comparison table, projects as rows, metrics as columns; cards below 768 px.', ['KPI tiles per project', 'Comparison table', 'Metric focus']),
+  set('story-board', 'SB-17', 'Production connection and metrics', "Connect a project's production database and choose which metrics to read.", '/projects', 'Production column on each row', 'table', '29 Sep, 14:02', 'picked', 'a', 'No reason given. Direction: inline row, a panel opens under the project row.', ['Inline row', 'Side drawer', 'Own page']),
+  set('story-board', 'SB-16', 'Preflight history', 'Every preflight run for a project: time, tokens and cost over time.', '/p/coins/preflight', 'Preflight tab', 'table', '29 Sep, 14:02', 'picked', 'a', 'No reason given. Direction: dense ledger, figures and both charts on top, one wide table.', ['Dense ledger', 'Timeline', 'Split view']),
+  set('story-board', 'SB-15', 'Stories by initiative', "A project's stories grouped by initiative, with filter chips above.", '/p/coins/stories', 'Stories tab', 'twopane', '29 Sep, 14:02', 'picked', 'c', 'No reason given. Direction: initiatives on the left with counts, stories on the right.', ['Accordion list', 'Card grid', 'Dense two-pane']),
+  set('story-board', 'SB-14', 'Project handbook', 'Rules, lessons and how each project differs from the kit.', '/p/coins/handbook', 'Handbook tab', 'doc', '29 Sep, 14:02', 'picked', 'a', 'Section tabs above one full-width reading card; decisions open in the centered modal.', ['Section tabs', 'Handbook reader']),
+  set('story-board', 'SB-7', 'App shell and project switcher', 'The sidebar, the project switcher and the pages it leads to.', '/ and /p/coins', 'every page', 'tiles', '29 Sep, 14:02', 'picked', 'a', '"A is the best design."', ['Sidebar command center', 'Top bar + ⌘K', 'Flow board']),
+  set('story-board', 'SB-4', 'Story and mockup view', "A story's text with its mockups side by side.", '/p/coins/s/SELL-45', 'story full page', 'doc', '29 Sep, 14:02', 'picked', 'b', '"Story above the mockups gives the frames the full width."', ['Beside', 'Above']),
+  set('story-board', 'SB-3', 'What needs me (home)', 'The home page lists what is waiting on the owner.', '/', 'home', 'tiles', '29 Sep, 14:02', 'picked', 'a', '"A is fine, but I\'d like to be able to select things and they open up and give more detail, mockups, etc."', ['Inbox', 'Lanes', 'Queue']),
+  set('coins', 'VAR-19', '"My VAM isn\'t listed"', 'Say which VAM a coin is from the sheet you are already on, when it is not in the dropdown.', 'Add-coin sheet', 'variety row + new modal', 'sheet', '28 Sep, 22:15', 'awaiting', null, null, ['In the caption', 'In the dropdown too', 'Beside the select']),
+  set('coins', 'SCOPE-7', 'The Collecting screen tells the truth', 'Warn before switching a kind off hides pieces you own.', '/settings/collecting', 'Settings → Collecting', 'page', '28 Sep, 22:15', 'awaiting', null, null, ['Two columns, split down the middle', 'One list, self-annotated', 'Disclosure at the point of decision'], ['final.html']),
+  set('coins', 'IMG-19', 'The rectangle cropper', 'A note-shaped crop box you can drag, free and rotate.', 'Photo step → Crop', 'intake, paper money', 'sheet', '28 Sep, 22:15', 'picked', 'a', 'No reason given at the pick (tappable choice). Least new: the coin cropper, widened.', ['The coin cropper, widened', 'Tools on the photo', 'See it on the plate']),
+  set('coins', 'SELL-45', "Selling a coin happens on the coin's own page", "The full sale form opens on the coin's page with that coin in it.", '/coins/{n}', 'Mark sold → modal', 'sheet', '28 Sep, 22:15', 'picked', 'a', '"A is best": the form a seller already knows, minus the explanatory label.', ['The sheet, narrowed', 'Two columns', 'Stepper']),
+  set('coins', 'SCOPE-9', 'Paper money gets its own page', 'Notes move off /coins to their own page; the toolbar closes up.', '/paper-money', 'new page', 'tiles', null, 'picked', 'a', '"Closes up": the toolbar simply closes up where the pills were.', ['Closes up', 'Paper names itself']),
+  set('coins', 'SELL-39', 'A report of what is sitting', 'What is not selling and how long it has sat, to reprice or pull.', '/selling/reports', 'Selling → Reports', 'table', '28 Sep, 22:15', 'picked', 'c', 'Chosen by the owner 2026-09-05: the facing brief.', ['The ageing ledger', 'The banded brief', 'The facing brief']),
+  set('coins', 'SCOPE-5', 'The filter rail offers only what you collect', 'Hide the rail blocks for kinds you do not collect.', '/coins', 'filter rail', 'twopane', '28 Sep, 22:15', 'parked', null, 'Neither: owner ruling 2026-09-12, story parked.', ['Blocks absent', 'Absent, re-balanced']),
+];
+const PROJECTS = [{ key: 'story-board', total: 9, dir: '~/Code/story-board/docs/mockups' }, { key: 'coins', total: 263, dir: '~/Code/coins/docs/mockups' }];
+const awaitingCount = () => SETS.filter(s => s.status === 'awaiting').length;
+const U = k => k === 'current' ? 'Current' : k.toUpperCase();
+const optOf = (s, k) => s.opts.find(o => o.k === k);
+const optName = (s, k) => k === 'current' ? (s.current ? 'Today\'s page' : 'No current version') : `Option ${U(k)} · ${optOf(s, k).name}`;
+
+// ---- Status badges: text always carries the meaning, colour only reinforces it ----
+function badge(s, size = 'text-xs') {
+  if (s.status === 'awaiting') return `<span class="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 ${size} font-medium text-amber-800 dark:bg-amber-500/15 dark:text-amber-300"><span class="size-1.5 rounded-full bg-amber-500"></span>Awaiting pick</span>`;
+  if (s.status === 'parked') return `<span class="inline-flex shrink-0 items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 ${size} font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">Neither · parked</span>`;
+  return `<span class="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 ${size} font-medium text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300"><svg class="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>Picked ${U(s.picked)}</span>`;
+}
+function whereLine(s, cls = 'text-xs') {
+  return `<p class="${cls} min-w-0 truncate text-zinc-500 dark:text-zinc-400">Where: <code class="font-mono text-zinc-800 dark:text-zinc-200">${s.project === 'coins' ? 'coins · ' : ''}${s.where}</code> <span>(${s.whereNote})</span></p>`;
+}
+
+// ---- Frames: a 1280-wide page scaled into any box. Iframes for real option files; drawn boxes for "Current" ----
+const bar = (w, h = 'h-3', c = 'bg-zinc-300 dark:bg-zinc-600') => `<div class="${h} ${w} rounded ${c}"></div>`;
+const card = (h, extra = '') => `<div class="${h} ${extra} rounded-xl border border-zinc-300 bg-white dark:border-zinc-700 dark:bg-zinc-900"></div>`;
+function skel(kind) {
+  const rows = n => [...Array(n)].map((_, i) => `<div class="flex items-center gap-6 px-5 py-4">${bar('w-24')}${bar(i % 3 ? 'w-72' : 'w-96')}${bar('w-16', 'h-3', 'bg-zinc-200 dark:bg-zinc-700')}<div class="ml-auto">${bar('w-20', 'h-3', 'bg-zinc-200 dark:bg-zinc-700')}</div></div>`).join('');
+  const main = {
+    table: `${bar('w-72', 'h-7', 'bg-zinc-400 dark:bg-zinc-500')}<div class="mt-8 grid grid-cols-4 gap-4">${card('h-28').repeat(4)}</div>${card('mt-6 h-48')}<div class="mt-6 divide-y divide-zinc-200 rounded-xl border border-zinc-300 bg-white dark:divide-zinc-800 dark:border-zinc-700 dark:bg-zinc-900">${rows(7)}</div>`,
+    tiles: `${bar('w-80', 'h-7', 'bg-zinc-400 dark:bg-zinc-500')}${bar('mt-3 w-[32rem]', 'h-3', 'bg-zinc-200 dark:bg-zinc-700')}<div class="mt-8 grid grid-cols-3 gap-5">${card('h-56').repeat(6)}</div>`,
+    twopane: `${bar('w-72', 'h-7', 'bg-zinc-400 dark:bg-zinc-500')}<div class="mt-8 flex gap-5"><div class="w-72 space-y-3">${card('h-14').repeat(6)}</div><div class="flex-1 divide-y divide-zinc-200 rounded-xl border border-zinc-300 bg-white dark:divide-zinc-800 dark:border-zinc-700 dark:bg-zinc-900">${rows(9)}</div></div>`,
+    doc: `${bar('w-72', 'h-7', 'bg-zinc-400 dark:bg-zinc-500')}<div class="mt-6 flex gap-6">${bar('w-20')}${bar('w-24')}${bar('w-16')}${bar('w-20')}</div><div class="mt-6 space-y-4 rounded-xl border border-zinc-300 bg-white p-8 dark:border-zinc-700 dark:bg-zinc-900">${[...Array(10)].map((_, i) => bar(['w-full', 'w-11/12', 'w-4/5', 'w-2/3'][i % 4])).join('')}</div>`,
+    sheet: `${bar('w-60', 'h-7', 'bg-zinc-400 dark:bg-zinc-500')}<div class="mx-auto mt-10 w-[40rem] space-y-5 rounded-2xl border border-zinc-300 bg-white p-8 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">${bar('w-48', 'h-5')}${[...Array(5)].map(() => `<div>${bar('w-24', 'h-2.5', 'bg-zinc-200 dark:bg-zinc-700')}${card('mt-2 h-10')}</div>`).join('')}<div class="flex justify-end gap-3">${bar('w-24', 'h-10', 'bg-zinc-200 dark:bg-zinc-700')}${bar('w-32', 'h-10', 'bg-zinc-500')}</div></div>`,
+    page: `${bar('w-60', 'h-7', 'bg-zinc-400 dark:bg-zinc-500')}<div class="mt-8 max-w-3xl space-y-4">${[...Array(5)].map(() => `<div class="flex items-center justify-between rounded-xl border border-zinc-300 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900"><div class="space-y-2">${bar('w-40')}${bar('w-72', 'h-2.5', 'bg-zinc-200 dark:bg-zinc-700')}</div>${bar('w-12', 'h-6', 'bg-zinc-400 dark:bg-zinc-500 rounded-full')}</div>`).join('')}</div>`,
+  }[kind];
+  return `<div class="flex h-full bg-zinc-100 dark:bg-zinc-950"><div class="w-64 shrink-0 space-y-4 border-r border-zinc-300 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">${bar('w-32', 'h-6', 'bg-zinc-400 dark:bg-zinc-500')}${card('h-9')}${[...Array(8)].map((_, i) => bar(i === 1 ? 'w-full' : 'w-40', 'h-4', 'bg-zinc-200 dark:bg-zinc-700')).join('')}</div><div class="flex-1 overflow-hidden p-10">${main}</div></div>`;
+}
+// A drawn "screenshot" of today's page, or the new-page placeholder. Grey on purpose: it is the before.
+function shot(s, compact = false) {
+  if (!s.current) return `<div class="absolute inset-0 grid place-items-center border-2 border-dashed border-zinc-300 bg-zinc-50 p-3 text-center dark:border-zinc-700 dark:bg-zinc-900">
+    <div><svg class="mx-auto size-6 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 9v6M9 12h6"/></svg>
+    <p class="mt-1.5 text-sm font-medium">No current version — new page</p>
+    ${compact ? '' : `<p class="mt-0.5 text-xs text-zinc-500"><code class="font-mono">${s.where}</code> does not exist yet. Compare two options instead.</p>`}</div></div>`;
+  return `<div class="sf absolute inset-0 overflow-hidden" data-w="1280"><div class="sf-in origin-top-left grayscale opacity-80">${skel(s.kind)}</div></div>
+    <span class="pointer-events-none absolute bottom-2 left-2 max-w-[90%] truncate rounded bg-zinc-900/80 px-1.5 py-0.5 text-[11px] text-white">Screenshot · ${s.where} · ${s.current}</span>`;
+}
+// Stand-in when a real file cannot be embedded (inside another SB-21 option, to avoid iframes in iframes).
+function stand(s, k) {
+  return `<div class="sf absolute inset-0 overflow-hidden" data-w="1280"><div class="sf-in origin-top-left">${skel(s.kind)}</div></div>
+    <span class="pointer-events-none absolute left-2 top-2 rounded bg-sky-600 px-1.5 py-0.5 text-[11px] font-medium text-white">Option ${U(k)}</span>`;
+}
+// k = 'current' | 'a' | 'b' …; w = the page width the frame renders at; live = the iframe takes clicks.
+function frame(s, k, { w = 1280, live = false, compact = false } = {}) {
+  if (k === 'current') return shot(s, compact);
+  if (EMBED) return stand(s, k);
+  const o = optOf(s, k);
+  return `<div class="sf absolute inset-0 overflow-hidden bg-white dark:bg-zinc-900" data-w="${w}">
+    <iframe class="sf-in origin-top-left border-0 bg-white ${live ? '' : 'pointer-events-none'} ${w < 1280 ? 'ring-1 ring-zinc-300 dark:ring-zinc-700' : ''}" src="${o.src}" title="${s.id} option ${U(k)}: ${o.name}" loading="lazy" ${live ? '' : 'tabindex="-1" aria-hidden="true"'}></iframe></div>`;
+}
+// Scale every .sf child to its box: never enlarge; centre a narrow page (375/768) in a wide box.
+function fit(root = document) {
+  root.querySelectorAll('.sf').forEach(el => {
+    const w = +el.dataset.w, inner = el.querySelector('.sf-in');
+    if (!inner || !el.clientWidth) return;
+    const s = Math.min(1, el.clientWidth / w);
+    inner.style.width = w + 'px';
+    inner.style.height = (el.clientHeight / s) + 'px';
+    inner.style.transform = `translateX(${Math.max(0, (el.clientWidth - w * s) / 2)}px) scale(${s})`;
+  });
+}
+window.addEventListener('resize', () => fit());
+
+// ---- The design-A shell (SB-7): sidebar gains "Mockups", with the awaiting-pick count ----
+const ico = {
+  grid: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+  prod: '<path d="M3 20h18M5 16l4-5 4 3 6-8"/>',
+  mock: '<rect x="3" y="4" width="8" height="16" rx="1.5"/><rect x="13" y="4" width="8" height="16" rx="1.5"/>',
+};
+const svg = (p, c = 'size-4') => `<svg class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">${p}</svg>`;
+function sidebar(active, highlight = false) {
+  const link = (key, label, icon, right) => `<a href="#" ${active === key ? 'aria-current="page"' : ''} onclick="${key === 'mockups' ? "go('gallery');return false" : 'return false'}" class="mt-0.5 flex w-full items-center gap-3 rounded-lg px-3 py-2 ${active === key ? 'bg-zinc-100 font-medium dark:bg-zinc-800' : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/50'} ${highlight && key === 'mockups' ? 'ring-2 ring-sky-500' : ''}">${svg(icon)}<span class="flex-1 text-left font-medium">${label}</span>${right}</a>`;
+  const proj = (n, c) => `<li><a href="#" onclick="return false" class="flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"><span class="size-2 rounded-full bg-emerald-500" title="State ok"></span><span class="flex-1 truncate text-left">${n}</span><span class="text-xs tabular-nums text-zinc-500">${c}</span></a></li>`;
+  return `<div class="flex items-center justify-between px-5 pb-3 pt-5"><div class="flex items-center gap-2"><span class="grid size-7 place-items-center rounded-lg bg-zinc-800 text-xs font-bold text-white dark:bg-white dark:text-zinc-900">SB</span><span class="font-semibold">Story board</span></div>
+    <button type="button" onclick="drawer(false)" aria-label="Close project menu" class="rounded-lg p-1.5 hover:bg-zinc-100 lg:hidden dark:hover:bg-zinc-800">${svg('<path d="M6 6l12 12M18 6L6 18"/>', 'size-5')}</button></div>
+  <div class="px-4 pb-3"><button type="button" class="flex w-full items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950">${svg('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>')}<span class="flex-1 text-left">Find a story</span><kbd class="rounded border border-zinc-200 px-1.5 font-sans text-[11px] dark:border-zinc-700">⌘K</kbd></button></div>
+  <nav class="flex-1 overflow-y-auto px-3 pb-3 text-sm" aria-label="Project switcher">
+    ${link('all', 'All projects', ico.grid, '<span class="text-xs tabular-nums text-zinc-500">1,090</span>')}
+    ${link('prod', 'Production', ico.prod, '<span class="text-xs tabular-nums text-zinc-500">3/4</span>')}
+    ${link('mockups', 'Mockups', ico.mock, `<span class="rounded-full bg-amber-100 px-1.5 text-xs font-medium tabular-nums text-amber-800 dark:bg-amber-500/15 dark:text-amber-300" title="${awaitingCount()} awaiting your pick">${awaitingCount()}</span>`)}
+    <p class="mb-1 mt-5 px-3 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Projects</p>
+    <ul class="space-y-0.5">${proj('coins', 946)}${proj('client-dashboard', 97)}${proj('asset-track', 11)}${proj('rent-track', 15)}${proj('story-board', 21)}</ul>
+  </nav>
+  <div class="border-t border-zinc-200 p-3 dark:border-zinc-800"><a href="#" onclick="return false" class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800/50">${svg('<path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/>')}<span class="flex-1 text-left font-medium">Manage projects</span></a></div>`;
+}
+function drawer(open) { document.getElementById('sidebar').classList.toggle('-translate-x-full', !open); document.getElementById('scrim').hidden = !open; document.getElementById('menu-btn').setAttribute('aria-expanded', open); }
+function toast(msg) {
+  const t = document.getElementById('toast'); t.textContent = msg; t.hidden = false;
+  clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; }, 4000);
+}
+// The pick itself (SB-13): the board never writes the repo; it sends the pick to the session that owns the story.
+function recordPick(s, k, why) {
+  s.status = 'picked'; s.picked = k; s.reason = why.trim() || 'No reason given.';
+  toast(`Pick sent: ${s.id} option ${U(k)}. The next session on ${s.project} records it in the story.`);
+}
+const segBtn = (on) => `rounded-md px-2.5 py-1 text-xs font-medium whitespace-nowrap ${on ? 'bg-zinc-800 text-white dark:bg-white dark:text-zinc-900' : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'}`;
+const segWrap = 'inline-flex shrink-0 rounded-lg border border-zinc-200 bg-white p-0.5 dark:border-zinc-800 dark:bg-zinc-900';
+const btn = 'inline-flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-2.5 py-1 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800';
+const btnPrimary = 'inline-flex shrink-0 items-center gap-1.5 rounded-md bg-zinc-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200';
+const WIDTHS = [[1280, 'Desktop'], [768, 'Tablet'], [375, 'Phone']];
+// ===== end shared =====
+
+
+// ===== Option A =====
+const S = { view: 'gallery', filter: 'all', proj: 'all', q: '', i: 3, opt: 'a', compare: false, left: 'current', right: 'a', w: 1280, pickK: null };
+
+function strip() {
+  const tabs = [['gallery', 'Gallery'], ['viewer', 'Viewer · SB-16 (picked)'], ['viewer-new', 'Viewer · SB-21 (awaiting, new page)'], ['compare', 'Compare · VAR-19 current vs A'], ['entry', 'Entry from a story']];
+  const cur = S.view === 'gallery' && document.getElementById('viewer').hidden ? 'gallery' : S.stripTab;
+  document.getElementById('strip').innerHTML = `<span class="shrink-0 font-semibold">Option A · state:</span>
+    <div role="tablist" aria-label="Mockup state" class="flex shrink-0 gap-1">${tabs.map(([k, l]) => `<button role="tab" type="button" aria-selected="${cur === k}" onclick="go('${k}')" class="shrink-0 rounded-md px-2 py-1 opacity-70 hover:opacity-100 aria-selected:bg-white aria-selected:font-medium aria-selected:text-zinc-900 aria-selected:opacity-100 dark:aria-selected:bg-zinc-900 dark:aria-selected:text-white">${l}</button>`).join('')}</div>
+    <span class="shrink-0 opacity-80">· click any card · ← → next story · Esc closes</span>
+    <a href="index.html" class="ml-auto hidden shrink-0 underline underline-offset-4 opacity-80 hover:opacity-100 sm:inline">All options</a>`;
+}
+function go(k) {
+  S.stripTab = k; drawer(false);
+  const idx = id => SETS.findIndex(s => s.id === id);
+  if (k === 'gallery') { S.view = 'gallery'; closeViewer(); }
+  if (k === 'entry') { S.view = 'entry'; closeViewer(); }
+  if (k === 'viewer') openViewer(idx('SB-16'));
+  if (k === 'viewer-new') openViewer(idx('SB-21'));
+  if (k === 'compare') { openViewer(idx('VAR-19')); S.compare = true; S.left = 'current'; S.right = 'a'; renderViewer(); }
+  render();
+}
+
+// ---------- Gallery ----------
+function visible() {
+  return SETS.filter(s => (S.filter === 'all' || s.status === S.filter) && (S.proj === 'all' || s.project === S.proj)
+    && (!S.q || (s.id + ' ' + s.title).toLowerCase().includes(S.q.toLowerCase())));
+}
+function galleryCard(s) {
+  const i = SETS.indexOf(s), thumbK = s.picked || 'a';
+  return `<li><button type="button" onclick="openViewer(${i})" class="group block w-full overflow-hidden rounded-xl border text-left transition hover:shadow-md ${s.status === 'awaiting' ? 'border-amber-300 dark:border-amber-500/40' : 'border-zinc-200 dark:border-zinc-800'} bg-white dark:bg-zinc-900">
+    <div class="relative aspect-[16/10] overflow-hidden border-b border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-800">
+      ${frame(s, thumbK)}
+      <span class="absolute right-2 top-2 rounded-md bg-zinc-900/80 px-1.5 py-0.5 text-[11px] font-medium text-white">${s.opts.length} options${s.extra.length ? ` + ${s.extra.length} file` : ''}</span>
+      <span class="absolute inset-0 grid place-items-center bg-zinc-950/0 opacity-0 transition group-hover:bg-zinc-950/30 group-hover:opacity-100"><span class="rounded-md bg-white px-2.5 py-1 text-xs font-medium text-zinc-900">Open full screen</span></span>
+    </div>
+    <div class="space-y-1 p-3">
+      <div class="flex items-center justify-between gap-2"><span class="font-mono text-xs text-zinc-500">${s.id}</span>${badge(s)}</div>
+      <p class="truncate text-sm font-medium">${s.title}</p>
+      ${whereLine(s)}
+      <p class="line-clamp-2 min-h-8 text-xs text-zinc-500 dark:text-zinc-400">${s.status === 'awaiting' ? `${s.opts.length} options, none picked. Shows option A.` : s.reason}</p>
+    </div></button></li>`;
+}
+function renderGallery() {
+  const list = visible(), cnt = st => SETS.filter(s => st === 'all' || s.status === st).length;
+  const filt = [['all', 'All'], ['awaiting', 'Awaiting pick'], ['picked', 'Picked'], ['parked', 'Parked']];
+  const groups = PROJECTS.filter(p => S.proj === 'all' || p.key === S.proj).map(p => {
+    const items = list.filter(s => s.project === p.key).sort((a, b) => (a.status === 'awaiting' ? 0 : 1) - (b.status === 'awaiting' ? 0 : 1));
+    if (!items.length) return '';
+    const shown = SETS.filter(s => s.project === p.key).length;
+    return `<section class="mt-8">
+      <div class="flex flex-wrap items-baseline justify-between gap-2"><h2 class="font-semibold">${p.key} <span class="text-sm font-normal text-zinc-500">· ${p.total} sets · ${items.filter(s => s.status === 'awaiting').length} awaiting</span></h2><span class="font-mono text-xs text-zinc-500">${p.dir}</span></div>
+      <ul class="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">${items.map(galleryCard).join('')}</ul>
+      ${p.total > shown ? `<div class="mt-4 flex items-center justify-center gap-3 text-sm text-zinc-500">Showing the ${shown} newest of ${p.total} <button type="button" class="${btn}">Show all ${p.total}</button></div>` : ''}
+    </section>`;
+  }).join('');
+  return `<header class="flex flex-wrap items-end justify-between gap-3">
+      <div class="min-w-0"><p class="font-mono text-xs text-zinc-500">/mockups</p><h1 class="mt-1 text-2xl font-semibold tracking-tight">Mockups</h1>
+      <p class="mt-1 text-sm text-zinc-500">Every story's design options, from every project. <strong class="font-medium text-amber-700 dark:text-amber-300">${cnt('awaiting')} waiting for your pick.</strong></p></div>
+    </header>
+    <div class="mt-5 flex flex-wrap items-center gap-2">
+      <div role="group" aria-label="Status" class="${segWrap}">${filt.map(([k, l]) => `<button type="button" aria-pressed="${S.filter === k}" onclick="S.filter='${k}';render()" class="${segBtn(S.filter === k)}">${l} <span class="tabular-nums opacity-60">${cnt(k)}</span></button>`).join('')}</div>
+      <div role="group" aria-label="Project" class="${segWrap}">${[['all', 'All projects'], ...PROJECTS.map(p => [p.key, p.key])].map(([k, l]) => `<button type="button" aria-pressed="${S.proj === k}" onclick="S.proj='${k}';render()" class="${segBtn(S.proj === k)}">${l}</button>`).join('')}</div>
+      <label class="relative ml-auto w-full sm:w-64"><span class="sr-only">Find a mockup set</span>
+        <input type="search" value="${S.q}" oninput="S.q=this.value;renderList()" placeholder="Story ID or title" class="w-full rounded-lg border border-zinc-200 bg-white py-1.5 pl-3 pr-3 text-sm placeholder:text-zinc-400 dark:border-zinc-800 dark:bg-zinc-900"></label>
+    </div>
+    <div id="groups">${groups || `<div class="mt-8 rounded-xl border border-dashed border-zinc-300 p-10 text-center dark:border-zinc-700"><p class="font-medium">No mockup sets match</p><p class="mt-1 text-sm text-zinc-500">Clear the search or pick "All".</p><button type="button" onclick="S.q='';S.filter='all';S.proj='all';render()" class="${btn} mt-3">Clear filters</button></div>`}</div>`;
+}
+function renderList() { const g = document.createElement('div'); g.innerHTML = renderGallery(); document.getElementById('groups').replaceWith(g.querySelector('#groups')); fit(); }
+
+// ---------- Entry: the SB-8 story modal gains "Open in gallery" ----------
+function renderEntry() {
+  const s = SETS.find(x => x.id === 'SB-16');
+  return `<div aria-hidden="true" class="pointer-events-none opacity-40">${bar('w-40', 'h-3')}<div class="mt-2">${bar('w-56', 'h-7', 'bg-zinc-400 dark:bg-zinc-500')}</div><div class="mt-6 space-y-2">${[...Array(8)].map(() => card('h-12')).join('')}</div></div>
+  <div class="fixed inset-0 top-10 z-[60] grid place-items-center bg-zinc-950/40 p-4 lg:pl-64">
+    <div class="w-full max-w-3xl overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
+      <div class="flex items-start justify-between gap-3 border-b border-zinc-200 p-4 dark:border-zinc-800">
+        <div class="min-w-0"><p class="font-mono text-xs text-zinc-500">story-board · SB-16</p><h2 class="mt-0.5 font-semibold">Preflight history</h2></div>
+        <div class="flex items-center gap-2"><span class="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium dark:bg-zinc-800">built</span><a href="#" onclick="return false" class="hidden text-xs font-medium underline-offset-4 hover:underline sm:inline">Open full page →</a></div>
+      </div>
+      <div class="grid gap-4 p-4 md:grid-cols-2">
+        <div class="space-y-2 text-sm text-zinc-600 dark:text-zinc-400"><p>As the owner, I want every preflight run for a project on one page…</p>${[...Array(5)].map((_, i) => bar(['w-full', 'w-11/12', 'w-4/5'][i % 3], 'h-2.5', 'bg-zinc-200 dark:bg-zinc-700')).join('')}</div>
+        <div>
+          <div class="flex items-center justify-between gap-2"><p class="text-xs font-semibold uppercase tracking-wider text-zinc-400">Mockups</p>${badge(s)}</div>
+          <div class="mt-2 grid grid-cols-3 gap-2">${s.opts.map(o => `<button type="button" onclick="openViewer(${SETS.indexOf(s)},'${o.k}')" class="relative aspect-[4/3] overflow-hidden rounded-md border ${o.k === s.picked ? 'border-emerald-500 ring-1 ring-emerald-500' : 'border-zinc-200 dark:border-zinc-700'}">${frame(s, o.k)}<span class="absolute bottom-1 left-1 rounded bg-zinc-900/80 px-1 text-[10px] font-medium text-white">${U(o.k)}</span></button>`).join('')}</div>
+          <button type="button" onclick="openViewer(${SETS.indexOf(s)})" class="${btnPrimary} mt-3 w-full justify-center ring-2 ring-sky-500 ring-offset-2 dark:ring-offset-zinc-900">${svg('<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>', 'size-3.5')} Open in mockup gallery</button>
+          <p class="mt-2 text-xs text-zinc-500">Also in the sidebar: <strong class="font-medium">Mockups</strong> (ringed), which lists every set.</p>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ---------- Lightbox viewer ----------
+function openViewer(i, k) {
+  const s = SETS[i]; S.i = i; S.compare = false;
+  S.opt = k || s.picked || 'a'; S.left = s.current ? 'current' : 'a'; S.right = s.picked && s.current ? s.picked : (s.current ? 'a' : 'b');
+  if (S.left === S.right) S.right = 'b';
+  if (!S.stripTab || S.stripTab === 'gallery' || S.stripTab === 'entry') S.stripTab = 'viewer';
+  document.getElementById('viewer').hidden = false; document.body.style.overflow = 'hidden';
+  renderViewer(); strip();
+}
+function closeViewer() { document.getElementById('viewer').hidden = true; document.body.style.overflow = ''; closePick(); if (S.stripTab && S.stripTab.startsWith('viewer') || S.stripTab === 'compare') S.stripTab = S.view; strip(); }
+function step(d) { openViewer((S.i + d + SETS.length) % SETS.length); }
+function paneSelect(side) {
+  const s = SETS[S.i], v = S[side];
+  const choices = ['current', ...s.opts.map(o => o.k)];
+  return `<label class="flex min-w-0 items-center gap-2 text-xs"><span class="shrink-0 font-medium text-zinc-500">${side === 'left' ? 'Left' : 'Right'}</span>
+    <select onchange="S['${side}']=this.value;renderViewer()" class="min-w-0 truncate rounded-md border border-zinc-300 bg-white py-1 pl-2 pr-7 text-xs dark:border-zinc-700 dark:bg-zinc-900">${choices.map(k => `<option value="${k}" ${k === v ? 'selected' : ''}>${k === 'current' ? (s.current ? 'Current · today\'s page' : 'Current · none (new page)') : `Option ${U(k)} · ${optOf(s, k).name}`}${k === s.picked ? ' ✓ picked' : ''}</option>`).join('')}</select></label>`;
+}
+function pane(side) {
+  const s = SETS[S.i], k = S[side];
+  return `<section class="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border ${k === s.picked ? 'border-emerald-500' : 'border-zinc-200 dark:border-zinc-800'} bg-white dark:bg-zinc-900">
+    <div class="flex items-center justify-between gap-2 border-b border-zinc-200 px-2 py-1.5 dark:border-zinc-800">${paneSelect(side)}${k === s.picked ? '<span class="shrink-0 text-[11px] font-medium text-emerald-700 dark:text-emerald-300">✓ picked</span>' : ''}</div>
+    <div class="relative min-h-0 flex-1">${frame(s, k, { w: S.w, live: true })}</div></section>`;
+}
+function renderViewer() {
+  const s = SETS[S.i], v = document.getElementById('viewer');
+  const tabs = ['current', ...s.opts.map(o => o.k)];
+  const stage = S.compare
+    ? `<div class="grid h-full min-h-0 grid-rows-2 gap-3 md:grid-cols-[1fr_auto_1fr] md:grid-rows-1">${pane('left')}
+        <button type="button" onclick="[S.left,S.right]=[S.right,S.left];renderViewer()" aria-label="Swap left and right" class="${btn} hidden self-center md:inline-flex">⇄</button>${pane('right')}</div>`
+    : `<div class="relative h-full overflow-hidden rounded-lg border ${S.opt === s.picked ? 'border-emerald-500' : 'border-zinc-200 dark:border-zinc-800'} bg-white dark:bg-zinc-900">${frame(s, S.opt, { w: S.w, live: true })}</div>`;
+  v.innerHTML = `
+  <div class="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+    <div class="flex h-11 items-center gap-2 px-2 sm:px-3">
+      <button type="button" onclick="closeViewer()" aria-label="Close viewer (Esc)" class="rounded-md p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800">${svg('<path d="M6 6l12 12M18 6L6 18"/>')}</button>
+      <span class="shrink-0 whitespace-nowrap font-mono text-xs text-zinc-500"><span class="hidden sm:inline">${s.project} · </span>${s.id}</span>
+      <h2 id="v-title" class="min-w-0 truncate text-sm font-semibold">${s.title}</h2>${badge(s)}
+      <div class="ml-auto flex shrink-0 items-center gap-1 text-xs text-zinc-500">
+        <button type="button" onclick="step(-1)" aria-label="Previous set" class="rounded-md p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800">${svg('<path d="M15 6l-6 6 6 6"/>')}</button>
+        <span class="tabular-nums">${S.i + 1} / ${SETS.length}</span>
+        <button type="button" onclick="step(1)" aria-label="Next set" class="rounded-md p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800">${svg('<path d="M9 6l6 6-6 6"/>')}</button>
+      </div>
+    </div>
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-0.5 px-3 pb-2 text-xs"><p class="min-w-0 text-zinc-600 dark:text-zinc-400">${s.desc}</p>${whereLine(s)}</div>
+    <div class="flex items-center gap-2 overflow-x-auto border-t border-zinc-200 px-3 py-2 no-scrollbar dark:border-zinc-800">
+      ${S.compare ? `<span class="shrink-0 text-xs text-zinc-500">Pick a side in each pane ·</span><button type="button" onclick="[S.left,S.right]=[S.right,S.left];renderViewer()" class="${btn} md:hidden">⇄ Swap</button>`
+        : `<div role="tablist" aria-label="Version" class="${segWrap}">${tabs.map(k => `<button role="tab" type="button" aria-selected="${S.opt === k}" onclick="S.opt='${k}';renderViewer()" class="${segBtn(S.opt === k)}">${k === 'current' ? 'Current' : U(k)}${k === s.picked ? ' ✓' : ''}</button>`).join('')}</div>`}
+      <button type="button" aria-pressed="${S.compare}" onclick="S.compare=!S.compare;renderViewer()" class="${S.compare ? btnPrimary : btn}">${svg('<rect x="3" y="4" width="8" height="16" rx="1.5"/><rect x="13" y="4" width="8" height="16" rx="1.5"/>', 'size-3.5')} Side by side</button>
+      <div role="group" aria-label="Page width" class="${segWrap} hidden sm:inline-flex">${WIDTHS.map(([w, l]) => `<button type="button" aria-pressed="${S.w === w}" onclick="S.w=${w};renderViewer()" class="${segBtn(S.w === w)}">${l} <span class="tabular-nums opacity-60">${w}</span></button>`).join('')}</div>
+      <span class="ml-auto hidden shrink-0 text-xs text-zinc-500 lg:inline">${S.compare ? '' : optName(s, S.opt)}</span>
+      ${!S.compare && S.opt !== 'current' && !EMBED ? `<a href="${optOf(s, S.opt).src}" target="_blank" class="${btn}">Open file ↗</a>` : ''}
+    </div>
+  </div>
+  <div class="min-h-0 flex-1 p-2 sm:p-3">${stage}</div>
+  <div class="flex flex-wrap items-center gap-2 border-t border-zinc-200 bg-white px-3 py-2 text-xs dark:border-zinc-800 dark:bg-zinc-900">
+    ${s.status === 'awaiting'
+      ? `<span class="font-medium text-amber-700 dark:text-amber-300">Not picked yet.</span><span class="text-zinc-500">Pick one:</span>${s.opts.map(o => `<button type="button" onclick="openPick('${o.k}')" class="${btn}">Pick ${U(o.k)}</button>`).join('')}<button type="button" onclick="toast('Marked neither: ${s.id} is parked until new options are drawn.')" class="ml-auto text-zinc-500 underline-offset-4 hover:underline">Neither</button>`
+      : `<span class="min-w-0 flex-1 truncate text-zinc-600 dark:text-zinc-400">${s.status === 'parked' ? '' : `<strong class="font-medium text-zinc-900 dark:text-zinc-100">Picked ${U(s.picked)}</strong> · `}${s.reason}</span>`}
+  </div>`;
+  requestAnimationFrame(() => fit(v));
+}
+function openPick(k) {
+  const s = SETS[S.i]; S.pickK = k;
+  const p = document.getElementById('pick'); p.hidden = false;
+  p.innerHTML = `<form onsubmit="event.preventDefault();recordPick(SETS[S.i],'${k}',this.why.value);closePick();renderViewer();render()" class="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-5 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
+    <h3 class="font-semibold">Pick option ${U(k)} for ${s.id}?</h3>
+    <p class="mt-1 text-sm text-zinc-500">${optOf(s, k).name}. The pick and your reason go into the story's mockup gate.</p>
+    <label class="mt-4 block text-sm font-medium" for="why">Why this one <span class="font-normal text-zinc-500">(one line, optional)</span></label>
+    <textarea id="why" name="why" rows="2" class="mt-1 w-full rounded-lg border border-zinc-300 bg-white p-2 text-sm dark:border-zinc-700 dark:bg-zinc-950" placeholder="e.g. the split compare is what I asked for"></textarea>
+    <div class="mt-4 flex justify-end gap-2"><button type="button" onclick="closePick()" class="${btn}">Cancel</button><button class="${btnPrimary}">Pick option ${U(k)}</button></div></form>`;
+  p.querySelector('textarea').focus();
+}
+function closePick() { const p = document.getElementById('pick'); p.hidden = true; p.innerHTML = ''; }
+
+function render() {
+  document.getElementById('sidebar').innerHTML = sidebar('mockups', S.view === 'entry');
+  document.getElementById('main').innerHTML = S.view === 'entry' ? renderEntry() : renderGallery();
+  strip(); requestAnimationFrame(() => fit());
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { if (!document.getElementById('pick').hidden) closePick(); else if (!document.getElementById('viewer').hidden) closeViewer(); else drawer(false); }
+  if (!document.getElementById('viewer').hidden && document.getElementById('pick').hidden && !/SELECT|INPUT|TEXTAREA/.test(document.activeElement.tagName)) {
+    if (e.key === 'ArrowRight') step(1); if (e.key === 'ArrowLeft') step(-1);
+  }
+});
+render();
+if (location.hash === '#viewer') go('viewer'); if (location.hash === '#compare') go('compare'); if (location.hash === '#entry') go('entry');
+</script>
+</body>
+</html>

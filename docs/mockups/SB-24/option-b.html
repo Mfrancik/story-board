@@ -1,0 +1,571 @@
+<!-- SB-24 option B — App map (Flow map). Static mockup inside the SB-7 design-A shell, tab bar from SB-15.
+     Real data: journeys, step names, story IDs and built/pending status read from each registered project's
+     docs/journeys/<slug>.md on 2026-09-29 (coins, client-dashboard, asset-track, rent-track; story-board has none).
+     Screenshots do not exist yet: every built screen is a drawn greyscale wireframe marked "screenshot placeholder". -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SB-24 option B — Flow map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'media',
+    theme: { extend: { fontFamily: { sans: ['"Instrument Sans"', 'system-ui', 'sans-serif'] } } }
+  };
+</script>
+<style>
+  html, body { overflow-x: hidden; }
+  button:focus-visible, a:focus-visible, select:focus-visible, [tabindex]:focus-visible { outline: 2px solid #0ea5e9; outline-offset: 2px; }
+  .no-scrollbar { scrollbar-width: none; } .no-scrollbar::-webkit-scrollbar { display: none; }
+  [hidden] { display: none !important; }
+  .canvas-bg { background-image: radial-gradient(circle, rgb(161 161 170 / .35) 1px, transparent 1px); background-size: 18px 18px; cursor: grab; }
+  .node { transition: opacity .2s, box-shadow .2s; }
+
+</style>
+<script>
+// ---- SB-24 shared mockup core: real journey data (read 2026-09-29) + the wireframe renderer. ----
+// Journeys, step names, story IDs and statuses come from each project's docs/journeys/<slug>.md on main.
+// Routes for built steps are the ones the journeys name; routes for pending steps are the planned ones.
+// Screenshots do not exist yet (a separate story makes the journey tests save one per step), so every
+// built screen is a drawn greyscale wireframe marked "screenshot placeholder".
+
+/** mk(): chosen mockup; aw(): mockups exist, awaiting the owner's pick; no(): no mockup yet. */
+const mk = (opt, note) => ({ s: 'chosen', opt, note });
+const aw = (...opts) => ({ s: 'await', opts });
+const no = () => ({ s: 'none' });
+/** A step. st: built | pending. shot: the journey test has saved a screenshot for it (built only). */
+const S = (name, story, st, route, kind, extra = {}) => ({ name, story, st, route, kind, shot: st === 'built', ...extra });
+
+window.PROJECTS = [
+  { slug: 'coins', dot: 'bg-emerald-500', stories: 946, repo: '~/Code/coins', journeys: [
+    { slug: 'see-my-collection', name: 'See my collection', test: 'tests/Browser/Journeys/SeeMyCollectionTest.php', steps: [
+      S('Search coins fast', 'SRCH-1', 'built', '/search', 'list'),
+      S('Browse the all-coins gallery', 'VIEW-2', 'built', '/coins', 'grid'),
+      S('Land on the collection dashboard', 'VIEW-3', 'built', '/dashboard', 'dashboard'),
+      S('Open a coin', 'COIN-3', 'built', '/coins/{n}', 'detail'),
+      S('Filter to key dates', 'KEY-2', 'built', '/coins?key=1', 'grid'),
+      S('Say what you collect', 'SCOPE-7', 'pending', '/settings/collecting', 'form', { storyStatus: 'approved', mock: mk('B', 'chosen 2026-08-28') }),
+    ]},
+    { slug: 'buy-at-auction', name: 'Buy at auction', test: 'tests/Browser/Journeys/BuyAtAuctionTest.php', steps: [
+      S('The public shell knows you', 'SHARE-15', 'built', '/market', 'landing'),
+      S('Browse every live lot', 'AUC-15', 'built', '/market/auctions', 'grid'),
+      S('Narrow it with the rail', 'AUC-16', 'built', '/market/auctions?filters', 'gridRail'),
+      S('The lot page, rebuilt around the bid', 'AUC-17', 'pending', '/auctions/{slug}', 'detail', { storyStatus: 'approved', mock: aw('a', 'b') }),
+      S('Your max bid on the docket', 'AUC-18', 'built', '/dashboard', 'dashboard'),
+      S('Winning is an invoice', 'SELL-24', 'built', '/orders/{n}', 'invoice', { shot: false }),
+    ]},
+    { slug: 'sell-my-coins', name: 'Sell my coins', test: 'tests/Browser/Journeys/SellMyCoinsTest.php', steps: [
+      S('Say you sell coins', 'SELL-5', 'built', '/settings/selling', 'form'),
+      S('Mark a coin for sale', 'VIEW-8', 'built', '/coins', 'grid'),
+      S('The public for-sale page', 'SHARE-8', 'built', '/u/{handle}/for-sale', 'landingGrid'),
+      S('Record the sale', 'SELL-1', 'built', '/coins/{n}', 'detail'),
+      S('The selling dashboard', 'SELL-3', 'built', '/selling', 'dashboard'),
+      S('The carrier says it arrived', 'SELL-33', 'pending', '/selling/orders/{n}', 'invoice', { storyStatus: 'draft', mock: no() }),
+    ]},
+    { slug: 'start-my-collection', name: 'Start my collection', test: 'tests/Browser/Journeys/StartMyCollectionTest.php', steps: [
+      S('Register', 'TEN-1', 'built', '/register', 'auth'),
+      S('Grow the catalog', 'CAT-1', 'built', '/admin/series', 'admin'),
+      S('Add a coin', 'COIN-1', 'built', '/coins/create', 'form'),
+      S('Upload obverse and reverse', 'IMG-1', 'built', '/coins/{n}', 'detail'),
+      S('Crop the obverse to a disc', 'IMG-2', 'built', '/coins/{n}/crop', 'modal'),
+    ]},
+    { slug: 'bring-my-collection-with-me', name: 'Bring my collection with me', test: 'tests/Browser/Journeys/BringMyCollectionWithMeTest.php', steps: [
+      S('Find the import door', 'IMP-1', 'pending', '/settings/import', 'form', { storyStatus: 'draft', mock: no() }),
+      S('Say which column is which', 'IMP-2', 'pending', '/settings/import/{run}/map', 'table', { storyStatus: 'draft', mock: no() }),
+      S('Is this file enough?', 'IMP-3', 'pending', '/settings/import/{run}/check', 'summary', { storyStatus: 'draft', mock: no() }),
+      S('The rows become coins', 'IMP-5', 'pending', '/settings/import/{run}', 'progress', { storyStatus: 'draft', mock: no() }),
+      S('The ledger says what landed', 'IMP-6', 'pending', '/settings/import/{run}/ledger', 'table', { storyStatus: 'draft', mock: no() }),
+    ]},
+  ]},
+  { slug: 'client-dashboard', dot: 'bg-emerald-500', stories: 97, repo: '~/Code/client-dashboard', journeys: [
+    { slug: 'sale-submit', name: 'Sale submit', test: 'tests/Browser/Journeys/SaleSubmitTest.php', steps: [
+      S('A super admin records the team key', 'SS-5', 'built', '/admin/teams', 'admin'),
+      S('The submit-sale button appears', 'SS-7', 'built', '/dashboard', 'dashboard'),
+      S('Submit a sale', 'SS-8', 'built', '/dashboard · submit modal', 'modal'),
+      S('Did I already send that one?', 'SS-14', 'built', '/dashboard · submit modal · recent', 'modal'),
+      S('The admin reads the record', 'SS-10', 'built', '/admin/sale-submissions', 'admin'),
+    ]},
+    { slug: 'publish-announcement', name: 'Publish announcement', test: 'tests/Browser/Journeys/PublishAnnouncementTest.php', steps: [
+      S('A super admin publishes', 'AN-2', 'built', '/admin/announcements', 'admin'),
+      S('The buyer sees the banner', 'AN-3', 'built', '/dashboard', 'dashboard'),
+      S('Acknowledge it once', 'AN-4', 'built', '/dashboard · acknowledge modal', 'modal'),
+    ]},
+  ]},
+  { slug: 'asset-track', dot: 'bg-emerald-500', stories: 11, repo: '~/Code/asset-track', journeys: [
+    { slug: 'collectibles-key-dates', name: 'Collectibles → coin key dates', test: 'tests/Browser/Journeys/CollectiblesKeyDatesTest.php', steps: [
+      S('Open Collectibles', 'CV-2', 'pending', '/collectibles', 'dashboard', { storyStatus: 'draft', mock: mk('A', 'inherited from CV-1') }),
+      S('Open the Coins tab', 'CV-3', 'pending', '/collectibles/coins', 'table', { storyStatus: 'draft', mock: mk('A', 'inherited from CV-1') }),
+      S('Toggle to the Key Dates board', 'KD-3', 'pending', '/collectibles/coins?view=key-dates', 'board', { storyStatus: 'draft', mock: mk('B', 'major-key gaps first') }),
+      S('Correct a wrong match', 'KD-3', 'pending', '/collectibles/coins?view=key-dates', 'board', { storyStatus: 'draft', mock: mk('B', 'major-key gaps first') }),
+    ]},
+    { slug: 'collectibles-type-set', name: 'Collectibles → coin type set', test: 'tests/Browser/Journeys/CollectiblesTypeSetTest.php', steps: [
+      S('Open Collectibles', 'CV-2', 'pending', '/collectibles', 'dashboard', { storyStatus: 'draft', mock: mk('A', 'inherited from CV-1') }),
+      S('Open the Coins tab', 'CV-3', 'pending', '/collectibles/coins', 'table', { storyStatus: 'draft', mock: mk('A', 'inherited from CV-1') }),
+      S('Toggle to the Type set board', 'TS-3', 'pending', '/collectibles/coins?view=type-set', 'board', { storyStatus: 'draft', mock: mk('A', '"a looks great"') }),
+      S('Assign a coin to a slot', 'TS-2', 'pending', '/collectibles/coins · assign modal', 'modal', { storyStatus: 'draft', mock: aw('a', 'b') }),
+      S('Return to the board', 'TS-3', 'pending', '/collectibles/coins?view=type-set', 'board', { storyStatus: 'draft', mock: mk('A', '"a looks great"') }),
+    ]},
+  ]},
+  { slug: 'rent-track', dot: 'bg-emerald-500', stories: 15, repo: '~/Code/rent-track', journeys: [
+    { slug: 'multi-tenant-org-isolation', name: 'Multi-tenant org isolation', test: 'tests/Browser/Journeys/MultiTenantOrgIsolationTest.php', steps: [
+      S('Accept an invitation', 'MT-4a', 'built', '/invitations/{token}', 'auth'),
+      S('Manage members', 'MT-4b', 'built', '/org/members', 'table'),
+      S('Switch organisation', 'MT-4c', 'built', '/dashboard', 'dashboard'),
+      S('Platform admin', 'MT-6', 'pending', '/admin/orgs', 'admin', { storyStatus: 'stub', mock: no() }),
+    ]},
+  ]},
+  { slug: 'story-board', dot: 'bg-emerald-500', stories: 24, repo: '~/Code/story-board', journeys: [] },
+];
+
+window.NOW_LABEL = 'Sep 29';
+
+// ---- helpers ----
+window.esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+window.proj = (slug) => PROJECTS.find(p => p.slug === slug);
+window.counts = (j) => ({ built: j.steps.filter(s => s.st === 'built').length, total: j.steps.length });
+/** Screen key: the route with any "· modal" suffix kept, so a modal is its own screen. */
+window.screensOf = (p) => {
+  const map = new Map();
+  p.journeys.forEach((j, ji) => j.steps.forEach((s, si) => {
+    if (!map.has(s.route)) map.set(s.route, { route: s.route, kind: s.kind, step: s, uses: [] });
+    map.get(s.route).uses.push({ ji, si, j });
+  }));
+  return [...map.values()];
+};
+/** Other journeys that pass through this step's screen. */
+window.alsoIn = (p, ji, route) => {
+  const out = [];
+  p.journeys.forEach((j, k) => { if (k === ji) return; const i = j.steps.findIndex(s => s.route === route); if (i >= 0) out.push({ j, k, i }); });
+  return out;
+};
+window.JCOL = ['#2a78d6', '#eb6834', '#1baf7a', '#9b5de5', '#c98a00'];   // journey colours, by position in the project
+
+/** Status pill: Built (emerald) or the story's own pending status (amber). */
+window.pill = (s, sm) => {
+  const cls = sm ? 'text-[10px] px-1.5 py-px' : 'text-[11px] px-2 py-0.5';
+  return s.st === 'built'
+    ? `<span class="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-emerald-500/10 ${cls} font-medium text-emerald-700 dark:text-emerald-300 ring-1 ring-inset ring-emerald-500/30"><span class="size-1.5 rounded-full bg-emerald-500"></span>Built</span>`
+    : `<span class="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-amber-500/10 ${cls} font-medium text-amber-800 dark:text-amber-200 ring-1 ring-inset ring-amber-500/40"><span class="size-1.5 rounded-full bg-amber-500"></span>Pending${sm ? '' : ' · ' + esc(s.storyStatus)}</span>`;
+};
+/** What the frame shows, in words. */
+window.shows = (s) => {
+  if (s.st === 'built') return s.shot ? 'Screenshot from the journey test (placeholder)' : 'Built, no screenshot yet — the journey test has not saved one';
+  if (s.mock.s === 'chosen') return `Chosen mockup: option ${s.mock.opt}${s.mock.note ? ' (' + s.mock.note + ')' : ''}`;
+  if (s.mock.s === 'await') return `Mockups ${s.mock.opts.join(' and ')} exist, awaiting your pick`;
+  return 'No mockup yet';
+};
+
+// ---- the wireframe renderer: a stylised page, drawn in divs, sized by its container ----
+window.W = (kind, tone) => {
+  const g = 'bg-zinc-200 dark:bg-zinc-700', g2 = 'bg-zinc-300 dark:bg-zinc-600';
+  const acc = tone === 'mock' ? 'bg-violet-400 dark:bg-violet-500' : 'bg-zinc-400 dark:bg-zinc-500';
+  const bar = (w, c = g, h = 4) => `<div class="rounded-sm ${c}" style="width:${w}%;height:${h}%"></div>`;
+  const box = (st, c = g) => `<div class="rounded-sm ${c}" style="${st}"></div>`;
+  const coin = (c = g2) => `<div class="rounded-full ${c} mx-auto" style="width:62%;aspect-ratio:1"></div>`;
+  const card = () => `<div class="rounded-sm border border-zinc-200 dark:border-zinc-700 p-[6%] flex flex-col gap-[6%]">${coin()}<div class="${g} rounded-sm" style="height:7%;width:80%"></div><div class="${g} rounded-sm" style="height:7%;width:50%"></div></div>`;
+  const top = `<div class="flex items-center gap-[2%] px-[3%] border-b border-zinc-200 dark:border-zinc-700" style="height:9%"><div class="rounded-full ${g2}" style="height:45%;aspect-ratio:1"></div>${bar(12, g, 30)}<div class="flex-1"></div>${bar(8, g, 30)}${bar(8, g, 30)}<div class="rounded-full ${g2}" style="height:50%;aspect-ratio:1"></div></div>`;
+  const body = (inner, pad = 4) => `<div class="flex flex-col" style="height:100%">${top}<div class="flex-1 min-h-0 flex flex-col gap-[3%]" style="padding:${pad}%">${inner}</div></div>`;
+  const grid = (n, cols) => `<div class="grid gap-[3%] flex-1 min-h-0" style="grid-template-columns:repeat(${cols},1fr)">${Array.from({ length: n }, card).join('')}</div>`;
+  const rows = (n, lead) => `<div class="flex-1 min-h-0 flex flex-col rounded-sm border border-zinc-200 dark:border-zinc-700 overflow-hidden">${Array.from({ length: n }, (_, i) => `<div class="flex items-center gap-[3%] px-[3%] ${i ? 'border-t border-zinc-100 dark:border-zinc-800' : g}" style="flex:1">${lead ? `<div class="rounded-full ${g2}" style="height:45%;aspect-ratio:1"></div>` : ''}${bar(28, i ? g : g2, 28)}${bar(14, g, 28)}<div class="flex-1"></div>${bar(10, i % 3 === 1 ? acc : g, 28)}</div>`).join('')}</div>`;
+  const chips = `<div class="flex gap-[2%]" style="height:7%">${[14, 10, 12, 9].map((w, i) => `<div class="rounded-full ${i ? g : acc}" style="width:${w}%"></div>`).join('')}</div>`;
+  const field = () => `<div class="flex flex-col gap-[4px]" style="height:14%">${bar(18, g, 22)}<div class="rounded-sm border border-zinc-300 dark:border-zinc-600 flex-1"></div></div>`;
+  switch (kind) {
+    case 'grid': return body(`${bar(30, g2, 6)}${chips}${grid(8, 4)}`);
+    case 'gridRail': return body(`<div class="flex gap-[3%] flex-1 min-h-0"><div class="flex flex-col gap-[4%] rounded-sm border border-zinc-200 dark:border-zinc-700 p-[3%]" style="width:24%">${[70, 50, 60, 40, 55, 45].map((w, i) => bar(w, i === 0 ? g2 : g, 5)).join('')}<div class="flex-1"></div>${bar(80, acc, 7)}</div><div class="flex-1 flex flex-col gap-[3%]">${chips}${grid(6, 3)}</div></div>`);
+    case 'landing': return body(`<div class="flex-1 flex flex-col items-center justify-center gap-[5%]">${bar(55, g2, 9)}${bar(40, g, 5)}<div class="flex gap-[2%] w-[60%]" style="height:10%"><div class="flex-1 rounded-sm border border-zinc-300 dark:border-zinc-600"></div><div class="${acc} rounded-sm" style="width:28%"></div></div></div>${grid(4, 4)}`);
+    case 'landingGrid': return body(`<div class="flex items-center gap-[3%]" style="height:16%"><div class="rounded-full ${g2}" style="height:90%;aspect-ratio:1"></div><div class="flex-1 flex flex-col gap-[10%]">${bar(40, g2, 22)}${bar(25, g, 18)}</div><div class="${acc} rounded-sm" style="width:16%;height:40%"></div></div>${chips}${grid(8, 4)}`);
+    case 'dashboard': return body(`${bar(26, g2, 6)}<div class="grid grid-cols-4 gap-[3%]" style="height:18%">${[0, 1, 2, 3].map(() => `<div class="rounded-sm border border-zinc-200 dark:border-zinc-700 p-[8%] flex flex-col justify-between">${bar(60, g, 18)}${bar(40, g2, 30)}</div>`).join('')}</div><div class="flex gap-[3%] flex-1 min-h-0"><div class="flex-[2] rounded-sm border border-zinc-200 dark:border-zinc-700 p-[3%] flex items-end gap-[3%]">${[30, 45, 38, 60, 52, 70, 64, 82].map(h => `<div class="flex-1 rounded-t-sm ${g2}" style="height:${h}%"></div>`).join('')}</div><div class="flex-1 flex flex-col gap-[6%]">${[0, 1, 2, 3].map(i => `<div class="flex-1 rounded-sm border border-zinc-200 dark:border-zinc-700 flex items-center gap-[6%] px-[6%]"><div class="rounded-full ${i ? g : acc}" style="height:50%;aspect-ratio:1"></div>${bar(55, g, 22)}</div>`).join('')}</div></div>`);
+    case 'detail': return body(`${bar(22, g, 4)}<div class="flex gap-[4%] flex-1 min-h-0"><div class="flex-1 rounded-sm ${g} flex items-center justify-center"><div class="rounded-full ${g2}" style="height:70%;aspect-ratio:1"></div></div><div class="flex-1 flex flex-col gap-[5%]">${bar(80, g2, 8)}${bar(45, g, 5)}<div class="flex gap-[4%]" style="height:7%"><div class="rounded-full ${g}" style="width:20%"></div><div class="rounded-full ${g}" style="width:16%"></div></div>${[70, 60, 75, 50].map(w => bar(w, g, 4)).join('')}<div class="flex-1"></div><div class="flex gap-[4%]" style="height:11%"><div class="${acc} rounded-sm" style="width:45%"></div><div class="rounded-sm border border-zinc-300 dark:border-zinc-600" style="width:30%"></div></div></div></div><div class="flex gap-[2%]" style="height:12%">${[0, 1, 2, 3, 4].map(() => `<div class="rounded-sm ${g}" style="aspect-ratio:1;height:100%"></div>`).join('')}</div>`);
+    case 'invoice': return body(`<div class="flex justify-between items-center" style="height:10%">${bar(30, g2, 50)}${box('width:18%;height:60%', acc)}</div><div class="flex gap-[4%] flex-1 min-h-0"><div class="flex-[3] flex flex-col gap-[4%]">${rows(4, true)}</div><div class="flex-[2] rounded-sm border border-zinc-200 dark:border-zinc-700 p-[4%] flex flex-col gap-[6%]">${[60, 80, 50, 70].map(w => bar(w, g, 6)).join('')}<div class="flex-1"></div>${bar(100, acc, 12)}</div></div>`);
+    case 'form': return body(`${bar(30, g2, 6)}${bar(55, g, 3)}<div class="flex-1 min-h-0 rounded-sm border border-zinc-200 dark:border-zinc-700 p-[4%] flex flex-col gap-[4%]" style="max-width:70%">${field()}${field()}${field()}<div class="flex items-center gap-[3%]" style="height:8%"><div class="rounded-full ${acc}" style="height:70%;aspect-ratio:1.8"></div>${bar(40, g, 45)}</div><div class="flex-1"></div><div class="${acc} rounded-sm" style="width:30%;height:12%"></div></div>`);
+    case 'auth': return `<div class="h-full flex items-center justify-center bg-zinc-100 dark:bg-zinc-800"><div class="rounded-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-[4%] flex flex-col gap-[5%]" style="width:42%;height:80%"><div class="rounded-full ${g2} mx-auto" style="height:12%;aspect-ratio:1"></div>${bar(60, g2, 5)}${field()}${field()}<div class="flex-1"></div><div class="${acc} rounded-sm" style="height:12%"></div>${bar(50, g, 3)}</div></div>`;
+    case 'admin': return `<div class="h-full flex"><div class="bg-zinc-700 dark:bg-zinc-800 flex flex-col gap-[4%] p-[2%]" style="width:18%">${[70, 50, 60, 55, 45, 65].map((w, i) => `<div class="rounded-sm ${i === 2 ? 'bg-zinc-400' : 'bg-zinc-500'}" style="width:${w}%;height:3.5%"></div>`).join('')}</div><div class="flex-1 p-[3%] flex flex-col gap-[4%]"><div class="flex items-center justify-between" style="height:8%">${bar(30, g2, 60)}${box('width:18%;height:80%', acc)}</div>${rows(7, false)}</div></div>`;
+    case 'modal': return `<div class="relative h-full">${W('dashboard', 'shot').replace(/bg-violet-\d00/g, '')}<div class="absolute inset-0 bg-zinc-900/40"></div><div class="absolute rounded-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-[3%] flex flex-col gap-[5%] shadow-lg" style="left:26%;right:26%;top:14%;bottom:14%">${bar(55, g2, 7)}${field()}${field()}<div class="flex-1 rounded-sm ${g}"></div><div class="flex justify-end gap-[3%]" style="height:11%"><div class="rounded-sm border border-zinc-300 dark:border-zinc-600" style="width:24%"></div><div class="${acc} rounded-sm" style="width:30%"></div></div></div></div>`;
+    case 'table': return body(`<div class="flex justify-between items-center" style="height:7%">${bar(26, g2, 80)}${box('width:14%;height:100%', acc)}</div>${chips}${rows(7, true)}`);
+    case 'list': return body(`<div class="rounded-sm border border-zinc-300 dark:border-zinc-600 flex items-center px-[2%] gap-[2%]" style="height:10%"><div class="rounded-full ${g2}" style="height:45%;aspect-ratio:1"></div>${bar(30, g, 30)}</div>${rows(6, true)}`);
+    case 'summary': return body(`${bar(40, g2, 6)}<div class="grid grid-cols-3 gap-[3%]" style="height:26%">${[acc, g2, g].map(c => `<div class="rounded-sm border border-zinc-200 dark:border-zinc-700 p-[8%] flex flex-col gap-[10%]"><div class="${c} rounded-sm" style="height:35%;width:50%"></div>${bar(80, g, 12)}</div>`).join('')}</div>${rows(3, false)}<div class="flex gap-[3%]" style="height:9%"><div class="${acc} rounded-sm" style="width:26%"></div><div class="rounded-sm border border-zinc-300 dark:border-zinc-600" style="width:18%"></div></div>`);
+    case 'progress': return body(`${bar(36, g2, 6)}<div class="rounded-full ${g} overflow-hidden" style="height:5%"><div class="${acc} h-full" style="width:62%"></div></div>${bar(22, g, 3)}${rows(6, true)}`);
+    case 'board': return body(`<div class="flex justify-between items-center" style="height:8%">${bar(30, g2, 70)}<div class="rounded-full ${g} overflow-hidden" style="width:26%;height:50%"><div class="${acc} h-full" style="width:40%"></div></div></div>${[0, 1, 2].map(r => `<div class="flex flex-col gap-[6%] flex-1 min-h-0">${bar(20, g2, 12)}<div class="grid gap-[2%] flex-1" style="grid-template-columns:repeat(8,1fr)">${Array.from({ length: 8 }, (_, i) => `<div class="rounded-sm ${(i + r) % 3 === 0 ? 'border border-dashed border-zinc-300 dark:border-zinc-600' : g2}"></div>`).join('')}</div></div>`).join('')}`);
+  }
+  return body('');
+};
+
+/** A screen frame: browser chrome with the route, then the page. size: 'sm' | 'md' | 'lg'. */
+window.frame = (s, size = 'sm', extraCls = '') => {
+  const lg = size === 'lg', md = size === 'md', xs = size === 'xs';
+  const t = (full, short) => xs ? short : full;   // the tiniest thumbnails get the short tag
+  const tag = lg ? 'text-[11px] px-2 py-0.5' : md ? 'text-[9px] px-1.5 py-px' : 'text-[8px] px-1 py-px';
+  const chromeH = lg ? 'h-7' : md ? 'h-5' : 'h-4';
+  const dot = lg ? 'size-2' : 'size-1';
+  const routeCls = lg ? 'text-xs' : md ? 'text-[10px]' : 'text-[8px]';
+  let inner, border;
+  if (s.st === 'built' && s.shot) {
+    border = 'border-zinc-300 dark:border-zinc-700';
+    inner = `<div class="absolute inset-0 grayscale">${W(s.kind, 'shot')}</div><span class="absolute bottom-1 right-1 rounded bg-zinc-900/75 text-white ${tag} font-medium whitespace-nowrap">${t('screenshot placeholder', 'placeholder')}</span>`;
+  } else if (s.st === 'built') {
+    border = 'border-zinc-300 dark:border-zinc-700';
+    inner = `<div class="absolute inset-0 grid place-items-center text-center bg-[repeating-linear-gradient(135deg,transparent_0_8px,rgb(161_161_170/0.12)_8px_16px)]"><div class="px-2"><p class="${lg ? 'text-sm' : 'text-[9px]'} font-medium text-zinc-600 dark:text-zinc-300">Built · no screenshot yet</p>${lg || md ? `<p class="mt-1 ${lg ? 'text-xs' : 'text-[9px]'} text-zinc-500">Appears after the journey test next passes</p>` : ''}</div></div>`;
+  } else if (s.mock.s === 'chosen') {
+    border = 'border-dashed border-violet-400 dark:border-violet-500';
+    inner = `<div class="absolute inset-0">${W(s.kind, 'mock')}</div><span class="absolute bottom-1 right-1 rounded bg-violet-600 text-white ${tag} font-medium whitespace-nowrap">${t('mockup · option ' + s.mock.opt, 'option ' + s.mock.opt)}</span>`;
+  } else if (s.mock.s === 'await') {
+    border = 'border-dashed border-amber-400 dark:border-amber-500';
+    inner = `<div class="absolute inset-0 flex gap-[3%] p-[4%] bg-amber-50/60 dark:bg-amber-500/5">${s.mock.opts.map(o => `<div class="relative flex-1 rounded-sm border border-zinc-200 dark:border-zinc-700 overflow-hidden opacity-60"><div class="absolute inset-0">${W(s.kind, 'mock')}</div><span class="absolute top-1 left-1 rounded bg-zinc-900/70 text-white ${tag} font-mono">${o}</span></div>`).join('')}</div><span class="absolute bottom-1 right-1 rounded bg-amber-500 text-zinc-900 ${tag} font-semibold whitespace-nowrap">${t('awaiting pick', 'pick')}</span>`;
+  } else {
+    border = 'border-dashed border-zinc-300 dark:border-zinc-600';
+    inner = `<div class="absolute inset-0 grid place-items-center text-center bg-zinc-50 dark:bg-zinc-900/60"><div><svg class="mx-auto ${lg ? 'size-8' : 'size-4'} text-zinc-300 dark:text-zinc-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 14h8"/></svg><p class="mt-1 ${lg ? 'text-sm' : 'text-[9px]'} font-medium text-zinc-500">${t('No mockup yet', 'No mockup')}</p></div></div>`;
+  }
+  return `<div class="overflow-hidden rounded-md border ${border} bg-white dark:bg-zinc-900 ${extraCls}">
+    <div class="${chromeH} flex items-center gap-1 px-1.5 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950">
+      <span class="${dot} rounded-full bg-zinc-300 dark:bg-zinc-600"></span><span class="${dot} rounded-full bg-zinc-300 dark:bg-zinc-600"></span>
+      <span class="ml-1 min-w-0 truncate font-mono ${routeCls} text-zinc-500">${esc(s.route)}</span></div>
+    <div class="relative" style="aspect-ratio:16/10">${inner}</div></div>`;
+};
+
+// ---- the design-A shell: sidebar project switcher, shared by every option ----
+window.renderSidebar = (current, onPick) => {
+  const nav = document.getElementById('proj-list');
+  nav.innerHTML = PROJECTS.map(p => `<li><a href="#" data-p="${p.slug}" ${p.slug === current ? 'aria-current="page"' : ''}
+    class="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm ${p.slug === current ? 'bg-zinc-100 dark:bg-zinc-800 font-medium' : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/50'}">
+    <span class="size-2 rounded-full ${p.dot}" title="State ok"></span><span class="flex-1 truncate">${p.slug}</span>
+    <span class="text-xs text-zinc-500 tabular-nums">${p.stories}</span></a></li>`).join('');
+  nav.querySelectorAll('a').forEach(a => a.onclick = (e) => { e.preventDefault(); drawer(false); onPick(a.dataset.p); });
+};
+window.drawer = (open) => {
+  document.getElementById('sidebar').classList.toggle('-translate-x-full', !open);
+  document.getElementById('scrim').hidden = !open;
+  document.getElementById('menu-btn').setAttribute('aria-expanded', open);
+};
+window.renderHeader = (p) => {
+  const js = p.journeys, built = js.reduce((n, j) => n + counts(j).built, 0), total = js.reduce((n, j) => n + counts(j).total, 0);
+  document.getElementById('crumb-proj').textContent = p.slug;
+  document.getElementById('mob-proj').textContent = '· ' + p.slug + ' · App map';
+  document.getElementById('h-proj').firstChild.textContent = p.slug + ' ';
+  document.getElementById('h-sub').innerHTML = `<span class="font-mono text-xs">${p.repo}</span> · origin/main · <span class="tabular-nums">${js.length}</span> journeys · <span class="tabular-nums">${built}</span> of <span class="tabular-nums">${total}</span> steps built`;
+};
+/** The empty state, for a project with no journeys (story-board itself today). */
+window.emptyState = (p) => `<div class="mt-6 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 sm:px-6 py-10 text-center">
+  <svg class="mx-auto size-8 text-zinc-300 dark:text-zinc-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="7" height="6" rx="1"/><rect x="14" y="14" width="7" height="6" rx="1"/><path d="M10 7h4a2 2 0 012 2v5"/></svg>
+  <p class="mt-3 font-medium">${p.slug} has no journeys yet.</p>
+  <p class="mt-1 text-sm text-zinc-500 max-w-md mx-auto">The map is drawn from <span class="font-mono text-xs">docs/journeys/&lt;slug&gt;.md</span>. Only a README is there. <span class="font-mono text-xs">/story</span> writes a journey when a brain dump describes an end-to-end flow.</p></div>`;
+
+</script>
+</head>
+<body class="font-sans bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 antialiased">
+
+<!-- Mockup bar (not part of the design) -->
+<div class="fixed inset-x-0 top-0 z-[60] h-10 bg-zinc-900 text-zinc-100 dark:bg-white dark:text-zinc-900 flex items-center gap-3 px-3 text-xs overflow-x-auto no-scrollbar">
+  <span class="shrink-0 font-semibold">Option B · Flow map</span>
+  <a href="option-a.html" class="shrink-0 underline-offset-4 hover:underline opacity-70">A</a>
+  <a href="option-b.html" class="shrink-0 underline-offset-4 hover:underline font-semibold underline">B</a>
+  <a href="option-c.html" class="shrink-0 underline-offset-4 hover:underline opacity-70">C</a>
+  <span class="shrink-0 opacity-80">· click a flow chip to trace it · click a screen · ▶ Play · drag to pan</span>
+  <a href="index.html" class="hidden sm:inline ml-auto shrink-0 underline underline-offset-4 opacity-80 hover:opacity-100">All options</a>
+</div>
+
+<!-- Mobile top bar -->
+<div class="lg:hidden sticky top-10 z-30 flex items-center gap-3 border-b border-zinc-200 dark:border-zinc-800 bg-white/90 dark:bg-zinc-900/90 backdrop-blur px-4 h-14 mt-10">
+  <button id="menu-btn" type="button" onclick="drawer(true)" aria-label="Open project menu" aria-controls="sidebar" aria-expanded="false" class="rounded-lg p-2 -ml-2 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+    <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+  <span class="font-semibold">Story board</span>
+  <span id="mob-proj" class="text-sm text-zinc-500 truncate">· coins · App map</span>
+</div>
+
+<div id="scrim" hidden onclick="drawer(false)" class="fixed inset-0 top-10 z-40 bg-zinc-950/40 lg:hidden"></div>
+
+<!-- Sidebar (design A shell, from SB-7 option A) -->
+<aside id="sidebar" aria-label="Projects" class="-translate-x-full fixed top-10 bottom-0 left-0 z-50 w-72 lg:w-64 lg:translate-x-0 transition-transform bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col">
+  <div class="flex items-center justify-between px-5 pt-5 pb-3">
+    <div class="flex items-center gap-2">
+      <span class="grid place-items-center size-7 rounded-lg bg-zinc-800 text-white dark:bg-white dark:text-zinc-900 text-xs font-bold">SB</span>
+      <span class="font-semibold">Story board</span>
+    </div>
+    <button type="button" onclick="drawer(false)" aria-label="Close project menu" class="lg:hidden rounded-lg p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+      <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="px-4 pb-3">
+    <button type="button" class="w-full flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-3 py-2 text-sm text-zinc-500 hover:border-zinc-300 dark:hover:border-zinc-700">
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <span class="flex-1 text-left">Find a story</span>
+      <kbd class="rounded border border-zinc-200 dark:border-zinc-700 px-1.5 text-[11px] font-sans">⌘K</kbd>
+    </button>
+  </div>
+  <nav class="flex-1 overflow-y-auto px-3 pb-3 text-sm" aria-label="Project switcher">
+    <a href="#" class="w-full flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      <span class="flex-1 text-left font-medium">All projects</span>
+      <span class="text-xs text-zinc-500 tabular-nums">1,093</span>
+    </a>
+    <a href="#" class="w-full flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M21 19H3"/></svg>
+      <span class="flex-1 text-left font-medium">Production</span>
+      <span class="text-xs text-zinc-500 tabular-nums">3/4</span>
+    </a>
+    <p class="mt-5 mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Projects</p>
+    <ul id="proj-list" class="space-y-0.5"></ul>
+  </nav>
+  <div class="border-t border-zinc-200 dark:border-zinc-800 p-3">
+    <a href="#" class="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+      <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h7"/><circle cx="18" cy="16" r="3"/></svg>
+      <span class="flex-1 text-left font-medium">Manage projects</span>
+    </a>
+  </div>
+</aside>
+
+<main class="lg:pl-64 lg:pt-10 min-h-screen">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-10 py-6 lg:py-10">
+    <!-- Project header (board/project-header, SB-15) -->
+    <header class="flex flex-wrap items-end justify-between gap-3">
+      <div class="min-w-0">
+        <p class="text-xs text-zinc-500"><a href="#" class="hover:underline underline-offset-4">All projects</a> <span aria-hidden="true">/</span> <span id="crumb-proj">coins</span></p>
+        <h1 id="h-proj" class="mt-1 text-2xl font-semibold tracking-tight flex items-center gap-2">coins <span class="size-2 rounded-full bg-emerald-500" title="State ok"></span></h1>
+        <p id="h-sub" class="mt-1 text-sm text-zinc-500"></p>
+      </div>
+      <p class="text-sm text-zinc-500 flex items-center gap-2">Journeys read from main · screenshots from the journey tests</p>
+    </header>
+
+    <!-- Page tabs: board/project-tabs gains App map -->
+    <nav aria-label="Project pages" class="mt-5 border-b border-zinc-200 dark:border-zinc-800 flex gap-6 text-sm overflow-x-auto no-scrollbar">
+      <a href="#" class="-mb-px shrink-0 border-b-2 border-transparent pb-3 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200">Dashboard</a>
+      <a href="#" class="-mb-px shrink-0 border-b-2 border-transparent pb-3 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200">Handbook</a>
+      <a href="#" class="-mb-px shrink-0 border-b-2 border-transparent pb-3 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200">Stories</a>
+      <a href="#" class="-mb-px shrink-0 border-b-2 border-transparent pb-3 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200">Preflight</a>
+      <a href="#" aria-current="page" class="-mb-px shrink-0 border-b-2 border-zinc-800 dark:border-white pb-3 font-medium">App map</a>
+    </nav>
+
+    <div class="mt-5 space-y-3">
+      <!-- Flow legend doubles as the picker: click a flow to trace it, click again (or All) to show every flow -->
+      <div class="flex flex-wrap items-center gap-1.5" id="legend" role="group" aria-label="Flows"></div>
+      <div id="stage" class="grid gap-3 lg:grid-cols-[1fr_22rem] items-start">
+        <!-- The canvas: every screen in the project once; each flow is a coloured path through them -->
+        <section aria-label="Flow map" class="relative min-w-0 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
+          <div class="flex items-center gap-2 border-b border-zinc-200 dark:border-zinc-800 px-3 py-2 text-xs">
+            <span id="canvas-meta" class="text-zinc-500 truncate"></span>
+            <div class="ml-auto flex items-center gap-1">
+              <button type="button" id="play" class="rounded-md border border-zinc-200 dark:border-zinc-700 px-2 py-1 font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800">▶ Play flow</button>
+              <button type="button" onclick="zoom(-0.15)" aria-label="Zoom out" class="rounded-md border border-zinc-200 dark:border-zinc-700 size-7 hover:bg-zinc-50 dark:hover:bg-zinc-800">−</button>
+              <button type="button" onclick="zoom(0)" class="rounded-md border border-zinc-200 dark:border-zinc-700 px-2 h-7 hover:bg-zinc-50 dark:hover:bg-zinc-800 tabular-nums" id="zlabel" title="Fit to width">100%</button>
+              <button type="button" onclick="zoom(0.15)" aria-label="Zoom in" class="rounded-md border border-zinc-200 dark:border-zinc-700 size-7 hover:bg-zinc-50 dark:hover:bg-zinc-800">+</button>
+            </div>
+          </div>
+          <div id="canvas" class="canvas-bg overflow-auto h-[26rem] sm:h-[34rem] lg:h-[40rem]">
+            <div id="sizer" class="relative"><div id="plane" class="absolute left-0 top-0 origin-top-left"></div></div>
+          </div>
+        </section>
+        <!-- Inspector: the selected screen, large, with Back / Next along the flow you are following.
+             On a phone it is a bottom sheet over the canvas. -->
+        <aside id="panel" aria-label="Selected screen" class="hidden lg:block fixed lg:static inset-x-0 bottom-0 z-40 max-h-[80vh] overflow-y-auto rounded-t-2xl lg:rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl lg:shadow-none"></aside>
+      </div>
+      <div id="empty"></div>
+      <p class="text-xs text-zinc-500">Each screen appears once. A screen with several colour bars is shared: every flow that passes through it draws its line into it. Drag or scroll the canvas; click a screen to open it; ← → follow the selected flow.</p>
+    </div>
+
+    <!-- Full-screen viewer (Escape closes, arrows step) -->
+    <div id="lightbox" hidden class="fixed inset-0 z-[70] bg-zinc-950/85 backdrop-blur-sm p-3 sm:p-8 flex flex-col" role="dialog" aria-modal="true" aria-label="Screen, full size">
+      <div class="flex items-center gap-3 text-white text-sm">
+        <p id="lb-title" class="min-w-0 truncate font-medium"></p>
+        <button type="button" onclick="closeLb()" class="ml-auto rounded-lg px-2 py-1 hover:bg-white/10" aria-label="Close full-size view">Close <kbd class="ml-1 text-[10px] opacity-60">Esc</kbd></button>
+      </div>
+      <div class="flex-1 min-h-0 grid place-items-center">
+        <div id="lb-frame" class="w-full max-w-6xl"></div>
+      </div>
+      <div class="flex items-center justify-center gap-3">
+        <button type="button" onclick="step(-1)" class="rounded-lg bg-white/10 text-white px-4 py-2 text-sm hover:bg-white/20">← Back</button>
+        
+        <button type="button" onclick="step(1)" class="rounded-lg bg-white text-zinc-900 px-4 py-2 text-sm font-medium hover:bg-zinc-200">Next →</button>
+      </div>
+    </div>
+
+
+    <p class="mt-10 text-xs text-zinc-400">Mockup · SB-24 option B · real journeys from each project's docs/journeys, read 2026-09-29 · every screen is a drawn placeholder · <a href="index.html" class="underline underline-offset-4">all options</a></p>
+  </div>
+</main>
+<script>
+/** Option B: a flow map. Every screen in the project is one node on a canvas; each journey is a coloured path
+ *  through the nodes, so shared screens are literally where lines meet. Pure UI state, no server calls. */
+const st = { p: 'coins', focus: -1, sel: null, follow: 0, step: 0, z: 1, timer: null };
+const NW = 176, NH = 150, CX = 236, CY = 200, PAD = 28;
+const P = () => proj(st.p);
+
+/** Lay out: journey k owns row k, step i sits in column i. A screen already placed by an earlier journey stays put. */
+function layout(p) {
+  const pos = new Map(); let cols = 0;
+  p.journeys.forEach((j, k) => j.steps.forEach((s, i) => {
+    if (!pos.has(s.route)) pos.set(s.route, { x: PAD + i * CX, y: PAD + k * CY, s });
+    cols = Math.max(cols, i + 1);
+  }));
+  return { pos, W: PAD * 2 + (cols - 1) * CX + NW, H: PAD * 2 + (p.journeys.length - 1) * CY + NH + 40 };
+}
+
+function edges(p, L) {
+  const n = p.journeys.length; let out = '', marks = '';
+  p.journeys.forEach((j, k) => {
+    const col = JCOL[k], dim = st.focus >= 0 && st.focus !== k, off = (k - (n - 1) / 2) * 5;
+    marks += `<marker id="ar${k}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${col}"/></marker>`;
+    for (let i = 0; i < j.steps.length - 1; i++) {
+      const a = L.pos.get(j.steps[i].route), b = L.pos.get(j.steps[i + 1].route);
+      let d;
+      if (a === b) { // the flow stays on this screen (a revisit): a small loop over the top
+        const x = a.x + NW * 0.7, y = a.y; d = `M${x - 18} ${y} C${x - 18} ${y - 34}, ${x + 18} ${y - 34}, ${x + 18} ${y}`;
+      } else if (b.x > a.x) {
+        const x1 = a.x + NW, y1 = a.y + NH / 2 + off, x2 = b.x, y2 = b.y + NH / 2 + off, dx = Math.max(40, (x2 - x1) / 2);
+        d = `M${x1} ${y1} C${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
+      } else { // backwards or straight down: leave from the bottom, arrive at the bottom
+        const x1 = a.x + NW / 2 + off, y1 = a.y + NH, x2 = b.x + NW / 2 + off, y2 = b.y + NH, low = Math.max(y1, y2) + 46;
+        d = `M${x1} ${y1} C${x1} ${low}, ${x2} ${low}, ${x2} ${y2}`;
+      }
+      const on = st.sel && st.follow === k && i === st.step - 1;
+      out += `<path d="${d}" fill="none" stroke="${col}" stroke-width="${on ? 4 : 2.5}" stroke-linecap="round" opacity="${dim ? 0.1 : 0.9}" marker-end="url(#ar${k})"${j.steps[i + 1].st === 'pending' ? ' stroke-dasharray="6 5"' : ''}/>`;
+    }
+  });
+  return `<svg class="absolute inset-0 pointer-events-none overflow-visible" width="${L.W}" height="${L.H}" aria-hidden="true"><defs>${marks}</defs>${out}</svg>`;
+}
+
+function nodes(p, L) {
+  return [...L.pos.values()].map(({ x, y, s }) => {
+    const uses = []; p.journeys.forEach((j, k) => j.steps.forEach((t, i) => { if (t.route === s.route) uses.push({ k, i }); }));
+    const ks = [...new Set(uses.map(u => u.k))];
+    const inFocus = st.focus < 0 || ks.includes(st.focus);
+    const selected = st.sel === s.route;
+    const nums = st.focus >= 0 ? uses.filter(u => u.k === st.focus).map(u => u.i + 1) : [];
+    return `<button type="button" data-route="${esc(s.route)}" style="left:${x}px;top:${y}px;width:${NW}px" class="node absolute text-left rounded-lg p-1.5 bg-white dark:bg-zinc-900 ${selected ? 'ring-2 ring-zinc-900 dark:ring-white shadow-lg' : 'ring-1 ring-zinc-200 dark:ring-zinc-800 hover:ring-zinc-400 dark:hover:ring-zinc-600'} ${inFocus ? '' : 'opacity-30'}">
+      <span class="absolute -top-2 left-2 flex gap-1">${nums.map(n => `<span class="grid place-items-center size-5 rounded-full text-white text-[10px] font-bold shadow" style="background:${JCOL[st.focus]}">${n}</span>`).join('')}</span>
+      <span class="absolute -top-1 right-2 flex gap-0.5" title="${ks.length} flow${ks.length > 1 ? 's' : ''} pass through">${ks.map(k => `<span class="h-2 w-3 rounded-sm" style="background:${JCOL[k]}"></span>`).join('')}</span>
+      ${frame(s, 'sm')}
+      <span class="mt-1 flex items-center gap-1 text-[10px]"><span class="font-mono text-zinc-500">${s.story}</span>${ks.length > 1 ? `<span class="rounded bg-zinc-100 dark:bg-zinc-800 px-1 text-zinc-600 dark:text-zinc-300">shared ×${ks.length}</span>` : ''}<span class="ml-auto">${pill(s, true)}</span></span>
+      <span class="block text-[11px] font-medium leading-tight truncate">${esc(s.name)}</span></button>`;
+  }).join('');
+}
+
+function renderLegend(p) {
+  const chip = (k, label, sub, col) => `<button type="button" data-f="${k}" aria-pressed="${st.focus === k}" class="flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs ${st.focus === k ? 'border-zinc-800 dark:border-white bg-white dark:bg-zinc-900 font-medium' : 'border-zinc-200 dark:border-zinc-800 bg-white/60 dark:bg-zinc-900/60 hover:border-zinc-400'}">
+    ${col ? `<span class="h-1 w-5 rounded-full" style="background:${col}"></span>` : ''}${label}${sub ? ` <span class="tabular-nums text-zinc-500">${sub}</span>` : ''}</button>`;
+  document.getElementById('legend').innerHTML = p.journeys.length
+    ? chip(-1, 'All flows', '', '') + p.journeys.map((j, k) => { const c = counts(j); return chip(k, esc(j.name), c.built + '/' + c.total, JCOL[k]); }).join('')
+      + `<span class="ml-auto hidden md:flex items-center gap-3 text-[11px] text-zinc-500"><span class="flex items-center gap-1"><svg width="22" height="6" aria-hidden="true"><path d="M1 3h20" stroke="currentColor" stroke-width="2"/></svg>into a built screen</span><span class="flex items-center gap-1"><svg width="22" height="6" aria-hidden="true"><path d="M1 3h20" stroke="currentColor" stroke-width="2" stroke-dasharray="5 4"/></svg>into a pending one</span></span>`
+    : '';
+  document.querySelectorAll('#legend [data-f]').forEach(b => b.onclick = () => { stop(); const k = +b.dataset.f; st.focus = st.focus === k ? -1 : k; if (st.focus >= 0) { st.follow = st.focus; select(P().journeys[st.focus].steps[0].route, st.focus, 0); } else render(); });
+}
+
+function renderPanel(p) {
+  const el = document.getElementById('panel');
+  if (!st.sel) {
+    el.classList.add('hidden');
+    el.innerHTML = `<div class="p-5 text-sm text-zinc-500"><p class="font-medium text-zinc-800 dark:text-zinc-200">Pick a screen</p><p class="mt-1">Click any screen on the map to see it large, the story behind it and every flow that uses it. Pick a flow above to trace just that path, or press Play to walk it.</p>
+      <dl class="mt-4 grid grid-cols-2 gap-2 text-xs">${p.journeys.map((j, k) => { const c = counts(j); return `<div class="rounded-lg bg-zinc-50 dark:bg-zinc-950/60 p-2"><dt class="flex items-center gap-1.5 truncate"><span class="h-1 w-3 rounded-full shrink-0" style="background:${JCOL[k]}"></span><span class="truncate">${esc(j.name)}</span></dt><dd class="mt-0.5 font-semibold tabular-nums text-zinc-800 dark:text-zinc-100">${c.built}/${c.total} built</dd></div>`; }).join('')}</dl></div>`;
+    return;
+  }
+  el.classList.remove('hidden');
+  const j = p.journeys[st.follow], s = j.steps[st.step];
+  const uses = []; p.journeys.forEach((jj, k) => jj.steps.forEach((t, i) => { if (t.route === st.sel) uses.push({ k, i, j: jj }); }));
+  el.innerHTML = `<div class="sticky top-0 z-10 flex items-center gap-2 border-b border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/95 backdrop-blur px-4 py-2.5">
+      <span class="h-1.5 w-4 rounded-full" style="background:${JCOL[st.follow]}"></span>
+      <p class="text-xs min-w-0 truncate"><span class="font-medium">${esc(j.name)}</span> <span class="text-zinc-500 tabular-nums">· step ${st.step + 1} of ${j.steps.length}</span></p>
+      <button type="button" id="close-panel" class="ml-auto rounded-md p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800" aria-label="Close screen">✕</button></div>
+    <div class="p-4 space-y-3">
+      <button type="button" id="enlarge" class="block w-full" aria-label="Open full size">${frame(s, 'md')}</button>
+      <div class="flex items-start justify-between gap-2"><div class="min-w-0"><h2 class="font-semibold leading-snug">${esc(s.name)}</h2><p class="mt-0.5 font-mono text-xs"><a href="#" class="underline underline-offset-4 decoration-zinc-300 dark:decoration-zinc-600">${s.story}</a> · <span class="text-zinc-500 break-all">${esc(s.route)}</span></p></div>${pill(s)}</div>
+      <p class="text-xs text-zinc-600 dark:text-zinc-400">${esc(shows(s))}.</p>
+      <div class="flex gap-2">
+        <button type="button" onclick="step(-1)" ${st.step === 0 ? 'disabled' : ''} class="flex-1 rounded-lg border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40">← Back</button>
+        <button type="button" onclick="step(1)" ${st.step === j.steps.length - 1 ? 'disabled' : ''} class="flex-1 rounded-lg bg-zinc-800 text-white dark:bg-white dark:text-zinc-900 px-3 py-1.5 text-sm font-medium disabled:opacity-40">Next →</button>
+      </div>
+      <div><p class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Flows through this screen · ${uses.length}</p>
+        <ul class="mt-1.5 space-y-1">${uses.map(u => `<li><button type="button" data-follow="${u.k}:${u.i}" class="w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-left ${u.k === st.follow && u.i === st.step ? 'bg-zinc-100 dark:bg-zinc-800 font-medium' : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/60'}">
+          <span class="h-1.5 w-3 rounded-full shrink-0" style="background:${JCOL[u.k]}"></span><span class="truncate">${esc(u.j.name)}</span><span class="ml-auto shrink-0 tabular-nums text-zinc-500">step ${u.i + 1} · ${u.j.steps[u.i].story}</span></button></li>`).join('')}</ul>
+        ${uses.length > 1 ? `<p class="mt-1 text-[11px] text-zinc-500">Back and Next follow the highlighted flow. Pick another to follow it instead.</p>` : ''}</div>
+      <p class="text-[11px] text-zinc-400 font-mono break-all">${esc(j.test)}</p>
+    </div>`;
+  el.querySelector('#close-panel').onclick = () => { stop(); st.sel = null; render(); };
+  el.querySelector('#enlarge').onclick = openLb;
+  el.querySelectorAll('[data-follow]').forEach(b => b.onclick = () => { const [k, i] = b.dataset.follow.split(':').map(Number); st.follow = k; st.step = i; render(); });
+}
+
+function render() {
+  const p = P();
+  renderSidebar(st.p, (slug) => { stop(); Object.assign(st, { p: slug, focus: -1, sel: null, follow: 0, step: 0 }); zoom(0); render(); });
+  renderHeader(p);
+  renderLegend(p);
+  const plane = document.getElementById('plane'), sizer = document.getElementById('sizer');
+  const stage = document.getElementById('stage');
+  if (!p.journeys.length) { stage.classList.add('hidden'); document.getElementById('empty').innerHTML = emptyState(p); return; }
+  stage.classList.remove('hidden'); document.getElementById('empty').innerHTML = '';
+  const L = layout(p);
+  plane.style.width = L.W + 'px'; plane.style.height = L.H + 'px'; plane.style.transform = `scale(${st.z})`;
+  sizer.style.width = L.W * st.z + 'px'; sizer.style.height = L.H * st.z + 'px';
+  plane.innerHTML = edges(p, L) + nodes(p, L);
+  document.getElementById('zlabel').textContent = Math.round(st.z * 100) + '%';
+  const scr = screensOf(p), shared = scr.filter(sc => new Set(sc.uses.map(u => u.ji)).size > 1).length;
+  document.getElementById('canvas-meta').textContent = `${scr.length} screens · ${p.journeys.length} flows · ${shared} shared`;
+  document.getElementById('play').textContent = st.timer ? '❚❚ Pause' : '▶ Play flow';
+  plane.querySelectorAll('.node').forEach(b => b.onclick = () => {
+    if (moved) return;
+    const r = b.dataset.route;
+    // Follow the focused flow if it passes here, else the first flow that does.
+    const pick = (k) => p.journeys[k].steps.findIndex(s => s.route === r);
+    let k = st.focus >= 0 && pick(st.focus) >= 0 ? st.focus : p.journeys.findIndex(j => j.steps.some(s => s.route === r));
+    stop(); select(r, k, pick(k));
+  });
+  renderPanel(p);
+  if (st.lb) renderLb();
+}
+function select(route, k, i) { st.sel = route; st.follow = k; st.step = i; render(); scrollToSel(); }
+function scrollToSel() {
+  const n = document.querySelector(`.node[data-route="${CSS.escape(st.sel)}"]`), c = document.getElementById('canvas'); if (!n) return;
+  const x = parseFloat(n.style.left) * st.z, y = parseFloat(n.style.top) * st.z;
+  c.scrollTo({ left: x - c.clientWidth / 2 + NW * st.z / 2, top: y - c.clientHeight / 2 + NH * st.z / 2, behavior: 'smooth' });
+}
+function step(d) {
+  if (!st.sel) return;
+  const j = P().journeys[st.follow], i = Math.max(0, Math.min(j.steps.length - 1, st.step + d));
+  select(j.steps[i].route, st.follow, i);
+}
+/** d = 0 fits the map to the canvas width (never below 75% on desktop or 55% on a phone, never above 100%). */
+function zoom(d) {
+  if (d === 0) { const p = P(); if (!p.journeys.length) return; const W = layout(p).W; st.z = Math.max(window.innerWidth < 640 ? 0.55 : 0.75, Math.min(1, +((document.getElementById('canvas').clientWidth - 8) / W).toFixed(2))); }
+  else st.z = Math.max(0.4, Math.min(1.4, +(st.z + d).toFixed(2)));
+  render();
+}
+function stop() { clearInterval(st.timer); st.timer = null; }
+document.getElementById('play').onclick = () => {
+  if (st.timer) { stop(); render(); return; }
+  const p = P(); if (st.focus < 0) st.focus = st.sel ? st.follow : 0;
+  const j = p.journeys[st.focus]; st.follow = st.focus;
+  const start = st.sel && st.follow === st.focus && st.step < j.steps.length - 1 ? st.step : 0;
+  select(j.steps[start].route, st.focus, start);
+  st.timer = setInterval(() => { if (st.step >= j.steps.length - 1) { stop(); render(); return; } step(1); }, 1600);
+  render();
+};
+// Drag the canvas to pan (a click that moved is not a node click).
+let drag = null, moved = false;
+const cv = document.getElementById('canvas');
+cv.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') return; drag = { x: e.clientX, y: e.clientY, l: cv.scrollLeft, t: cv.scrollTop }; moved = false; });
+window.addEventListener('pointermove', e => { if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.abs(dx) + Math.abs(dy) > 4) { moved = true; cv.classList.add('cursor-grabbing'); } cv.scrollLeft = drag.l - dx; cv.scrollTop = drag.t - dy; });
+window.addEventListener('pointerup', () => { drag = null; cv.classList.remove('cursor-grabbing'); setTimeout(() => moved = false, 0); });
+
+// Full-size viewer
+function openLb() { st.lb = true; document.getElementById('lightbox').hidden = false; renderLb(); }
+function closeLb() { st.lb = false; document.getElementById('lightbox').hidden = true; }
+function renderLb() {
+  const j = P().journeys[st.follow], s = j.steps[st.step];
+  document.getElementById('lb-title').innerHTML = `<span class="inline-block h-1.5 w-4 rounded-full align-middle mr-1" style="background:${JCOL[st.follow]}"></span>${esc(j.name)} · step ${st.step + 1} of ${j.steps.length} · ${esc(s.name)} <span class="font-mono text-white/60">${s.story}</span>`;
+  document.getElementById('lb-frame').innerHTML = frame(s, 'lg');
+}
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { if (st.lb) closeLb(); else { drawer(false); stop(); st.sel = null; render(); } }
+  if (e.key === 'ArrowRight') { stop(); step(1); }
+  if (e.key === 'ArrowLeft') { stop(); step(-1); }
+});
+render();
+zoom(0);
+
+</script>
+</body>
+</html>
