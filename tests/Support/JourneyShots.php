@@ -53,7 +53,7 @@ class JourneyShots
      * Side effects (capture on only): the first step of a journey in a run
      * deletes that journey's PNGs and manifest, so a re-run replaces instead of
      * appending; each step writes two PNGs and rewrites the manifest. The
-     * viewport is put back to its size before the capture.
+     * viewport is restored afterwards to the size it had before the capture.
      *
      * @param  string  $route  the path the step shows, recorded for the board to match against the journey doc
      *
