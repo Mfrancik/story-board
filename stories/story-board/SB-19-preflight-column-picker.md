@@ -1,5 +1,5 @@
 # SB-19 — Preflight columns picker
-Status: draft          Journey: none
+Status: approved         Journey: none
 Source: owner 2026-09-29, feedback on SB-16 at http://127.0.0.1:8018/p/coins/preflight: *"lets add a filter so i
 can pick what to add and remove from the table. everything else looks great."* Owner answers: remember the picks
 in this browser; build it in the existing filter style, no mockup round.

@@ -271,7 +271,7 @@ the Where (compare the story's `- Routes:` path with the manifest's `route`), or
   be newer or older than the code the set was read at. The capture date and commit on the pane say which.
 - The frame CSP has no `allow-popups`, so a mockup's `target=_blank` links do nothing.
 - Every thumbnail is a live iframe and a PHP request. The 12-per-group cap is what keeps `/mockups` usable.
-- SB-13 ("Pick a mockup from the board", approved) overlaps this story's pick. It has not been rescoped.
+- SB-13 ("Pick a mockup from the board") was cut by the owner on 2026-09-30: this story's pick covers it.
 
 ## Change history
 2026-09-29 — Gallery, full-screen viewer, compare, pick from the board; `mockups.frame` route;

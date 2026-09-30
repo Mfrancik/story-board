@@ -78,8 +78,9 @@ None yet. Every SB story so far is `Journey: none`.
   SB-7 app shell · SB-8 story modal · SB-9 all-projects dashboard · SB-10 single-project dashboard ·
   SB-11 live sessions · SB-12 manage projects · SB-14 project handbook · SB-15 stories by initiative ·
   SB-16 preflight history · SB-17 production connection · SB-18 production dashboard · SB-21 mockup gallery · SB-22 journey shots · SB-23 current pane · SB-24 app map · SB-25 live cards link own stories
-- **approved**: SB-13 pick a mockup (overlaps SB-21's pick; needs rescoping)
-- **draft**: SB-19 preflight columns picker · SB-20 preflight run errors
+- **approved**: SB-19 preflight columns picker
+- **draft**: SB-20 preflight run errors
+- **cut**: SB-13 pick a mockup (2026-09-30; SB-21's pick covers it)
 - **draft (parked)**: SB-6 the board on an always-live domain
 
 SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this repo.
@@ -134,9 +135,9 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
 
 ## Current phase and what's next
 Phase 2: UI organisation. Phase 1 (SB-2 to SB-5) is built and retro'd. SB-7 to SB-12, SB-14 to SB-18,
-SB-21 to SB-25 are built (some on branches awaiting merge). Next: adopt `journeyStep()` in coins via the kit
+SB-21 to SB-25 are built. Next: SB-19 (columns picker); adopt `journeyStep()` in coins via the kit
 sync, then the real-data check of the app map and Current pane on coins; decide on the
-`--text-thumb` token; decide SB-13's fate now that SB-21 picks; then the phase-2 retro and full sweep. SB-6 (hosted) stays
+`--text-thumb` token; then the phase-2 retro and full sweep. SB-6 (hosted) stays
 parked. Backlog: F-2 (timeline of what was built), F-3 (meter tier labels), F-5 (preflight run record).
 
 ## Known limitations

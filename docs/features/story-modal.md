@@ -126,7 +126,7 @@ leaves the board) are client-side and leave no log line; see the RUNBOOK entry f
   to dependencies on main.
 - Deliberate deviations from the mockup: the close button reads "Close" (the story's label), not
   "Close story", and the two-column breakpoint is 768px (the story's), not 1024px.
-- The modal is read-only. Picking a mockup is SB-13.
+- The modal is read-only. Picking a mockup is SB-21 (the mockup gallery).
 
 ## Known limitations & gotchas
 - **Off-main rows with malformed IDs are not clickable.** On 2026-09-29, 23 real rows had IDs that
