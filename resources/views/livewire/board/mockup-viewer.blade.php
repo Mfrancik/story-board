@@ -6,7 +6,9 @@
 
     All of that is Alpine (mockupViewer in resources/js): switching an option only changes a frame's
     src, never loads the page. The compare panes are `x-if`, so their frames exist only while open.
-    "Current" is SB-23's pane; until then it is a placeholder. The one server call is the pick.
+    "Current" is SB-23's pane (board/mockup-current): today's page from a journey shot, or why there is
+    none. With a shot the viewer opens in compare, Current left and the first option right (option a, or
+    the picked one). The one server call is the pick.
 --}}
 @php
     $frame = fn (string $o) => route('mockups.frame', ['project' => $set['project'], 'story' => $set['story'], 'file' => "option-{$o}.html"]);
@@ -22,10 +24,20 @@
     $on = 'bg-zinc-800 text-white dark:bg-white dark:text-zinc-900';
     $off = 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white';
     $widths = [1280 => 'Desktop', 768 => 'Tablet', 375 => 'Phone'];
+    // Current vs an option by default when a shot exists (SB-23); otherwise option vs option, as SB-21 opened.
+    $hasShot = $current['state'] === \App\Actions\Board\ReadCurrentVersion::SHOT;
+    $left = $hasShot ? 'current' : $first;
+    $right = $hasShot ? $first : (collect($set['options'])->first(fn ($o) => $o !== $first) ?? 'current');
+    $currentLabel = match ($current['state']) {
+        \App\Actions\Board\ReadCurrentVersion::SHOT => "Current · today's page",
+        \App\Actions\Board\ReadCurrentVersion::NEW_PAGE => 'Current · none (new page)',
+        default => 'Current · no journey shot',
+    };
     $icon = fn (string $d, string $size = 'size-4') => '<svg class="'.$size.'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">'.$d.'</svg>';
 @endphp
 <div data-viewer="{{ $set['project'] }}/{{ $set['story'] }}" role="dialog" aria-modal="true" aria-labelledby="viewer-title"
-    x-data="mockupViewer(@js(['options' => $set['options'], 'first' => $first, 'urls' => $urls, 'gallery' => $gallery, 'prev' => $show($prev), 'next' => $show($next)]))"
+    data-compare-open="{{ $hasShot ? 'true' : 'false' }}" data-default-left="{{ $left }}" data-default-right="{{ $right }}"
+    x-data="mockupViewer(@js(['options' => $set['options'], 'first' => $first, 'compare' => $hasShot, 'left' => $left, 'right' => $right, 'urls' => $urls, 'gallery' => $gallery, 'prev' => $show($prev), 'next' => $show($next)]))"
     x-trap.noscroll="true"
     x-on:keydown.escape.window="escape()"
     x-on:keydown.arrow-right.window="step($event, 'next')"
@@ -77,7 +89,7 @@
         {{-- One version at a time. --}}
         <div x-show="! compare" class="relative h-full overflow-hidden rounded-lg border bg-white dark:bg-zinc-900"
             x-bind:class="opt === @js($picked) ? 'border-built' : 'border-zinc-200 dark:border-zinc-800'">
-            <div x-show="opt === 'current'" x-cloak class="absolute inset-0"><x-board.mockup-current :where="$set['where']" /></div>
+            <div x-show="opt === 'current'" x-cloak class="absolute inset-0"><x-board.mockup-current :current="$current" :project="$set['project']" /></div>
             <div x-show="opt !== 'current'" class="absolute inset-0 overflow-hidden" x-data="mockupFit(() => width)">
                 <iframe data-viewer-frame src="{{ $urls[$first] }}" x-bind:src="url(opt)" sandbox="allow-scripts" title="{{ $set['story'] }} mockup"
                     class="absolute top-0 left-0 origin-top-left border-0 bg-white" x-bind:style="frameStyle"></iframe>
@@ -94,7 +106,7 @@
                             <label class="flex min-w-0 items-center gap-2 text-xs">
                                 <span class="shrink-0 font-medium text-zinc-500 dark:text-zinc-400">{{ $label }}</span>
                                 <select x-model="{{ $side }}" class="min-w-0 truncate rounded-md border border-zinc-300 bg-white py-1 pr-7 pl-2 text-xs dark:border-zinc-700 dark:bg-zinc-900">
-                                    <option value="current">Current</option>
+                                    <option value="current">{{ $currentLabel }}</option>
                                     @foreach ($set['options'] as $o)
                                         <option value="{{ $o }}">Option {{ strtoupper($o) }}@if ($o === $picked) ✓ picked @endif</option>
                                     @endforeach
@@ -102,7 +114,7 @@
                             </label>
                         </div>
                         <div class="relative min-h-0 flex-1">
-                            <div x-show="{{ $side }} === 'current'" class="absolute inset-0"><x-board.mockup-current :where="$set['where']" /></div>
+                            <div x-show="{{ $side }} === 'current'" class="absolute inset-0"><x-board.mockup-current :current="$current" :project="$set['project']" /></div>
                             <div x-show="{{ $side }} !== 'current'" class="absolute inset-0 overflow-hidden" x-data="mockupFit(() => width)">
                                 <iframe x-bind:src="url({{ $side }})" sandbox="allow-scripts" x-bind:title="@js($set['story']) + ' ' + label({{ $side }})"
                                     class="absolute top-0 left-0 origin-top-left border-0 bg-white" x-bind:style="frameStyle"></iframe>
