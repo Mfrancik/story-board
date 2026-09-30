@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Support\JourneyShots;
 use Tests\TestCase;
 
 /*
@@ -44,7 +45,13 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Screenshot one step of a journey test (SB-22): visits `$route` (or uses
+ * `$page`) and, with `JOURNEY_SHOTS=1`, saves a desktop and a 375 px PNG plus
+ * manifest entries under `storage/app/journey-shots/<journey>/`. Returns the
+ * page so the test keeps asserting. See Tests\Support\JourneyShots.
+ */
+function journeyStep(string $journey, string $step, string $route, ?object $page = null): object
 {
-    // ..
+    return JourneyShots::step($journey, $step, $route, $page);
 }

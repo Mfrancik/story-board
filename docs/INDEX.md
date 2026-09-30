@@ -19,3 +19,4 @@ One line per feature. /document maintains this file.
 | Preflight history | `/p/{project}/preflight`: a project's preflight runs from its cost CSVs as a newest-first ledger, with trend figures, two SVG charts and Alpine filters. | active | 2026-09-29 | [doc](features/preflight-history.md) |
 | Mockup gallery | `/mockups`: every mockup set as a card, awaiting-pick first, with a full-screen viewer, side-by-side compare and Pick, which commits the story file alone. | active | 2026-09-29 | [doc](features/mockup-gallery.md) |
 | App map | `/p/{project}/map`: a project's journeys as clickable screen flows, with shots, chosen mockups or drawn placeholders, Back/Next stepping and shared screens marked. | active | 2026-09-29 | [doc](features/app-map.md) |
+| Journey shots | `journeyStep()`, a kit Pest helper: with `JOURNEY_SHOTS=1` a journey test saves a desktop and 375 px PNG per step plus a manifest the board reads. | active | 2026-09-30 | [doc](features/journey-shots.md) |

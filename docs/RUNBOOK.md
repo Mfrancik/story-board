@@ -16,6 +16,12 @@ Root cause: `IndexOffMain` tags an untracked file with the branch of the checkou
 Fix: `ListLiveSessions::branchRows()` skips the fallback on the project's default branch, and links an untracked row only when its root equals the session's own (deepest) checkout root (SB-25, `f747e88`, ADR-034).
 Log trail: `board.session_links_filtered` (debug) with `rule` `default_branch` or `untracked_checkout` and `dropped`. Before the fix there was no trace; the card itself was the symptom.
 
+## 2026-09-30 — Journey shots stop being written after a Pest upgrade
+Symptom (anticipated, not yet seen): with `JOURNEY_SHOTS=1`, journey tests error in `JourneyShots::capture()` (undefined method on `Pest\Browser\Support\Screenshot`, or `File::move()` cannot find the source), or PNGs pile up in `tests/Browser/Screenshots/`.
+Root cause: Pest can only save a screenshot into its own `tests/Browser/Screenshots/`, so the helper saves there under a random name and moves it out using `Screenshot::path()` and `Screenshot::dir()`, both `@internal`. Pest may rename or move them in any release.
+Fix: re-point `tests/Support/JourneyShots.php:capture()` at wherever the new Pest writes `screenshot(true, $name)`, then re-run `tests/Browser/JourneyShotsTest.php`, whose first criterion fails first when this breaks (SB-22, `0f7ae8b`). Fix it in the kit copy too, since every project carries the same file.
+Log trail: none; test tooling logs nothing. The PHP error names `Screenshot` or the missing temp file `journey-shot-<hex>.png`.
+
 ## 2026-09-29 — Project tabs scrolled 1 px vertically after they were made to scroll sideways
 Symptom: with a fifth tab (App map), the project tab row overflowed a 375 px phone. Making it `overflow-x-auto` fixed the width, but the row then also scrolled up and down by 1 px and showed a vertical scrollbar.
 Root cause: the active tab's underline uses `-mb-px` to sit on the row's `border-b`. Once the row is a scroll container, that 1 px overhang counts as overflow, and `overflow-x-auto` forces `overflow-y` to `auto` too.

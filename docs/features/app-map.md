@@ -1,5 +1,5 @@
 # App map
-Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-24
+Status: active   ·   Last updated: 2026-09-30   ·   Stories: SB-24
 
 ## Overview
 `/p/{project}/map` draws a project's journeys as screens in order. Each journey is a numbered strip of
@@ -104,7 +104,8 @@ and story files from git at the snapshot sha, and journey-shot manifests from th
   (`tests/Browser/Journeys/…`) and steps, or null.
 - `ReadJourneyShots::handle(Project)`, `forStep(shots, journey, ?story, ?route)` and
   `file(Project, journey, file): ?string`. The phpstan type is `JourneyShot`.
-- **Manifest shapes accepted** (SB-22 has not pinned its format yet):
+- **Manifest shapes accepted.** SB-22 writes the first shape below with `file` as a bare name (pinned in
+  [journey-shots.md](journey-shots.md)); the others remain accepted:
   - The top level is a JSON list, or an object holding the list under `shots` / `steps` / `entries`.
   - The file key is `file`, `path` or `png`. Its value is a bare name (relative to the manifest folder),
     `journey-shots/<j>/…` or `storage/app/journey-shots/<j>/…`.
@@ -171,10 +172,11 @@ Every line carries `request_id`.
 - A set whose choice the kit parser cannot read (`other`, e.g. asset-track TS-3) shows "No pick recorded",
   not the option.
 - Shots come from the **working tree**, not the ref, so they can be newer or older than the snapshot.
-- SB-22 has not pinned its manifest format. The reader accepts several shapes, and phone vs desktop rests
-  on `width` of 480 or less.
+- SB-22's manifest format is pinned to this reader ([journey-shots.md](journey-shots.md)). Phone vs
+  desktop rests on `width` of 480 or less. A shot folder shows only when it is named like the journey doc.
 - Shared-screen colours repeat after three, and only the letter tells rings apart.
 
 ## Change history
 2026-09-29 — App map tab, All flows overview with shared screens, flow stage/strip with Alpine stepping,
 `ReadJourneyMap`, `ReadJourneyShots`, `shots.file` route; project tabs scroll on phones (SB-24, `b838dcf`)
+2026-09-30 — Manifest format pinned by SB-22's `journeyStep()`; doc notes only, no code change (SB-22)
