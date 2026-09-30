@@ -53,7 +53,7 @@ Scope: PROMOTE
 
 Retro finding (owner-approved capture): three times this phase the cost label read "audit opus" or "opus+sonnet" when the preflight audit ran on Sonnet. The meter counts every subagent that ran in its window, so a documenter subagent (session model) was reported as the audit tier. It should count only `preflight`-type subagents toward the audit tier. Fix in the kit, proven with bin/preflight-ab.sh.
 
-### F-5 — 2026-09-29 — Preflight run record: tests, failures, gates, verdict
+### F-5 — 2026-09-29 — Preflight run record: tests, failures, gates, verdict · Story: SB-20
 Area: kit tooling (preflight.sh) · feeds SB-16 preflight history
 Scope: PROMOTE
 
