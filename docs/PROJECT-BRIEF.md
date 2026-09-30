@@ -1,5 +1,5 @@
 # Project brief — story-board
-Last refreshed: 2026-09-29 (SB-18)
+Last refreshed: 2026-09-29 (SB-16, SB-17, SB-18)
 
 ## What it is, and for whom
 A localhost Laravel app for one owner. It reads the `stories/` folder of every project that uses
@@ -9,7 +9,8 @@ ruling). It can also read a project's production MySQL database, read-only, for 
 daily history. Work not on the ref yet (unmerged branches, worktrees, untracked files) is shown beside it,
 labelled with where it lives, and never counts as status. Live Claude Code sessions are shown from
 their transcript metadata (never their messages). Each project's handbook shows how it has drifted
-from the kit.
+from the kit. Each project's preflight runs are read from the cost CSVs the kit's meter leaves under
+`~/.claude/projects`.
 
 ## Domain model
 - **Project**: a registered local checkout (`name`, `path`, `ref`, `is_enabled`; off hides it everywhere
@@ -24,6 +25,8 @@ from the kit.
   as-is when one fails. Off-main rows are a second snapshot, replaced by each off-main scan.
 - **Live session** (not stored): a transcript changed in the last 10 min, reduced to `cwd`, branch and
   times, matched to a project by path and to stories by branch name.
+- **Preflight run** (not stored): one row of a `preflight-cost.csv` in the project's own, worktree or plans
+  folder under `board.sessions_path`, read by header name on each load.
 - **Kit** (not stored, not a project): the dev-standards checkout at `board.kit_path` / `kit_ref`, read
   through `GitReader` to badge each project's standards and skills.
 - **ProdConnection**: a project's one read-only production MySQL connection (credentials encrypted with
@@ -48,6 +51,8 @@ from the kit.
 | Manage projects: `/projects` switch on/off, add by folder, remove behind a confirmation | active (SB-12) | [doc](features/manage-projects.md) |
 | Live sessions: Live now panel on both dashboards (30 s poll) and sidebar live badge | active (SB-11) | [doc](features/live-sessions.md) |
 | Project handbook: `/p/{project}/handbook` rules, lessons, standards, runbook, decisions, skills; kit badges | active (SB-14) | [doc](features/project-handbook.md) |
+| Stories by initiative: `/p/{project}/stories` two panes, status tags, Alpine filter chips, Expand all | active (SB-15) | [doc](features/stories-by-initiative.md) |
+| Preflight history: `/p/{project}/preflight` ledger of runs from the cost CSVs, trend figures, two SVG charts, Alpine filters | active (SB-16) | [doc](features/preflight-history.md) |
 | Production connection and metrics: read-only prod MySQL per project on `/projects`, presets and custom SQL | active (SB-17) | [doc](features/production-connection.md) |
 | Production dashboard: `/prod` projects × metrics with changes and trends, queued reads, nightly `board:prod-snapshot` | active (SB-18) | [doc](features/production-dashboard.md) |
 
@@ -57,9 +62,9 @@ None yet. Every SB story so far is `Journey: none`.
 ## Stories
 - **built**: SB-2 registry and reader · SB-3 what needs me · SB-4 story and mockups · SB-5 not on main ·
   SB-7 app shell · SB-8 story modal · SB-9 all-projects dashboard · SB-10 single-project dashboard ·
-  SB-11 live sessions · SB-12 manage projects · SB-14 project handbook · SB-17 production connection ·
-  SB-18 production dashboard
-- **approved**: SB-13 pick a mockup · SB-15 stories by initiative · SB-16 preflight history
+  SB-11 live sessions · SB-12 manage projects · SB-14 project handbook · SB-15 stories by initiative ·
+  SB-16 preflight history · SB-17 production connection · SB-18 production dashboard
+- **approved**: SB-13 pick a mockup
 - **draft (parked)**: SB-6 the board on an always-live domain
 
 SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this repo.
@@ -89,6 +94,10 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
   [ADR-023](decisions/ADR-023-live-sessions-read-transcript-metadata-defensively.md)
 - Handbook sections load on first open via renderless calls and stay in Alpine; no re-render →
   [ADR-024](decisions/ADR-024-handbook-sections-load-lazily-and-stay-client-side.md)
+- The Stories page is one query fed to `ReadProjectProgress::rollup()`, and it filters rows with one CSS class, not
+  Alpine per row → [ADR-025](decisions/ADR-025-stories-page-reuses-the-progress-rollup-over-one-query.md), [ADR-026](decisions/ADR-026-stories-page-filters-rows-with-css-not-alpine.md)
+- Preflight history reuses `board.sessions_path`, matches folders by exact encoded name (case-insensitive),
+  renders on the server and recomputes in Alpine → [ADR-027](decisions/ADR-027-preflight-history-reads-the-cost-csvs-by-folder-name-on-load.md), [ADR-028](decisions/ADR-028-preflight-page-renders-on-the-server-and-recomputes-in-alpine.md)
 - Production is read only through `ProductionReader`: raw PDO outside `config/`, a read-only session,
   `SHOW GRANTS` proof on every open and an SQL guard. This amends "git only" →
   [ADR-029](decisions/ADR-029-production-reads-go-through-one-read-only-gateway.md)
@@ -100,11 +109,10 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
 - Preflight audit scope, audit cost record, build-artifact disposal (kit) → ADR-001 to ADR-003
 
 ## Current phase and what's next
-Phase 2: UI organisation (SB-7 to SB-14). Phase 1 (SB-2 to SB-5) is built and retro'd. SB-7 to SB-12
-and SB-14 have shipped, and SB-17/SB-18 (production connection and dashboard) with them. Next: SB-13,
-SB-15, SB-16 (point its `series` token at SB-18's `series-1` at integration), then the phase-2 retro and
-full preflight sweep. SB-6 (hosted) stays parked. F-2 (a timeline of what was built) is in
-the backlog.
+Phase 2: UI organisation (SB-7 to SB-18). Phase 1 (SB-2 to SB-5) is built and retro'd. SB-7 to SB-12
+and SB-14 to SB-18 are built (SB-15 to SB-18 on branches awaiting merge). Next: SB-13 (pick a mockup,
+reuses `board/confirm-modal`), then the phase-2 retro and full preflight sweep. SB-6 (hosted) stays
+parked. Backlog: F-2 (timeline of what was built), F-3 (meter tier labels), F-5 (preflight run record).
 
 ## Known limitations
 - Laravel 13 / Livewire 4 are installed (starter kit), while `CLAUDE.md` says 12 / 3. Flagged, unchanged.
@@ -116,7 +124,10 @@ the backlog.
 - Untracked stories and mockups are listed but cannot be shown (not in git). Off-main rows with
   malformed IDs cannot open the modal (owner decision pending). `?v=` links break at the next refresh.
 - Layout classes still use the raw `zinc-*` palette; only status and state colours are theme tokens.
-- Initiative rows on the project page open nothing; the project page has no initiative or search filter.
+- Initiative rows on the project dashboard open nothing; the Stories tab is where to see an initiative's stories.
+  Nothing on the board searches stories by ID or title.
+- The Stories page groups initiative names case-sensitively, but the dashboard (MySQL) groups them
+  case-insensitively. Names that differ only by case would split on one and merge on the other.
 - `/projects` has no auth, can add and delete projects and now holds production credentials. It is safe
   only while localhost-only, and SB-6 must add auth first. A project's
   path and ref cannot be edited (remove and re-add).
@@ -126,4 +137,6 @@ the backlog.
 - Production SSL is encrypted but not certificate-verified. Rotating APP_KEY breaks stored credentials.
   The real coins production check (SB-17 and SB-18) awaits the owner's read-only user. `/prod` has no
   auth either.
+- Preflight history has no test counts, failures or verdict (the CSV lacks them; F-5). Its median and
+  number formats exist in PHP and JS and must change together.
 - Dev server runs on port 8010 (coins holds 8000/8001). No git remote for this repo, by owner ruling.

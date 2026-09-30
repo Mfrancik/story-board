@@ -39,6 +39,17 @@ Symptom: on `/projects`, saving a Production connection showed the check result 
 Root cause: to update the row's "Read-only · N metrics" summary, the parent `ManageProjects` was re-rendered. That re-mounted the lazy `ProductionSettings` child and reset its state. Separately, the parent's `Project` instance carried a cached `prodConnection` relation, so a freshly mounted child could read stale data.
 Fix: the panel dispatches a `prod-summary` browser event that the row's Alpine applies, so the parent never re-renders. `ProductionSettings::mount()` takes `$project->withoutRelations()` (SB-17, `c8bcfbe`). Never refresh a parent to update a lazy child's surroundings. Use a browser event.
 Log trail: none; `board.prod_connection_saved` is logged normally, the loss is client render state only.
+## 2026-09-29 — Preflight tab 404s, or shows no runs, for a project that has a cost CSV
+Symptom: during SB-16's real-data check, `/p/story-board/preflight` returned 404 even though `~/.claude/projects/-Users-mikefrancik-Code-story-board/preflight-cost.csv` holds 9 runs. Separately, a registered project whose path differs in case from Claude's folder showed the empty state.
+Root cause: the 404 happens because story-board is not a registered project in the dev DB. `EnsureProjectIsShown` refuses any unregistered or disabled name, and the page has nothing to key on. The case mismatch happens because the registered path `/Users/mikefrancik/code/story-board` encodes to `-Users-mikefrancik-code-story-board`, while Claude named the folder after the path it saw, `…-Code-…`.
+Fix: register the project (`/projects` → Add, or `board:project`). Folder matching in `ReadPreflightHistory::files()` is case-insensitive, so the case mismatch is handled (SB-16, `baeeeb7`). If runs are still missing, compare the empty state's "looked in" paths with `ls ~/.claude/projects | grep <name>`. Only the exact name, `--claude-plans`, and `--claude-worktrees-*` folders count.
+Log trail: `board.project_page_refused` for the 404. `board.preflight_history_viewed` with `runs: 0`, and `board.preflight_history_unreadable` if the root itself is missing.
+
+## 2026-09-29 — PHPStan rejects a story collection passed to `ReadProjectProgress::rollup()`
+Symptom: `vendor/bin/phpstan analyse` failed on `ReadProjectStories` after `rollup()` was extracted. It reported an Eloquent collection where `iterable<stdClass>` was expected.
+Root cause: grouping an Eloquent `Collection` of `Story` models gives nested model collections, and the rows built from them are plain objects, not models. PHPStan correctly refuses to treat that as `iterable<stdClass>`.
+Fix: `->toBase()` before grouping in `ReadProjectStories::handle()`, and `rollup()` typed as `iterable<stdClass>` (SB-15). Any new caller must pass plain rows, for example a `toBase()` aggregate.
+Log trail: none; static analysis.
 
 ## 2026-09-29 — Handbook lesson counts were one too high (17/6/3, not 16/5/2)
 Symptom: SB-14's first real-data counts of `## L-<n>` entries (coins 17, client-dashboard 6, rent-track 3) were each one more than the ledgers actually hold.

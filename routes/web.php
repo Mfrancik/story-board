@@ -8,6 +8,8 @@ use App\Livewire\Board\ManageProjects;
 use App\Livewire\Board\ProductionDashboard;
 use App\Livewire\Board\ProjectHandbook;
 use App\Livewire\Board\ProjectPage;
+use App\Livewire\Board\ProjectPreflight;
+use App\Livewire\Board\ProjectStories;
 use App\Livewire\Board\StoryPage;
 use App\Models\Story;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +28,18 @@ Route::livewire('/p/{project:name}', ProjectPage::class)
 Route::livewire('/p/{project:name}/handbook', ProjectHandbook::class)
     ->middleware(EnsureProjectIsShown::class)
     ->name('projects.handbook');
+
+// One project's stories grouped by initiative (SB-15), each tagged with its status. The whole list
+// renders once; selecting an initiative, the filters and Expand all are Alpine.
+Route::livewire('/p/{project:name}/stories', ProjectStories::class)
+    ->middleware(EnsureProjectIsShown::class)
+    ->name('projects.stories');
+
+// One project's preflight runs (SB-16), read from its preflight-cost.csv files under the Claude
+// projects root on each load. The filters and charts are Alpine over the page's own data.
+Route::livewire('/p/{project:name}/preflight', ProjectPreflight::class)
+    ->middleware(EnsureProjectIsShown::class)
+    ->name('projects.preflight');
 
 // One story above its mockups (SB-4). Only a well-formed story ID reaches the component.
 Route::livewire('/p/{project:name}/s/{storyId}', StoryPage::class)

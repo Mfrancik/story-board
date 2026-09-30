@@ -84,6 +84,21 @@ class SessionFixture
     }
 
     /**
+     * Write a `preflight-cost.csv` into `$folder` (SB-16), as `bin/preflight-meter.py report`
+     * leaves it next to a checkout's transcripts. Returns its full path.
+     *
+     * @param  list<string>  $lines  the header line, then one line per run
+     */
+    public function preflightCsv(string $folder, array $lines): string
+    {
+        $path = "{$this->root}/{$folder}/preflight-cost.csv";
+        File::ensureDirectoryExists(dirname($path));
+        File::put($path, implode("\n", $lines)."\n");
+
+        return $path;
+    }
+
+    /**
      * Remove the root and everything in it.
      */
     public function destroy(): void

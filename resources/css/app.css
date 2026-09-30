@@ -46,6 +46,8 @@
     /* A production change's direction (SB-18): text on white, so the darker steps. */
     --color-gain: var(--color-emerald-700);
     --color-loss: var(--color-rose-700);
+    /* The one data series of a chart — the first palette slot, one chart palette (owner 2026-09-29; SB-16 preflight trend lines, points and the hovered row's tint). */
+    --color-series: var(--color-series-1);
 
     --color-accent: var(--color-neutral-800);
     --color-accent-content: var(--color-neutral-800);
@@ -60,6 +62,7 @@
         --color-series-3: #199e70;
         --color-gain: var(--color-emerald-400);
         --color-loss: var(--color-rose-400);
+        --color-series: var(--color-series-1);
         --color-accent: var(--color-white);
         --color-accent-content: var(--color-white);
         --color-accent-foreground: var(--color-neutral-800);
