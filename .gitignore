@@ -41,3 +41,6 @@ yarn-error.log
 # Local-only
 __pycache__/
 .claude/settings.local.json
+
+# Journey step screenshots (SB-22) — local captures, never committed
+/storage/app/journey-shots/
