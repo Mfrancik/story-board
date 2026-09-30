@@ -210,7 +210,16 @@
                                                 </a>
                                             @endforeach
                                         </div>
-                                        <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Compare side by side on the full page.</p>
+                                        @if ($shown->location_kind === null && $shown->hasPage())
+                                            {{-- SB-21: the gallery's full-screen viewer reads the ref, so only the on-ref version links there. --}}
+                                            <a href="{{ route('mockups.show', ['project' => $project->name, 'story' => $shown->story_id]) }}" wire:navigate data-open-gallery
+                                                class="mt-3 flex w-full items-center justify-center gap-1.5 rounded-md bg-zinc-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200">
+                                                <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+                                                Open in mockup gallery
+                                            </a>
+                                        @else
+                                            <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Compare side by side on the full page.</p>
+                                        @endif
                                     @endif
                                 </section>
 

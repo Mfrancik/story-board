@@ -42,6 +42,11 @@
             </p>
         </div>
         <div class="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
+            @if ($mockupSets > 0)
+                <a href="{{ route('mockups', ['project' => $model->name]) }}" wire:navigate data-project-mockups
+                    class="rounded-md border border-zinc-300 px-3 py-1.5 font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800">Mockups <span class="tabular-nums text-zinc-500 dark:text-zinc-400">{{ $mockupSets }}</span></a>
+                <span aria-hidden="true">·</span>
+            @endif
             <span data-refreshed>{{ $model->indexed_at ? 'Refreshed '.$model->indexed_at->diffForHumans() : 'Not read yet' }}</span>
             <span aria-hidden="true">·</span>
             <button type="button" data-refresh-project wire:click="refresh" wire:loading.attr="disabled" wire:target="refresh"

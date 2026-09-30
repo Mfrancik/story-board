@@ -3,6 +3,7 @@
 namespace App\View\Components\Board;
 
 use App\Actions\Board\ListLiveSessions;
+use App\Actions\Board\ReadMockupSets;
 use App\Models\Project;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Route;
@@ -13,7 +14,8 @@ use Illuminate\View\Component;
  * snapshot state and on-ref story count, "All projects", and the Manage projects
  * slot once SB-12 registers its page, and (SB-11) a live badge beside each project
  * with a Claude Code session active now; (SB-18) a Production link counting the
- * projects connected to production. A drawer below 768px; all toggling is Alpine.
+ * projects connected to production; (SB-21) a Mockups link counting the sets
+ * awaiting a pick. A drawer below 768px; all toggling is Alpine.
  */
 class Sidebar extends Component
 {
@@ -45,6 +47,9 @@ class Sidebar extends Component
             'prodUrl' => Route::has('prod') ? route('prod') : null,
             'onProd' => request()->routeIs('prod'),
             'prodConnected' => Project::enabled()->has('prodConnection')->count(),
+            // SB-21: Mockups, with how many sets await a pick (cached per project snapshot, so no git on most loads).
+            'onMockups' => request()->routeIs('mockups', 'mockups.show'),
+            'awaitingMockups' => app(ReadMockupSets::class)->awaitingCount(),
             // Live sessions per project (SB-11), from the same 20 s cached scan as the Live now panel.
             'live' => app(ListLiveSessions::class)->counts(),
         ]);

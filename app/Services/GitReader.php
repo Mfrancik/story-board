@@ -102,6 +102,56 @@ class GitReader
     }
 
     /**
+     * The raw bytes of several files at `$ref` from one `git cat-file --batch`
+     * process, as path => bytes; a path that is not a file at the ref maps to
+     * null. One process instead of one `show` per file: the mockup gallery
+     * (SB-21) reads every set's story, and coins alone has 263 of them.
+     *
+     * @param  list<string>  $files
+     * @return array<string, string|null>
+     *
+     * @throws GitReaderException when git fails or a path could break the batch protocol.
+     */
+    public function showMany(string $path, string $ref, array $files): array
+    {
+        $this->assertRef($ref);
+        if ($files === []) {
+            return [];
+        }
+        foreach ($files as $file) {
+            // One request per line: a newline in a path would smuggle in a second object name.
+            if (str_contains($file, "\n") || str_contains($file, "\r")) {
+                throw $this->refuse('a path in a batch read contains a newline', ['cat-file']);
+            }
+        }
+
+        $out = $this->run($path, ['cat-file', '--batch'], input: implode('', array_map(fn ($f) => "{$ref}:{$f}\n", $files)));
+
+        $read = [];
+        $offset = 0;
+        foreach ($files as $file) {
+            $end = strpos($out, "\n", $offset);
+            if ($end === false) {
+                $read[$file] = null;
+
+                continue;
+            }
+            $header = substr($out, $offset, $end - $offset);
+            $offset = $end + 1;
+            // `<sha> <type> <size>` then the bytes and a newline; anything else (`<name> missing`) has no body.
+            if (! preg_match('/^[0-9a-f]+ (\w+) (\d+)$/', $header, $m)) {
+                $read[$file] = null;
+
+                continue;
+            }
+            $read[$file] = $m[1] === 'blob' ? substr($out, $offset, (int) $m[2]) : null;
+            $offset += (int) $m[2] + 1;
+        }
+
+        return $read;
+    }
+
+    /**
      * Every file path under `$prefix` at `$ref`, recursively.
      *
      * @return list<string>
@@ -305,10 +355,11 @@ class GitReader
      *
      * @param  list<string>  $args  the subcommand first, then its arguments
      * @param  list<string>  $config  `-c key=value` settings the reader itself imposes
+     * @param  string|null  $input  stdin for the command (`cat-file --batch` object names)
      *
      * @throws GitReaderException when the subcommand is not allowed, fails, or times out.
      */
-    public function run(string $path, array $args, int $timeout = 30, array $config = []): string
+    public function run(string $path, array $args, int $timeout = 30, array $config = [], ?string $input = null): string
     {
         $subcommand = $args[0] ?? '';
         if (! in_array($subcommand, self::ALLOWED, true)) {
@@ -338,7 +389,8 @@ class GitReader
         }
 
         try {
-            $result = Process::env(self::ENV)->timeout($timeout)->run([...$command, ...$args]);
+            $process = Process::env(self::ENV)->timeout($timeout);
+            $result = ($input === null ? $process : $process->input($input))->run([...$command, ...$args]);
         } catch (ProcessTimedOutException $e) {
             throw new GitReaderException("git {$subcommand} timed out after {$timeout}s", previous: $e);
         }

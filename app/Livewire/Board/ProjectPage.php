@@ -4,6 +4,7 @@ namespace App\Livewire\Board;
 
 use App\Actions\Board\CheckProjectShown;
 use App\Actions\Board\ListWhatNeedsMe;
+use App\Actions\Board\ReadMockupSets;
 use App\Actions\Board\ReadProjectProgress;
 use App\Jobs\RefreshProjectJob;
 use App\Models\Project;
@@ -146,7 +147,7 @@ class ProjectPage extends Component
      * grouped initiative query, one grouped off-main count, and the off-main rows
      * (one query) only while a kind is open.
      */
-    public function render(ListWhatNeedsMe $list, ReadProjectProgress $progress): View|string
+    public function render(ListWhatNeedsMe $list, ReadProjectProgress $progress, ReadMockupSets $mockups): View|string
     {
         if ($this->gone) {
             // Nothing of a project that is off the board may render, not even its rollup.
@@ -161,6 +162,8 @@ class ProjectPage extends Component
             ...$data,
             ...$progress->handle($project->id),
             'model' => $project,
+            // SB-21: the header's Mockups button, only when the project has sets (a snapshot count, no git).
+            'mockupSets' => $mockups->countFor($project),
             'counts' => $summary['counts'] ?? [],
             'parseErrors' => $summary['parse_errors'] ?? 0,
             'offmainRows' => $this->openKinds === []

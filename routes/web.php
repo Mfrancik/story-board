@@ -1,10 +1,13 @@
 <?php
 
 use App\Http\Controllers\MockupFileController;
+use App\Http\Controllers\MockupSetFileController;
 use App\Http\Middleware\EnsureProjectIsShown;
 use App\Http\Middleware\RedirectProjectFilter;
 use App\Livewire\Board\Home;
 use App\Livewire\Board\ManageProjects;
+use App\Livewire\Board\MockupGallery;
+use App\Livewire\Board\MockupViewer;
 use App\Livewire\Board\ProductionDashboard;
 use App\Livewire\Board\ProjectHandbook;
 use App\Livewire\Board\ProjectPage;
@@ -60,6 +63,19 @@ Route::livewire('/prod', ProductionDashboard::class)->name('prod');
 Route::get('/p/{project:name}/m/{storyId}/{file}', MockupFileController::class)
     ->where('file', '.*')
     ->name('mockups.file');
+
+// Every enabled project's mockup sets (SB-21), a full-screen viewer per set, and the set's files for its
+// sandboxed frames. The file route answers only names in the set directory's own listing at the ref;
+// `mockups.file` was already SB-4's name for the story page's route, so this one is `mockups.frame`.
+Route::livewire('/mockups', MockupGallery::class)->name('mockups');
+Route::livewire('/mockups/{project:name}/{story}', MockupViewer::class)
+    ->where('story', Story::ID_ROUTE)
+    ->middleware(EnsureProjectIsShown::class)
+    ->name('mockups.show');
+Route::get('/mockups/{project:name}/{story}/file/{file}', MockupSetFileController::class)
+    ->where(['story' => Story::ID_ROUTE, 'file' => '.*'])
+    ->middleware(EnsureProjectIsShown::class)
+    ->name('mockups.frame');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('dashboard', 'dashboard')->name('dashboard');

@@ -15,8 +15,8 @@ use Illuminate\Support\Facades\Log;
  */
 class MockupFileController extends Controller
 {
-    /** Types a mockup directory plausibly holds; anything else is served as opaque bytes. */
-    private const TYPES = [
+    /** Types a mockup directory plausibly holds; anything else is served as opaque bytes. Shared with the gallery's frame route (SB-21). */
+    public const TYPES = [
         'html' => 'text/html; charset=UTF-8', 'htm' => 'text/html; charset=UTF-8',
         'css' => 'text/css; charset=UTF-8', 'js' => 'text/javascript; charset=UTF-8',
         'json' => 'application/json', 'svg' => 'image/svg+xml', 'png' => 'image/png',

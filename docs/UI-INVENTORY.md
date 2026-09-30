@@ -25,10 +25,10 @@ Every reusable component. Consult BEFORE building any new UI (design-standards
 | board/project-card | Blade | The dashboard tile, a link to `/p/{project}`: state, story total, status bar, count chips, not-on-main, refresh age, parse errors | Home |
 | board/status-chip | Blade | A story's raw status with parse-error marker; danger tone for out-of-vocabulary values; `count` makes a tally chip; `variant="tag"` reads Built/To do/Draft/Cancelled, others grey | Home, story-row, project-card, ProjectStories |
 | board/status-bar | Blade | Stacked bar of counts by raw status; out-of-vocabulary values get a danger-toned segment (grey with `variant="tag"`) | project-card, ProjectPage initiative rows, ProjectStories |
-| layouts/board | Blade layout | The board's shell: board/sidebar beside the page, persisted Flux toasts, no auth, Flux appearance for light/dark | Home, ProjectPage, StoryPage, ManageProjects, ProductionDashboard |
-| board/sidebar | Blade (class) | Project switcher: filter box (⌘K), All projects, Production (connected/shown), enabled projects with state dot, count and live badge (`data-live-count`); drawer below 768px; Manage slot | layouts/board |
+| layouts/board | Blade layout | The board's shell: board/sidebar beside the page, persisted Flux toasts, no auth, Flux appearance for light/dark | Home, ProjectPage, StoryPage, ManageProjects, ProductionDashboard, MockupGallery, MockupViewer |
+| board/sidebar | Blade (class) | Project switcher: filter box (⌘K), All projects, Production (connected/shown), Mockups (awaiting-pick count), enabled projects with state dot, count and live badge; drawer below 768px; Manage slot | layouts/board |
 | StoryPage | Livewire (Board) | Story above its mockups (side-by-side / one-at-a-time, 375/768/1280), full-screen compare; `?v=` versions banner for off-main copies | `/p/{project}/s/{id}` |
-| StoryModal | Livewire (Board) | Design-A story modal at `?story=<project>/<ID>`: text, details, dependency chips, mockup thumbnails, versions off main; opened by the `board-story` event | Home, ProjectPage, ProjectStories |
+| StoryModal | Livewire (Board) | Design-A story modal at `?story=<project>/<ID>`: text, details, dependency chips, mockup thumbnails and Open in mockup gallery, versions off main; opened by `board-story` | Home, ProjectPage, ProjectStories |
 | ProjectPage | Livewire (Board) | One project's dashboard (SB-10): header with Refresh this project, scoped What needs me cards, Progress by initiative, Not on main by kind; embeds StoryModal | `/p/{project}` |
 | board/needs-me-cards | Blade | The three What needs me cards (pick, approval, build) with count, top rows and Show all calling the host's `showAll()` | Home, ProjectPage |
 | board/state | Blade | A project's snapshot state: `part="dot"` coloured dot, `part="label"` word (none for `ok`, danger for unknown states) | sidebar, project-card, ProjectPage header |
@@ -51,3 +51,7 @@ Every reusable component. Consult BEFORE building any new UI (design-standards
 | board/prod-row-status | Blade | Under a project's name on /prod: Reading… / read time, and the failed read's badge and sentence | ProductionDashboard |
 | board/sparkline | Blade | Inline-SVG 30-day trend line, gaps for missing days, end dot, Alpine hover readout; no chart library | prod-stat |
 | ProjectPreflight | Livewire (Board) | A project's preflight runs (SB-16): trend figures and two SVG line charts over a ledger table; Alpine filters and hover (`preflightHistory` in resources/js) | `/p/{project}/preflight` |
+| MockupGallery | Livewire (Board) | Mockup gallery (SB-21): every set as a live-thumbnail card grouped by project, awaiting first; Alpine status/project/search filters, Show all per project | `/mockups` |
+| MockupViewer | Livewire (Board) | Full-screen mockup viewer (SB-21): title bar, description, Where, Current/A/B/C tabs, width switch, side by side with per-pane picker and swap, Pick with reason | `/mockups/{project}/{story}` |
+| board/mockup-state | Blade | A mockup set's pick state: Awaiting pick (`pick` token), Picked X (`built`, "not pushed" for a local pick), or grey | MockupGallery, MockupViewer |
+| board/mockup-current | Blade | The viewer's Current pane placeholder until SB-23 captures the page as it is today | MockupViewer |

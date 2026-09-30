@@ -34,3 +34,7 @@ it('refuses worktree and status in any form but the read-only one', function (ar
     'worktree prune' => [['worktree', 'prune']],
     'status without porcelain' => [['status']],
 ])->throws(GitReaderException::class, 'not allowed');
+
+it('refuses a batch read whose path could smuggle in a second object name', function () {
+    (new GitReader)->showMany('/tmp', 'origin/main', ["stories/a.md\nHEAD:.env"]);
+})->throws(GitReaderException::class, 'newline');
