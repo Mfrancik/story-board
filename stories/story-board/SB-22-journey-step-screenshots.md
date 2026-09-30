@@ -18,8 +18,11 @@ there costs one helper call per step and no extra work for build sessions.
 - A Pest browser helper, `journeyStep(string $journey, string $step, string $route)`, called at each step of a
   journey test: saves a PNG (desktop width, plus 375 px) and appends to a manifest.
 - Output, outside git: `<project>/storage/app/journey-shots/<journey>/<nn>-<step>.png` and `manifest.json`
-  (`journey`, `step`, `route`, `story` if the journey doc names one, `captured_at`, `commit`). `storage/app/journey-shots/`
-  is gitignored.
+  — a JSON list, one entry per PNG: `journey`, `step`, `route`, `story` if the journey doc names one, `file` (the PNG's
+  bare name, relative to the manifest's folder), `width` (the viewport width it was captured at — 375 for the phone
+  shot), `captured_at`, `commit`. `storage/app/journey-shots/` is gitignored. This shape is what SB-24's
+  `ReadJourneyShots` reads (it treats `width` ≤ 480 as the phone shot and prefers desktop); do not change it here
+  without changing that reader.
 - Capture is on only when `JOURNEY_SHOTS=1` (off in normal runs, so preflight stays as fast as it is).
 - Adopted in story-board's own journey tests (currently none exist under `tests/Browser/Journeys/` — this story adds the
   helper and one example use; coins is the first real consumer after the kit sync).
@@ -32,6 +35,10 @@ there costs one helper call per step and no extra work for build sessions.
 ## Acceptance criteria (executable — these become the Pest test names)
 - Given `JOURNEY_SHOTS=1`, when a journey test calls `journeyStep('sign-up', 'verify', '/verify')`, then a PNG exists
   at `journey-shots/sign-up/NN-verify.png` and the manifest lists it with route, commit and time.
+- Given a captured step, then the manifest has two entries for it — desktop and 375 px — each with `file` set to the
+  PNG's bare name and `width` set to its capture width.
+- Given the manifest a real capture wrote, when SB-24's `ReadJourneyShots` reads it, then every shot is found and the
+  375 px one is classed as the phone shot (round-trip test, no hand-written fixture).
 - Given `JOURNEY_SHOTS` unset, then no file is written and the test runs as before.
 - Given a second run, then the journey's shots and manifest entries are replaced, not appended twice.
 - Given a step name with spaces or slashes, then the file name is slugged and stays inside the journey folder.
@@ -50,7 +57,8 @@ there costs one helper call per step and no extra work for build sessions.
 - `preflight.sh`, `bin/preflight-meter.py`, `config/`, any registered project's files.
 
 ## Data & interfaces
-- New on-disk format: `storage/app/journey-shots/<journey>/manifest.json` + PNGs (fixed by this story; SB-23/24 read it).
+- New on-disk format: `storage/app/journey-shots/<journey>/manifest.json` + PNGs (fixed by this story; SB-23/24 read it
+  through `App\Actions\Board\ReadJourneyShots` — see docs/features/app-map.md for the reader's accepted keys).
 
 ## Test plan
 - Pest: failing tests first, a tiny throwaway route walked by a test journey.
