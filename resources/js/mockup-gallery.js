@@ -36,6 +36,8 @@ export function mockupFit(width) {
 /**
  * The gallery's filters: status, project and a search over ID and title. Each project group
  * shows its first `perGroup` cards until "Show all"; a search or a status filter shows every match.
+ * It opens on "Awaiting pick" — the sets that need the owner — falling back to "All" when none
+ * await, so an empty filter is never the first thing seen.
  *
  * @param {string} project the project to start on ('' for all)
  * @param {number} perGroup cards a group shows before "Show all"
@@ -44,7 +46,7 @@ export function mockupFit(width) {
 export function mockupGallery(project, perGroup, sets) {
     return {
         sets,
-        status: 'all',
+        status: sets.some((s) => s.state === 'awaiting') ? 'awaiting' : 'all',
         project,
         q: '',
         expanded: [],

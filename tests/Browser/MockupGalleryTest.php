@@ -75,3 +75,36 @@ it('picks option b with a reason from the viewer, committing only in the fixture
     expect(File::get($this->repo->project.'/stories/demo/FX-1-story.md'))->toContain("- Chosen option: b\n")
         ->and(trim($this->repo->git($this->repo->project, 'log', '-1', '--format=%s')))->toBe('docs(FX-1): record mockup pick b');
 });
+
+/** Whether the card for a set is on screen (x-show hides it with display:none). */
+function setCardVisible(string $set): string
+{
+    return "(() => { const el = document.querySelector('[data-set=\"{$set}\"]'); return !!el && el.offsetParent !== null; })()";
+}
+
+it('opens on awaiting picks only, and All shows the picked sets too', function () {
+    $this->repo->story('FX-2', 'draft', 'demo', "## Design mockup gate\n- Chosen option: b\n- Why I chose it: owner pick 2026-09-29, cleaner table\n");
+    $this->repo->write('docs/mockups/FX-2/option-a.html', '<html><body>FX-2 a</body></html>');
+    $this->repo->write('docs/mockups/FX-2/option-b.html', '<html><body>FX-2 b</body></html>');
+    $this->repo->commitAndPush();
+    $this->artisan('board:refresh', ['project' => 'fx'])->assertSuccessful();
+    $this->repo->syncProject();
+
+    visit('/mockups')->resize(1280, 800)
+        ->assertAttribute('[data-filter-status="awaiting"]', 'aria-pressed', 'true')
+        ->assertScript(setCardVisible('fx/FX-1'), true)
+        ->assertScript(setCardVisible('fx/FX-2'), false)
+        ->click('[data-filter-status="all"]')
+        ->assertScript(setCardVisible('fx/FX-2'), true);
+});
+
+it('opens on All when no set is awaiting a pick', function () {
+    $this->repo->story('FX-1', 'draft', 'demo', "## Design mockup gate\n- Chosen option: a\n- Why I chose it: owner pick 2026-09-29, fine\n");
+    $this->repo->commitAndPush();
+    $this->artisan('board:refresh', ['project' => 'fx'])->assertSuccessful();
+    $this->repo->syncProject();
+
+    visit('/mockups')->resize(1280, 800)
+        ->assertAttribute('[data-filter-status="all"]', 'aria-pressed', 'true')
+        ->assertScript(setCardVisible('fx/FX-1'), true);
+});
