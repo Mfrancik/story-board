@@ -82,4 +82,4 @@ Audit tier, and the greyed Tests column). Most checks need three or four of them
 - [ ] Feature doc written/updated via /document
 
 ## Links
-Journey: none · Depends on: SB-16 (not yet on main — build after it merges) · Related: SB-20 (draft)
+Journey: none · Depends on: SB-16 · Related: SB-20 (draft)

@@ -63,7 +63,7 @@ project's own journey tests, via the kit's `journeyStep()` helper (SB-22).
 | Live sessions: Live now panel on both dashboards (30 s poll) and sidebar live badge | active (SB-11, SB-25) | [doc](features/live-sessions.md) |
 | Project handbook: `/p/{project}/handbook` rules, lessons, standards, runbook, decisions, skills; kit badges | active (SB-14) | [doc](features/project-handbook.md) |
 | Stories by initiative: `/p/{project}/stories` two panes, status tags, Alpine filter chips, Expand all | active (SB-15) | [doc](features/stories-by-initiative.md) |
-| Preflight history: `/p/{project}/preflight` ledger of runs from the cost CSVs, trend figures, two SVG charts, Alpine filters | active (SB-16) | [doc](features/preflight-history.md) |
+| Preflight history: `/p/{project}/preflight` ledger of runs from the cost CSVs, trend figures, two SVG charts, Alpine filters, columns picker | active (SB-16, SB-19) | [doc](features/preflight-history.md) |
 | Production connection and metrics: read-only prod MySQL per project on `/projects`, presets and custom SQL | active (SB-17) | [doc](features/production-connection.md) |
 | Production dashboard: `/prod` projects × metrics with changes and trends, queued reads, nightly `board:prod-snapshot` | active (SB-18) | [doc](features/production-dashboard.md) |
 | Mockup gallery: `/mockups` cards awaiting-pick first, full-screen viewer, compare against today's page (journey shot), Pick commits the story file | active (SB-21, SB-23) | [doc](features/mockup-gallery.md) |
@@ -77,8 +77,7 @@ None yet. Every SB story so far is `Journey: none`.
 - **built**: SB-2 registry and reader · SB-3 what needs me · SB-4 story and mockups · SB-5 not on main ·
   SB-7 app shell · SB-8 story modal · SB-9 all-projects dashboard · SB-10 single-project dashboard ·
   SB-11 live sessions · SB-12 manage projects · SB-14 project handbook · SB-15 stories by initiative ·
-  SB-16 preflight history · SB-17 production connection · SB-18 production dashboard · SB-21 mockup gallery · SB-22 journey shots · SB-23 current pane · SB-24 app map · SB-25 live cards link own stories
-- **approved**: SB-19 preflight columns picker
+  SB-16 preflight history · SB-17 production connection · SB-18 production dashboard · SB-19 preflight columns picker · SB-21 mockup gallery · SB-22 journey shots · SB-23 current pane · SB-24 app map · SB-25 live cards link own stories
 - **draft**: SB-20 preflight run errors
 - **cut**: SB-13 pick a mockup (2026-09-30; SB-21's pick covers it)
 - **draft (parked)**: SB-6 the board on an always-live domain
@@ -134,8 +133,8 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
 - Preflight audit scope, audit cost record, build-artifact disposal (kit) → ADR-001 to ADR-003
 
 ## Current phase and what's next
-Phase 2: UI organisation. Phase 1 (SB-2 to SB-5) is built and retro'd. SB-7 to SB-12, SB-14 to SB-18,
-SB-21 to SB-25 are built. Next: SB-19 (columns picker); adopt `journeyStep()` in coins via the kit
+Phase 2: UI organisation. Phase 1 (SB-2 to SB-5) is built and retro'd. SB-7 to SB-12, SB-14 to SB-19,
+SB-21 to SB-25 are built. Next: owner confirms SB-19's native checkbox look; adopt `journeyStep()` in coins via the kit
 sync, then the real-data check of the app map and Current pane on coins; decide on the
 `--text-thumb` token; then the phase-2 retro and full sweep. SB-6 (hosted) stays
 parked. Backlog: F-2 (timeline of what was built), F-3 (meter tier labels), F-5 (preflight run record).
@@ -165,7 +164,9 @@ parked. Backlog: F-2 (timeline of what was built), F-3 (meter tier labels), F-5 
   The real coins production check (SB-17 and SB-18) awaits the owner's read-only user. `/prod` has no
   auth either.
 - Preflight history has no test counts, failures or verdict (the CSV lacks them; F-5). Its median and
-  number formats exist in PHP and JS and must change together.
+  number formats exist in PHP and JS and must change together. Its hidden columns are saved per browser only.
+- Flux reads `localStorage` unguarded (`flux.appearance`), so a browser with site data blocked gets an
+  uncaught `SecurityError` on every page (RUNBOOK). Pre-existing, not fixed.
 - A board pick shows as "Picked X · not pushed" in the gallery at once, but the story modal, story page and
   What needs me show it only after a push and refresh. Its `--no-verify` (skips project hooks) awaits owner
   confirmation. The Current pane's "new page" can be wrong for routes not declared in `routes/*.php`, and

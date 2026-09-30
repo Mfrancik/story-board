@@ -10,6 +10,12 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-09-30 — Uncaught `SecurityError` from Flux when localStorage is blocked
+Symptom: SB-19's "localStorage throws" browser test, which stubs `Storage.prototype` `getItem` / `setItem` / `removeItem` to throw `DOMException('SecurityError')` for every key, hits an uncaught error before the page's own code runs, even though the Columns picker wraps all its storage calls.
+Root cause: Flux reads `localStorage` unguarded for `flux.appearance`: once in the `@fluxAppearance` script in `<head>` and again in `flux.min.js` on `alpine:init`. A real browser with site data blocked hits the same throw on every board page. Pre-existing, outside SB-19.
+Fix: none in Flux. The test's init script passes `flux.*` keys through to the real storage and throws for everything else, so it still proves the picker falls back to all columns (SB-19, `8e0fa41`). Any board code that touches storage must wrap it in try/catch, as `readHiddenColumns()` / `writeHiddenColumns()` in `resources/js/preflight-history.js` do.
+Log trail: none; client-side only. Visible as a Pest browser failure naming `SecurityError` and `flux.appearance`.
+
 ## 2026-09-30 — Live cards on `main` list every untracked story in the main checkout
 Symptom: two coins sessions on `main` (main checkout and worktree `prf7ch`) each listed ADMIN-16, ADMIN-23, BRAND-9… on their Live now card, all "Not on main · untracked in /Users/mikefrancik/Code/coins".
 Root cause: `IndexOffMain` tags an untracked file with the branch of the checkout it sits in, so every untracked story in the main checkout had `branch = main`. `ListLiveSessions::links()` step 2 links off-main rows by branch alone, so any session on `main`, in any folder, claimed all of them. A "cwd sits under the row's root" check would not have been enough: worktrees live under the main checkout.

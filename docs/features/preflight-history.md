@@ -1,5 +1,5 @@
 # Preflight history
-Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-16
+Status: active   ·   Last updated: 2026-09-30   ·   Stories: SB-16, SB-19
 
 ## Overview
 `/p/{project}/preflight` is the project page's fourth tab (Dashboard | Handbook | Stories | Preflight).
@@ -8,6 +8,8 @@ turns, tool calls, tokens, subagent share, pack size and audit tier. Two line ch
 figures sit above the table. `bin/preflight-meter.py report` appends one row per run to a
 `preflight-cost.csv` outside the repo. CLAUDE.md calls that CSV "the record", but until this page it was
 only read with `cat`. The page answers "is preflight getting slower or more expensive, and since when".
+A Columns picker (SB-19) lets the viewer hide ledger columns they do not need, remembered per project in
+this browser.
 
 ## How it works
 **Route.** `routes/web.php` registers `GET /p/{project:name}/preflight` (`projects.preflight`) behind
@@ -57,6 +59,7 @@ option A, the dense ledger) has these parts:
 - The skipped-rows notice ("N rows could not be read").
 - The filters: mode (All / Scoped / Full, with counts), branch contains, and where (All / Main checkout
   / Worktrees). "Worktrees" means anything that is not the main checkout, so `plans` is included.
+- The Columns picker (SB-19), in the same row as the filters. See **Columns picker** below.
 - The trend strip, the two charts, and the table with a sticky header. The Tests column is greyed with
   zinc tokens and reads "needs F-5".
 - The empty state, listing the three paths looked in.
@@ -73,6 +76,33 @@ The server renders every row, the figures and the count, so HTTP tests can asser
 
 Nothing on the page calls the server after load
 ([ADR-028](../decisions/ADR-028-preflight-page-renders-on-the-server-and-recomputes-in-alpine.md)).
+
+**Columns picker (SB-19).** The view's `$columns` map lists the ledger's twelve keys in table order
+(`when, branch, where, mode, wall, turns, tools, tokens, share, pack, tier, tests`); every `th` and `td`
+carries its key as `data-col`, and the picker renders one checkbox per key (`data-col-toggle`). `$hideable`
+is every key but `when`, passed to Alpine as the component's fifth argument. When is the timeline's key,
+so its checkbox is a static `checked disabled` input; the "always shown" tooltip is a `title` on its
+`label`, because disabled inputs do not reliably show tooltips.
+- Hiding is `x-show="shown('<key>')"` on each `th`/`td`, the same mechanism rows use; no CSS was added.
+  With nothing hidden the table keeps its approved `min-w-5xl`. With any column hidden an object-form
+  `x-bind:class` swaps it for `min-w-max`, so the table really narrows (the object form is what lets
+  Alpine remove the static class).
+- State lives in `preflightHistory`: `hiddenCols`, `colsOpen`, `shown()`, `hiddenCount`, `columnsLabel`
+  ("Columns" or "Columns · N hidden"), `toggleColumn()` and `resetColumns()`. `toggleColumn()` ignores
+  keys outside `hideable` and rebuilds the list from `hideable`, so it stays in table order.
+- Storage: `readHiddenColumns()` / `writeHiddenColumns()` in `resources/js/preflight-history.js`, key
+  `board.preflight.hidden-columns.<project name>`, value a JSON array of hidden keys. The key is removed
+  when nothing is hidden (Reset, or re-ticking the last one), so "all shown" and "never chosen" are the
+  same state. On read only keys in `hideable` survive, so a stale or hand-edited value cannot hide When
+  or invent columns; a parse or storage failure means all columns. A failed write is ignored: the choice
+  still applies on the page, it just does not survive a reload.
+- The popover is plain Alpine (the board had no Alpine popover; Flux dropdowns live only in the layouts).
+  It is positioned with `x-anchor.bottom-start.offset.4` (the anchor plugin ships in Livewire 3's
+  Alpine), whose flip/shift keeps it on screen at 375px. Click-outside and Escape close it; the button
+  carries `aria-expanded` / `aria-controls`. The button copies the Stories tab's "Expand all" classes and
+  Reset columns copies the "Clear filters" link.
+- Columns and filters are independent: filters scope rows and the trend figures, columns only hide
+  cells. The trend strip never follows the columns.
 
 **Charts.** There is no chart library. Each chart has one series (wall time, tokens), drawn at its
 measured width (a `ResizeObserver`) so labels never stretch. The x-axis spans **all** runs, not only
@@ -92,13 +122,20 @@ None. No migration and nothing stored. The page reads `preflight-cost.csv` files
   tier, flagged`. The full shape is in the docblock.
 - Formatters: `ReadPreflightHistory::wall()` (`m:ss`), `tokens()` (`2.6M`, `517k`), `pack()` (KB).
   Constants: `MAIN`, `PLANS_WHERE`, `PINNED_TIER`, `WINDOW_DAYS`, `FILE`.
-- JS: `preflightHistory(runs, now, main)`, exported and registered as `Alpine.data('preflightHistory')`.
-  `now` is the server's time, so client and server windows agree.
+- JS: `preflightHistory(runs, now, main, project, hideable)`, exported and registered as
+  `Alpine.data('preflightHistory')`. `now` is the server's time, so client and server windows agree;
+  `project` keys the saved columns; `hideable` is the `data-col` keys the picker may hide, in table order.
+- DOM hooks (for tests): `data-col` on every `th`/`td`, `data-col-toggle`, `data-col-option`,
+  `data-columns-button`, `data-columns-panel`, `data-columns-reset`.
+- Browser storage: `localStorage['board.preflight.hidden-columns.<project>']`, a JSON array. Per viewer
+  only; the server never reads it.
 - `board/project-tabs` gains `preflight`. Test helper: `SessionFixture::preflightCsv($folder, $lines)`.
 
 ## Configuration
 - `board.sessions_path` (`BOARD_SESSIONS_PATH`, default `$HOME/.claude/projects`). This key is shared
   with Live sessions. `tests/TestCase.php` points it at an empty temp folder for every test.
+- The Columns picker has no configuration. To clear a viewer's saved columns, use Reset columns or
+  delete the `board.preflight.hidden-columns.<project>` key in the browser's storage.
 
 ## Observability
 - `board.preflight_history_viewed` (info): `project`, `runs`, `skipped`. There is one per page load.
@@ -108,7 +145,8 @@ None. No migration and nothing stored. The page reads `preflight-cost.csv` files
   file).
 - `board.project_page_refused` (info, `request: update`): the project left the board mid-visit.
 - Healthy: one `viewed` line per visit, no `unreadable`, and no Livewire update requests while
-  filtering or hovering. If `runs: 0` appears for a project you know has runs, see the RUNBOOK entry
+  filtering, hovering or toggling columns. The Columns picker logs nothing by design (pure UI, and a
+  failed storage write is not something the server needs to know). If `runs: 0` appears for a project you know has runs, see the RUNBOOK entry
   "Preflight tab shows no runs".
 
 ## Testing & verification
@@ -117,7 +155,17 @@ None. No migration and nothing stored. The page reads `preflight-cost.csv` files
   writes to a CSV it reads", `hydrate()` refusal, and the tab. Fixtures are temp CSVs written with
   `SessionFixture::preflightCsv()`, never the real `~/.claude`.
 - `tests/Browser/ProjectPreflightTest.php` covers the scoped filter with no server request, both charts
-  drawn, row hover marking both charts, and the 375px layout with no sideways scroll.
+  drawn, row hover marking both charts, and the 375px layout with no sideways scroll. SB-19 adds one
+  `it()` per picker acceptance criterion. "No server request" is proved by an equal
+  `performance.getEntriesByType('resource')` fetch count before and after a toggle. The
+  localStorage-throws case installs a Playwright init script
+  (`$page->page()->context()->addInitScript()`) that makes `Storage.prototype` `getItem` / `setItem` /
+  `removeItem` throw `SecurityError`, then reloads; the stub lets `flux.*` keys through (see gotchas).
+  The combined-filter case asserts the trend figures follow the mode filter, not the columns.
+- The feature test asserts every `th` and `td` carries its `data-col` key in the picker's order, and that
+  no toggle is wired to Livewire.
+- Browser check (SB-19): `/p/coins/preflight` → Columns → untick Turns, Tool calls, Pack → the table
+  narrows and the button reads "Columns · 3 hidden" → reload → still hidden → Reset columns → all back.
 - Real data (read-only, 2026-09-29): coins has 36 runs, 0 skipped, 15 scoped and 11 flagged, from Aug 26
   to Sep 28. story-board has 13 runs (main 9, sb-10 2, sb-15 1, plans 1).
 
@@ -131,6 +179,11 @@ None. No migration and nothing stored. The page reads `preflight-cost.csv` files
 - Two single-series charts instead of one dual-axis chart. No chart library.
 - The Tests column is greyed with zinc tokens rather than the mockup's striped gradient, because tokens
   are law.
+- Columns picker: hidden columns are saved in `localStorage` per project, not in the DB or per user;
+  they are a viewer convenience and the server never sees them. When cannot be hidden. No mockup round:
+  the owner waived it for a small control inside the approved SB-16 layout.
+- The picker's checkboxes are native inputs styled `size-4 accent-accent` (the existing `--color-accent`
+  token). The board had no checkbox and no forms plugin; the owner has yet to confirm this look.
 
 ## Known limitations & gotchas
 - **Median and the formats are duplicated.** `ReadPreflightHistory::wall()` / `tokens()` / `median()`
@@ -142,6 +195,15 @@ None. No migration and nothing stored. The page reads `preflight-cost.csv` files
 - A project must be registered to have a Preflight tab. story-board is not registered in the dev DB, so
   `/p/story-board/preflight` is a 404 until it is.
 - Every CSV is re-read on every load. That is fine at tens of rows, but nothing pages or caches.
+- **Flux reads `localStorage` unguarded.** With site data blocked, `flux.appearance` is read by
+  `@fluxAppearance` in `<head>` and by `flux.min.js` on `alpine:init`, which throws an uncaught
+  `SecurityError` before this page's code runs. The Columns picker itself survives (its reads and writes
+  are wrapped), but the SB-19 browser test has to let `flux.*` keys through its throwing stub. This is a
+  pre-existing Flux issue, not fixed here (RUNBOOK 2026-09-30).
+- Saved columns live in one browser. A different browser, a private window or cleared site data shows
+  every column. Columns cannot be reordered or resized.
+- A column key renamed in `$columns` silently drops from viewers' saved choice (the read keeps only
+  current `hideable` keys), which shows it again. That is the safe direction.
 - `preflightHistory` was the first `Alpine.data` registration in the codebase. Chart code was too big
   for an inline `x-data`.
 
@@ -149,3 +211,5 @@ None. No migration and nothing stored. The page reads `preflight-cost.csv` files
 2026-09-29 — Preflight tab at `/p/{project}/preflight`: ledger of runs from every `preflight-cost.csv`
 of the project (main checkout, worktrees, plans), trend figures, two SVG charts, Alpine filters and hover
 (SB-16, `baeeeb7`)
+2026-09-30 — Columns picker in the filter row: hide any ledger column but When, "Columns · N hidden",
+Reset columns, saved per project in localStorage with a safe fallback (SB-19, `8e0fa41`)

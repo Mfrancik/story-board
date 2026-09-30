@@ -50,7 +50,7 @@ Every reusable component. Consult BEFORE building any new UI (design-standards
 | board/prod-change | Blade | A signed change with ▲/▼ and gain/loss colour, "—" when no snapshot that day | prod-stat |
 | board/prod-row-status | Blade | Under a project's name on /prod: Reading… / read time, and the failed read's badge and sentence | ProductionDashboard |
 | board/sparkline | Blade | Inline-SVG 30-day trend line, gaps for missing days, end dot, Alpine hover readout; no chart library | prod-stat |
-| ProjectPreflight | Livewire (Board) | A project's preflight runs (SB-16): trend figures and two SVG line charts over a ledger table; Alpine filters and hover (`preflightHistory` in resources/js) | `/p/{project}/preflight` |
+| ProjectPreflight | Livewire (Board) | A project's preflight runs (SB-16): trend figures and two SVG line charts over a ledger table; Alpine filters, hover and columns picker (`preflightHistory` in resources/js) | `/p/{project}/preflight` |
 | MockupGallery | Livewire (Board) | Mockup gallery (SB-21): every set as a live-thumbnail card grouped by project, awaiting first; Alpine status/project/search filters, Show all per project | `/mockups` |
 | MockupViewer | Livewire (Board) | Full-screen mockup viewer (SB-21): title bar, description, Where, Current/A/B/C tabs (opens Current vs option when a shot exists), width switch, side by side with per-pane picker and swap, Pick with reason | `/mockups/{project}/{story}` |
 | board/mockup-state | Blade | A mockup set's pick state: Awaiting pick (`pick` token), Picked X (`built`, "not pushed" for a local pick), or grey | MockupGallery, MockupViewer |
