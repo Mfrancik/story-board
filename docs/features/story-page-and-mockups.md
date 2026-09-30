@@ -1,19 +1,20 @@
 # Story page and mockups
-Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-4, SB-5, SB-7, SB-8
+Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-4, SB-5, SB-7, SB-8, SB-21
 
 ## Overview
 `/p/{project}/s/{storyId}` shows one story's full text, read from its project's ref, above its mockup
 options. The options render in sandboxed frames at 375, 768 or 1280 px, and a full-screen overlay
 compares any two. Before this page, reviewing a mockup meant serving files locally from each repo.
-The page only displays. Approving and picking stay in `/story` and `/build`, because the board is
-read-only by owner ruling. The layout is mockup B (story above, so the frames get the full width).
+The page only displays. Picking from the board happens in the [mockup gallery](mockup-gallery.md)
+viewer (SB-21). This page reads the ref, so it shows a board pick only after it is pushed. The layout is mockup B (story above, so the frames get the full width).
 The compare overlay was added by owner ruling at the gate.
 
 ## How it works
 **Routes** (`routes/web.php`):
 - `stories.show`: `Route::livewire('/p/{project:name}/s/{storyId}', StoryPage::class)`, constrained to
   `[A-Z]{2,}-[0-9]+[a-z]?`, so a malformed ID is a routing 404 and never reaches the component.
-- `mockups.file`: `GET /p/{project:name}/m/{storyId}/{file}` → `MockupFileController`. `file` is
+- `mockups.file`: `GET /p/{project:name}/m/{storyId}/{file}` → `MockupFileController` (the gallery's
+  own frame route is `mockups.frame`; see [Mockup gallery](mockup-gallery.md)). `file` is
   `.*` so that relative assets like `shots/01.png` match. `ReadMockupFile` decides what is allowed,
   not the route pattern.
 
@@ -201,3 +202,4 @@ Any `mockup_path_rejected` means a URL the board never builds, so someone is pro
 2026-09-29 — Versions: `?v=` row selection, the off-main line and versions banner, branch/commit metadata, `mockups.file` `?v=` for branch versions, a story that exists only off main opens instead of returning 404 (SB-5, `7165b18`, `f83e02e`)
 2026-09-29 — Unknown/disabled project refused by `EnsureProjectIsShown` before binding (replaces `mount()`'s disabled check); renders in the sidebar shell; project breadcrumb links to `/p/{project}` (SB-7)
 2026-09-29 — Version picking and the versions banner lines moved to `FindStoryVersion`, shared with the story modal (SB-8, `f601c01`)
+2026-09-29 — `MockupFileController::TYPES` made public for the gallery's `mockups.frame`; picking moved to the gallery viewer (SB-21, `486be22`)

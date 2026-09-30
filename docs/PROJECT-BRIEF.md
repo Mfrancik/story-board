@@ -1,11 +1,11 @@
 # Project brief — story-board
-Last refreshed: 2026-09-29 (SB-16, SB-17, SB-18)
+Last refreshed: 2026-09-29 (SB-21)
 
 ## What it is, and for whom
 A localhost Laravel app for one owner. It reads the `stories/` folder of every project that uses
 the dev-standards kit and shows, in one place, what state each project's stories are in. It reads
-from git, at each project's ref (default `origin/main`), and never writes to a project (owner
-ruling). It can also read a project's production MySQL database, read-only, for headline numbers, shown side by side on `/prod` with
+from git, at each project's ref (default `origin/main`). Its one write into a project is a mockup pick
+from the gallery: two lines of one story file, one local commit, never pushed (ADR-032). It can also read a project's production MySQL database, read-only, for headline numbers, shown side by side on `/prod` with
 daily history. Work not on the ref yet (unmerged branches, worktrees, untracked files) is shown beside it,
 labelled with where it lives, and never counts as status. Live Claude Code sessions are shown from
 their transcript metadata (never their messages). Each project's handbook shows how it has drifted
@@ -35,8 +35,12 @@ from the kit. Each project's preflight runs are read from the cost CSVs the kit'
   local day (`board.timezone`), upserted by every good read; the last read's outcome is a cache entry.
 - **ProductionReader**: the only code that opens a production connection. It uses runtime PDO, a
   read-only 5 s session and a `SHOW GRANTS` proof on every open.
-- **GitReader**: the only code that runs git. Read-only subcommands only, plus `worktree list` and
-  `status --porcelain` in those forms only.
+- **GitReader**: the only code that runs git reads. Read-only subcommands only, plus `worktree list` and
+  `status --porcelain` in those forms only; `showMany()` batches reads through `cat-file --batch`.
+- **StoryPickWriter**: the only code that writes to a project: a story's `Chosen option:` / `Why I chose
+  it:` lines and a `git commit --only` of that file (SB-21).
+- **Mockup set** (not stored): an on-ref story whose snapshot mockup dir is `docs/mockups/<ID>` with
+  options; state `awaiting | picked | other`, read by `ReadMockupSets`.
 
 ## Features
 | Feature | Status | Doc |
@@ -55,6 +59,7 @@ from the kit. Each project's preflight runs are read from the cost CSVs the kit'
 | Preflight history: `/p/{project}/preflight` ledger of runs from the cost CSVs, trend figures, two SVG charts, Alpine filters | active (SB-16) | [doc](features/preflight-history.md) |
 | Production connection and metrics: read-only prod MySQL per project on `/projects`, presets and custom SQL | active (SB-17) | [doc](features/production-connection.md) |
 | Production dashboard: `/prod` projects × metrics with changes and trends, queued reads, nightly `board:prod-snapshot` | active (SB-18) | [doc](features/production-dashboard.md) |
+| Mockup gallery: `/mockups` cards awaiting-pick first, full-screen viewer, compare, Pick commits the story file | active (SB-21) | [doc](features/mockup-gallery.md) |
 
 ## Journeys
 None yet. Every SB story so far is `Journey: none`.
@@ -63,8 +68,9 @@ None yet. Every SB story so far is `Journey: none`.
 - **built**: SB-2 registry and reader · SB-3 what needs me · SB-4 story and mockups · SB-5 not on main ·
   SB-7 app shell · SB-8 story modal · SB-9 all-projects dashboard · SB-10 single-project dashboard ·
   SB-11 live sessions · SB-12 manage projects · SB-14 project handbook · SB-15 stories by initiative ·
-  SB-16 preflight history · SB-17 production connection · SB-18 production dashboard
-- **approved**: SB-13 pick a mockup
+  SB-16 preflight history · SB-17 production connection · SB-18 production dashboard · SB-21 mockup gallery
+- **approved**: SB-13 pick a mockup (overlaps SB-21's pick; needs rescoping) · SB-24 app map
+- **draft**: SB-19 preflight columns picker · SB-20 preflight run errors · SB-22 journey shots · SB-23 current pane
 - **draft (parked)**: SB-6 the board on an always-live domain
 
 SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this repo.
@@ -105,13 +111,14 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
   nightly snapshot reads in-process, and the scheduler is documented, not bundled →
   [ADR-030](decisions/ADR-030-production-read-outcome-lives-in-the-cache-and-rows-settle-by-read-count.md),
   [ADR-031](decisions/ADR-031-daily-production-snapshot-reads-in-process.md)
-- The board never writes to a project (owner ruling); its only writes are its own database.
+- The board writes to a project only through `StoryPickWriter`: one pick, one file, one local commit, never
+  pushed, refusing before any write → [ADR-032](decisions/ADR-032-the-board-writes-narrowly-one-pick-one-file-one-commit.md)
 - Preflight audit scope, audit cost record, build-artifact disposal (kit) → ADR-001 to ADR-003
 
 ## Current phase and what's next
-Phase 2: UI organisation (SB-7 to SB-18). Phase 1 (SB-2 to SB-5) is built and retro'd. SB-7 to SB-12
-and SB-14 to SB-18 are built (SB-15 to SB-18 on branches awaiting merge). Next: SB-13 (pick a mockup,
-reuses `board/confirm-modal`), then the phase-2 retro and full preflight sweep. SB-6 (hosted) stays
+Phase 2: UI organisation. Phase 1 (SB-2 to SB-5) is built and retro'd. SB-7 to SB-12, SB-14 to SB-18
+and SB-21 are built (some on branches awaiting merge). Next: SB-24 (app map, in a parallel build), SB-23
+(Current pane), SB-22; decide SB-13's fate now that SB-21 picks; then the phase-2 retro and full sweep. SB-6 (hosted) stays
 parked. Backlog: F-2 (timeline of what was built), F-3 (meter tier labels), F-5 (preflight run record).
 
 ## Known limitations
@@ -139,4 +146,7 @@ parked. Backlog: F-2 (timeline of what was built), F-3 (meter tier labels), F-5 
   auth either.
 - Preflight history has no test counts, failures or verdict (the CSV lacks them; F-5). Its median and
   number formats exist in PHP and JS and must change together.
+- A board pick shows as "Picked X · not pushed" in the gallery at once, but the story modal, story page and
+  What needs me show it only after a push and refresh. Its `--no-verify` (skips project hooks) awaits owner
+  confirmation. The gallery's Current pane is a placeholder until SB-23.
 - Dev server runs on port 8010 (coins holds 8000/8001). No git remote for this repo, by owner ruling.

@@ -10,6 +10,12 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-09-29 — "Same number of queries" tests failed once the sidebar counted mockups
+Symptom: after SB-21 added the sidebar's awaiting-pick count, `ProjectPageTest` "runs the same number of queries whatever the number of initiatives" (and its `ProjectStoriesTest` twin) failed: the first render ran more queries than the second.
+Root cause: an early `ReadMockupSets` cached whole sets. A cold render queried the snapshot and filled the cache, and a warm one skipped the query, so the query count depended on cache state rather than on the page.
+Fix: rows are read fresh on every call, always two queries (`ReadMockupSets::handle()`). Only git results are cached: gate readings per commit (`board:mockup-gates:{id}:{sha}`) and the local-branch pick check (`board:mockup-local:{id}`) (SB-21). Cache what is expensive (git), not what a query-count test measures.
+Log trail: none; found by the query-count assertions (`DB::getQueryLog()` lengths differing between the two renders).
+
 ## 2026-09-29 — No production snapshot for a day
 Symptom: a project's trend line on `/prod` has a gap for a day, and the change against that day shows "—", although the connection was fine.
 Root cause: nobody opened `/prod` that day, and `board:prod-snapshot` (scheduled 23:55 in `board.timezone`) never ran. `composer run dev` starts the server, queue worker, pail and Vite, **not the scheduler**.
