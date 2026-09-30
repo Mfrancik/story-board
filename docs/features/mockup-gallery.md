@@ -47,7 +47,9 @@ viewer, the file route, the sidebar count and the project page button. SB-24's a
 **Gallery** (`resources/views/livewire/board/mockup-gallery.blade.php`, Alpine `mockupGallery` in
 `resources/js/mockup-gallery.js`). Sets are grouped by project, and each card holds a live thumbnail
 frame (`mockupFit` scales a 1280 px page into the card). Filters for status, project and search over
-ID and title run in Alpine over the single render, and the component has no actions. Each group shows
+ID and title run in Alpine over the single render, and the component has no actions. The status filter
+opens on "Awaiting pick" (the sets that need the owner), or on "All" when no set awaits, so the first view
+is never the "No mockup sets match" state; "Clear filters" resets to All. Each group shows
 its first 12 cards until "Show all". A search or status filter shows every match. With no sets it shows
 the empty state (`data-mockups-empty`), which says mockups come from `docs/mockups/<ID>/`.
 
@@ -193,3 +195,4 @@ git reads again.
 ## Change history
 2026-09-29 — Gallery, full-screen viewer, compare, pick from the board; `mockups.frame` route;
 `GitReader::showMany()`; `StoryPickWriter`; sidebar/project page/modal entry points (SB-21, `486be22`)
+2026-09-29 — Gallery opens on "Awaiting pick", falling back to All when none await (SB-21, `b1a3ab7`)
