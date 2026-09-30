@@ -1,5 +1,5 @@
 # Project brief — story-board
-Last refreshed: 2026-09-30 (SB-22)
+Last refreshed: 2026-09-30 (SB-22, SB-23, SB-25)
 
 ## What it is, and for whom
 A localhost Laravel app for one owner. It reads the `stories/` folder of every project that uses
@@ -46,7 +46,8 @@ project's own journey tests, via the kit's `journeyStep()` helper (SB-22).
 - **Journey map** (not stored): a project's `docs/journeys/*.md` parsed into ordered steps, each with its
   story, state, route and picture, by `ReadJourneyMap`. **Journey shot**: an SB-22 PNG listed in a working-tree
   `journey-shots/<j>/manifest.json`, served only by manifest lookup (`ReadJourneyShots`). Written by the
-  kit test helper `journeyStep()` when `JOURNEY_SHOTS=1`: a desktop and a 375 px PNG per step.
+  kit test helper `journeyStep()` when `JOURNEY_SHOTS=1`: a desktop and a 375 px PNG per step. **Current version**
+  (not stored): a mockup set's newest matching shot, or `new`/`uncovered`, by `ReadCurrentVersion`.
 
 ## Features
 | Feature | Status | Doc |
@@ -65,7 +66,7 @@ project's own journey tests, via the kit's `journeyStep()` helper (SB-22).
 | Preflight history: `/p/{project}/preflight` ledger of runs from the cost CSVs, trend figures, two SVG charts, Alpine filters | active (SB-16) | [doc](features/preflight-history.md) |
 | Production connection and metrics: read-only prod MySQL per project on `/projects`, presets and custom SQL | active (SB-17) | [doc](features/production-connection.md) |
 | Production dashboard: `/prod` projects × metrics with changes and trends, queued reads, nightly `board:prod-snapshot` | active (SB-18) | [doc](features/production-dashboard.md) |
-| Mockup gallery: `/mockups` cards awaiting-pick first, full-screen viewer, compare, Pick commits the story file | active (SB-21) | [doc](features/mockup-gallery.md) |
+| Mockup gallery: `/mockups` cards awaiting-pick first, full-screen viewer, compare against today's page (journey shot), Pick commits the story file | active (SB-21, SB-23) | [doc](features/mockup-gallery.md) |
 | App map: `/p/{project}/map` journeys as screen flows, Alpine Back/Next, All flows with shared screens, SB-22 shots when present | active (SB-24) | [doc](features/app-map.md) |
 | Journey shots: kit Pest helper `journeyStep()`, desktop + 375 px PNG and manifest per step when `JOURNEY_SHOTS=1` | active (SB-22) | [doc](features/journey-shots.md) |
 
@@ -76,9 +77,9 @@ None yet. Every SB story so far is `Journey: none`.
 - **built**: SB-2 registry and reader · SB-3 what needs me · SB-4 story and mockups · SB-5 not on main ·
   SB-7 app shell · SB-8 story modal · SB-9 all-projects dashboard · SB-10 single-project dashboard ·
   SB-11 live sessions · SB-12 manage projects · SB-14 project handbook · SB-15 stories by initiative ·
-  SB-16 preflight history · SB-17 production connection · SB-18 production dashboard · SB-21 mockup gallery · SB-22 journey shots · SB-24 app map · SB-25 live cards link own stories
+  SB-16 preflight history · SB-17 production connection · SB-18 production dashboard · SB-21 mockup gallery · SB-22 journey shots · SB-23 current pane · SB-24 app map · SB-25 live cards link own stories
 - **approved**: SB-13 pick a mockup (overlaps SB-21's pick; needs rescoping)
-- **draft**: SB-19 preflight columns picker · SB-20 preflight run errors · SB-23 current pane
+- **draft**: SB-19 preflight columns picker · SB-20 preflight run errors
 - **draft (parked)**: SB-6 the board on an always-live domain
 
 SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this repo.
@@ -127,12 +128,14 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
   shots are a manifest lookup, never a path → [ADR-033](decisions/ADR-033-app-map-is-generated-server-side-from-project-files.md)
 - Journey shots are a kit test helper, switched by the shell env only, writing a manifest pinned to
   `ReadJourneyShots` → [ADR-035](decisions/ADR-035-journey-shots-are-a-test-helper-with-a-pinned-manifest.md)
+- "New page" in the Current pane is read statically from a project's route files, never by running them,
+  and claimed only on positive evidence → [ADR-036](decisions/ADR-036-new-page-is-read-statically-from-route-files.md)
 - Preflight audit scope, audit cost record, build-artifact disposal (kit) → ADR-001 to ADR-003
 
 ## Current phase and what's next
 Phase 2: UI organisation. Phase 1 (SB-2 to SB-5) is built and retro'd. SB-7 to SB-12, SB-14 to SB-18,
-SB-21, SB-22, SB-24 and SB-25 are built (some on branches awaiting merge). Next: SB-23 (Current pane, reuses
-`ReadJourneyShots`); adopt `journeyStep()` in coins via the kit sync; decide on the
+SB-21 to SB-25 are built (some on branches awaiting merge). Next: adopt `journeyStep()` in coins via the kit
+sync, then the real-data check of the app map and Current pane on coins; decide on the
 `--text-thumb` token; decide SB-13's fate now that SB-21 picks; then the phase-2 retro and full sweep. SB-6 (hosted) stays
 parked. Backlog: F-2 (timeline of what was built), F-3 (meter tier labels), F-5 (preflight run record).
 
@@ -164,7 +167,8 @@ parked. Backlog: F-2 (timeline of what was built), F-3 (meter tier labels), F-5 
   number formats exist in PHP and JS and must change together.
 - A board pick shows as "Picked X · not pushed" in the gallery at once, but the story modal, story page and
   What needs me show it only after a push and refresh. Its `--no-verify` (skips project hooks) awaits owner
-  confirmation. The gallery's Current pane is a placeholder until SB-23.
+  confirmation. The Current pane's "new page" can be wrong for routes not declared in `routes/*.php`, and
+  staleness is 14 days only (no commit-count rule; needs a `GitReader` change).
 - The app map puts every step of every journey in the page (coins: about 3.1 MB). Page weight is its cost driver.
   Its `--text-thumb` type token awaits owner approval. Shots are read from the working tree, not the ref.
 - Journey shots rely on Pest's `@internal` screenshot folder (RUNBOOK), show on the map only when the

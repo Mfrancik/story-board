@@ -1,5 +1,5 @@
 # SB-23 — Current version in the mockup compare
-Status: approved         Journey: none
+Status: built           Journey: none
 Source: owner 2026-09-29 (/story): *"shows me a current version (if that exists, then i can see the two mockups side
 by side in a single screen."* Screenshots come from journey tests (SB-22, owner pick).
 

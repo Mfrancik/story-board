@@ -71,14 +71,17 @@ export function mockupGallery(project, perGroup, sets) {
  * The full-screen viewer: one option at a time (tabs), or two side by side with a picker per pane
  * and a swap; the width switch; Escape back to the gallery; the pick dialog.
  *
- * @param {{options: string[], first: string, urls: Object<string, string>, gallery: string, prev: string, next: string}} cfg
+ * It opens in compare (Current vs the first option) when the server found a journey shot of today's
+ * page (SB-23); the server decides the starting panes so the page and its log line agree.
+ *
+ * @param {{options: string[], first: string, compare: boolean, left: string, right: string, urls: Object<string, string>, gallery: string, prev: string, next: string}} cfg
  */
 export function mockupViewer(cfg) {
     return {
         opt: cfg.first,
-        compare: false,
-        left: cfg.first,
-        right: cfg.options.find((o) => o !== cfg.first) || 'current',
+        compare: cfg.compare,
+        left: cfg.left,
+        right: cfg.right,
         width: 1280,
         picking: null,
         reason: '',

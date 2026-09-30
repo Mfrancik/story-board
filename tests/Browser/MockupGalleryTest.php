@@ -134,3 +134,22 @@ it('opens on All for a project with nothing awaiting, even when another project 
         $other->destroy();
     }
 });
+
+it('opens a set whose route has a journey shot in compare, Current (the shot) left and option a right (SB-23)', function () {
+    $this->repo->story('FX-1', 'draft', 'demo', "## Design mockup gate\n- Chosen option: _pending_\n- Why I chose it: _pending_\n\n## Data & interfaces\n- Routes: `GET /widgets`.\n");
+    $this->repo->commitAndPush();
+    $this->artisan('board:refresh', ['project' => 'fx'])->assertSuccessful();
+    $this->repo->syncProject();
+    $dir = $this->repo->project.'/storage/app/journey-shots/widgets';
+    File::ensureDirectoryExists($dir);
+    // A real 1×1 PNG, so the browser decodes it and the test can see it loaded.
+    File::put("{$dir}/01-widgets.png", base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='));
+    File::put("{$dir}/manifest.json", json_encode([['route' => '/widgets', 'captured_at' => now()->subDay()->toIso8601String(), 'commit' => 'abc1234', 'file' => '01-widgets.png']]));
+
+    visit('/mockups/fx/FX-1')->resize(1280, 800)
+        ->assertVisible('[data-compare-pane="left"] [data-current-pane="shot"] img')
+        ->assertScript('document.querySelector("[data-compare-pane=left] img").naturalWidth', 1)
+        ->assertScript('document.querySelector("[data-compare-pane=right] iframe").getAttribute("src").endsWith("option-a.html")', true)
+        ->assertSee('abc1234')
+        ->assertNoJavaScriptErrors();
+});

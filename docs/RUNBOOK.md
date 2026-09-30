@@ -22,6 +22,12 @@ Root cause: Pest can only save a screenshot into its own `tests/Browser/Screensh
 Fix: re-point `tests/Support/JourneyShots.php:capture()` at wherever the new Pest writes `screenshot(true, $name)`, then re-run `tests/Browser/JourneyShotsTest.php`, whose first criterion fails first when this breaks (SB-22, `0f7ae8b`). Fix it in the kit copy too, since every project carries the same file.
 Log trail: none; test tooling logs nothing. The PHP error names `Screenshot` or the missing temp file `journey-shot-<hex>.png`.
 
+## 2026-09-30 — Browser test fails after a change to resources/js, though Feature tests pass
+Symptom: SB-23's browser test for "opens in compare, Current left" failed on its first run; the viewer opened as before (one option, compare off) even though the server rendered `data-compare-open="true"`.
+Root cause: the browser suite loads the built assets in `public/build`, not Vite's dev server. `mockupViewer(cfg)` in `resources/js/mockup-gallery.js` had been changed to take `compare`/`left`/`right` from the server, but the old bundle still hard-coded `compare: false`.
+Fix: `npm run build`, then re-run the browser suite (SB-23, `079a2c1`). Any change under `resources/js` or to Tailwind classes needs a rebuild before `tests/Browser`.
+Log trail: none; `board.mockup_viewed` already logged `compare: true`, so a log saying compare while the page shows a single option points at stale assets.
+
 ## 2026-09-29 — Project tabs scrolled 1 px vertically after they were made to scroll sideways
 Symptom: with a fifth tab (App map), the project tab row overflowed a 375 px phone. Making it `overflow-x-auto` fixed the width, but the row then also scrolled up and down by 1 px and showed a vertical scrollbar.
 Root cause: the active tab's underline uses `-mb-px` to sit on the row's `border-b`. Once the row is a scroll container, that 1 px overhang counts as overflow, and `overflow-x-auto` forces `overflow-y` to `auto` too.
