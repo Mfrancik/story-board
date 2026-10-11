@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RD-2 option A — Home A command center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E0F11}
+a{color:#F2A33A;text-decoration:none}a:hover{color:#FFC26B}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.card{background:#16181B;border:1px solid #26292E;border-radius:12px}
+.lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9A9DA3;font-weight:500}
+.navi{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;color:#C9CBCF;font-size:14px;min-height:24px}
+.navi:hover{background:#1D2024;color:#F2F1EE}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid #33373D;color:#C9CBCF;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+.btn{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 16px;border-radius:8px;font:500 14px Geist,sans-serif;border:1px solid #33373D;background:#1D2024;color:#F2F1EE;cursor:pointer}
+.btn.pri{background:#F2A33A;border-color:#F2A33A;color:#1A1205}
+.bar{height:6px;border-radius:3px;background:#26292E;overflow:hidden;display:flex}
+</style>
+</head>
+<body>
+<!-- Approved record — RD-2, redesign canvas board 'Home A — Command center', chosen option A (owner, 2026-10-10): 'A is better'. Source: https://claude.ai/artifact/Ervkp5duofs7VbUbbz7tDg -->
+<div style="min-height:100vh;background:#0E0F11;color:#F2F1EE;font-family:Geist,system-ui,sans-serif;display:flex;flex-wrap:wrap">
+
+  <nav aria-label="Main" style="flex:1 1 232px;max-width:100%;box-sizing:border-box;padding:20px 14px;border-right:1px solid #1F2226;display:flex;flex-direction:column;gap:22px">
+    <div style="display:flex;align-items:center;gap:10px;padding:0 6px">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="1" width="24" height="24" rx="7" fill="none" stroke="#F2A33A" stroke-width="2"></rect><path d="M8 9h10M8 13h6M8 17h8" stroke="#F2A33A" stroke-width="2" stroke-linecap="round"></path></svg>
+      <span style="font-weight:600;font-size:16px">Story Board</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <a class="navi" href="#" style="background:#1D2024;color:#F2F1EE">Home</a>
+      <a class="navi" href="#">Money</a>
+      <a class="navi" href="#">Brain runner <span class="pill mono" style="margin-left:auto;border-color:#2B4A6E;color:#8EBBF2">1 running</span></a>
+      <a class="navi" href="#">Mockups &amp; flows <span class="pill mono" style="margin-left:auto">3</span></a>
+      <a class="navi" href="#">Backlog</a>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <span class="lbl" style="padding:0 12px 6px">Projects</span>
+              <a class="navi" href="#"><span class="dot" style="background:#6CA6F0"></span>story-board<span class="mono" style="margin-left:auto;color:#7E8187;font-size:12px">SB</span></a>
+      
+        <a class="navi" href="#"><span class="dot" style="background:#F59088"></span>ledger-app<span class="mono" style="margin-left:auto;color:#7E8187;font-size:12px">LA</span></a>
+      
+        <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>client-portal<span class="mono" style="margin-left:auto;color:#7E8187;font-size:12px">CP</span></a>
+      
+        <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>cozmic-site<span class="mono" style="margin-left:auto;color:#7E8187;font-size:12px">CZ</span></a>
+      
+    </div>
+    <div class="card" style="margin-top:auto;padding:14px;display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:#6CA6F0;box-shadow:0 0 0 4px rgba(108,166,240,.18)"></span><span style="font-weight:600;font-size:14px">brain</span><span class="mono" style="margin-left:auto;font-size:12px;color:#9A9DA3">online</span></div>
+      <div class="mono" style="font-size:12px;color:#9A9DA3">CPU 62% · queue 2 · last GO 14m</div>
+    </div>
+  </nav>
+
+  <main style="flex:999 1 560px;min-width:0;box-sizing:border-box;padding:28px 32px 48px;display:flex;flex-direction:column;gap:28px">
+
+    <header style="display:flex;flex-wrap:wrap;align-items:center;gap:16px">
+      <div style="display:flex;flex-direction:column;gap:4px;margin-right:auto">
+        <span class="lbl">Saturday 10 October</span>
+        <h1 style="margin:0;font-size:28px;font-weight:600;letter-spacing:-.01em">7 things need you. 3 sessions are building.</h1>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;min-height:40px;padding:0 12px;border:1px solid #33373D;border-radius:8px;background:#16181B;color:#9A9DA3;font-size:14px;min-width:240px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input aria-label="Search stories, projects, runs" placeholder="Jump to story, project, run…" style="background:transparent;border:0;outline:0;color:#F2F1EE;font:14px Geist,sans-serif;flex:1">
+        <span class="mono" style="font-size:12px">⌘K</span>
+      </label>
+      <button class="btn pri">Run preflight on brain</button>
+    </header>
+
+    <section aria-label="Right now" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">
+              <div class="card" style="padding:18px;display:flex;flex-direction:column;gap:10px">
+          <span class="lbl">Live sessions</span>
+          <div style="display:flex;align-items:baseline;gap:10px"><span class="mono" style="font-size:32px;font-weight:500;letter-spacing:-.02em">3</span><span style="font-size:13px;color:#8EBBF2">2 projects</span></div>
+          <span style="font-size:13px;color:#9A9DA3">Longest: SB-26, 1h 12m</span>
+        </div>
+      
+        <div class="card" style="padding:18px;display:flex;flex-direction:column;gap:10px">
+          <span class="lbl">Brain runner</span>
+          <div style="display:flex;align-items:baseline;gap:10px"><span class="mono" style="font-size:32px;font-weight:500;letter-spacing:-.02em">1</span><span style="font-size:13px;color:#8EBBF2">+2 queued</span></div>
+          <span style="font-size:13px;color:#9A9DA3">Preflight · story-board · 3m 40s in</span>
+        </div>
+      
+        <div class="card" style="padding:18px;display:flex;flex-direction:column;gap:10px">
+          <span class="lbl">Needs me</span>
+          <div style="display:flex;align-items:baseline;gap:10px"><span class="mono" style="font-size:32px;font-weight:500;letter-spacing:-.02em">7</span><span style="font-size:13px;color:#F2A33A">2 over a day</span></div>
+          <span style="font-size:13px;color:#9A9DA3">3 picks · 2 approvals · 1 NO-GO · 1 merge</span>
+        </div>
+      
+        <div class="card" style="padding:18px;display:flex;flex-direction:column;gap:10px">
+          <span class="lbl">Spend today</span>
+          <div style="display:flex;align-items:baseline;gap:10px"><span class="mono" style="font-size:32px;font-weight:500;letter-spacing:-.02em">$38.40</span><span style="font-size:13px;color:#9A9DA3">avg $41</span></div>
+          <span style="font-size:13px;color:#9A9DA3">Tokens $31 · infra $7.40</span>
+        </div>
+      
+    </section>
+
+    <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+      <section class="card" aria-labelledby="needs" style="flex:1 1 420px;min-width:0;padding:6px 0">
+        <div style="display:flex;align-items:center;padding:14px 20px 10px"><h2 id="needs" style="margin:0;font-size:16px;font-weight:600">Needs me</h2><span style="margin-left:auto;font-size:13px;color:#9A9DA3">oldest first</span></div>
+                  <a href="#" style="display:flex;align-items:center;gap:14px;padding:12px 20px;border-top:1px solid #1F2226;color:#F2F1EE;min-height:44px">
+            <span class="pill" style="border-color:#6B2E2A;color:#F59088;min-width:92px;justify-content:center">NO-GO</span>
+            <span style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1"><span style="font-size:14px;font-weight:500">Preflight failed on ledger-app LA-14</span><span class="mono" style="font-size:12px;color:#9A9DA3">gate: pest · 2 failing · brain run #412</span></span>
+            <span style="font-size:12px;color:#7E8187;white-space:nowrap">26h</span>
+          </a>
+        
+          <a href="#" style="display:flex;align-items:center;gap:14px;padding:12px 20px;border-top:1px solid #1F2226;color:#F2F1EE;min-height:44px">
+            <span class="pill" style="border-color:#5C4219;color:#F2A33A;min-width:92px;justify-content:center">Pick</span>
+            <span style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1"><span style="font-size:14px;font-weight:500">Pick a mockup for SB-27 project timeline</span><span class="mono" style="font-size:12px;color:#9A9DA3">story-board · 3 options · today vs. A/B/C</span></span>
+            <span style="font-size:12px;color:#7E8187;white-space:nowrap">22h</span>
+          </a>
+        
+          <a href="#" style="display:flex;align-items:center;gap:14px;padding:12px 20px;border-top:1px solid #1F2226;color:#F2F1EE;min-height:44px">
+            <span class="pill" style="border-color:#5C4219;color:#F2A33A;min-width:92px;justify-content:center">Pick</span>
+            <span style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1"><span style="font-size:14px;font-weight:500">Pick a mockup for CP-6 invoice list</span><span class="mono" style="font-size:12px;color:#9A9DA3">client-portal · 2 options</span></span>
+            <span style="font-size:12px;color:#7E8187;white-space:nowrap">5h</span>
+          </a>
+        
+          <a href="#" style="display:flex;align-items:center;gap:14px;padding:12px 20px;border-top:1px solid #1F2226;color:#F2F1EE;min-height:44px">
+            <span class="pill" style="border-color:#2B4A6E;color:#8EBBF2;min-width:92px;justify-content:center">Approve</span>
+            <span style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1"><span style="font-size:14px;font-weight:500">Approve story SB-28 money dashboard</span><span class="mono" style="font-size:12px;color:#9A9DA3">story-board · draft · 6 criteria</span></span>
+            <span style="font-size:12px;color:#7E8187;white-space:nowrap">3h</span>
+          </a>
+        
+          <a href="#" style="display:flex;align-items:center;gap:14px;padding:12px 20px;border-top:1px solid #1F2226;color:#F2F1EE;min-height:44px">
+            <span class="pill" style="border-color:#2B4A6E;color:#8EBBF2;min-width:92px;justify-content:center">Approve</span>
+            <span style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1"><span style="font-size:14px;font-weight:500">Approve story LA-15 export CSV</span><span class="mono" style="font-size:12px;color:#9A9DA3">ledger-app · draft · 4 criteria</span></span>
+            <span style="font-size:12px;color:#7E8187;white-space:nowrap">2h</span>
+          </a>
+        
+          <a href="#" style="display:flex;align-items:center;gap:14px;padding:12px 20px;border-top:1px solid #1F2226;color:#F2F1EE;min-height:44px">
+            <span class="pill" style="border-color:#2B4A6E;color:#8EBBF2;min-width:92px;justify-content:center">Merge</span>
+            <span style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1"><span style="font-size:14px;font-weight:500">feat/SB-26 is GO and ready to land</span><span class="mono" style="font-size:12px;color:#9A9DA3">story-board · 4 commits ahead of main</span></span>
+            <span style="font-size:12px;color:#7E8187;white-space:nowrap">40m</span>
+          </a>
+        
+          <a href="#" style="display:flex;align-items:center;gap:14px;padding:12px 20px;border-top:1px solid #1F2226;color:#F2F1EE;min-height:44px">
+            <span class="pill" style="border-color:#5C4219;color:#F2A33A;min-width:92px;justify-content:center">Pick</span>
+            <span style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1"><span style="font-size:14px;font-weight:500">Pick a mockup for CZ-3 pricing page</span><span class="mono" style="font-size:12px;color:#9A9DA3">cozmic-site · 3 options</span></span>
+            <span style="font-size:12px;color:#7E8187;white-space:nowrap">12m</span>
+          </a>
+        
+      </section>
+
+      <section aria-labelledby="live" style="flex:1 1 380px;min-width:0;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:#6CA6F0"></span><h2 id="live" style="margin:0;font-size:16px;font-weight:600">Live now</h2><span style="margin-left:auto;font-size:13px;color:#9A9DA3">updates every 5s</span></div>
+                  <article class="card" style="padding:16px;display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="font-weight:600;font-size:14px">story-board</span><span class="pill mono">feat/SB-26</span><span class="pill" style="border-color:#5C4219;color:#F2A33A">SB-26</span><span style="margin-left:auto;font-size:12px;color:#9A9DA3">1h 12m</span></div>
+            <div style="font-size:14px;color:#C9CBCF">Writing Pest test for the brain runner queue</div>
+            <div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;color:#9A9DA3;width:58px">context</span><div class="bar" style="flex:1"><div style="width:71%;background:#F2A33A"></div></div><span class="mono" style="font-size:12px;color:#C9CBCF;width:110px;text-align:right">142k / 200k</span></div>
+            <div class="mono" style="display:flex;gap:16px;font-size:12px;color:#9A9DA3;flex-wrap:wrap"><span>build · step 3 of 7</span><span>$6.80</span><span>worktree sb-26</span></div>
+          </article>
+        
+          <article class="card" style="padding:16px;display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="font-weight:600;font-size:14px">ledger-app</span><span class="pill mono">fix/LA-14</span><span class="pill" style="border-color:#5C4219;color:#F2A33A">LA-14</span><span style="margin-left:auto;font-size:12px;color:#9A9DA3">24m</span></div>
+            <div style="font-size:14px;color:#C9CBCF">Reading tests/Feature/ExportTest.php</div>
+            <div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;color:#9A9DA3;width:58px">context</span><div class="bar" style="flex:1"><div style="width:28%;background:#6CA6F0"></div></div><span class="mono" style="font-size:12px;color:#C9CBCF;width:110px;text-align:right">56k / 200k</span></div>
+            <div class="mono" style="display:flex;gap:16px;font-size:12px;color:#9A9DA3;flex-wrap:wrap"><span>fix · after NO-GO</span><span>$1.90</span><span>main checkout</span></div>
+          </article>
+        
+          <article class="card" style="padding:16px;display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="font-weight:600;font-size:14px">story-board</span><span class="pill mono">main</span><span class="pill" style="border-color:#5C4219;color:#F2A33A">/story</span><span style="margin-left:auto;font-size:12px;color:#9A9DA3">6m</span></div>
+            <div style="font-size:14px;color:#C9CBCF">Drafting stories from a brain dump</div>
+            <div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;color:#9A9DA3;width:58px">context</span><div class="bar" style="flex:1"><div style="width:12%;background:#6CA6F0"></div></div><span class="mono" style="font-size:12px;color:#C9CBCF;width:110px;text-align:right">24k / 200k</span></div>
+            <div class="mono" style="display:flex;gap:16px;font-size:12px;color:#9A9DA3;flex-wrap:wrap"><span>story · sweeping backlog</span><span>$0.40</span><span>main checkout</span></div>
+          </article>
+        
+      </section>
+    </div>
+
+    <section aria-labelledby="projs" style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;align-items:center"><h2 id="projs" style="margin:0;font-size:16px;font-weight:600">Projects</h2><a href="#" style="margin-left:auto;font-size:13px">Manage projects</a></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">
+                  <a href="#" class="card" style="padding:18px;display:flex;flex-direction:column;gap:14px;color:#F2F1EE">
+            <div style="display:flex;align-items:center;gap:10px"><span class="dot" style="background:#6CA6F0"></span><span style="font-weight:600;font-size:15px">story-board</span><span class="pill" style="margin-left:auto;border-color:#2B4A6E;color:#8EBBF2">Running</span></div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div class="bar"><div style="width:72%;background:#5FBF8F"></div><div style="width:10%;background:#6CA6F0"></div><div style="width:8%;background:#F2A33A"></div></div>
+              <div style="display:flex;gap:14px;font-size:12px;color:#9A9DA3"><span>21 built · 2 in flight · 2 draft</span><span style="margin-left:auto">3 off main</span></div>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:12px">
+              <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;color:#9A9DA3">Stories shipped / wk</span><span class="mono" style="font-size:20px">6</span></div>
+              <svg width="110" height="34" viewBox="0 0 110 34" style="margin-left:auto" aria-hidden="true"><polyline points="0,26 15,24 30,28 45,18 60,20 75,12 90,10 110,6" fill="none" stroke="#6CA6F0" stroke-width="2" stroke-linejoin="round"></polyline></svg>
+            </div>
+            <div class="mono" style="display:flex;gap:14px;font-size:12px;color:#9A9DA3;border-top:1px solid #1F2226;padding-top:12px"><span>$238 this month</span><span style="margin-left:auto">shipped 2h ago</span></div>
+          </a>
+        
+          <a href="#" class="card" style="padding:18px;display:flex;flex-direction:column;gap:14px;color:#F2F1EE">
+            <div style="display:flex;align-items:center;gap:10px"><span class="dot" style="background:#F59088"></span><span style="font-weight:600;font-size:15px">ledger-app</span><span class="pill" style="margin-left:auto;border-color:#6B2E2A;color:#F59088">NO-GO</span></div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div class="bar"><div style="width:60%;background:#5FBF8F"></div><div style="width:7%;background:#6CA6F0"></div><div style="width:13%;background:#F2A33A"></div></div>
+              <div style="display:flex;gap:14px;font-size:12px;color:#9A9DA3"><span>9 built · 1 in flight · 2 draft</span><span style="margin-left:auto">1 off main</span></div>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:12px">
+              <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;color:#9A9DA3">Active users (prod)</span><span class="mono" style="font-size:20px">1,284</span></div>
+              <svg width="110" height="34" viewBox="0 0 110 34" style="margin-left:auto" aria-hidden="true"><polyline points="0,22 15,20 30,21 45,16 60,17 75,14 90,12 110,10" fill="none" stroke="#6CA6F0" stroke-width="2" stroke-linejoin="round"></polyline></svg>
+            </div>
+            <div class="mono" style="display:flex;gap:14px;font-size:12px;color:#9A9DA3;border-top:1px solid #1F2226;padding-top:12px"><span>$174 this month</span><span style="margin-left:auto">shipped 2d ago</span></div>
+          </a>
+        
+          <a href="#" class="card" style="padding:18px;display:flex;flex-direction:column;gap:14px;color:#F2F1EE">
+            <div style="display:flex;align-items:center;gap:10px"><span class="dot" style="background:#5FBF8F"></span><span style="font-weight:600;font-size:15px">client-portal</span><span class="pill" style="margin-left:auto;border-color:#2D5A44;color:#7CD1A4">GO</span></div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div class="bar"><div style="width:45%;background:#5FBF8F"></div><div style="width:0%;background:#6CA6F0"></div><div style="width:20%;background:#F2A33A"></div></div>
+              <div style="display:flex;gap:14px;font-size:12px;color:#9A9DA3"><span>5 built · 0 in flight · 2 draft</span><span style="margin-left:auto">clean</span></div>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:12px">
+              <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;color:#9A9DA3">Invoices sent (prod)</span><span class="mono" style="font-size:20px">312</span></div>
+              <svg width="110" height="34" viewBox="0 0 110 34" style="margin-left:auto" aria-hidden="true"><polyline points="0,28 15,26 30,22 45,24 60,18 75,16 90,17 110,12" fill="none" stroke="#6CA6F0" stroke-width="2" stroke-linejoin="round"></polyline></svg>
+            </div>
+            <div class="mono" style="display:flex;gap:14px;font-size:12px;color:#9A9DA3;border-top:1px solid #1F2226;padding-top:12px"><span>$118 this month</span><span style="margin-left:auto">shipped 4d ago</span></div>
+          </a>
+        
+          <a href="#" class="card" style="padding:18px;display:flex;flex-direction:column;gap:14px;color:#F2F1EE">
+            <div style="display:flex;align-items:center;gap:10px"><span class="dot" style="background:#5FBF8F"></span><span style="font-weight:600;font-size:15px">cozmic-site</span><span class="pill" style="margin-left:auto;border-color:#2D5A44;color:#7CD1A4">GO</span></div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div class="bar"><div style="width:30%;background:#5FBF8F"></div><div style="width:0%;background:#6CA6F0"></div><div style="width:40%;background:#F2A33A"></div></div>
+              <div style="display:flex;gap:14px;font-size:12px;color:#9A9DA3"><span>3 built · 0 in flight · 4 draft</span><span style="margin-left:auto">clean</span></div>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:12px">
+              <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;color:#9A9DA3">Visitors / day</span><span class="mono" style="font-size:20px">846</span></div>
+              <svg width="110" height="34" viewBox="0 0 110 34" style="margin-left:auto" aria-hidden="true"><polyline points="0,20 15,24 30,18 45,22 60,16 75,20 90,14 110,12" fill="none" stroke="#6CA6F0" stroke-width="2" stroke-linejoin="round"></polyline></svg>
+            </div>
+            <div class="mono" style="display:flex;gap:14px;font-size:12px;color:#9A9DA3;border-top:1px solid #1F2226;padding-top:12px"><span>$82 this month</span><span style="margin-left:auto">shipped 6d ago</span></div>
+          </a>
+        
+      </div>
+    </section>
+
+    <div style="display:flex;flex-wrap:wrap;gap:20px">
+      <section class="card" aria-labelledby="shipped" style="flex:2 1 460px;min-width:0;padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;align-items:center"><h2 id="shipped" style="margin:0;font-size:16px;font-weight:600">Shipped this week</h2><a href="#" style="margin-left:auto;font-size:13px">Full timeline</a></div>
+        <div style="display:flex;flex-direction:column">
+                      <div style="display:flex;gap:14px;align-items:center;padding:8px 0;border-top:1px solid #1F2226;min-height:28px">
+              <span class="mono" style="font-size:12px;color:#7E8187;width:64px">Sat 09:12</span>
+              <span class="pill mono" style="border-color:#2D5A44;color:#7CD1A4">SB-19</span>
+              <span style="font-size:14px;flex:1;min-width:0">Columns picker on preflight history</span>
+              <span style="font-size:12px;color:#9A9DA3">story-board</span>
+            </div>
+          
+            <div style="display:flex;gap:14px;align-items:center;padding:8px 0;border-top:1px solid #1F2226;min-height:28px">
+              <span class="mono" style="font-size:12px;color:#7E8187;width:64px">Fri 17:40</span>
+              <span class="pill mono" style="border-color:#2D5A44;color:#7CD1A4">SB-23</span>
+              <span style="font-size:14px;flex:1;min-width:0">Current pane in mockup gallery</span>
+              <span style="font-size:12px;color:#9A9DA3">story-board</span>
+            </div>
+          
+            <div style="display:flex;gap:14px;align-items:center;padding:8px 0;border-top:1px solid #1F2226;min-height:28px">
+              <span class="mono" style="font-size:12px;color:#7E8187;width:64px">Fri 11:05</span>
+              <span class="pill mono" style="border-color:#2D5A44;color:#7CD1A4">LA-13</span>
+              <span style="font-size:14px;flex:1;min-width:0">Recurring entries</span>
+              <span style="font-size:12px;color:#9A9DA3">ledger-app</span>
+            </div>
+          
+            <div style="display:flex;gap:14px;align-items:center;padding:8px 0;border-top:1px solid #1F2226;min-height:28px">
+              <span class="mono" style="font-size:12px;color:#7E8187;width:64px">Thu 15:22</span>
+              <span class="pill mono" style="border-color:#2D5A44;color:#7CD1A4">SB-24</span>
+              <span style="font-size:14px;flex:1;min-width:0">App map of journeys</span>
+              <span style="font-size:12px;color:#9A9DA3">story-board</span>
+            </div>
+          
+            <div style="display:flex;gap:14px;align-items:center;padding:8px 0;border-top:1px solid #1F2226;min-height:28px">
+              <span class="mono" style="font-size:12px;color:#7E8187;width:64px">Wed 10:48</span>
+              <span class="pill mono" style="border-color:#2D5A44;color:#7CD1A4">CP-5</span>
+              <span style="font-size:14px;flex:1;min-width:0">Client login with magic link</span>
+              <span style="font-size:12px;color:#9A9DA3">client-portal</span>
+            </div>
+          
+        </div>
+      </section>
+      <section class="card" aria-labelledby="spend" style="flex:1 1 300px;min-width:0;padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;align-items:center"><h2 id="spend" style="margin:0;font-size:16px;font-weight:600">October spend</h2><a href="#" style="margin-left:auto;font-size:13px">Money</a></div>
+        <div style="display:flex;align-items:baseline;gap:10px"><span class="mono" style="font-size:30px">$612</span><span style="font-size:13px;color:#9A9DA3">of $1,400 budget · day 10 of 31</span></div>
+        <div class="bar" style="height:10px;border-radius:5px"><div style="width:20%;background:#F2A33A"></div><div style="width:14%;background:#6CA6F0"></div><div style="width:10%;background:#A98BE0"></div></div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
+          <div style="display:flex;gap:8px;align-items:center"><span class="dot" style="background:#F2A33A"></span>Claude &amp; tokens<span class="mono" style="margin-left:auto">$284</span></div>
+          <div style="display:flex;gap:8px;align-items:center"><span class="dot" style="background:#6CA6F0"></span>Hosting &amp; infra<span class="mono" style="margin-left:auto">$196</span></div>
+          <div style="display:flex;gap:8px;align-items:center"><span class="dot" style="background:#A98BE0"></span>Subscriptions<span class="mono" style="margin-left:auto">$132</span></div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+</body>
+</html>
