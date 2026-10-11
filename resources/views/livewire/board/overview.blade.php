@@ -1,7 +1,8 @@
 {{--
     RD-5 home overview, Home A "command center" (docs/mockups/RD-5/option-a.html) in the RD-2 shell. Top to bottom: today's
     date and one sentence of counts; the four headline figures; then Needs me (oldest first) beside Live now. The
-    mockup's dashed parts (search, Run preflight on brain, project tiles, Shipped this week, spend) are other stories.
+    mockup's dashed parts (search, Run preflight on brain, spend) are other stories. RD-7 (docs/mockups/RD-7/option-a.html)
+    adds the Projects grid and Shipped this week below; the Full timeline link and the spend card stay out (F-2, Money).
 
     Each panel's data arrives on its own and may be null — its source threw (Overview::attempt logged it) — so a panel
     shows its error state and the others still render. Live now's section carries the page's only wire:poll; a poll
@@ -261,5 +262,145 @@
                 @endif
             </section>
         </div>
+
+        {{-- RD-7 Projects grid: one tile per covered project, linking to its Stories page. Counts, off-main and the
+             production headline are stored data; the last preflight is the newest CSV row; the live dot follows the
+             Live now cards above, so it never disagrees with them. --}}
+        @php
+            $liveProjects = array_unique(array_column($cards, 'project'));
+            $tileState = $tiles === null ? 'error' : ($tiles === [] ? 'empty' : 'ok');
+        @endphp
+        <section data-tiles-panel="{{ $tileState }}" aria-labelledby="projects-title" class="flex min-w-0 flex-col gap-3">
+            <div class="flex flex-wrap items-center gap-2">
+                <h2 id="projects-title" class="text-base font-semibold">Projects</h2>
+                <span wire:loading.delay class="text-xs text-ink-muted" role="status">Updating…</span>
+                <a href="{{ route('projects.manage') }}" wire:navigate class="ml-auto inline-flex min-h-11 items-center rounded-md text-sm text-needs hover:underline {{ $focus }}">Manage projects</a>
+            </div>
+
+            @if ($tiles === null)
+                <div class="flex flex-col gap-3 rounded-xl border border-edge bg-surface p-4">
+                    <p role="alert" class="{{ $panelError }}">Could not load the project tiles. The rest of the page is unaffected.</p>
+                    <button type="button" wire:click="$refresh" wire:loading.attr="disabled" class="{{ $retry }}">Try again</button>
+                </div>
+            @elseif ($tiles === [])
+                <p class="rounded-xl border border-edge bg-surface p-4 {{ $note }}">No projects match the filter.</p>
+            @else
+                <div class="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                    @foreach ($tiles as $tile)
+                        @php
+                            ['built' => $built, 'approved' => $approved, 'draft' => $draft] = $tile['stories'];
+                            $progress = "{$built} built · {$approved} in flight · {$draft} draft";
+                            $run = $tile['preflight'];
+                            $live = in_array($tile['name'], $liveProjects, true);
+                            // One string, not an `@if` inside the span: Livewire's morph markers would split the text.
+                            $runText = $run === null ? null : Overview::ago($run['at']).($run['wall'] !== null ? ' · '.Overview::duration($run['wall']) : '');
+                        @endphp
+                        <a wire:key="tile-{{ $tile['name'] }}" href="{{ route('projects.stories', ['project' => $tile['name']]) }}" wire:navigate data-tile="{{ $tile['name'] }}"
+                            aria-label="{{ $tile['name'] }} stories"
+                            class="flex min-w-0 flex-col gap-3.5 rounded-xl border border-edge bg-surface p-4 hover:border-rim {{ $focus }}">
+                            <span class="flex flex-wrap items-center gap-2.5">
+                                <x-board.state :state="$tile['state']" />
+                                <span class="min-w-0 truncate text-sm font-semibold">{{ $tile['name'] }}</span>
+                                <x-board.state :state="$tile['state']" part="label" />
+                                @if ($live)
+                                    <span data-tile-live class="ml-auto inline-flex items-center gap-1.5 text-xs text-live">
+                                        <span class="size-2 shrink-0 rounded-full bg-live" aria-hidden="true"></span>session running
+                                    </span>
+                                @endif
+                            </span>
+
+                            <span class="flex flex-col gap-1.5">
+                                <x-board.status-bar :counts="['built' => $built, 'approved' => $approved, 'draft' => $draft]" :label="$progress" />
+                                <span class="flex flex-wrap gap-x-3.5 gap-y-1 text-xs text-ink-muted">
+                                    <span data-tile-counts>{{ $progress }}</span>
+                                    <span data-tile-offmain="{{ $tile['offmain'] }}" class="ml-auto">{{ $tile['offmain'] > 0 ? number_format($tile['offmain']).' off main' : 'clean' }}</span>
+                                </span>
+                            </span>
+
+                            @if ($tile['prod'] !== null)
+                                <span data-tile-prod class="flex items-end gap-3">
+                                    <span class="flex min-w-0 flex-col gap-0.5">
+                                        <span class="truncate text-xs text-ink-muted">{{ $tile['prod']['label'] }} <span class="text-ink-faint">(prod)</span></span>
+                                        <span class="font-mono text-xl">{{ $tile['prod']['text'] }}</span>
+                                    </span>
+                                    <x-board.sparkline decorative :series="$tile['prod']['series']" tone="text-live" class="ml-auto h-8 w-28 shrink-0" />
+                                </span>
+                            @endif
+
+                            <span data-tile-preflight class="flex flex-wrap items-center gap-2 border-t border-hairline pt-3 text-xs text-ink-muted">
+                                <span>Last preflight</span>
+                                @if ($run === null)
+                                    <span class="ml-auto text-ink-faint">no runs yet</span>
+                                @else
+                                    <span class="ml-auto font-mono text-ink-soft" title="{{ $run['at']->toDateTimeString() }}">{{ $runText }}</span>
+                                    @if ($run['mode'] !== null)<x-shell.tag mono>{{ $run['mode'] }}</x-shell.tag>@endif
+                                    {{-- RD-8 sets where the run was made; until then this is always null. --}}
+                                    @if ($run['ran_on'] !== null)<span data-tile-ran-on class="font-mono">on {{ $run['ran_on'] }}</span>@endif
+                                @endif
+                            </span>
+                        </a>
+                    @endforeach
+                </div>
+            @endif
+        </section>
+
+        {{-- RD-7 Shipped this week: build commits (feat|fix|test with a story ID) on each covered project's ref in the
+             last 7 days, newest first. A project whose history cannot be read is named; the others are still listed. --}}
+        @php
+            $shippedRows = $shipped['rows'] ?? [];
+            $shippedFailed = $shipped['failed'] ?? [];
+            $shippedState = match (true) {
+                $shipped === null => 'error',
+                $shippedRows === [] => 'empty',
+                default => 'ok',
+            };
+        @endphp
+        <section data-shipped-panel="{{ $shippedState }}" aria-labelledby="shipped-title" class="min-w-0 rounded-xl border border-edge bg-surface py-1.5">
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 px-5 pt-3.5 pb-2.5">
+                <h2 id="shipped-title" class="text-base font-semibold">Shipped this week</h2>
+                <span wire:loading.delay class="text-xs text-ink-muted" role="status">Updating…</span>
+                <span class="text-sm text-ink-muted">newest first · build commits only</span>
+            </div>
+
+            @if ($shipped === null)
+                <div class="flex flex-col gap-3 border-t border-hairline px-5 py-4">
+                    <p role="alert" class="{{ $panelError }}">Could not load what shipped. The rest of the page is unaffected.</p>
+                    <button type="button" wire:click="$refresh" wire:loading.attr="disabled" class="{{ $retry }}">Try again</button>
+                </div>
+            @else
+                @if ($shippedFailed !== [])
+                    <div class="flex flex-col gap-3 border-t border-hairline px-5 py-4">
+                        <p role="alert" data-shipped-failed="{{ implode(',', $shippedFailed) }}" class="{{ $panelError }}">
+                            Could not read git history for {{ implode(', ', $shippedFailed) }}. @if ($shippedRows !== [])Other projects are listed.@endif
+                        </p>
+                        <button type="button" wire:click="$refresh" wire:loading.attr="disabled" class="{{ $retry }}">Try again</button>
+                    </div>
+                @endif
+                @if ($shippedRows === [])
+                    <p class="border-t border-hairline px-5 py-4 {{ $note }}">Nothing shipped in the last 7 days.</p>
+                @else
+                    <ul>
+                        @foreach ($shippedRows as $row)
+                            @php
+                                $at = $row['at']->setTimezone(config('app.timezone'));
+                                $shipLink = new \Illuminate\View\ComponentAttributeBag($row['linked'] ? [
+                                    'href' => route('stories.show', ['project' => $row['project'], 'storyId' => $row['story_id']]),
+                                    'wire:navigate' => true,
+                                ] : []);
+                            @endphp
+                            <li wire:key="shipped-{{ $row['project'] }}-{{ $row['story_id'] }}-{{ $loop->index }}">
+                                <a {{ $shipLink }} data-shipped-row="{{ $row['project'] }}/{{ $row['story_id'] }}"
+                                    @class(['flex min-h-11 flex-wrap items-center gap-x-3.5 gap-y-1 border-t border-hairline px-5 py-2.5', "hover:bg-raised {$focus}" => $row['linked']])>
+                                    <time datetime="{{ $at->toIso8601String() }}" class="w-18 font-mono text-xs text-ink-faint">{{ $at->format('D H:i') }}</time>
+                                    <x-shell.tag tone="go" mono>{{ $row['story_id'] }}</x-shell.tag>
+                                    <span class="min-w-0 flex-1 basis-40 text-sm">{{ $row['title'] }}</span>
+                                    <span class="text-xs text-ink-muted">{{ $row['project'] }}</span>
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
+            @endif
+        </section>
 @endif
 </main>

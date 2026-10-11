@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Exceptions\GitReaderException;
+use Carbon\CarbonImmutable;
+use DateTimeInterface;
 use Illuminate\Process\Exceptions\ProcessTimedOutException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
@@ -19,9 +21,18 @@ class GitReader
     /**
      * Subcommands that cannot change a working tree, index, or branch. `fetch`
      * is the one that writes at all, and only to remote-tracking refs under .git.
-     * `worktree` and `status` are allowed in one read-only form each (see run()).
+     * `worktree`, `status` and `log` are allowed in one read-only form each (see run()).
      */
-    private const ALLOWED = ['fetch', 'ls-tree', 'show', 'rev-parse', 'cat-file', 'remote', 'for-each-ref', 'worktree', 'status', 'merge-base'];
+    private const ALLOWED = ['fetch', 'ls-tree', 'show', 'rev-parse', 'cat-file', 'remote', 'for-each-ref', 'worktree', 'status', 'merge-base', 'log'];
+
+    /**
+     * The one format `log` may print (RD-7): SHA, committer time and subject, unit-separated.
+     * Fixed so no caller can ask for a patch, a body or anything git could expand further.
+     */
+    public const LOG_FORMAT = '--format=%H%x1f%ct%x1f%s';
+
+    /** The one `--since` form `log` takes: an absolute unix time, never git's free-text dates. */
+    private const LOG_SINCE = '/^--since=@\d+$/D';
 
     /**
      * What a ref may look like: branch/remote names and SHAs. A leading `-` is
@@ -300,6 +311,33 @@ class GitReader
     }
 
     /**
+     * The commits reachable from `$ref` whose committer date is after `$since`, newest
+     * first, as SHA, committer time and subject line (RD-7's Shipped this week). Only
+     * the fixed LOG_FORMAT, `--since` and the ref reach git; run() refuses any other form.
+     *
+     * @return list<array{sha: string, at: CarbonImmutable, subject: string}>
+     *
+     * @throws GitReaderException when the ref does not resolve or `$path` is not a repository.
+     */
+    public function log(string $path, string $ref, DateTimeInterface $since): array
+    {
+        $this->assertRef($ref);
+        // A project's own config could ask log to verify signatures, which runs gpg; the board runs git only.
+        $out = $this->run($path, ['log', self::LOG_FORMAT, '--since=@'.$since->getTimestamp(), $ref, '--'], config: ['log.showSignature=false']);
+
+        $commits = [];
+        foreach (explode("\n", $out) as $line) {
+            $parts = explode("\x1f", $line, 3);
+            // A line that is not `<sha>␟<time>␟<subject>` (the trailing empty one) is not a commit.
+            if (count($parts) === 3 && preg_match('/^[0-9a-f]{40,64}$/D', $parts[0]) && ctype_digit($parts[1])) {
+                $commits[] = ['sha' => $parts[0], 'at' => CarbonImmutable::createFromTimestamp((int) $parts[1]), 'subject' => $parts[2]];
+            }
+        }
+
+        return $commits;
+    }
+
+    /**
      * Every story record at `$ref`, straight from the kit's bin/story-index
      * contract (docs/KIT-REFERENCE.md §story-index). The parser reads through
      * `git ls-tree` and `git cat-file` only, so it is inside the read-only rule.
@@ -362,6 +400,21 @@ class GitReader
     }
 
     /**
+     * Whether `$args` is the one `log` form the board runs: `log`, LOG_FORMAT,
+     * `--since=@<unix>`, a valid ref, `--`, and nothing else.
+     *
+     * @param  list<string>  $args
+     */
+    private function isReadOnlyLog(array $args): bool
+    {
+        return count($args) === 5
+            && $args[1] === self::LOG_FORMAT
+            && preg_match(self::LOG_SINCE, $args[2]) === 1
+            && self::isValidRef($args[3])
+            && $args[4] === '--';
+    }
+
+    /**
      * Run one allow-listed git subcommand in `$path` and return its stdout.
      *
      * @param  list<string>  $args  the subcommand first, then its arguments
@@ -387,6 +440,11 @@ class GitReader
         }
         if ($subcommand === 'status' && ! in_array('--porcelain', $args, true)) {
             throw $this->refuse('git status is not allowed without --porcelain: the board is read-only', $args);
+        }
+        // `log` takes exactly the fixed format, one absolute --since, a ref and `--`: no patch,
+        // no other refs, no paths, and nothing git could read as a writing option.
+        if ($subcommand === 'log' && ! $this->isReadOnlyLog($args)) {
+            throw $this->refuse('git log is not allowed except the fixed format, --since and a ref: the board is read-only', $args);
         }
         foreach ($args as $arg) {
             if (str_starts_with($arg, '--output') || str_starts_with($arg, '-o')) {

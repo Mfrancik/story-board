@@ -4,10 +4,13 @@ namespace App\Livewire\Board;
 
 use App\Actions\Board\ListLiveSessions;
 use App\Actions\Board\ListNeedsMe;
+use App\Actions\Board\ListProjectTiles;
+use App\Actions\Board\ListShippedThisWeek;
 use App\Actions\Board\ReadOverviewFigures;
 use App\Actions\Board\ResolveProjectFilter;
 use App\Models\Project;
 use App\Services\ProjectFilter;
+use Carbon\CarbonInterface;
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Log;
@@ -30,6 +33,9 @@ use Throwable;
  * to those projects. The URL value is resolved once per render into one
  * ProjectFilter, and that one value is handed to each panel's action, so the panels
  * can never disagree on which projects they cover.
+ *
+ * RD-7 adds the Projects grid (a tile per project) and Shipped this week below them,
+ * each a panel of its own that fails alone and takes the same filter.
  */
 #[Layout('layouts.shell')]
 #[Title('Home')]
@@ -96,14 +102,14 @@ class Overview extends Component
      * Render the overview, or the one "no projects" empty state when the board has
      * no enabled project.
      *
-     * Side effects: reads the stored snapshot, the cached session scan and the
-     * preflight CSVs; logs `board.overview_viewed` (info, counts) on the page load
+     * Side effects: reads the stored snapshot, the cached session scan, the
+     * preflight CSVs and (cached per snapshot) each project's `git log`; logs `board.overview_viewed` (info, counts) on the page load
      * (not on each poll) and `board.overview_panel_failed` (error) for a panel whose
      * source threw. On the page load and on a filter change, logs
      * `board.overview_filtered` (info, the chosen names) and, through
      * ResolveProjectFilter, `board.overview_filter_ignored` (warning).
      */
-    public function render(ListNeedsMe $needs, ListLiveSessions $sessions, ReadOverviewFigures $figures, ResolveProjectFilter $resolve): View
+    public function render(ListNeedsMe $needs, ListLiveSessions $sessions, ReadOverviewFigures $figures, ListProjectTiles $tiles, ListShippedThisWeek $shipped, ResolveProjectFilter $resolve): View
     {
         $options = Project::enabled()->orderBy('name')->pluck('name')->all();
         $projects = count($options);
@@ -123,6 +129,8 @@ class Overview extends Component
             'needs' => $this->attempt('needs', fn () => $needs->handle($filter)),
             'live' => $this->attempt('live', fn () => $sessions->overview($filter)),
             'figures' => $this->attempt('figures', fn () => $figures->handle($filter)),
+            'tiles' => $this->attempt('tiles', fn () => $tiles->handle($filter)),
+            'shipped' => $this->attempt('shipped', fn () => $shipped->handle($filter)),
         ];
 
         $this->logViewed([
@@ -134,6 +142,8 @@ class Overview extends Component
             'sessions' => $data['live'] === null ? null : count($data['live']['sessions']),
             'preflight_runs' => $data['figures']['preflight']['runs'] ?? null,
             'in_flight' => $data['figures']['in_flight'] ?? null,
+            'tiles' => $data['tiles'] === null ? null : count($data['tiles']),
+            'shipped' => $data['shipped'] === null ? null : count($data['shipped']['rows']),
         ]);
 
         return view('livewire.board.overview', $data);
@@ -156,6 +166,22 @@ class Overview extends Component
             $m > 0 && $s > 0 => "{$m}m {$s}s",
             $m > 0 => "{$m}m",
             default => "{$s}s",
+        };
+    }
+
+    /**
+     * How long ago `$at` was, compact for a tile: `just now`, `12m ago`, `6h ago`, `3d ago`.
+     * Whole units, rounded down, so a run 6h 40m ago still reads `6h ago`.
+     */
+    public static function ago(CarbonInterface $at): string
+    {
+        $seconds = max(0, (int) $at->diffInSeconds(now(), true));
+
+        return match (true) {
+            $seconds < 60 => 'just now',
+            $seconds < 3600 => intdiv($seconds, 60).'m ago',
+            $seconds < 86400 => intdiv($seconds, 3600).'h ago',
+            default => intdiv($seconds, 86400).'d ago',
         };
     }
 

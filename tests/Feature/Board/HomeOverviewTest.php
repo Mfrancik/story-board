@@ -243,6 +243,8 @@ it('logs board.overview_viewed with the counts once per page view, not on each p
 
     Log::shouldHaveReceived('info')->withArgs(fn ($event, $context) => $event === 'board.overview_viewed' && $context === [
         'projects' => 2, 'needs' => 6, 'picks' => 2, 'drafts' => 1, 'ready' => 3, 'sessions' => 1, 'preflight_runs' => 0, 'in_flight' => 4,
+        // RD-7: two tiles; nothing shipped (the projects' paths are not checkouts).
+        'tiles' => 2, 'shipped' => 0,
     ])->once();
 });
 

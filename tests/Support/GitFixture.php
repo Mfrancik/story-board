@@ -81,6 +81,23 @@ class GitFixture
     }
 
     /**
+     * Commit everything in the author clone as if made at `$at` (author and committer
+     * date both), and push it. For readers that window by date — Shipped this week
+     * (RD-7) reads `git log --since`, which goes by the committer date.
+     */
+    public function commitAt(string $message, \DateTimeInterface $at): self
+    {
+        $date = $at->format(DATE_RFC2822);
+        $this->git($this->author, 'add', '-A');
+        $process = new Process(['git', '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.test', 'commit', '--quiet', '--allow-empty', '-m', $message],
+            $this->author, ['GIT_AUTHOR_DATE' => $date, 'GIT_COMMITTER_DATE' => $date]);
+        $process->mustRun();
+        $this->git($this->author, 'push', '--quiet', 'origin', 'HEAD:main');
+
+        return $this;
+    }
+
+    /**
      * Pull origin into the registered clone, so its working tree matches main.
      */
     public function syncProject(): self

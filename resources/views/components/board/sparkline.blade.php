@@ -4,8 +4,10 @@
     (preserveAspectRatio none, non-scaling stroke), so points are placed in percent and the end dot and hover
     readout are HTML over it. Hover is pure UI, so it is Alpine: the nearest day with a value and its number.
     `tone` is a full text-colour class (text-series-N, or text-zinc-400 for a greyed last-good line).
+    `decorative` (RD-7 project tile): the figure is already in text beside the line, so the SVG is aria-hidden with no
+    label, no hover readout and no end dot — a glance at the shape, nothing to read twice.
 --}}
-@props(['series', 'tone', 'label'])
+@props(['series', 'tone', 'label' => null, 'decorative' => false])
 @php
     $n = count($series);
     $values = array_filter(array_column($series, 'value'), fn ($v) => $v !== null);
@@ -28,7 +30,16 @@
     $last = end($drawn) ?: null;
     $first = $drawn[0] ?? null;
 @endphp
-@if ($drawn === [])
+@if ($decorative)
+    @if ($drawn !== [])
+        <svg data-sparkline viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false" {{ $attributes->class(['block overflow-visible', $tone]) }}>
+            {{-- One day of history draws a zero-length segment: with a round cap and a non-scaling stroke that is a
+                 round dot, where a <circle> would be squashed by preserveAspectRatio none. --}}
+            <path d="{{ count($drawn) > 1 ? $line : 'M'.$first['x'].' '.$first['y'].' L'.$first['x'].' '.$first['y'] }}" fill="none" stroke="currentColor" stroke-width="{{ count($drawn) > 1 ? 2 : 4 }}"
+                stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+        </svg>
+    @endif
+@elseif ($drawn === [])
     <p {{ $attributes->class('text-xs text-zinc-400 dark:text-zinc-500') }}>No history yet</p>
 @else
     <div {{ $attributes->class(['relative h-8 w-full cursor-crosshair touch-pan-y', $tone]) }}

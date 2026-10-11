@@ -1,5 +1,5 @@
 # RD-7 — Project tiles and Shipped this week
-Status: approved         Journey: none
+Status: built            Journey: none
 Source: owner 2026-10-10, Home A on the redesign canvas (Projects grid, Shipped this week).
 
 ## Story
