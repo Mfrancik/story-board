@@ -111,6 +111,13 @@ These ignored paths do **not** block disposal, because `composer install`,
 
     vendor · node_modules · public/build · public/hot · public/storage
     bootstrap/cache · .phpunit.cache · storage/app/public/coins
+    storage/framework/views · storage/logs · bin/__pycache__
+
+`.env` is allowed only while it is byte-identical to the primary checkout's —
+the provisioner's copy. Edited in the worktree, it may be the only copy of a
+setting, and it keeps the tree. Without these (L-10), every provisioned Laravel
+worktree held compiled views, test logs and its `.env`, so none was ever
+disposable unattended.
 
 Anything else ignored and non-empty **keeps the tree and is reported**. The list
 is short on purpose: every entry is a promise that losing that path costs

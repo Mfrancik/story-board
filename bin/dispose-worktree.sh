@@ -48,7 +48,9 @@ IDLE_MIN="${PF_IDLE_MINUTES:-30}"
 # that losing that path costs nothing, because `composer install`, `npm ci` or
 # the next test run recreates it. The list is short on purpose: that promise is
 # the whole thing 3b protects. Append per project with PF_IGNORED_ALLOW="a b".
-IGNORED_ALLOW="vendor node_modules public/build public/hot public/storage bootstrap/cache .phpunit.cache storage/app/public/coins ${PF_IGNORED_ALLOW:-}"
+# Compiled views, test-run logs and Python bytecode joined in L-10: every
+# provisioned worktree has them, so without them no worktree was ever disposable.
+IGNORED_ALLOW="vendor node_modules public/build public/hot public/storage bootstrap/cache .phpunit.cache storage/app/public/coins storage/framework/views storage/logs bin/__pycache__ ${PF_IGNORED_ALLOW:-}"
 
 SCRATCH=$(mktemp -d "${TMPDIR:-/tmp}/dispose.XXXXXX") || { echo "mktemp -d failed" >&2; exit 2; }
 trap 'rm -rf "$SCRATCH"' EXIT
@@ -70,6 +72,12 @@ block() { echo "  BLOCKED: $*"; blockers=$((blockers + 1)); }
 #      ignored directory is evidence of nothing and must not strand a worktree.
 ignored_blocks() {
   local pth="$1" a hit
+  # .env is the provisioner's copy of the primary's. Identical, it costs nothing to
+  # lose; edited in the worktree, it may hold the only copy of a setting (L-10).
+  if [ "$pth" = .env ]; then
+    cmp -s "$WT/.env" "$PRIMARY/.env" && return 1
+    return 0
+  fi
   for a in $IGNORED_ALLOW; do
     case "$pth" in "$a"|"$a"/*) return 1 ;; esac
   done

@@ -61,6 +61,7 @@ shots-sell36/
 storage/app/browser-evidence/
 G
 echo app > README.md; git add -A; git commit -qm init
+printf 'APP_KEY=base64:x\n' > .env                                  # the primary's .env (ignored)
 git init -q --bare "$REMOTE"; git remote add origin "$REMOTE"; git push -q origin main
 
 wt() { git worktree add -q -b "$2" ".claude/worktrees/$1" main; }
@@ -91,6 +92,8 @@ wt runtime feat/RUNTIME; git push -q origin feat/RUNTIME
 mkdir -p .claude/worktrees/runtime/storage/logs
 printf 'APP_KEY=base64:x\n' > .claude/worktrees/runtime/.env           # copied by the provisioner
 echo log > .claude/worktrees/runtime/storage/logs/laravel.log
+wt runtimeenv feat/RUNTIMEENV; git push -q origin feat/RUNTIMEENV
+printf 'APP_KEY=base64:x\nPROD_DB=edited-here\n' > .claude/worktrees/runtimeenv/.env   # edited in the worktree
 # --- Rule 3c / stale registration --------------------------------------------
 git worktree add -q --detach .claude/worktrees/detached main
 wt gone feat/GONE; rm -rf .claude/worktrees/gone                       # stale registration
@@ -107,10 +110,10 @@ assert_state dirty      KEPT "measurement.txt"
 assert_state ignshots   KEPT "shots-sell36"
 assert_state ignbuild   DISPOSABLE          # ignored but allow-listed build output
 assert_state ignempty   DISPOSABLE          # ignored, empty — evidence of nothing
-# As specified: .env and storage/logs are ignored, non-empty, and not on the
-# allow-list, so a provisioned Laravel worktree is KEPT. Asserted so the
-# consequence is visible rather than discovered on contact.
-assert_state runtime    KEPT ".env"
+# L-10: a provisioned Laravel worktree (the primary's .env copied unchanged, test
+# logs) is disposable; one whose .env was edited is KEPT, it may be the only copy.
+assert_state runtime    DISPOSABLE
+assert_state runtimeenv KEPT ".env"
 
 say "Rule 3c — main or a detached HEAD in a worktree"
 assert_state detached   KEPT "(c)"
