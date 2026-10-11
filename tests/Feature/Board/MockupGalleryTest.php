@@ -1,9 +1,12 @@
 <?php
 
+use App\Actions\Board\ReadMockupSets;
+use App\Livewire\Board\MockupViewer;
 use App\Models\Project;
 use App\Services\GitReader;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Livewire\Livewire;
 use Tests\Support\GitFixture;
 
 /**
@@ -204,6 +207,17 @@ it('logs board.mockup_not_found before the viewer 404s a story without a set', f
     $this->get('/mockups/alpha/AL-3')->assertNotFound();
 
     Log::shouldHaveReceived('info')->withArgs(fn ($event, $context = []) => $event === 'board.mockup_not_found' && $context['story'] === 'AL-3')->once();
+});
+
+it('logs board.mockup_not_found when the set is gone by a later render, before the 404', function () {
+    $viewer = Livewire::test(MockupViewer::class, ['project' => Project::where('name', 'alpha')->firstOrFail(), 'story' => 'AL-2']);
+    // The set was there at mount; a refresh after it left the repo renders with none.
+    $this->mock(ReadMockupSets::class, fn ($m) => $m->shouldReceive('handle')->andReturn([]));
+    Log::spy();
+
+    $viewer->call('$refresh')->assertStatus(404);
+
+    Log::shouldHaveReceived('info')->withArgs(fn ($event, $context = []) => $event === 'board.mockup_not_found' && $context['story'] === 'AL-2' && $context['reason'] === 'set gone on render')->once();
 });
 
 it('reads several files at a ref in one batch, with null for a path that is not there', function () {

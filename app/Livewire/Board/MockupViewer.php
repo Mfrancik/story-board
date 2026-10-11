@@ -105,6 +105,8 @@ class MockupViewer extends Component
 
     /**
      * Render the viewer from the (cached) set, its directory listing and the Current pane.
+     *
+     * Side effects: logs `board.mockup_not_found` before a 404 when the set has gone since mount.
      */
     public function render(ReadMockupSets $sets, ReadCurrentVersion $current): View|string
     {
@@ -115,7 +117,11 @@ class MockupViewer extends Component
         $project = Project::where('name', $this->project)->firstOrFail();
         $all = $sets->handle($project);
         $index = array_search($this->story, array_column($all, 'story'), true);
-        abort_if($index === false, 404);
+        // The set can leave the repo between mount and a later render (a refresh, or a Pick's re-render).
+        if ($index === false) {
+            Log::info('board.mockup_not_found', ['project' => $this->project, 'story' => $this->story, 'reason' => 'set gone on render']);
+            abort(404);
+        }
         $set = $all[$index];
         $this->current ??= $current->handle($project, $set['where'], $set['sha']);
 

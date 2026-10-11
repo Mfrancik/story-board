@@ -86,7 +86,7 @@ class ProductionSettings extends Component
      */
     public function placeholder(): string
     {
-        return '<p class="px-1 py-4 text-sm text-zinc-500 dark:text-zinc-400">Loading production settings…</p>';
+        return '<p class="px-1 py-4 text-sm text-ink-muted">Loading production settings…</p>';
     }
 
     /**

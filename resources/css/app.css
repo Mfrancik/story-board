@@ -7,6 +7,8 @@
 @source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
 @source '../../vendor/livewire/flux/stubs/**/*.blade.php';
 
+/* Keep `dark` declared ABOVE `shell`. Both are zero-specificity :where(), so `shell:` beats `dark:` only by coming
+   later in the built CSS — and `.dark` can be on a shell page's <html> after navigating from an old page (ADR-045). */
 @custom-variant dark (&:where(.dark, .dark *));
 /* Inside the RD-2 command-center shell (layouts/shell sets `.shell` on <html>). Shared components that old,
    light pages still use carry their shell look under this variant until RD-4 moves every page into the shell. */
