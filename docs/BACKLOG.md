@@ -71,6 +71,18 @@ Scope: PROJECT
 
 Owner, 2026-10-11: the shell sidebar has no Production item, so /prod is reachable only from the old Home's sidebar until RD-9. Add a Production item with RD-5/RD-9.
 
+### F-13 — 2026-10-11 — One owner for story status labels and colours
+Area: shared board primitives (status-chip, status-bar) · Stories, project page, story page
+Scope: PROJECT
+
+With RD-9: one owner for story status labels and colours. The built/approved/draft/cancelled → label/dot/tone maps are defined separately in status-chip.blade.php:26, project-stories.blade.php:18,19,29, status-bar.blade.php:14, project-page.blade.php:104 and story-page.blade.php:25-29. Fold them into StoryStatusOrder helpers (label(), dot(), tone()) or a board/status-key component. (Found by the redesign phase full preflight sweep, 2026-10-11.)
+
+### F-14 — 2026-10-11 — One shared icon component
+Area: all board/shell views
+Scope: PROJECT
+
+With RD-9: ~45 hand-pasted inline SVG icons (sidebars, the empty-state glyph in six views, search magnifier, warning triangle, chevron, spinner) plus per-view icon closures (mockup-viewer.blade.php:37 $icon, project-app-map.blade.php:30 $arrow, production-settings.blade.php:97-98 $tick/$cross, story-page.blade.php:36 $chevron). Replace with one <x-shell.icon name=… class=…> component; mockup-viewer's $icon closure is the closest starting point. (Found by the redesign phase full preflight sweep, 2026-10-11.)
+
 ## Cut
 
 ### F-1 — 2026-09-29 — Kit parser misses bold Chosen option picks
