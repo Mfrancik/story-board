@@ -1,5 +1,5 @@
 # RD-2 — Dark shell and sidebar
-Status: approved         Journey: none
+Status: built            Journey: none
 Source: owner 2026-10-10, picked Home A on the redesign canvas: *"A is better"*.
 
 ## Story

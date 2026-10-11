@@ -57,17 +57,13 @@ class ProjectPage extends Component
     private bool $gone = false;
 
     /**
-     * Log the view and queue a refresh of this project if its snapshot is stale —
-     * only this one: the others refresh when `/` or their own page loads.
+     * Log the view. Stale projects are refreshed by the board's RefreshStaleProjects
+     * middleware (RD-2), not here, so a load queues each refresh once.
      */
     public function mount(Project $project): void
     {
         $this->project = $project->name;
         Log::info('board.project_viewed', ['project' => $project->name]);
-
-        if ($project->needsRefresh()) {
-            RefreshProjectJob::dispatch($project);
-        }
     }
 
     /**

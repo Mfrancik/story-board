@@ -56,12 +56,12 @@ function writeHiddenColumns(key, hidden) {
  */
 export function preflightHistory(runs, now, main, project, hideable) {
     // One series colour per chart; literal class names so Tailwind generates them.
-    const GRID = 'stroke-zinc-100 dark:stroke-zinc-800';
-    const BASE = 'stroke-zinc-300 dark:stroke-zinc-700';
-    const LABEL = 'fill-zinc-400';
+    const GRID = 'stroke-hairline';
+    const BASE = 'stroke-rim';
+    const LABEL = 'fill-ink-muted';
     const LINE = 'stroke-series';
-    const DOT = 'fill-series stroke-white dark:stroke-zinc-900';
-    const MARK = 'stroke-zinc-400 dark:stroke-zinc-500';
+    const DOT = 'fill-series stroke-surface';
+    const MARK = 'stroke-ink-faint';
 
     // The x domain spans every run, not just the visible ones, so a filter never rescales time.
     const first = runs.length ? Math.min(...runs.map((r) => r.ts)) : now - 60 * DAY;

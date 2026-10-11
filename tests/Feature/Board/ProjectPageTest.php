@@ -307,14 +307,17 @@ it('keeps /p/coins on coins whatever the query string says', function () {
     $this->get('/p/coins?project=client-dashboard')->assertSee('AUC-17')->assertDontSee('SS-15');
 });
 
-it('queues a refresh of this project only when its snapshot is stale', function () {
+// RD-2: the board's RefreshStaleProjects middleware now refreshes every stale project on any page load,
+// so this page no longer refreshes only its own project.
+it('queues one refresh per stale project when the page loads', function () {
     $this->coins->update(['refresh_attempted_at' => now()->subHour(), 'indexed_at' => now()->subHour()]);
     $this->cd->update(['refresh_attempted_at' => now()->subHour(), 'indexed_at' => now()->subHour()]);
 
     $this->get('/p/coins')->assertOk();
 
-    Queue::assertPushed(RefreshProjectJob::class, 1);
+    Queue::assertPushed(RefreshProjectJob::class, 2);
     Queue::assertPushed(RefreshProjectJob::class, fn (RefreshProjectJob $job) => $job->project->is($this->coins));
+    Queue::assertPushed(RefreshProjectJob::class, fn (RefreshProjectJob $job) => $job->project->is($this->cd));
 });
 
 // L-5 guards: each refusal has a test and a log line.

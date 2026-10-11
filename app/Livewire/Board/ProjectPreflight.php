@@ -20,7 +20,7 @@ use Livewire\Component;
  * never re-renders in a normal visit. The route's EnsureProjectIsShown has already
  * refused an unknown or disabled project before this mounts (ADR-013).
  */
-#[Layout('layouts.board')]
+#[Layout('layouts.shell')]
 class ProjectPreflight extends Component
 {
     use GuardsProjectPage;

@@ -61,17 +61,12 @@ class Home extends Component
     public ?string $notice = null;
 
     /**
-     * Log the view and queue a refresh for any project whose snapshot is stale.
-     * Queued, not after-response: `artisan serve` cannot flush a response early,
-     * so after-response work held the page open for the whole refresh (8–50 s).
+     * Log the view. Stale projects are refreshed by the board's RefreshStaleProjects
+     * middleware (RD-2), not here, so a load queues each refresh once.
      */
     public function mount(): void
     {
         Log::info('board.home_viewed', ['initiative' => $this->initiative, 'q' => $this->q]);
-
-        Project::enabled()->get()
-            ->filter(fn (Project $p) => $p->needsRefresh())
-            ->each(fn (Project $p) => RefreshProjectJob::dispatch($p));
     }
 
     /**

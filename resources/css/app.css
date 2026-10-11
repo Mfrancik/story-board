@@ -8,6 +8,28 @@
 @source '../../vendor/livewire/flux/stubs/**/*.blade.php';
 
 @custom-variant dark (&:where(.dark, .dark *));
+/* Inside the RD-2 command-center shell (layouts/shell sets `.shell` on <html>). Shared components that old,
+   light pages still use carry their shell look under this variant until RD-4 moves every page into the shell. */
+@custom-variant shell (&:where(.shell, .shell *));
+
+/* Geist and Geist Mono (RD-2), self-hosted from the @fontsource-variable packages: Vite copies the woff2 into the
+   build, so no page asks a font CDN at run time. Our own @font-face (not the package's CSS) keeps the family names
+   `Geist` / `Geist Mono`; one variable latin file each covers every weight the shell uses. */
+@font-face {
+    font-family: 'Geist';
+    src: url('../../node_modules/@fontsource-variable/geist/files/geist-latin-wght-normal.woff2') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Geist Mono';
+    src: url('../../node_modules/@fontsource-variable/geist-mono/files/geist-mono-latin-wght-normal.woff2') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
 
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
@@ -57,9 +79,45 @@
     --color-accent: var(--color-neutral-800);
     --color-accent-content: var(--color-neutral-800);
     --color-accent-foreground: var(--color-white);
+
+    /* RD-2 command center (docs/mockups/RD-2/option-a.html, "Home A"). Dark only. Every text tone is at least
+       4.5:1 on ground, surface and raised; `ink-faint` is lifted from the mockup's #7E8187 (4.19:1 on raised). */
+    --font-geist: 'Geist', ui-sans-serif, system-ui, sans-serif;
+    --font-geist-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --color-ground: #0e0f11;      /* the page */
+    --color-surface: #16181b;     /* cards, the drawer */
+    --color-raised: #1d2024;      /* hover, the current nav item, controls */
+    --color-hairline: #1f2226;    /* dividers, the sidebar edge */
+    --color-edge: #26292e;        /* card borders */
+    --color-rim: #33373d;         /* control and pill borders */
+    --color-ink: #f2f1ee;         /* body text */
+    --color-ink-soft: #c9cbcf;    /* nav items, secondary text */
+    --color-ink-muted: #9a9da3;   /* labels, captions */
+    --color-ink-faint: #8a8d93;   /* ID prefixes, timestamps */
+    --color-needs: #f2a33a;       /* amber: needs you */
+    --color-needs-ink: #1a1205;   /* text on amber */
+    --color-live: #6ca6f0;        /* blue: live or running */
+    --color-go: #5fbf8f;          /* green: built or GO */
+    --color-fail: #f59088;        /* red: failed or NO-GO */
 }
 
 @layer theme {
+    /* The shell re-points the board's shared semantic tokens at the command-center palette, so components
+       both shells use (state dots, charts) take the dark ground's colours with no per-view overrides. */
+    .shell {
+        color-scheme: dark;
+        --font-sans: var(--font-geist);
+        --font-mono: var(--font-geist-mono);
+        --color-ok: var(--color-go);
+        --color-pending: var(--color-ink-muted);
+        --color-warning: var(--color-needs);
+        --color-danger: var(--color-fail);
+        --color-series: var(--color-live);
+        --color-accent: var(--color-needs);
+        --color-accent-content: var(--color-needs);
+        --color-accent-foreground: var(--color-needs-ink);
+    }
+
     .dark {
         /* Dark steps are chosen for the dark surface, not flipped (SB-18 mockup). */
         --color-series-1: #3987e5;
@@ -82,6 +140,13 @@
     ::backdrop,
     ::file-selector-button {
         border-color: var(--color-gray-200, currentColor);
+    }
+
+    /* In the shell an unclassed border is a hairline on the dark ground, not the light theme's gray. */
+    .shell *,
+    .shell ::after,
+    .shell ::before {
+        border-color: var(--color-edge);
     }
 }
 
