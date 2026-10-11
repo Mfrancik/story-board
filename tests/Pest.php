@@ -1,6 +1,9 @@
 <?php
 
+use App\Http\Middleware\RefreshStaleProjects;
+use App\Livewire\Board\Home;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Tests\Support\JourneyShots;
 use Tests\TestCase;
 
@@ -63,4 +66,19 @@ expect()->extend('toBeOne', function () {
 function journeyStep(string $journey, string $step, string $route, ?object $page = null): object
 {
     return JourneyShots::step($journey, $step, $route, $page);
+}
+
+/**
+ * The URL of the SB-9 all-projects dashboard (`Home`) for tests (RD-5). `/` is the overview now; `Home` stays in
+ * the code, unrouted, until RD-9 deletes it, so its tests render it at this test-only route — with the same
+ * refresh-on-load middleware `/` gave it — to keep their coverage until then. `$query` is appended (`?story=…`).
+ */
+function oldHome(string $query = ''): string
+{
+    if (! Route::has('test.old-home')) {
+        Route::livewire('/test/old-home', Home::class)->middleware(RefreshStaleProjects::class)->name('test.old-home');
+        Route::getRoutes()->refreshNameLookups();
+    }
+
+    return '/test/old-home'.$query;
 }

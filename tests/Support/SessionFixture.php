@@ -51,6 +51,50 @@ class SessionFixture
     }
 
     /**
+     * One assistant line as Claude Code writes it (RD-5): a message with its model,
+     * its content blocks (a tool call, say) and, unless `$usage` is null, its usage
+     * record. The text block carries a sentinel the board must never show.
+     *
+     * @param  list<array<string, mixed>>  $blocks  content blocks, e.g. `SessionFixture::tool('Read', [...])`
+     * @param  array<string, mixed>|null  $usage  the usage record, or null for a line without one
+     * @param  array<string, mixed>  $overrides
+     */
+    public static function assistant(string $cwd, ?string $branch, string $sessionId, array $blocks, ?array $usage = null, string $model = 'claude-sonnet-4-5', int $minutesAgo = 2, array $overrides = []): string
+    {
+        $message = [
+            'id' => 'msg_'.bin2hex(random_bytes(6)),
+            'type' => 'message',
+            'role' => 'assistant',
+            'model' => $model,
+            'content' => [['type' => 'text', 'text' => 'ASSISTANT-SENTINEL-TEXT'], ...$blocks],
+            ...($usage === null ? [] : ['usage' => $usage]),
+        ];
+
+        return self::line($cwd, $branch, $sessionId, $minutesAgo, ['type' => 'assistant', 'message' => $message, ...$overrides]);
+    }
+
+    /**
+     * A `tool_use` content block, as an assistant line carries it.
+     *
+     * @param  array<string, mixed>  $input
+     * @return array<string, mixed>
+     */
+    public static function tool(string $name, array $input): array
+    {
+        return ['type' => 'tool_use', 'id' => 'toolu_'.bin2hex(random_bytes(6)), 'name' => $name, 'input' => $input];
+    }
+
+    /**
+     * A usage record whose four token counts total `$total` (mostly cache reads, as a long session's are).
+     *
+     * @return array<string, int>
+     */
+    public static function usage(int $total): array
+    {
+        return ['input_tokens' => 2, 'cache_creation_input_tokens' => 998, 'cache_read_input_tokens' => $total - 1500, 'output_tokens' => 500];
+    }
+
+    /**
      * Write one session file whose mtime is `$minutesAgo` minutes in the past.
      * Returns its full path.
      *

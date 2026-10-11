@@ -6,10 +6,10 @@ use App\Http\Controllers\MockupSetFileController;
 use App\Http\Middleware\EnsureProjectIsShown;
 use App\Http\Middleware\RedirectProjectFilter;
 use App\Http\Middleware\RefreshStaleProjects;
-use App\Livewire\Board\Home;
 use App\Livewire\Board\ManageProjects;
 use App\Livewire\Board\MockupGallery;
 use App\Livewire\Board\MockupViewer;
+use App\Livewire\Board\Overview;
 use App\Livewire\Board\ProductionDashboard;
 use App\Livewire\Board\ProjectAppMap;
 use App\Livewire\Board\ProjectHandbook;
@@ -23,8 +23,9 @@ use Illuminate\Support\Facades\Route;
 // The board's pages (RD-2): every page load queues a refresh of each stale enabled project. The file routes
 // below are left out on purpose — a page's frames and images hit them many times per load.
 Route::middleware(RefreshStaleProjects::class)->group(function () {
+    // The home overview (RD-5). The old SB-9 dashboard component stays in the code, unrouted, until RD-9.
     // The pre-SB-7 `/?project=x` filter URL now lives at /p/x.
-    Route::livewire('/', Home::class)->middleware(RedirectProjectFilter::class)->name('home');
+    Route::livewire('/', Overview::class)->middleware(RedirectProjectFilter::class)->name('home');
 
     // One project's dashboard (SB-10; the route is SB-7's). EnsureProjectIsShown is the one
     // place an unknown or disabled project is refused, before binding (ADR-013).

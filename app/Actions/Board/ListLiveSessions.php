@@ -27,6 +27,12 @@ class ListLiveSessions
     /** A day: a story line is read at a fixed SHA, so it never changes; the TTL only bounds the cache. */
     private const LINE_CACHE_SECONDS = 86400;
 
+    /** The context window a Claude model has unless it runs with the long-context option (RD-5). */
+    public const CONTEXT_WINDOW = 200_000;
+
+    /** The long-context window: a model id marked `[1m]`, or any usage past the standard window. */
+    public const LONG_CONTEXT_WINDOW = 1_000_000;
+
     /**
      * @param  SessionReader  $reader  the only reader of transcript files
      * @param  FindStoryVersion  $versions  picks the story version a linked ID stands for, as the modal does
@@ -72,6 +78,56 @@ class ListLiveSessions
     }
 
     /**
+     * The overview's Live now (RD-5): one slim card per live session in an enabled
+     * project, newest first — its project and branch, the IDs of the stories its
+     * branch builds (no story text, so no git), when it started, what it is doing and
+     * how full its context is. Throws whatever the reader throws; the overview catches
+     * it per panel.
+     *
+     * Side effects: logs `board.session_ignored` (debug) for a session outside every
+     * enabled project.
+     *
+     * @return array{status: string, sessions: list<array{key: string, project: string, branch: string|null, stories: list<string>, started_at: Carbon|null, active_at: Carbon, doing: string|null, tokens: int|null, window: int|null}>}
+     */
+    public function overview(): array
+    {
+        $live = $this->reader->live();
+        $cards = [];
+
+        foreach ($this->matched($live['sessions'], log: true) as [$session, $model]) {
+            $tokens = $session['tokens'] ?? null;
+            $cards[] = [
+                // Derived from the file name, never the session's own text.
+                'key' => substr(sha1($session['file']), 0, 12),
+                'project' => $model->name,
+                'branch' => $session['branch'],
+                'stories' => array_values(array_unique(array_map(
+                    fn (Story $s) => (string) $s->story_id,
+                    $this->storyRows($model, $session['branch'], $session['cwd']),
+                ))),
+                'started_at' => ($session['started'] ?? null) === null ? null : Carbon::createFromTimestamp($session['started']),
+                'active_at' => Carbon::createFromTimestamp($session['mtime']),
+                'doing' => $session['doing'] ?? null,
+                'tokens' => $tokens,
+                'window' => $tokens === null ? null : $this->window($session['model'] ?? null, $tokens),
+            ];
+        }
+
+        return ['status' => $live['status'], 'sessions' => $cards];
+    }
+
+    /**
+     * The context window the session's model has. A transcript names the model but
+     * not whether it runs with the long context, so a `[1m]` id or a usage already past
+     * the standard window means the long one — a bar never reads over 100%.
+     */
+    private function window(?string $model, int $tokens): int
+    {
+        return ($model !== null && str_contains($model, '[1m]')) || $tokens > self::CONTEXT_WINDOW
+            ? self::LONG_CONTEXT_WINDOW : self::CONTEXT_WINDOW;
+    }
+
+    /**
      * Live sessions per enabled project, for the sidebar badge. No story links, no git.
      *
      * @return array<string, int> project name => live sessions
@@ -91,8 +147,8 @@ class ListLiveSessions
      * checkout name. The deepest registered path wins, so a worktree registered as
      * a location beats the main checkout it sits under.
      *
-     * @param  list<array{file: string, cwd: string, branch: string|null, timestamp: string|null, session_id: string|null, version: string|null, mtime: int}>  $sessions
-     * @return list<array{0: array{file: string, cwd: string, branch: string|null, timestamp: string|null, session_id: string|null, version: string|null, mtime: int}, 1: Project, 2: string}>
+     * @param  list<array{file: string, cwd: string, branch: string|null, timestamp: string|null, session_id: string|null, version: string|null, mtime: int, started: int|null, doing: string|null, tokens: int|null, model: string|null}>  $sessions
+     * @return list<array{0: array{file: string, cwd: string, branch: string|null, timestamp: string|null, session_id: string|null, version: string|null, mtime: int, started: int|null, doing: string|null, tokens: int|null, model: string|null}, 1: Project, 2: string}>
      */
     private function matched(array $sessions, bool $log): array
     {
@@ -188,6 +244,28 @@ class ListLiveSessions
      */
     private function links(Project $project, ?string $branch, string $cwd): array
     {
+        return array_map(function (Story $row) use ($project) {
+            $row->setRelation('project', $project);
+            $chosen = $row->mockups['chosen'] ?? null;
+            $hasChosen = is_string($chosen) && in_array($chosen, $row->mockups['options'] ?? [], true);
+
+            return [
+                'story' => $row,
+                'line' => $this->firstSentence($row),
+                'thumb' => $hasChosen ? $row->mockupUrl("option-{$chosen}.html") : null,
+                'chosen' => $hasChosen ? $chosen : null,
+            ];
+        }, $this->storyRows($project, $branch, $cwd));
+    }
+
+    /**
+     * The story rows a session's branch builds, by the rules links() documents, with
+     * no story text read — the overview's slim cards need only the IDs (RD-5).
+     *
+     * @return list<Story>
+     */
+    private function storyRows(Project $project, ?string $branch, string $cwd): array
+    {
         // No branch recorded, or a detached HEAD: nothing names the work.
         if ($branch === null || $branch === 'HEAD') {
             return [];
@@ -202,22 +280,7 @@ class ListLiveSessions
             }
         }
 
-        if ($rows === []) {
-            $rows = $this->branchRows($project, $branch, $cwd);
-        }
-
-        return array_map(function (Story $row) use ($project) {
-            $row->setRelation('project', $project);
-            $chosen = $row->mockups['chosen'] ?? null;
-            $hasChosen = is_string($chosen) && in_array($chosen, $row->mockups['options'] ?? [], true);
-
-            return [
-                'story' => $row,
-                'line' => $this->firstSentence($row),
-                'thumb' => $hasChosen ? $row->mockupUrl("option-{$chosen}.html") : null,
-                'chosen' => $hasChosen ? $chosen : null,
-            ];
-        }, $rows);
+        return $rows === [] ? $this->branchRows($project, $branch, $cwd) : $rows;
     }
 
     /**

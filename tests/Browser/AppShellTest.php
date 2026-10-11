@@ -12,7 +12,7 @@ beforeEach(function () {
 });
 
 it('hides the sidebar at 375px, opens it with the menu button and closes it with Escape', function () {
-    visit('/')
+    visit(oldHome())
         ->resize(375, 812)
         ->assertMissing('#board-sidebar')
         ->click('[aria-label="Open projects"]')
@@ -27,7 +27,7 @@ it('hides the sidebar at 375px, opens it with the menu button and closes it with
 });
 
 it('switches project from the sidebar and filters the list as you type', function () {
-    visit('/')
+    visit(oldHome())
         ->resize(1280, 800)
         ->assertVisible('#board-sidebar')
         ->click('[data-sidebar-project="coins"]')

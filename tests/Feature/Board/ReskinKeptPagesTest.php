@@ -133,4 +133,4 @@ it('leaves the old home and project dashboard on the board layout, still renderi
     $this->get($url)->assertOk()
         ->assertDontSeeHtml('class="shell"')
         ->assertSeeHtml('data-sidebar-project="alpha"');
-})->with(['/', '/p/alpha']);
+})->with([fn () => oldHome(), '/p/alpha']);

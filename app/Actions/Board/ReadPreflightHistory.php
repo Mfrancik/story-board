@@ -263,12 +263,13 @@ class ReadPreflightHistory
     }
 
     /**
-     * Runs, median wall time and median tokens of the runs in (from, to].
+     * Runs, median wall time and median tokens of the runs in (from, to]. Public
+     * since RD-5: the overview's Preflight figure is the same sum over a 7-day window.
      *
      * @param  list<array{ts: CarbonImmutable, wall: int|null, tokens: int|null}>  $runs
      * @return array{runs: int, wall: float|null, tokens: float|null}
      */
-    private function figures(array $runs, CarbonImmutable $from, CarbonImmutable $to): array
+    public function figures(array $runs, CarbonImmutable $from, CarbonImmutable $to): array
     {
         $in = array_filter($runs, fn (array $r) => $r['ts']->greaterThan($from) && $r['ts']->lessThanOrEqualTo($to));
 

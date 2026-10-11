@@ -91,7 +91,7 @@ function rowIds(string $html): array
 }
 
 it('shows "What needs me" as the first heading in <main> when / loads with the dev data', function () {
-    $html = $this->get('/')->assertOk()->getContent();
+    $html = $this->get(oldHome())->assertOk()->getContent();
 
     preg_match('/<main\b.*?<\/main>/s', $html, $main);
     preg_match('/<h[1-6]\b[^>]*>(.*?)<\/h[1-6]>/s', $main[0] ?? '', $heading);
@@ -125,7 +125,7 @@ it('shows "Nothing to approve" instead of an empty list when there are no drafts
 });
 
 it('tones rent-track\'s in and done segments as danger and warns of 15 parse errors on its tile', function () {
-    $rent = tile($this->get('/')->getContent(), 'rent-track');
+    $rent = tile($this->get(oldHome())->getContent(), 'rent-track');
 
     expect($rent)->toMatch('/data-segment="in"[^>]*data-tone="danger"/')
         ->and($rent)->toMatch('/data-segment="done"[^>]*data-tone="danger"/')
@@ -137,7 +137,7 @@ it('tones rent-track\'s in and done segments as danger and warns of 15 parse err
 it('says an unreachable project is unreachable with the first line of last_error, and counts it as not ok', function () {
     $this->asset->update(['state' => Project::STATE_UNREACHABLE, 'last_error' => "not a git repository: /gone\nfatal: second line"]);
 
-    $html = $this->get('/')->getContent();
+    $html = $this->get(oldHome())->getContent();
     $asset = tile($html, 'asset-track');
 
     expect($asset)->toContain('Unreachable')
@@ -147,7 +147,7 @@ it('says an unreachable project is unreachable with the first line of last_error
 });
 
 it('gives a disabled project no tile and counts none of its stories anywhere on the page', function () {
-    $html = $this->get('/')->getContent();
+    $html = $this->get(oldHome())->getContent();
 
     expect($html)->not->toContain('data-project-card="acme-site"')
         ->and(rowIds($html))->not->toContain('AC-1')
@@ -185,7 +185,7 @@ it('runs the same number of queries whatever the number of projects', function (
     $count = function (): int {
         DB::flushQueryLog();
         DB::enableQueryLog();
-        $this->get('/')->assertOk();
+        $this->get(oldHome())->assertOk();
         $n = count(DB::getQueryLog());
         DB::disableQueryLog();
 
@@ -205,7 +205,7 @@ it('runs the same number of queries whatever the number of projects', function (
 it('shows the not-on-main count, story count and refresh age on each tile and links it to its project page', function () {
     $this->cd->update(['indexed_at' => now()->subMinutes(3)]);
 
-    $html = $this->get('/')->getContent();
+    $html = $this->get(oldHome())->getContent();
 
     expect(tile($html, 'coins'))->toContain('2 not on main')
         ->and(tile($html, 'coins'))->toContain('data-story-count="29"')
@@ -215,7 +215,7 @@ it('shows the not-on-main count, story count and refresh age on each tile and li
 });
 
 it('shows the three In flight figures across enabled projects', function () {
-    $html = $this->get('/')->getContent();
+    $html = $this->get(oldHome())->getContent();
 
     expect(figure($html, 'approved'))->toBe('30')
         ->and(figure($html, 'offmain'))->toBe('3')
@@ -225,23 +225,23 @@ it('shows the three In flight figures across enabled projects', function () {
 it('shows a designed empty state on a tile whose project has no stories', function () {
     Project::factory()->create(['name' => 'empty-one', 'indexed_at' => now(), 'refresh_attempted_at' => now(), 'state' => Project::STATE_OK]);
 
-    expect(tile($this->get('/')->getContent(), 'empty-one'))->toContain('No stories on origin/main yet');
+    expect(tile($this->get(oldHome())->getContent(), 'empty-one'))->toContain('No stories on origin/main yet');
 });
 
 it('says in the header how long ago the board was refreshed, next to Refresh', function () {
     $this->coins->update(['indexed_at' => now()->subMinutes(7)]);
 
-    $this->get('/')->assertSeeInOrder(['Refreshed 7 minutes ago', 'Refresh']);
+    $this->get(oldHome())->assertSeeInOrder(['Refreshed 7 minutes ago', 'Refresh']);
 });
 
 it('drops the project dropdown for the sidebar and keeps the initiative filter and search', function () {
-    $this->get('/')->assertDontSee('id="f-project"', false)
+    $this->get(oldHome())->assertDontSee('id="f-project"', false)
         ->assertSee('id="f-initiative"', false)
         ->assertSee('id="f-q"', false);
 });
 
 it('renders the Live now panel (SB-11) between What needs me and In flight', function () {
-    $this->get('/')->assertOk()->assertSeeInOrder(['Awaiting a pick', 'Live now', 'In flight']);
+    $this->get(oldHome())->assertOk()->assertSeeInOrder(['Awaiting a pick', 'Live now', 'In flight']);
 });
 
 it('scopes the What needs me cards on /p/{project} to that project (SB-10 page)', function () {

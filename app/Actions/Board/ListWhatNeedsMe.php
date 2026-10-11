@@ -41,16 +41,13 @@ class ListWhatNeedsMe
         $projects = $this->projects($project);
 
         return [
-            'approval' => $scoped()->where('stories.status', 'draft')->where('stories.is_parked', false)
+            // The three predicates live in ListNeedsMe (RD-5), so the overview and this page agree on what counts.
+            'approval' => ListNeedsMe::toApprove($scoped())
                 ->orderBy('projects.name')->orderBy('stories.path')->get(),
-            // Only open stories: a built or cancelled story with no parseable pick is history, not a decision.
-            // Raw SQL: the query builder has no JSON length/type predicates. Constant expressions, no input.
-            'pick' => $scoped()->whereIn('stories.status', StoryStatusOrder::OPEN)
-                ->whereRaw("json_length(json_extract(stories.mockups, '$.options')) > 0")
-                ->whereRaw("json_type(json_extract(stories.mockups, '$.chosen')) = 'NULL'")
+            'pick' => ListNeedsMe::awaitingPick($scoped())
                 ->orderBy('projects.name')->orderBy('stories.path')->get(),
             // Oldest first by the date the story was asked for; undated ones last (raw: MySQL has no NULLS LAST).
-            'build' => $scoped()->where('stories.status', 'approved')
+            'build' => ListNeedsMe::readyToBuild($scoped())
                 ->orderByRaw('stories.dated_on is null')->orderBy('stories.dated_on')
                 ->orderBy('projects.name')->orderBy('stories.path')->get(),
             'parked' => $scoped()->where('stories.status', 'draft')->where('stories.is_parked', true)->count(),

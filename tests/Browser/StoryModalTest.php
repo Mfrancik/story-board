@@ -30,7 +30,7 @@ afterEach(function () {
 
 it('opens a clicked row in the modal and keeps the list at its scroll position, and Back closes it', function () {
     // SB-9: a card shows its top 5; FX-9 is behind Show all.
-    $page = visit('/')->resize(1280, 600)->click('[data-show-all="build"]')->assertPresent('[data-row="FX-9"]');
+    $page = visit(oldHome())->resize(1280, 600)->click('[data-show-all="build"]')->assertPresent('[data-row="FX-9"]');
     $page->script("document.querySelector('[data-row=\"FX-9\"]').scrollIntoView({ block: 'center' })");
     $y = $page->script('Math.round(window.scrollY)');
     expect($y)->toBeGreaterThan(0);
@@ -49,7 +49,7 @@ it('opens a clicked row in the modal and keeps the list at its scroll position, 
 
 it('keeps the scroll position on Back after arriving at /p/{project} through the sidebar', function () {
     // wire:navigate stamps the history entry with a page snapshot; Back must not restore it over the list.
-    $page = visit('/')->resize(1280, 600)->click('[data-sidebar-project="coins"]')->assertPathIs('/p/coins')
+    $page = visit(oldHome())->resize(1280, 600)->click('[data-sidebar-project="coins"]')->assertPathIs('/p/coins')
         ->click('[data-show-all="build"]')->assertPresent('[data-row="FX-9"]');
     $page->script("document.querySelector('[data-row=\"FX-9\"]').scrollIntoView({ block: 'center' })");
     $y = $page->script('Math.round(window.scrollY)');
@@ -67,7 +67,7 @@ it('keeps the scroll position on Back after arriving at /p/{project} through the
 });
 
 it('closes on Escape, drops ?story from the URL and returns focus to the row', function () {
-    visit('/')
+    visit(oldHome())
         ->resize(1280, 800)
         ->click('[data-row="ACQ-20"]')
         ->assertVisible('[data-story-open="coins/ACQ-20"]')
@@ -82,7 +82,7 @@ it('closes on Escape, drops ?story from the URL and returns focus to the row', f
 });
 
 it('opens directly from the URL, one column at 375px, and follows a dependency chip', function () {
-    visit('/?story=coins/ACQ-20')
+    visit(oldHome('?story=coins/ACQ-20'))
         ->resize(375, 812)
         ->assertVisible('[data-story-open="coins/ACQ-20"]')
         ->assertPresent('[data-thumb="a"][data-chosen]')
@@ -95,7 +95,7 @@ it('opens directly from the URL, one column at 375px, and follows a dependency c
 });
 
 it('shows two columns from 768px and closes on a backdrop click', function () {
-    $page = visit('/?story=coins/ACQ-20')
+    $page = visit(oldHome('?story=coins/ACQ-20'))
         ->resize(1024, 800)
         ->assertVisible('[data-story-open="coins/ACQ-20"]')
         ->assertScript("getComputedStyle(document.querySelector('[data-story-grid]')).gridTemplateColumns.split(' ').length", 2);

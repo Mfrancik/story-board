@@ -66,7 +66,7 @@ it('opens coins ACQ-20 from ?story with its title, text, dependency chips and th
         ->and($acq20->depends_on)->toBe(['ACQ-19', 'ACQ-17'])
         ->and($acq20->mockups)->toEqual(['dir' => 'docs/mockups/ACQ-20', 'options' => ['a', 'b', 'c'], 'chosen' => 'a']);
 
-    $html = $this->get('/?story=coins/ACQ-20')->assertOk()
+    $html = $this->get(oldHome('?story=coins/ACQ-20'))->assertOk()
         ->assertSeeHtml('role="dialog"')
         ->assertSee('Open "didn\'t meet your rules" and see them')
         ->assertSeeHtml('<strong>missed my rules</strong>')
@@ -239,7 +239,7 @@ it('opens the modal from ?story on the project page too', function () {
 });
 
 it('renders every openable row as a button that opens the modal, with no expand in place', function () {
-    $html = $this->get('/')->assertOk()->getContent();
+    $html = $this->get(oldHome())->assertOk()->getContent();
 
     expect($html)->toMatch('/<button[^>]*data-row="MOB-65"/')
         ->and($html)->toContain('data-story-link="coins/MOB-65"')

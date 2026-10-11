@@ -7,7 +7,7 @@ it('shows each registered project with its story count', function () {
     $project = Project::factory()->create(['name' => 'coins', 'indexed_at' => now(), 'state' => Project::STATE_OK]);
     Story::factory()->count(4)->for($project)->create();
 
-    visit('/')
+    visit(oldHome())
         ->assertSee('coins')
         ->assertAttribute('[data-project-card="coins"]', 'data-story-count', '4')
         ->assertNoJavaScriptErrors();

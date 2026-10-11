@@ -88,12 +88,14 @@ it('keeps the light choice an old page saved through a wire:navigate round trip 
         ->assertMissing('html.shell')
         ->assertScript("document.documentElement.classList.contains('dark')", false)
         ->assertScript("localStorage.getItem('flux.appearance')", 'light')
-        // Second leg: a full load of a shell page first, then into an old page.
+        // Second leg: a full load of a shell page first, then a wire:navigate into an old page. Since RD-5 `/` is a
+        // shell page and no shell link leads to an old one, so the navigation is started the way wire:navigate does.
         ->navigate('/p/fx/stories')
         ->assertPresent('html.shell')
         ->assertScript("localStorage.getItem('flux.appearance')", 'light')
-        ->click('[data-nav="home"]')
-        ->assertPathIs('/')
+        ->script("Livewire.navigate('/p/fx')");
+    $page->wait(1);
+    $page->assertPathIs('/p/fx')
         ->assertMissing('html.shell')
         ->assertScript("document.documentElement.classList.contains('dark')", false)
         ->assertScript("localStorage.getItem('flux.appearance')", 'light')

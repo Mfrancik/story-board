@@ -34,7 +34,7 @@ afterEach(function () {
 });
 
 it('opens the SB-8 modal for a row clicked in any card', function () {
-    $page = visit('/')->resize(1280, 900);
+    $page = visit(oldHome())->resize(1280, 900);
 
     foreach (['pick' => 'MOB-65', 'approval' => 'VIEW-48', 'build' => 'AUC-17'] as $card => $id) {
         $page->click("[data-card=\"{$card}\"] [data-row=\"{$id}\"]")
@@ -49,7 +49,7 @@ it('opens the SB-8 modal for a row clicked in any card', function () {
 
 it('puts the three cards side by side at 1280px, stacks them at 375px, and a tile leads to its project page', function () {
     $tops = "[...document.querySelectorAll('[data-card]')].map(c => Math.round(c.getBoundingClientRect().top)).join(',')";
-    $page = visit('/')->resize(1280, 900);
+    $page = visit(oldHome())->resize(1280, 900);
 
     $wide = explode(',', (string) $page->script($tops));
     expect($wide)->toHaveCount(3)->and(array_unique($wide))->toHaveCount(1);

@@ -15,8 +15,9 @@ beforeEach(function () {
 });
 
 it('opens the board, then a project from the sidebar', function () {
+    // `/` is the RD-5 overview in the shell, whose sidebar lists projects as data-nav-project.
     journeyStep('browse-the-board', 'all projects', '/')
-        ->assertVisible('[data-sidebar-project="coins"]');
+        ->assertVisible('[data-nav-project="coins"]');
 
     $page = journeyStep('browse-the-board', 'one project', '/p/coins')
         ->assertPathIs('/p/coins')

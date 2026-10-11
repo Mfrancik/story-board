@@ -36,7 +36,7 @@ it('lists the enabled projects alphabetically with their story counts, and not t
     // Off-main versions are not on the ref, so they are not counted.
     Story::factory()->for($this->coins)->create(['location_kind' => Story::KIND_BRANCH, 'location' => 'branch feat/x', 'branch' => 'feat/x']);
 
-    $html = $this->get('/')->assertOk()
+    $html = $this->get(oldHome())->assertOk()
         ->assertSeeInOrder([
             'data-sidebar-project="asset-track"',
             'data-sidebar-project="client-dashboard"',
@@ -50,7 +50,9 @@ it('lists the enabled projects alphabetically with their story counts, and not t
         ->and(sidebarEntry($html, 'client-dashboard'))->toContain('data-story-count="2"')
         ->and(sidebarEntry($html, 'rent-track'))->toContain('data-story-count="1"')
         ->and(sidebarEntry($html, 'asset-track'))->toContain('data-story-count="0"')
-        ->and($html)->toMatch('/<a\b[^>]*data-sidebar-all[^>]*aria-current="page"/');
+        // "All projects" was marked current on `/`; since RD-5 `/` is the overview in the shell, so the old page at its
+        // test route only proves the entry is there. RD-9 retires this sidebar.
+        ->and($html)->toMatch('/<a\b[^>]*data-sidebar-all/');
 });
 
 it('marks coins current on /p/coins and shows only coins stories', function () {
@@ -127,7 +129,7 @@ it('redirects the old URL of a disabled project to / rather than to a 404', func
 it('gives a stale project a warning-tone dot with a screen-reader label', function () {
     $this->rent->update(['state' => Project::STATE_STALE]);
 
-    $html = $this->get('/')->getContent();
+    $html = $this->get(oldHome())->getContent();
 
     expect($html)->toMatch('/data-sidebar-project="rent-track".*?<span[^>]*data-state-dot="stale"[^>]*class="[^"]*\bbg-warning\b/s')
         ->and($html)->toMatch('/data-sidebar-project="rent-track".*?<span class="sr-only">stale<\/span>/s');
@@ -146,12 +148,12 @@ it('shows an empty sidebar that links to Manage projects to add a project', func
     Project::query()->delete();
 
     // SB-12 registered projects.manage, so the empty state points at the page, not the command.
-    $this->get('/')->assertOk()->assertSee('No projects yet')->assertSee('Add a project')
+    $this->get(oldHome())->assertOk()->assertSee('No projects yet')->assertSee('Add a project')
         ->assertSee(route('projects.manage'));
 });
 
 it('shows the Manage projects slot now that its page exists (SB-12)', function () {
-    $this->get('/')->assertSee('Manage projects');
+    $this->get(oldHome())->assertSee('Manage projects');
 });
 
 it('renders the story page for coins MOB-65 inside the shell with coins current', function () {

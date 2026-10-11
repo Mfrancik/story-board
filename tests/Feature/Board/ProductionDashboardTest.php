@@ -444,7 +444,7 @@ it('stops waiting and says so when no queue worker answers within a minute', fun
 it('links Production from the sidebar with how many shown projects are connected', function () {
     connectProd($this->coins, $this->fx);
 
-    $this->get('/')->assertOk()
+    $this->get(oldHome())->assertOk()
         ->assertSeeHtml('data-sidebar-prod')
         ->assertSee('1/2');
     $page = $this->get('/prod')->assertOk()->assertSee('· Production');

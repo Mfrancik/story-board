@@ -174,7 +174,7 @@ it('logs board.mockups_viewed on the gallery and board.mockup_viewed on the view
 });
 
 it('puts Mockups in the sidebar with the awaiting count', function () {
-    $this->get('/')->assertOk()->assertSee('data-sidebar-mockups', false)->assertSee('data-awaiting-count="1"', false);
+    $this->get(oldHome())->assertOk()->assertSee('data-sidebar-mockups', false)->assertSee('data-awaiting-count="1"', false);
 });
 
 it('links a story\'s modal and its project page to the gallery', function () {

@@ -35,7 +35,7 @@ afterEach(function () {
 
 it('shows the live coins session, keeps its card still through a poll, and opens its story in the modal', function () {
     $height = "Math.round(document.querySelector('[data-live-session]').getBoundingClientRect().height)";
-    $page = visit('/')->resize(1280, 900);
+    $page = visit(oldHome())->resize(1280, 900);
 
     $page->assertVisible('[data-live-session][data-live-project="coins"]')
         ->assertSeeIn('[data-live-session]', 'worktree set42')
