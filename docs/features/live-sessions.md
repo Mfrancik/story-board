@@ -1,5 +1,5 @@
 # Live sessions
-Status: active   ·   Last updated: 2026-09-30   ·   Stories: SB-11, SB-25
+Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-11, SB-25, RD-5
 
 ## Overview
 A "Live now" panel on `/` and `/p/{project}`, and a live badge in the sidebar, show which Claude Code
@@ -8,6 +8,11 @@ building, with its one-line description and chosen mockup. The board and git sho
 and merged. Live sessions show what is happening in the open terminals. Only metadata is read from a
 session: no message, prompt or tool output is kept, logged or rendered. Design A, views 1 and 2
 (`docs/mockups/SB-7/option-a.html`).
+
+**Since RD-5** the `LiveSessions` component below shows only on `/p/{project}`: `/` is the
+[home overview](home-overview.md), whose own Live now panel uses `ListLiveSessions::overview()` (slim cards: story
+IDs only, plus a doing line and context bar from `SessionReader`'s new `started`, `doing`, `tokens` and `model`
+fields, ADR-048). Matching and the story-link rules below are shared by both (`storyRows()`).
 
 ## How it works
 **1. Scan (cached 20 s).** `app/Services/SessionReader.php:live()` wraps `scan()` in
@@ -190,3 +195,4 @@ would repeat the warning. Each line carries `request_id`.
 ## Change history
 2026-09-29 — Live now panel on `/` and `/p/{project}`, sidebar live badge, `SessionReader`, `ListLiveSessions`, `config/board.php` (SB-11, `76ec1eb`)
 2026-09-30 — Fallback skips the default branch; untracked rows link only to a session in their own checkout; `board.session_links_filtered` (SB-25, `f747e88`)
+2026-10-11 — `SessionReader` reads `started`, `doing`, `tokens`, `model`; `ListLiveSessions::overview()` and `storyRows()` for the home overview; the old panel remains on `/p/{project}` only (RD-5, `6d6f3de`)
