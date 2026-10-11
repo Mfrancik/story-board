@@ -41,7 +41,7 @@
     @if ($servable) x-data="{ view: @js($first), choice: @js($first), reason: '', urls: @js($urls) }" @endif>
 
     <nav aria-label="Breadcrumb" class="text-sm text-ink-muted">
-        <a href="{{ route('projects.show', $model->name) }}" wire:navigate class="hover:text-ink {{ $focus }}">{{ $model->name }}</a>
+        <a href="{{ route('projects.stories', $model->name) }}" wire:navigate class="hover:text-ink {{ $focus }}">{{ $model->name }}</a>
         <span aria-hidden="true">/</span>
         <a href="{{ route('projects.stories', $model->name) }}" wire:navigate class="hover:text-ink {{ $focus }}">Stories</a>
         <span aria-hidden="true">/</span>

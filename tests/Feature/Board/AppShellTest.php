@@ -162,10 +162,11 @@ it('renders the story page for coins MOB-65 inside the shell with coins current'
 
     $html = $this->get('/p/coins/s/MOB-65')->assertOk()->assertSee('Story MOB-65')->getContent();
 
-    // RD-3 moved the story page into the RD-2 shell, so its sidebar is the shell's (data-nav-project, "Open menu").
+    // RD-3 moved the story page into the RD-2 shell, so its sidebar is the shell's (data-nav-project, "Open menu");
+    // RD-4 points its breadcrumb at Stories instead of the old dashboard.
     expect($html)->toMatch('/data-nav-project="coins"\s+aria-current="page"/')
         ->and($html)->toContain('aria-label="Open menu"')
-        ->and($html)->toContain('href="'.route('projects.show', ['project' => 'coins']).'"');
+        ->and($html)->toContain('href="'.route('projects.stories', ['project' => 'coins']).'"');
 
     $fixture->destroy();
 });

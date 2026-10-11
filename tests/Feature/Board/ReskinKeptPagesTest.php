@@ -113,6 +113,15 @@ it('points the project header\'s breadcrumb at the project\'s Stories page, not 
         ->not->toContain('Toggle dark mode');
 });
 
+it('points the story page\'s breadcrumb at the project\'s Stories page, not the old dashboard', function () {
+    $html = $this->get('/p/alpha/s/AL-2')->assertOk()->getContent();
+
+    preg_match('/<nav aria-label="Breadcrumb".*?<\/nav>/s', $html, $crumb);
+
+    expect($crumb[0] ?? '')->toContain('href="'.url('/p/alpha/stories').'"')
+        ->not->toContain('href="'.url('/p/alpha').'"');
+});
+
 it('keeps Flux toasts on the shell pages that raise them, without the old pages\' light/dark appearance script', function (string $url) {
     $this->get($url)->assertOk()
         ->assertSeeHtml('<ui-toast')

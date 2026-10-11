@@ -29,5 +29,5 @@ Alternatives rejected:
 
 - Rows open in a new tab and Back returns to the list, as a real link does.
 - The old dashboard still renders the new tabs, with none marked current, until it is deleted.
-- The RD-4 pages no longer link to `/p/{project}`. It is still reached from the old Home's tiles and sidebar, `/prod`,
-  and the RD-3 story page's breadcrumb (`story-page.blade.php`), which RD-4 did not change.
+- The RD-4 pages no longer link to `/p/{project}`, and neither does the RD-3 story page's breadcrumb (moved to Stories
+  in RD-4). It is still reached from the old Home's tiles and sidebar and `/prod`.
