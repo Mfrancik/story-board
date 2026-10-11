@@ -1,5 +1,7 @@
 # App shell and project switcher
-Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-7, SB-10, RD-4, RD-5
+Status: retired   ·   Last updated: 2026-10-11   ·   Stories: SB-7, SB-10, RD-4, RD-5, RD-9
+
+> **Retired in RD-9.** `layouts/board`, `App\View\Components\Board\Sidebar`, bare `/p/{project}` and the `/?project=` redirect were deleted. Its place is taken by the [dark shell](dark-shell.md) and its sidebar; `/?project=` is now ignored (ADR-058). `EnsureProjectIsShown` and ADR-013's refusal stay, on every kept project page. This doc is kept as the record of how it worked; see [retired pages](retired-pages.md) for the full list and where its tests went.
 
 ## Overview
 Every board page sits in one frame: a left sidebar that lists the enabled projects and switches
@@ -142,3 +144,4 @@ disabled project now logs `project_page_refused`, not `board.story_not_found`.
 2026-09-29 — Manage slot and empty state link to `/projects` now that the route exists (SB-12)
 2026-10-11 — Narrowed to `/`, `/p/{project}` and `/prod`; the kept pages moved to `layouts/shell` (RD-4, `f722dbc`)
 2026-10-11 — `/` moves to the dark shell as the home overview; this sidebar remains on `/p/{project}` and `/prod` (RD-5, `6d6f3de`)
+2026-10-11 — Deleted: `layouts/board`, the board sidebar, `projects.show`, `RedirectProjectFilter`; `AppShellTest` refusal coverage moved to `StoryPageTest` (RD-9, `2669db7`)

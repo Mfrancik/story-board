@@ -1,5 +1,7 @@
 # All-projects dashboard (What needs me)
-Status: deprecated   ·   Last updated: 2026-10-11   ·   Stories: SB-3, SB-4, SB-5, SB-7, SB-8, SB-9, SB-10, RD-2, RD-5
+Status: retired   ·   Last updated: 2026-10-11   ·   Stories: SB-3, SB-4, SB-5, SB-7, SB-8, SB-9, SB-10, RD-2, RD-5, RD-9
+
+> **Retired in RD-9.** The old Home component, its cards, sections and `ListWhatNeedsMe` were deleted. Its place is taken by the [home overview](home-overview.md); the needs-me predicates live on in `ListNeedsMe`. This doc is kept as the record of how it worked; see [retired pages](retired-pages.md) for the full list and where its tests went.
 
 ## Overview
 **Unrouted since RD-5.** `/` is now the [home overview](home-overview.md). This component (`Home`) stays in the
@@ -278,3 +280,4 @@ outlive a killed process until its TTL runs out, and that is expected.
 2026-09-29 — `projects()` sums per-status counts instead of `mapWithKeys`, so null and `(none)` no longer overwrite each other (SB-10, `e9a2f6e`)
 2026-10-11 — Page-load refresh moved out of `mount()` into the `RefreshStaleProjects` middleware (RD-2, `43b01ed`)
 2026-10-11 — Unrouted: `/` is the overview; the pick/approval/build predicates moved to `ListNeedsMe`; tests use `oldHome()` (RD-5, `6d6f3de`)
+2026-10-11 — Deleted: `Home`, `needs-me-cards`, `project-card`, `section`, `story-row`, `ListWhatNeedsMe`, `oldHome()` and its tests (RD-9, `2669db7`)

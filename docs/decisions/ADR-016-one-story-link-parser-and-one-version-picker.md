@@ -1,6 +1,6 @@
 # ADR-016 — One `?story` parser, one version picker, and a link that names a story, not a version
 
-Date: 2026-09-29 · Status: accepted
+Date: 2026-09-29 · Status: accepted · In part retired by RD-9 (`ResolveStoryLink` and `?story` deleted; `FindStoryVersion` stays); see [retired pages](../features/retired-pages.md)
 
 ## Context
 

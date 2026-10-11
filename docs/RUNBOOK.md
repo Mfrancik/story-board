@@ -10,6 +10,12 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-10-11 — Project tiles show no new production figure
+Symptom: an overview project tile's production row keeps yesterday's (or an older) figure, or drops off after 7 days, although the connection tests fine on `/projects`.
+Root cause: since RD-9 deleted `/prod` and its `ReadProductionMetrics` job, no page load reads production. The only read is `board:prod-snapshot` at 23:55 in `board.timezone`, which needs the scheduler, and `composer run dev` does not start it. The tiles show stored `ProdSnapshot` rows only (ADR-054).
+Fix: run `php artisan schedule:work` beside `composer run dev`. For a figure now, run `php artisan board:prod-snapshot` (RD-9, `2669db7`; see [retired pages](features/retired-pages.md)). Past days cannot be back-filled.
+Log trail: no `board.prod_snapshot_run` that night and no `board.prod_read`. If it ran but a project failed: `board.prod_snapshot_run failed>0` and that project's `board.prod_read_failed reason=<code>`.
+
 ## 2026-10-11 — A missing-field skip test stayed green with the missing-field guard deleted
 Symptom: during RD-8's build, the "no `runner` field is skipped" case stayed green when the mutation check deleted the required-field loop in `ReadPreflightRuns::read()`.
 Root cause: `runner` is also value-checked a few lines later (`isset(RAN_ON[...])`), so a record with no `runner` was still skipped and counted, just with reason `runner` instead of `missing runner`. The case proved a skip happened, not which guard caused it.
@@ -126,13 +132,13 @@ Fix: `pb-px` on the `<nav>` gives the underline room inside the scroll box. Each
 Log trail: none; visual. Found in the 375 px browser check (`tests/Browser/ProjectAppMapTest.php` "fits a 375px phone…").
 
 ## 2026-09-29 — "Same number of queries" tests failed once the sidebar counted mockups
-Symptom: after SB-21 added the sidebar's awaiting-pick count, `ProjectPageTest` "runs the same number of queries whatever the number of initiatives" (and its `ProjectStoriesTest` twin) failed: the first render ran more queries than the second.
+Symptom: after SB-21 added the sidebar's awaiting-pick count, `ProjectPageTest` "runs the same number of queries whatever the number of initiatives" (and its `ProjectStoriesTest` twin) failed: the first render ran more queries than the second. (Both pins superseded: RD-9 deleted `ProjectPageTest`; the Stories page's query count is pinned by `ProjectStoriesTest`'s one-query test.)
 Root cause: an early `ReadMockupSets` cached whole sets. A cold render queried the snapshot and filled the cache, and a warm one skipped the query, so the query count depended on cache state rather than on the page.
 Fix: rows are read fresh on every call, always two queries (`ReadMockupSets::handle()`). Only git results are cached: gate readings per commit (`board:mockup-gates:{id}:{sha}`) and the local-branch pick check (`board:mockup-local:{id}`) (SB-21). Cache what is expensive (git), not what a query-count test measures.
 Log trail: none; found by the query-count assertions (`DB::getQueryLog()` lengths differing between the two renders).
 
 ## 2026-09-29 — No production snapshot for a day
-Symptom: a project's trend line on `/prod` has a gap for a day, and the change against that day shows "—", although the connection was fine.
+Symptom (`/prod` was deleted in RD-9; today's form of this is "Project tiles show no new production figure" above): a project's trend line on `/prod` has a gap for a day, and the change against that day shows "—", although the connection was fine.
 Root cause: nobody opened `/prod` that day, and `board:prod-snapshot` (scheduled 23:55 in `board.timezone`) never ran. `composer run dev` starts the server, queue worker, pail and Vite, **not the scheduler**.
 Fix: run `php artisan schedule:work` beside `composer run dev` (owner chose doc-only, no `composer.json` change; SB-18, `74e1732`, ADR-031). To fill today by hand, run `php artisan board:prod-snapshot`. Past days cannot be back-filled: production is read as of now.
 Log trail: no `board.prod_snapshot_run` that night. If it ran but a project failed: `board.prod_snapshot_run failed>0` and that project's `board.prod_read_failed reason=<code>`.
@@ -140,7 +146,7 @@ Log trail: no `board.prod_snapshot_run` that night. If it ran but a project fail
 ## 2026-09-29 — Production dashboard tests: queued reads that never ran
 Symptom: while writing SB-18's tests, rows stayed on the skeleton, a second read was silently dropped, or an in-order text assertion failed on text that was plainly on the page.
 Root cause: three separate traps. (1) A `ShouldBeUnique` job run by hand (`$job->handle(...)`) never releases its unique lock, so the next dispatch for that project is dropped as a duplicate. (2) `dispatchSync` through a `Queue::fake()` never runs the job. (3) Livewire `call()` responses are JSON-escaped, so `assertSeeInOrder` on the response misses text with quotes, dashes or `<`.
-Fix: the helpers `runProdReads()` / `workProdQueue()` run each pushed `ReadProductionMetrics` and then release its lock with `(new UniqueLock(app(Cache::class)))->release($job)` (`tests/Feature/Board/ProductionDashboardTest.php`, `tests/Browser/ProductionDashboardTest.php`; SB-18, `74e1732`). In-order checks use a regex on `->html()`. Apply the same lock release to any unique job a test runs by hand.
+Fix: the helpers `runProdReads()` / `workProdQueue()` run each pushed `ReadProductionMetrics` and then release its lock with `(new UniqueLock(app(Cache::class)))->release($job)` (`tests/Feature/Board/ProductionDashboardTest.php`, `tests/Browser/ProductionDashboardTest.php`; SB-18, `74e1732`). In-order checks use a regex on `->html()`. Apply the same lock release to any unique job a test runs by hand. (The job, the helpers and both files no longer exist: RD-9 deleted `/prod`. The lock lesson stands.)
 Log trail: none for (2) and (3). For (1), no second `board.prod_read` after a Refresh in the test log.
 
 ## 2026-09-29 — A production metric using SLEEP() "succeeded" instead of timing out
@@ -193,19 +199,19 @@ Log trail: `board.project_add_refused` with `reason: missing_path` and an empty 
 ## 2026-09-29 — A project switched off mid-visit kept rendering its rollup
 Symptom: with `/p/coins` open, switching coins off and then clicking a kind button still re-rendered its initiatives; a removed project 404'd the Livewire request with no log line (L-5).
 Root cause: `EnsureProjectIsShown` is route middleware, and Livewire update requests (`/livewire/update`) never pass through the page's route middleware, so only the initial GET was guarded. Test trap: after `assertRedirect()`, Livewire's test harness still holds the previous HTML, so `assertDontSee('secret-rollup')` passes against stale markup and proves nothing.
-Fix: `ProjectPage::hydrate()` re-runs `CheckProjectShown` on every update request, logs `board.project_page_refused` (`request: update`), redirects home, and `render()` returns an empty `<div>` (SB-10, `e9a2f6e`). The test proves the rollup is not read by mocking `ReadProjectProgress` with `shouldNotReceive('handle')`. Any Livewire page guarded by route middleware needs the same `hydrate()` re-check.
+Fix: `ProjectPage::hydrate()` re-runs `CheckProjectShown` on every update request, logs `board.project_page_refused` (`request: update`), redirects home, and `render()` returns an empty `<div>` (SB-10, `e9a2f6e`). The test proves the rollup is not read by mocking `ReadProjectProgress` with `shouldNotReceive('handle')`. Any Livewire page guarded by route middleware needs the same `hydrate()` re-check. Today that is `app/Livewire/Board/Concerns/GuardsProjectPage.php:hydrate()` (RD-1), on every kept project page; `ProjectPage` itself was deleted in RD-9.
 Log trail: `board.project_page_refused` with `request: update` and `reason` `disabled` / `unknown`; before the fix, nothing after `board.project_viewed`.
 
 ## 2026-09-29 — A query-count test failed (15 vs 17) with no growth in the page
 Symptom: SB-10's "same number of queries whatever the number of initiatives" test counted 15 queries before adding initiatives and 17 after.
 Root cause: the fixture's What needs me cards started empty. An empty card skips its eager-load query, so the "after" run (which added open work) paid two queries the "before" run never made. Empty vs filled looked like growth.
-Fix: the test starts with non-empty cards and an off-main row, so both runs take the same code paths (`tests/Feature/Board/ProjectPageTest.php`, SB-10). Any query-count test must fill every conditional branch in its baseline.
+Fix: the test starts with non-empty cards and an off-main row, so both runs take the same code paths (`tests/Feature/Board/ProjectPageTest.php`, SB-10; the file no longer exists, deleted with the page in RD-9). Any query-count test must fill every conditional branch in its baseline.
 Log trail: none; compare `DB::getQueryLog()` of the two runs.
 
 ## 2026-09-29 — Browser test timed out clicking "Refresh this project" by its text
 Symptom: in `tests/Browser/ProjectPageTest.php`, a click by the text "Refresh this project" timed out, and an assertion on a branch name failed Playwright strict mode.
 Root cause: the text click likely resolved against the button's hidden `wire:loading` span beside the label (unconfirmed). The branch name appears on several off-main rows, so a text locator matched more than one element.
-Fix: the button carries `data-refresh-project` and the test clicks that; the branch check is a script assertion over the rows (SB-10). Prefer `data-*` hooks to text locators for Livewire buttons with loading states.
+Fix: the button carries `data-refresh-project` and the test clicks that; the branch check is a script assertion over the rows (SB-10). Prefer `data-*` hooks to text locators for Livewire buttons with loading states. (The page and its test no longer exist, deleted in RD-9; the lesson stands.)
 Log trail: none; Playwright timeout and strict-mode errors.
 
 ## 2026-09-29 — A Pest test helper collided with another file's helper
@@ -229,13 +235,13 @@ Log trail: none; a compile or render error.
 ## 2026-09-29 — Escape then Back left the board for about:blank
 Symptom: with the story modal open, pressing Escape (sometimes followed by Back) navigated off the board to `about:blank`. Intermittent; the browser test failed on some runs only.
 Root cause: the modal relied on Livewire's `#[Url(history: true)]`, which pushes the history entry only after the server round trip. Escape pressed before the response landed stepped back one entry more than had been pushed.
-Fix: the modal view pushes history itself, before calling the server, and counts the entries (`depth`). Close steps back through exactly those, and a modal opened straight from a URL closes with `$wire.close()` without navigating ([ADR-015](decisions/ADR-015-story-modal-history-is-driven-by-alpine.md), SB-8, `f601c01`). Pinned by `tests/Browser/StoryModalTest.php` "closes on Escape, drops ?story from the URL and returns focus to the row".
+Fix: the modal view pushes history itself, before calling the server, and counts the entries (`depth`). Close steps back through exactly those, and a modal opened straight from a URL closes with `$wire.close()` without navigating ([ADR-015](decisions/ADR-015-story-modal-history-is-driven-by-alpine.md), SB-8, `f601c01`). Pinned by `tests/Browser/StoryModalTest.php` "closes on Escape, drops ?story from the URL and returns focus to the row" (no longer exists: RD-9 deleted the modal and its test; push-before-round-trip still applies to any Alpine-owned history).
 Log trail: none; client-side. `board.story_modal_opened` looks normal. The symptom is the browser URL.
 
 ## 2026-09-29 — An unknown project's page 404'd with no log line
 Symptom: `/p/nope` returned 404, but no `board.project_page_refused` was logged, so the refusal could not be explained from the log.
 Root cause: Livewire 4 binds `{project:name}` inside `SubstituteBindings`. That runs before route middleware, so an unknown name 404'd in the binding before the guard ran.
-Fix: `bootstrap/app.php` calls `prependToPriorityList(SubstituteBindings::class, EnsureProjectIsShown::class)`, so the guard runs first and reads the raw route string ([ADR-013](decisions/ADR-013-project-refusal-runs-before-route-binding.md), SB-7). Pinned by `AppShellTest` "404s /p/nope and logs board.project_page_refused with reason unknown". Any guard that has to see an unbound name needs the same priority entry.
+Fix: `bootstrap/app.php` calls `prependToPriorityList(SubstituteBindings::class, EnsureProjectIsShown::class)`, so the guard runs first and reads the raw route string ([ADR-013](decisions/ADR-013-project-refusal-runs-before-route-binding.md), SB-7). Pinned by `StoryPageTest` "refuses the story page of an unknown or disabled project and logs board.project_page_refused with the reason" (moved from the old `AppShellTest` in RD-9, when bare `/p/{project}` was deleted). Any guard that has to see an unbound name needs the same priority entry.
 Log trail: none, and that absence was the symptom. The request's `request_id` had no board event at all.
 
 ## 2026-09-29 — The story page for a branch version said "@ origin/main"

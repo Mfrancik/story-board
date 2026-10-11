@@ -28,7 +28,7 @@ Alternatives rejected:
 ## Consequences
 
 - The two pages cannot disagree on order or counts unless their input rows differ. A test
-  (`ProjectStoriesTest`, "orders the initiatives exactly as ReadProjectProgress does") compares the
+  (`ProjectStoriesTest`, "orders the initiatives exactly as ReadProjectProgress does"; superseded in RD-9, which deleted ReadProjectProgress and pins the order directly) compares the
   two outputs directly.
 - The input rows can differ in one way: MySQL groups initiative names case-insensitively
   (collation), and PHP's `groupBy` is case-sensitive. Names that differ only by case would split here

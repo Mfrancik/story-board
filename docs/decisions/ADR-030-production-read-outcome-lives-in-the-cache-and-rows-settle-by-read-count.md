@@ -1,6 +1,6 @@
 # ADR-030 — Production read outcome lives in the cache; rows settle by read count
 
-Date: 2026-09-29 · Status: accepted · Story: SB-18
+Date: 2026-09-29 · Status: accepted · Story: SB-18 · In part retired by RD-9 (`/prod` read the outcome; it is still written, read by no page); see [retired pages](../features/retired-pages.md)
 
 ## Context
 

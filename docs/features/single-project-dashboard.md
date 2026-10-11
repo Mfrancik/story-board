@@ -1,5 +1,7 @@
 # Single-project dashboard
-Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-10, RD-2
+Status: retired   ·   Last updated: 2026-10-11   ·   Stories: SB-10, RD-2, RD-9
+
+> **Retired in RD-9.** `ProjectPage`, `ReadProjectProgress` and the `/p/{project}` route (now 404) were deleted. Its place is taken by the project tabs (Stories, Preflight, Handbook, Map); the shell sidebar links each project to its [Stories page](stories-by-initiative.md). This doc is kept as the record of how it worked; see [retired pages](retired-pages.md) for the full list and where its tests went.
 
 ## Overview
 `/p/{project}` is one project's dashboard, in depth where the all-projects page shows breadth. It has a
@@ -169,3 +171,4 @@ refresh was not scoped. A `project_action_refused` line means something hand-cra
 2026-09-29 — `hydrate()` sends the owner home (logged) when the project leaves the board mid-visit, replacing a stale render or unlogged 404; status counts summed so null and `(none)` no longer collide (SB-10, `e9a2f6e`)
 2026-10-11 — Status order, open statuses and the initiative rollup moved to `StoryStatusOrder` (RD-1, `6ad827b`)
 2026-10-11 — The page-load refresh moved to the `RefreshStaleProjects` middleware, so this page now refreshes every stale project (RD-2, `43b01ed`)
+2026-10-11 — Deleted: `ProjectPage`, `ReadProjectProgress`, `/p/{project}` and their tests (RD-9, `2669db7`)

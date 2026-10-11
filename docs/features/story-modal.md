@@ -1,5 +1,7 @@
 # Story modal
-Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-8, RD-4, RD-5
+Status: retired   ·   Last updated: 2026-10-11   ·   Stories: SB-8, RD-4, RD-5, RD-9
+
+> **Retired in RD-9.** `StoryModal`, `ResolveStoryLink` and `?story=` were deleted. Its place is taken by the [story page](story-page-and-mockups.md); `FindStoryVersion` stays, shared with it and Live now. This doc is kept as the record of how it worked; see [retired pages](retired-pages.md) for the full list and where its tests went.
 
 ## Overview
 Clicking any story row on `/p/{project}` (and, before RD-5, on `/`) opens a large modal with everything about that story:
@@ -145,3 +147,4 @@ leaves the board) are client-side and leave no log line; see the RUNBOOK entry f
 2026-09-29 — Story modal at `?story=<project>/<ID>` replaces expand-in-place; `ResolveStoryLink`, `FindStoryVersion` shared with the story page (SB-8, `f601c01`)
 2026-10-11 — No longer embedded on the Stories page, whose rows now link to the story page (RD-4, `f722dbc`)
 2026-10-11 — No longer on `/`: the home overview links rows to the story page; the modal remains on `/p/{project}` and the unrouted old Home (RD-5, `6d6f3de`)
+2026-10-11 — Deleted: `StoryModal`, `ResolveStoryLink`, `.mockup-thumb*` CSS and the modal's tests (RD-9, `2669db7`)

@@ -79,6 +79,12 @@ Scope: PROJECT
 
 With RD-9: ~45 hand-pasted inline SVG icons (sidebars, the empty-state glyph in six views, search magnifier, warning triangle, chevron, spinner) plus per-view icon closures (mockup-viewer.blade.php:37 $icon, project-app-map.blade.php:30 $arrow, production-settings.blade.php:97-98 $tick/$cross, story-page.blade.php:36 $chevron). Replace with one <x-shell.icon name=… class=…> component; mockup-viewer's $icon closure is the closest starting point. (Found by the redesign phase full preflight sweep, 2026-10-11.)
 
+### F-15 — 2026-10-11 — Dead code RD-9 left behind
+Area: ListLiveSessions, ReadProductionProject, ReadMockupSets, partials/head, app.css, shared board components
+Scope: PROJECT
+
+RD-9 handoff (follow-ups the build left undone, not fixed): ListLiveSessions::handle() + its private helpers (links(), firstSentence()) + the `chosen` field are now uncalled; ReadProductionProject::outcome()/outcomeKey() are write-only (only the next write reads them); ReadMockupSets::countFor() is uncalled (found by /document); dead `@else @fluxAppearance` light branch in resources/views/partials/head.blade.php and the stale app.css:10-14 comment; legacy zinc/dark: classes in shared board components (status-chip, status-bar, project-tabs); .board-modal/.board-drawer usage unchecked; "Refresh the project from its dashboard" copy in handbook unread/failed and app-map views now points at a deleted page.
+
 ## Cut
 
 ### F-6 — 2026-10-11 — /story writes a one-line Summary: for the story page

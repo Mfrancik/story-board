@@ -1,6 +1,6 @@
 # ADR-020 — The project page's initiative rollup is one grouped query; off-main rows load on demand
 
-Date: 2026-09-29 · Status: accepted
+Date: 2026-09-29 · Status: accepted · Retired by RD-9 (`ReadProjectProgress` was deleted; the rollup lives in `StoryStatusOrder`); see [retired pages](../features/retired-pages.md)
 
 ## Context
 

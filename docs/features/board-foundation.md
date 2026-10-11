@@ -1,11 +1,11 @@
 # Board foundation
-Status: active   ·   Last updated: 2026-10-11   ·   Stories: RD-1
+Status: active   ·   Last updated: 2026-10-11   ·   Stories: RD-1, RD-9
 
 ## Overview
 The shared backend the board's pages stand on: one status order, one mockup-gate parser, one
 project-page guard, and the action-level tests that prove them without loading a page. RD-1 built it
 for the redesign. It deleted the unused auth starter kit and untangled the kept backend from the
-pages RD-9 will delete, so later RD stories build only on code that is in use and tested directly.
+pages RD-9 then deleted ([retired pages](retired-pages.md)), so later RD stories build only on code that is in use and tested directly.
 There is no route or UI of its own. Every board page reads through it.
 
 ## How it works
@@ -61,12 +61,12 @@ board, it logs, sets `$gone` and redirects. `ProjectStories`, `ProjectPreflight`
 - `logProjectRefused($reason)` logs `board.project_page_refused` by default. `ProjectHandbook` routes it
   through its own `refuse()`, so it keeps `board.handbook_refused`.
 
-Every page redirects and logs exactly as it did before. `ProjectPage` has its own guard and does not
-use the trait.
+Every page redirects and logs exactly as it did before. (`ProjectPage` had its own guard; RD-9 deleted it.)
 
 **Mockup content types.** `MockupSetFileController::TYPES` now owns the extension→MIME map. That is the
 gallery's frame route, which the redesign keeps. The story page's older `MockupFileController` reads
-the map from there until RD-9 removes it.
+the map from there. RD-9 kept that route, because only it serves `?v=` versions
+([ADR-056](../decisions/ADR-056-mockup-file-route-kept-for-the-story-page.md)).
 
 ## Data model
 None. No migrations. The `users`, `passkeys` and `two_factor_*` schema is kept but unused.
@@ -97,11 +97,12 @@ No new events, and no event was renamed. The trait logs `board.project_page_refu
   parser / `ReadMockupSets` / `StoryPickWriter`, and the trait redirects for each page using it. The
   bold-pick test commits `Chosen option: **B**` on a local, unpushed branch in a fixture checkout. The kit
   parser cannot read `**B**` (L-6), so the test proves that the board's three readers agree.
-- `tests/Unit/FoundationArchTest.php` contains the arch rules. `ReadProjectStories` and `StoryPickWriter` depend on
-  neither `ListWhatNeedsMe` nor `ReadProjectProgress`. `ReadMockupSets` reads the gate through the parser.
+- `tests/Unit/FoundationArchTest.php` contains the arch rules. RD-9 deleted `ListWhatNeedsMe` and `ReadProjectProgress`, so the
+  two rules fencing them off went too; `RetireOldPagesTest` now holds that nothing uses a deleted class.
+  `ReadMockupSets` reads the gate through the parser.
   The parser and the status order use no git, DB or log.
 - `tests/Unit/MockupGateParserTest.php` and `tests/Unit/StoryStatusOrderTest.php` cover the pure classes.
-- Action tests ported off the pages RD-9 deletes:
+- Action tests ported off the pages RD-9 deleted:
   - `tests/Feature/Board/ProjectActionsTest.php` covers `AddProject`, `SwitchProject` and `RemoveProject`.
   - `tests/Feature/Board/StoryReadActionsTest.php` covers `RenderStory` and `FindStoryVersion::handle()`.
   - `tests/Feature/AssignRequestIdTest.php` covers the middleware.
@@ -120,10 +121,11 @@ No new events, and no event was renamed. The trait logs `board.project_page_refu
   `@laravel/passkeys` npm dependency, and `UserFactory::withTwoFactor()`. They were left for the owner.
 - Closed in RD-2: the page-load refresh used to be proven only through `HomePageTest` / `ProjectPageTest`.
   It is now the `RefreshStaleProjects` middleware, tested directly in `tests/Feature/Board/DarkShellTest.php`
-  (exactly one job when stale, none when fresh), so RD-9 can delete those pages without losing coverage.
+  (exactly one job when stale, none when fresh), so RD-9 deleted those pages without losing coverage.
 - A new one-project page should `use GuardsProjectPage` and override a hook only if it must return elsewhere or
   keep its own event name. Do not copy `hydrate()` again.
 - `composer remove` runs `boost:update`, which rewrites `.claude/` and agent files. Use `--no-scripts` (RUNBOOK).
 
 ## Change history
 2026-10-11 — Starter kit and `laravel/fortify` removed; `StoryStatusOrder`, `MockupGateParser`, `GuardsProjectPage` and `GitReader::remotes()` added; action tests ported off old pages (RD-1, `6ad827b`)
+2026-10-11 — The two arch rules fencing off `ListWhatNeedsMe` and `ReadProjectProgress` removed with those classes (RD-9, `2669db7`)

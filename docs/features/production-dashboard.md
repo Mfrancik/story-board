@@ -1,5 +1,7 @@
 # Production dashboard
-Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-18
+Status: retired   ·   Last updated: 2026-10-11   ·   Stories: SB-18, RD-9
+
+> **Retired in RD-9.** `/prod`, `ProductionDashboard`, `ListProductionDashboard`, the `prod-*` components and the `ReadProductionMetrics` job were deleted. Its place is taken by the overview's project tiles (RD-7, [home-overview.md](home-overview.md)), fed only by the nightly `board:prod-snapshot`; `format()` moved to `MetricNumber`. Connections and metrics are still managed on `/projects` ([production-connection.md](production-connection.md)). This doc is kept as the record of how it worked; see [retired pages](retired-pages.md) for the full list and where its tests went.
 
 ## Overview
 `/prod` puts every connected project's production numbers side by side: one row per project, one column
@@ -185,3 +187,4 @@ night (scheduler not running).
 ## Change history
 2026-09-29 — `/prod` comparison table, queued per-project reads, `prod_snapshots`, `board:prod-snapshot` at
 23:55, sidebar link, series and gain/loss tokens (SB-18, `74e1732`)
+2026-10-11 — Deleted: `/prod`, its component, action, components and queued job; snapshot coverage moved to `ProductionSnapshotTest`; `--color-loss` removed (RD-9, `2669db7`)

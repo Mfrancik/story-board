@@ -1,5 +1,5 @@
 # Story page and mockups
-Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-4, SB-5, SB-7, SB-8, SB-21, RD-3
+Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-4, SB-5, SB-7, SB-8, SB-21, RD-3, RD-9
 
 ## Overview
 `/p/{project}/s/{storyId}` is one story, short first (RD-3, option A,
@@ -191,8 +191,10 @@ the board never builds.
   dark toggle are gone. Comparing is in the gallery viewer ("Side by side").
 - Off-main `?v=` rows show mockups but no pick and no "Side by side": the set and the writer read only the ref.
 - The Today button appears only when `ReadCurrentVersion` finds a matching journey shot.
-- The story modal (`StoryModal`) still shows the long form until RD-9 deletes it.
-- The shell sidebar has no Production item, so `/prod` is reachable from here only through the old pages (F-7).
+- Since RD-9 this is the only place a story's full detail shows: the story modal is deleted.
+- The story page's frame loads through `mockups.file` (`/p/{project}/m/{id}/{file}`), not the gallery's
+  `mockups.frame`, because only `mockups.file` serves `?v=` versions. RD-9 kept it for that reason
+  ([ADR-056](../decisions/ADR-056-mockup-file-route-kept-for-the-story-page.md)).
 - The sandbox gives frames an opaque origin, so a mockup cannot use `localStorage` or cookies. `?v=` IDs change
   on every refresh, so old `?v=` links 404.
 
@@ -204,3 +206,4 @@ the board never builds.
 2026-09-29 — Version picking moved to `FindStoryVersion`, shared with the story modal (SB-8, `f601c01`)
 2026-09-29 — Picking moved to the gallery viewer (SB-21, `486be22`)
 2026-10-11 — Short story page in the RD-2 shell: tags, title, summary line, Pick, one mockup frame with Today, folded Details; `PickMockup` shared with the viewer; `ReadStoryOutline`, `RenderStory::inline()`, `x-shell.tag`. Compare overlay, `/build` button and dark toggle removed (RD-3, `0e8542b`)
+2026-10-11 — Refusal of an unknown or disabled project and its log line now tested here; the story modal and the bare `/p/{project}` deleted, `mockups.file` kept (RD-9, `2669db7`)

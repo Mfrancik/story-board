@@ -1,5 +1,5 @@
 # Project brief — story-board
-Last refreshed: 2026-10-11 (RD-8)
+Last refreshed: 2026-10-11 (RD-9)
 
 ## What it is, and for whom
 A localhost Laravel app for one owner, with no auth (removed in RD-1). It reads the `stories/` folder of
@@ -8,7 +8,7 @@ shows in one place what state each project's stories are in. Its one write into 
 (from the gallery or the story page): two lines of one story file, one local commit, never pushed.
 
 It also shows:
-- Each project's production numbers, read-only from its production MySQL, side by side on `/prod` with daily history.
+- Each project's production numbers, read-only from its production MySQL once a night, as a headline and trend on its home tile.
 - Work not on the ref yet (unmerged branches, worktrees, untracked files), labelled with where it lives. It never
   counts as status.
 - Live Claude Code sessions (transcript metadata, never messages); each project's handbook and its drift from the
@@ -39,16 +39,18 @@ It also shows:
   initiative rollup. `MockupGateParser` reads a story's mockup gate.
 
 ## Features
-20 features: 19 active; the SB-9 all-projects dashboard is deprecated (unrouted since RD-5, deleted in RD-9). `/` is the home overview (RD-5), with a project filter (RD-6), project tiles and Shipped this week (RD-7). The Preflight page and tiles say where each run ran (RD-8). Each one's route, summary and doc: [INDEX.md](INDEX.md); the stories behind it: its doc's
-header line.
+21 entries: 16 active, 5 retired by RD-9 (old dashboard, old sidebar, story modal, `/p/{project}`, `/prod`; their docs
+stay as history, and [retired-pages.md](features/retired-pages.md) maps what replaced each). Every page is in the dark
+shell. `/` is the home overview (RD-5) with a project filter (RD-6), project tiles and Shipped this week (RD-7); the
+Preflight page and tiles say where each run ran (RD-8). Each one's route, summary and doc: [INDEX.md](INDEX.md); the
+stories behind it: its doc's header line.
 
 ## Journeys
 None yet. Every SB and RD story so far is `Journey: none`.
 
 ## Stories
 - **built**: SB-2–5, SB-7–12, SB-14–19, SB-21–25 · RD-1 clean foundation · RD-2 dark shell and sidebar ·
-  RD-3 short story page · RD-4 re-skin kept pages · RD-5 home overview · RD-6 home project filter · RD-7 project tiles and Shipped · RD-8 preflight "Ran on"
-- **approved**: RD-9 retire old pages
+  RD-3 short story page · RD-4 re-skin kept pages · RD-5 home overview · RD-6 home project filter · RD-7 project tiles and Shipped · RD-8 preflight "Ran on" · RD-9 retire old pages
 - **draft**: SB-20 preflight run errors · RD-10 preflight run record (parked)
 - **draft (parked)**: SB-6 the board on an always-live domain
 - **cut**: SB-13 pick a mockup (SB-21's pick covers it)
@@ -60,13 +62,11 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
 - Snapshots are replaced wholesale and go stale on fetch failure; refresh runs on the queue → ADR-005, ADR-006
 - Story text is read from git on demand → ADR-007. Mockups are served from git in a CSP sandbox, and an unparsed choice is quoted → ADR-008, ADR-009
 - Off-main work is what a branch changed since its merge-base, parsed by the kit's parser → ADR-010, ADR-011
-- Unknown or disabled projects are refused before route binding, and pages re-check on update → ADR-013, ADR-019
-- `/p/{project}` is its own component, and its rollup is one grouped query → ADR-019, ADR-020
-- `/` leads with What needs me. Its portfolio figures ignore filters → ADR-017, ADR-018
-- The story modal's history is driven by Alpine, through one `?story` parser → ADR-015, ADR-016
+- Unknown or disabled projects are refused before route binding, and pages re-check on update → ADR-013
+- Retired with their pages in RD-9 (kept as history): the old project page, dashboard and story modal → ADR-015–020
 - Manage projects re-navigates after writes, and Add re-runs `RegisterProject`'s checks → ADR-021, ADR-022
 - Live sessions read transcripts defensively, and cards link untracked stories only from their own checkout → ADR-023, ADR-034
-- The home overview: Needs me lists each story once (a pick outranks draft/ready) and In flight keeps the owner's definition; Live cards summarise the latest tool call and usage; panels fail alone; the old Home is tested at a test-only route → ADR-047–050. One `ProjectFilter` value, from `?projects=`, is handed to every home panel → [ADR-051](decisions/ADR-051-one-project-filter-value-for-every-home-panel.md). `git log` is admitted in one fixed form; Shipped is build commits cached per snapshot; tiles reuse existing rules and stored data only → ADR-052–054
+- The home overview: Needs me lists each story once (a pick outranks draft/ready) and In flight keeps the owner's definition; Live cards summarise the latest tool call and usage; panels fail alone; the old Home was tested at a test-only route until RD-9 → ADR-047–050. One `ProjectFilter` value, from `?projects=`, is handed to every home panel → [ADR-051](decisions/ADR-051-one-project-filter-value-for-every-home-panel.md). `git log` is admitted in one fixed form; Shipped is build commits cached per snapshot; tiles reuse existing rules and stored data only → ADR-052–054
 - Handbook sections load lazily and stay client-side → ADR-024
 - The Stories page is one query over the shared rollup, and it filters with CSS → ADR-025, ADR-026
 - Preflight history reads the cost CSVs by folder name, renders on the server and recomputes in Alpine → ADR-027, ADR-028. Where a run ran is a per-run JSON record (schema 1) matched to its CSV row by branch within 10 min, nearest first → [ADR-055](decisions/ADR-055-preflight-run-record-format.md)
@@ -79,13 +79,14 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
 - The dark shell: Geist from fontsource, styling scoped by `.shell` and a `shell:` variant → ADR-039, ADR-040. Kept pages moved in, sharing primitives by variant, Flux toasts behind an appearance stub, no links to the old dashboard → ADR-044–046
 - Refresh on load is one middleware on the page-route group, not per-page `mount()` → [ADR-041](decisions/ADR-041-refresh-on-load-is-one-middleware-on-the-page-routes.md)
 - One pick action, `PickMockup`, serves the viewer and the story page; the short story page replaced the long one in place, trimmed to the approved mockup → [ADR-042](decisions/ADR-042-one-pick-action-shared-by-story-page-and-viewer.md), [ADR-043](decisions/ADR-043-short-story-page-replaces-the-long-one-in-place.md)
+- RD-9: the mockup file route stays for `?v` versions; coverage is ported before a test goes; `/?project=` is ignored → ADR-056–058
 - Preflight audit scope, audit cost record, build-artifact disposal (kit) → ADR-001 to ADR-003
 
 ## Current phase and what's next
-Phase 3, the redesign (RD). RD-1 to RD-8 are built: foundation, dark shell, short story page, every kept page
-in the shell, the home overview at `/` with its project filter, project tiles and Shipped this week, and the
-reading side of preflight "Ran on". Next, RD-9
-deletes the old Home, the old dashboard, the story modal and `layouts/board`. Page-load refresh is tested at its middleware, so that costs no coverage.
+Phase 3, the redesign (RD). RD-1 to RD-9 are built: foundation, dark shell, short story page, every kept page in
+the shell, the home overview with its filter, tiles and Shipped this week, the reading side of preflight "Ran on",
+and the deletion of every page the redesign replaced. Next: the phase-end full preflight sweep and `/lesson retro`;
+RD-10 (preflight run record writer) is parked. Dead code RD-9 left is backlog F-15.
 
 Still open from phase 2: the owner confirms SB-19's checkbox look; `journeyStep()` is adopted in coins, followed
 by the real-data check of the app map and Current pane; the `--text-thumb` token decision.
@@ -94,23 +95,22 @@ Backlog: [BACKLOG.md](BACKLOG.md).
 
 ## Known limitations
 - Laravel 13 / Livewire 4 are installed, while `CLAUDE.md` says 12 / 3. Flagged, unchanged.
-- Starter-kit leftovers are still unused: `resources/js/passkeys.js` and its Vite input, the
-  `@laravel/passkeys` npm dependency, `UserFactory::withTwoFactor()`, and the `users` / `passkeys` tables and
-  `two_factor_*` columns. These are left for the owner (RD-1).
-- Refresh and `/prod` reads need a queue worker (`composer run dev` starts one). The nightly snapshot also needs
-  `schedule:work`, which `composer run dev` does not start. A failing project is retried at most every 5 min.
+- Unused starter-kit leftovers (passkeys JS and npm dependency, `withTwoFactor()`, `users` / `passkeys` tables,
+  `two_factor_*` columns) are left for the owner (RD-1).
+- Refresh needs a queue worker (`composer run dev` starts one; a failing project retries at most every 5 min).
+  Production is read only by the nightly `board:prod-snapshot`, which needs `schedule:work` (not started by it).
 - Until the kit parser reads `Chosen option: **B**` (F-1), "Awaiting a pick" over-reports on the ref.
-- Untracked stories and mockups are listed but cannot be shown. Off-main rows with malformed IDs cannot open the
-  modal. `?v=` links break at the next refresh.
-- Story summaries mostly fall back to the first sentence of `## Story` until the kit writes `Summary:` (F-6). The
-  shell sidebar has no Production item (F-7). The story modal keeps the long form until RD-9.
-- Two layouts coexist until RD-9: `layouts/board` keeps `/p/{project}` and `/prod`; status-chip, status-bar and
-  project-tabs carry `dark:` and `shell:` tones side by side. The shell sidebar has no live badge and no Manage projects link (reachable from `/` only via the no-projects empty state).
-- `/projects` and `/prod` have no auth, hold production credentials, and are safe only while localhost-only.
+- No page lists off-main work since RD-9: tiles count it and a story page shows its versions. Untracked stories and
+  mockups cannot be shown. `?v=` links break at the next refresh.
+- Story summaries mostly fall back to the first sentence of `## Story` until the kit writes `Summary:` (F-6).
+- Status-chip, status-bar and project-tabs still carry dead `dark:` tones beside `shell:` ones (F-15). The shell
+  sidebar has no live badge and no Manage projects link (reachable from `/` only via the no-projects empty state).
+  Handbook and app-map error copy still says "Refresh the project from its dashboard", which no longer exists.
+- `/projects` has no auth, holds production credentials, and is safe only while localhost-only.
   SB-6 must add auth first. A project's path and ref cannot be edited.
-- Home tiles show production from stored nightly snapshots only, first metric only; Shipped this week lists only
-  `feat|fix|test(<ID>)` commits and can lag a new commit by up to 5 min (cached per snapshot).
-- Live sessions rely on an undocumented transcript format and a 10-minute mtime; the sidebar badge does not poll. A home
+- Tiles show only the first production metric; Shipped this week lists only `feat|fix|test(<ID>)` commits and can
+  lag a new commit by up to 5 min (cached per snapshot).
+- Live sessions rely on an undocumented transcript format and a 10-minute mtime. A home
   card shows a session's Bash command line (first line, 120 chars), accepted for localhost only (ADR-048); a 1M context is inferred.
 - The handbook compares against the kit checkout's last-fetched ref. Its real-data check is pending.
 - Production SSL is not certificate-verified, and rotating APP_KEY breaks stored credentials. The coins

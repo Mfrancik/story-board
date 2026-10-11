@@ -1,6 +1,6 @@
 # ADR-050 — The old Home is unrouted and tested at a test-only route until RD-9
 
-Date: 2026-10-11 · Status: accepted · Story: RD-5
+Date: 2026-10-11 · Status: accepted · Story: RD-5 · Superseded by RD-9 (the old Home, `oldHome()` and `/test/old-home` were deleted); see [retired pages](../features/retired-pages.md)
 
 ## Context
 

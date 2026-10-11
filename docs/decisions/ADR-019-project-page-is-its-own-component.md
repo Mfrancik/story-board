@@ -1,6 +1,6 @@
 # ADR-019 — `/p/{project}` is its own `ProjectPage` component, sharing the What needs me cards with `/`
 
-Date: 2026-09-29 · Status: accepted · Supersedes: [ADR-014](ADR-014-project-page-reuses-home-pinned.md)
+Date: 2026-09-29 · Status: accepted · Supersedes: [ADR-014](ADR-014-project-page-reuses-home-pinned.md) · Retired by RD-9 (`ProjectPage` and `/p/{project}` were deleted); see [retired pages](../features/retired-pages.md)
 
 ## Context
 

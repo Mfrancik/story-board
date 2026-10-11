@@ -1,11 +1,12 @@
 # Production connection and metrics
-Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-17
+Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-17, RD-9
 
 ## Overview
 Each project on `/projects` can hold one **read-only** connection to its production MySQL database and a list
 of metrics to read from it: four presets (Total users, New today, Active today, Logged in today) and custom
 single-`SELECT` metrics. This story makes the connection safe to hold and lets the owner test each number;
-SB-18 shows the numbers on a dashboard and keeps daily snapshots. It is the board's first read of anything
+SB-18 keeps daily snapshots (`board:prod-snapshot`, nightly), which the overview's project tiles show; its `/prod`
+dashboard was deleted in RD-9 ([retired pages](retired-pages.md)). It is the board's first read of anything
 that is not git, so it goes through one gateway, `ProductionReader`, that proves the user read-only every
 time it connects ([ADR-029](../decisions/ADR-029-production-reads-go-through-one-read-only-gateway.md)).
 
@@ -214,3 +215,4 @@ with no production connection.
 
 ## Change history
 2026-09-29 — Production panel on `/projects`: read-only connection with grants proof, presets and custom SQL metrics, `ProductionReader` gateway, `board.timezone` (SB-17, `c8bcfbe`)
+2026-10-11 — `/prod` deleted; the nightly snapshot is the only reader of these metrics, shown on the overview's tiles (RD-9, `2669db7`)

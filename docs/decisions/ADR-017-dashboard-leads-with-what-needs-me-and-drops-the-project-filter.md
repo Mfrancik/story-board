@@ -1,6 +1,6 @@
 # ADR-017 — The dashboard leads with What needs me, and the project filter is removed, not hidden
 
-Date: 2026-09-29 · Status: accepted
+Date: 2026-09-29 · Status: accepted · Retired by RD-9 (the old dashboard was deleted); see [retired pages](../features/retired-pages.md)
 
 ## Context
 

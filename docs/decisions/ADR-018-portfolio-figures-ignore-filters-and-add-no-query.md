@@ -1,6 +1,6 @@
 # ADR-018 — Portfolio figures ignore the filters, add no query, and report the stalest snapshot
 
-Date: 2026-09-29 · Status: accepted
+Date: 2026-09-29 · Status: accepted · Retired by RD-9 (the old dashboard was deleted); see [retired pages](../features/retired-pages.md)
 
 ## Context
 

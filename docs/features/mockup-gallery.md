@@ -1,5 +1,5 @@
 # Mockup gallery
-Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-21, SB-23, RD-3, RD-4
+Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-21, SB-23, RD-3, RD-4, RD-9
 
 ## Overview
 `/mockups` lists every mockup set across the enabled projects as live-thumbnail cards, with the sets
@@ -151,10 +151,11 @@ joins a path, so `../../.env` or `%2e%2e` is simply not in the listing. A miss l
 frame-ancestors 'self'`. Unlike SB-4's route, this CSP does **not** include `allow-popups`.
 
 **Entry points.**
-- The sidebar has a **Mockups** link with a `pick`-toned awaiting count (`Sidebar::render()` →
-  `awaitingCount()`).
-- The project page header has a **Mockups N** button, shown only when `countFor()` > 0 (a snapshot count, no git).
-- The story modal has **Open in mockup gallery**, only for the on-ref version (the viewer reads the ref).
+- The shell sidebar has a **Mockups** item with its awaiting count (`app/View/Components/Shell/Sidebar.php` →
+  `awaitingCount()`, hook `data-mockups-count`).
+- The story page links to the story's set in the viewer (`mockups.show`).
+- RD-9 deleted the other two: the old project page's **Mockups N** button (`countFor()`, now uncalled) and the story
+  modal's **Open in mockup gallery**.
 
 ## Data model
 No schema change. Reads `projects` and on-ref `stories` rows (`mockups` JSON `dir`/`options`/`chosen`,
@@ -185,8 +186,8 @@ project's working-tree `storage/app/journey-shots/<j>/manifest.json` (via `ReadJ
   `data-option-tab`, `data-width`, `data-compare-toggle`, `data-compare-pane`, `data-compare-swap`,
   `data-pick`, `data-pick-dialog`, `data-pick-refusal`, `data-current-placeholder` (empty states),
   `data-current-pane="<state>"`, `data-current-stale`, `data-compare-open`, `data-default-left`,
-  `data-default-right`, `data-sidebar-mockups`,
-  `data-awaiting-count`, `data-project-mockups`, `data-open-gallery`.
+  `data-default-right`. The sidebar count is the shell's `data-mockups-count` (the old `data-sidebar-mockups`,
+  `data-awaiting-count`, `data-project-mockups` and `data-open-gallery` went in RD-9).
 
 ## Configuration
 None of its own. Frames lean on `PHP_CLI_SERVER_WORKERS` like the story page. The stale threshold is the
@@ -217,7 +218,8 @@ the Where (compare the story's `- Routes:` path with the manifest's `route`), or
 
 ## Testing & verification
 - `tests/Feature/Board/MockupGalleryTest.php` has one `it()` per gallery/viewer acceptance criterion. It
-  also covers the Story-line fallback, the sidebar count, the modal and project-page links, git failure,
+  also covers the Story-line fallback, the sidebar count, the story page's link (the modal and project-page links
+  went in RD-9), git failure,
   `showMany()`, and the logged 404 when a set is gone by a later render (`$refresh` after mount).
 - `tests/Feature/Board/MockupPickTest.php` has one `it()` per pick criterion, run against a throwaway fixture
   repo. It also has one per extra guard: merge in progress, unknown option, missing file, status,
@@ -254,10 +256,10 @@ the Where (compare the story's `- Routes:` path with the manifest's `route`), or
 
 ## Known limitations & gotchas
 - **A pick is visible in two places at different times.** The gallery and the story page (RD-3) show
-  "Picked X · not pushed" at once. The story modal and What needs me read the ref, so they show it only after
+  "Picked X · not pushed" at once. Needs me and the tiles read the ref, so they show it only after
   a push and a refresh.
 - A pick committed **outside** the board (by hand in the checkout) can take up to 300 s to show in the gallery.
-- The sidebar's awaiting count checks placeholders, but the What needs me pick card does not, so the two
+- The sidebar's awaiting count checks placeholders, but Needs me's pick rows do not, so the two
   can differ slightly.
 - Re-picking, clearing, and "Neither / park" are not available from the board. The writer refuses any
   Chosen value that is not a placeholder.
@@ -284,3 +286,4 @@ the Where (compare the story's `- Routes:` path with the manifest's `route`), or
 2026-10-11 — Pick logic moved into `PickMockup`, shared with the story page; the viewer keeps its toast (RD-3, `0e8542b`)
 2026-10-11 — Gallery and viewer moved into the dark shell, restyled, layout unchanged; viewer toast kept via the shell's toast host (RD-4, `f722dbc`)
 2026-10-11 — `MockupViewer::render()` logs `board.mockup_not_found` (reason `set gone on render`) before its 404 when the set left the repo after mount (RD-4, `205e0b4`)
+2026-10-11 — Entry points are the shell sidebar and the story page; the project page button and modal link deleted (RD-9, `2669db7`)

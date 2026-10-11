@@ -1,13 +1,14 @@
 # Not on main (off-main work)
-Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-5
+Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-5, RD-9
 
 ## Overview
 The ref (`origin/main` by default) is the truth for a story's status, but a lot of real work is not
 there yet: picks made on unpushed branches, stories drafted on a branch, and mockup folders left
 untracked in a checkout. SB-5 indexes that work at refresh time and shows it beside the ref, always
-labelled with where it lives. On the home page it appears in a "Not on main" section, and on the
-story page as a banner. It never counts in the home page's groups, because the ref is still the only
-source of status.
+labelled with where it lives. The overview's project tiles count it ("N off main", RD-7) and the story
+page shows it as a versions banner with `?v=`. It never counts in Needs me or the figures, because the ref is
+still the only source of status. The old home page's "Not on main" section, which listed every row, was
+deleted with that page in RD-9 ([retired pages](retired-pages.md)).
 
 ## How it works
 **When it runs.** `app/Actions/Board/RefreshProject.php:refresh()` calls
@@ -66,7 +67,7 @@ same rules as the ref snapshot
 (`app/Actions/Board/RegisterAlias.php`). On 2026-09-29 all 17 of coins' `coins-*` siblings turned out
 to be worktrees, so coins has no aliases.
 
-**Home page.** `ListWhatNeedsMe::scoped()` takes `offMain: true` for the `offmain` count and section.
+**Home page (SB-5 to RD-8; deleted in RD-9).** `ListWhatNeedsMe::scoped()` took `offMain: true` for the `offmain` count and section.
 Every other group keeps `location_kind IS NULL`. `Home::SECTIONS` puts `offmain` first. It reuses
 SB-3's collapsible `board/section`, closed by default, with its count in the header. It loads rows
 only when opened, ordered by project, location kind, branch and path. Each `board/story-row` for an
@@ -108,9 +109,8 @@ Migration `database/migrations/2026_09_29_000005_create_project_locations_and_of
   `worktree list`) and `status` (only with `--porcelain`); `run()` enforces both restrictions.
 - `Story` helpers: `isInGit()`, `placePhrase()`, `mockupUrl()` (adds `v` for off-main rows),
   `isMockupOnly()` and `hasPage()`.
-- `ListWhatNeedsMe::handle()` gains `offmain` (a count), and `section('offmain', …)`.
-- Test hooks: `data-section="offmain"`, `data-offmain-row`, `data-offmain-shown`,
-  `data-offmain-banner`.
+- Test hooks: `data-offmain-shown`, `data-offmain-banner`. (The section's `ListWhatNeedsMe` keys and its
+  `data-section="offmain"` / `data-offmain-row` hooks went with the old home in RD-9.)
 
 ## Configuration
 Nothing new in `.env`. The scan needs `python3` on the PATH to run `scripts/parse-story-files.py`
@@ -140,9 +140,9 @@ that the board never builds.
   branch, a story moved on the ref, stacked branches, a failed scan keeping the snapshot, and alias
   scanning. The acceptance criterion "git status unchanged" is checked by comparing
   status, HEAD and the local branches of every checkout before and after the scan.
-- `tests/Feature/Board/NotOnMainPageTest.php` covers the UI: the MOB-56-style banner, the section
-  rows, branch-served mockups, `?v=` refusals (untracked, another story's or project's row,
-  non-numeric), branch/commit labelling, mockup-only labelling, and untracked text not being read.
+- `tests/Feature/Board/NotOnMainPageTest.php` covers the UI: the MOB-56-style banner, branch-served mockups, `?v=` refusals (untracked, another story's or project's row,
+  non-numeric), branch/commit labelling and untracked text not being read. Its three old-home section tests (branch row,
+  untracked directory, mockup-only label) were deleted with that page in RD-9.
 - `tests/Unit/GitReaderTest.php` covers the `worktree`/`status` restrictions.
 - Real data, 2026-09-29: coins Not on main = 263. There were 56 untracked mockup-only rows (the story
   needed a non-zero count). The MOB-56 banner is absent because `docs/MOB-56-pick` has since been
@@ -165,6 +165,8 @@ that the board never builds.
   no ranking by commit date.
 
 ## Known limitations & gotchas
+- **No page lists off-main work** since RD-9: only a count per project on the overview's tiles, and a story's
+  own versions on its page. Finding a branch-only story by browsing is no longer possible.
 - **Uncommitted edits to tracked files are invisible** (out of scope, too noisy). Only branch commits
   and untracked files count.
 - **Untracked text and mockups cannot be opened on the board.** The row and banner say where they
@@ -185,3 +187,4 @@ that the board never builds.
 2026-09-29 — Off-main indexing: branches, worktrees, untracked files, `project_locations`, `board:project alias` (SB-5, `ab69da3`, `7f4d864`)
 2026-09-29 — Not on main section on the home page, versions banner and `?v=` on the story page, branch mockups served (SB-5, `7165b18`)
 2026-09-29 — `board.version_rejected` logged and tested; view checks moved to `Story` helpers (SB-5, `f83e02e`)
+2026-10-11 — The old home's Not on main section and its tests deleted; off-main work shows as tile counts and story-page versions (RD-9, `2669db7`)

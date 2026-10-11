@@ -1,6 +1,6 @@
 # ADR-045 — Flux toasts in the shell, behind an appearance stub
 
-Date: 2026-10-11 · Status: accepted · Story: RD-4
+Date: 2026-10-11 · Status: accepted · Story: RD-4 · Moot since RD-9 (no light page remains to keep an appearance for); see [retired pages](../features/retired-pages.md)
 
 ## Context
 

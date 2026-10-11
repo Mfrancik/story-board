@@ -1,5 +1,5 @@
 # Home overview
-Status: active   ·   Last updated: 2026-10-11   ·   Stories: RD-5, RD-6, RD-7, RD-8
+Status: active   ·   Last updated: 2026-10-11   ·   Stories: RD-5, RD-6, RD-7, RD-8, RD-9
 
 ## Overview
 `/` is the redesign's home, Home A "command center" ([`docs/mockups/RD-5/option-a.html`](../mockups/RD-5/option-a.html))
@@ -7,16 +7,16 @@ in the [dark shell](dark-shell.md). It answers three questions at a glance: how 
 is being built right now, and how preflight is doing. A header sentence ("7 things need you. 3 sessions are
 building.") sits over four headline figures, then two panels: **Needs me** (oldest first) and **Live now** (one card
 per running Claude Code session, with what it is doing and how full its context is). It replaces the SB-9
-[all-projects dashboard](what-needs-me-home.md), which stays in the code, unrouted, until RD-9. A **Projects** filter
+[all-projects dashboard](what-needs-me-home.md), which RD-9 deleted ([retired pages](retired-pages.md)). A **Projects** filter
 in the header (RD-6) narrows every panel to chosen projects; by default it covers them all. Below the two panels
 (RD-7, [`docs/mockups/RD-7/option-a.html`](../mockups/RD-7/option-a.html)) sit a **Projects** grid, one tile per
 project, and **Shipped this week**, the build commits of the last 7 days.
 
 ## How it works
 **Route.** `routes/web.php` maps `/` (name `home`) to `app/Livewire/Board/Overview.php`, inside the
-`RefreshStaleProjects` group, still carrying `RedirectProjectFilter`, so an old `/?project=x` URL lands on `/p/x`.
-That middleware stays on purpose until RD-9 (RD-6's Do-NOT-touch). The filter uses `?projects=` (plural), which the
-middleware does not touch.
+`RefreshStaleProjects` group, with no other middleware. The filter uses `?projects=` (plural). The pre-SB-7
+`?project=` (singular) is read by nothing since RD-9 deleted its redirect, so an old bookmark renders the whole board
+([ADR-058](../decisions/ADR-058-legacy-project-query-is-ignored.md)).
 
 **Render.** `Overview::render()` first counts enabled projects. With none, the page renders one empty state linking
 to `/projects` (Manage projects) and no panels. Otherwise it resolves the project filter once (below), then fetches
@@ -64,7 +64,7 @@ are counted from the filtered panels, but the sentence does not name the filter.
 
 **Needs me.** `ListNeedsMe` owns the three predicates SB-3 used: `awaitingPick()` (draft or approved, mockup options,
 no chosen option), `toApprove()` (draft, not parked) and `readyToBuild()` (approved). They are public static query
-narrowers, and the old `ListWhatNeedsMe` now calls them too, so both pages count the same way. `handle()` runs them
+narrowers (the old `ListWhatNeedsMe` called them too until RD-9 deleted it). `handle()` runs them
 over `base($filter)` (the filter's enabled projects, on the ref: `location_kind IS NULL`) in the order pick, draft, ready, keyed by story
 row ID with `??=`. A story awaiting a pick is therefore listed **once, as a Pick**, even though it is also a draft
 or approved, and "ready" means approved minus those awaiting a pick
@@ -131,7 +131,7 @@ database, the preflight CSVs and (since RD-8) the preflight run records only, ne
   [Preflight history](preflight-history.md), [ADR-055](../decisions/ADR-055-preflight-run-record-format.md).
 - **Production.** `prod()`: only with a `ProdConnection` and an enabled metric, the first metric (by `position`, then
   id), its latest stored `ProdSnapshot` in the last `PROD_DAYS` (7) board-local days, formatted by
-  `ListProductionDashboard::format()`, and a 7-day series drawn by `<x-board.sparkline decorative>`. With no
+  `app/Services/Production/MetricNumber.php:format()` (RD-9; it was `ListProductionDashboard::format()`), and a 7-day series drawn by `<x-board.sparkline decorative>`. With no
   snapshot in the window, no production row shows. `ProductionReader` is never called.
 - **Live dot.** Computed in the view from the Live now cards (`$cards`), so a tile reads "session running" exactly
   when a card for its project is shown. If Live now failed, no tile is live.
@@ -284,8 +284,8 @@ run-record reader, once per skipped file per load. Every line carries `request_i
 - Tiles reuse the Stories page's kind rule, stored off-main rows, stored production snapshots and Live now's
   sessions; the sparkline gained a `decorative` prop →
   [ADR-054](../decisions/ADR-054-project-tiles-reuse-existing-rules-and-stored-data.md).
-- The old Home is unrouted and kept under test at a test-only route until RD-9 →
-  [ADR-050](../decisions/ADR-050-old-home-is-tested-at-a-test-only-route-until-rd-9.md).
+- The old Home was unrouted and kept under test at a test-only route until RD-9 deleted it →
+  [ADR-050](../decisions/ADR-050-old-home-is-tested-at-a-test-only-route-until-rd-9.md) (superseded).
 
 ## Known limitations & gotchas
 - **A command line shows on the card.** Whatever a session types on a Bash command line (first line, up to 120
@@ -297,7 +297,7 @@ run-record reader, once per skipped file per load. Every line carries `request_i
   `undated` and sorts last.
 - Polling re-renders the whole page, so Needs me and the figures re-query every 30 s.
 - The shell sidebar has no Manage projects link; from `/` it is reachable only through the no-projects empty state
-  (RD-9's sidebar work).
+  (RD-9 deleted the old sidebar but added no link).
 - **An ignored name stays in the URL** (e.g. `?projects=nope,coins` keeps `nope`) until the next change rebuilds the
   list from the resolved names. A Back to such an entry warns again, because it is a change.
 - `board.overview_viewed`'s `projects` is the count of every enabled project, not of the filter.
@@ -309,7 +309,9 @@ run-record reader, once per skipped file per load. Every line carries `request_i
   reach that far past 7 days. A non-conventional subject never appears.
 - **Off main counts story rows, not branches**: a branch touching three stories adds three.
 - The production row shows only the first enabled metric, from the nightly stored snapshot, and vanishes after 7
-  days with none. It is not a live read.
+  days with none. It is not a live read. Since RD-9 deleted `/prod`, `board:prod-snapshot` is the only production
+  read, so without `schedule:work` running the figure never updates (RUNBOOK "Project tiles show no new production
+  figure").
 - **Live dots depend on Live now.** If that panel fails, no tile is live.
 - Tiles fail as one panel; there is no per-field error state as in the mockup.
 - Wall time reads "4m 5s" (`Overview::duration()`), not the mockup's "4m 05s"; the mode tag shows the CSV value
@@ -320,3 +322,4 @@ run-record reader, once per skipped file per load. Every line carries `request_i
 2026-10-11 — Projects filter in the header: `?projects=` narrows Needs me, Live now and the figures through one `ProjectFilter`; chips, Clear, ignored-name warnings (RD-6, `a65ff4e`)
 2026-10-11 — Projects grid (progress, off main, last preflight, stored production headline, live dot) and Shipped this week (build commits via `GitReader::log()`, cached per snapshot); sparkline `decorative` (RD-7, `4d12af1`)
 2026-10-11 — The tile's last preflight reads "on brain" / "on mac" from the matched run record (RD-8, `5811fe3`)
+2026-10-11 — `RedirectProjectFilter` removed, `/?project=` ignored; production figures formatted by `MetricNumber`; the old Home deleted (RD-9, `2669db7`)

@@ -1,5 +1,5 @@
 # Stories by initiative
-Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-15, RD-4
+Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-15, RD-4, RD-9
 
 ## Overview
 `/p/{project}/stories` is a project's first tab (Stories | Preflight | Handbook | Map), in the dark shell since RD-4. It lists every
@@ -111,7 +111,8 @@ None.
   - The query-count test at coins' size. It asserts that the action is exactly one query, and that the
     page's total query count does not grow with story count. It does not assert "one query on
     `stories`", because the sidebar runs its own stories count.
-  - A test that `ReadProjectProgress` and `ReadProjectStories` give the same order and counts.
+  - The initiative order and counts, pinned directly (most open work, named before none, then A–Z, a missing
+    status counted as `(none)`). Until RD-9 deleted `ReadProjectProgress`, this test compared against it.
   - The Stories tab.
 - `tests/Browser/ProjectStoriesTest.php`: the Alpine behaviour. Covers selection with no server
   request, the Built chip hiding rows and an all-built initiative, Expand all jumping to a group and
@@ -143,10 +144,12 @@ None.
 - Selection, filters and Expand all are not remembered across visits (out of scope). There is no
   search by ID or title.
 - A row whose ID is not well formed is shown but has no link.
-- Off-main stories are not listed. The old dashboard's Not on main panel owns them until RD-9.
+- Off-main stories are not listed here, and since RD-9 deleted the old dashboard's Not on main panel, nowhere else
+  either: the overview's tiles count them and the story page shows a story's versions.
 
 ## Change history
 2026-09-29 — Stories tab at `/p/{project}/stories`: initiatives with counts, stories tagged by status,
 filter chips, Expand all; `rollup()` extracted; `board/project-header` shared with the Handbook (SB-15, `ae144cb`)
 2026-10-11 — Rollup moved to `StoryStatusOrder`, so this page no longer depends on `ReadProjectProgress`; guard via `GuardsProjectPage` (RD-1, `6ad827b`)
 2026-10-11 — In the dark shell; rows link to the story page and the embedded modal is gone (RD-4, `f722dbc`)
+2026-10-11 — The order-and-counts test pins its expectations directly; it no longer compares against the deleted `ReadProjectProgress` (RD-9, `2669db7`)

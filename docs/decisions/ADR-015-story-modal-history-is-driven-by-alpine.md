@@ -1,6 +1,6 @@
 # ADR-015 — The story modal's browser history is driven by Alpine, not by Livewire's `#[Url(history: true)]`
 
-Date: 2026-09-29 · Status: accepted
+Date: 2026-09-29 · Status: accepted · Retired by RD-9 (the story modal was deleted); see [retired pages](../features/retired-pages.md)
 
 ## Context
 

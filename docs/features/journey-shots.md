@@ -1,5 +1,5 @@
 # Journey shots
-Status: active   ·   Last updated: 2026-09-30   ·   Stories: SB-22
+Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-22, RD-9
 
 ## Overview
 A Pest browser helper, `journeyStep()`, that a journey test calls at each step it walks. With
@@ -50,8 +50,9 @@ helper works.
 9. **Commit.** `git rev-parse --short HEAD` in the project root, cached per root per run; omitted if git
    cannot answer.
 
-**Example use:** `tests/Browser/Journeys/BrowseTheBoardTest.php` walks `/`, `/p/coins`, then clicks to
-`/p/rent-track` and passes `$page` for that last step.
+**Example use:** `tests/Browser/Journeys/BrowseTheBoardTest.php` walks `/`, `/p/coins/stories`, then clicks the
+shell sidebar's rent-track entry (`data-nav-project`) to `/p/rent-track/stories` and passes `$page` for that last
+step. Until RD-9 deleted the bare `/p/{project}` page, it walked `/p/coins` and `/p/rent-track`.
 
 ## Data model
 No schema. On-disk, outside git (root `.gitignore` and `storage/app/.gitignore` both cover it):
@@ -127,3 +128,4 @@ Browser check: `JOURNEY_SHOTS=1 php artisan test tests/Browser/Journeys`, then o
 
 ## Change history
 2026-09-30 — `journeyStep()` helper, manifest format, example journey, kit how-to (SB-22, `0f7ae8b`)
+2026-10-11 — The browse-the-board example steps to each project's Stories page; bare `/p/{project}` is gone (RD-9, `2669db7`)
