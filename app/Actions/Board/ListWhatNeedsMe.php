@@ -4,6 +4,7 @@ namespace App\Actions\Board;
 
 use App\Models\Project;
 use App\Models\Story;
+use App\Services\StoryStatusOrder;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
@@ -15,9 +16,6 @@ use Illuminate\Support\Carbon;
  */
 class ListWhatNeedsMe
 {
-    /** Card order for the kit's vocabulary; anything else (a project's own or a typo) follows, A–Z. */
-    private const STATUS_ORDER = ['draft', 'approved', 'built', 'cancelled'];
-
     /**
      * The three groups and the project summaries, each narrowed by the same filters.
      * The project summaries and In flight (SB-9) describe the whole portfolio, so
@@ -47,7 +45,7 @@ class ListWhatNeedsMe
                 ->orderBy('projects.name')->orderBy('stories.path')->get(),
             // Only open stories: a built or cancelled story with no parseable pick is history, not a decision.
             // Raw SQL: the query builder has no JSON length/type predicates. Constant expressions, no input.
-            'pick' => $scoped()->whereIn('stories.status', ['draft', 'approved'])
+            'pick' => $scoped()->whereIn('stories.status', StoryStatusOrder::OPEN)
                 ->whereRaw("json_length(json_extract(stories.mockups, '$.options')) > 0")
                 ->whereRaw("json_type(json_extract(stories.mockups, '$.chosen')) = 'NULL'")
                 ->orderBy('projects.name')->orderBy('stories.path')->get(),
@@ -157,7 +155,7 @@ class ListWhatNeedsMe
             'last_error' => $p->last_error,
             // A status seen only off main (a mockup-only row's null, say) is not on the ref: no segment.
             // Summed, not keyed: a null status and a literal "(none)" share one key.
-            'counts' => $this->ordered($counts->get($p->id, collect())->filter(fn ($row) => (int) $row->n > 0)
+            'counts' => StoryStatusOrder::ordered($counts->get($p->id, collect())->filter(fn ($row) => (int) $row->n > 0)
                 ->groupBy('status')->map(fn ($rows) => $rows->sum(fn ($row) => (int) $row->n))->all()),
             'parse_errors' => (int) ($errors[$p->id] ?? 0),
             'offmain' => (int) $counts->get($p->id, collect())->sum(fn ($row) => (int) $row->off),
@@ -179,21 +177,6 @@ class ListWhatNeedsMe
             'offmain' => array_sum(array_column($projects, 'offmain')),
             'not_ok' => array_values(array_map(fn (array $p) => $p['name'], array_filter($projects, fn (array $p) => $p['state'] !== Project::STATE_OK))),
         ];
-    }
-
-    /**
-     * Counts keyed by status, in STATUS_ORDER and then alphabetically. Public so the
-     * project page's initiative rows (SB-10) order their bar segments the same way.
-     *
-     * @param  array<string, int>  $counts
-     * @return array<string, int>
-     */
-    public function ordered(array $counts): array
-    {
-        $rank = fn (string $s) => [array_search($s, self::STATUS_ORDER, true) === false ? 1 : 0, (int) array_search($s, self::STATUS_ORDER, true), $s];
-        uksort($counts, fn ($a, $b) => $rank((string) $a) <=> $rank((string) $b));
-
-        return $counts;
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Actions\Board;
 
 use App\Models\Project;
 use App\Models\Story;
+use App\Services\StoryStatusOrder;
 
 /**
  * A project's on-ref stories grouped by initiative, for the Stories page (SB-15):
@@ -15,8 +16,6 @@ class ReadProjectStories
 {
     /** The tag kinds, in filter-chip order. Every status maps to exactly one. */
     public const KINDS = ['built', 'approved', 'draft', 'cancelled', 'other'];
-
-    public function __construct(private ReadProjectProgress $progress) {}
 
     /**
      * The tag kind of a raw status. The kit's four statuses are their own kind; any
@@ -51,8 +50,8 @@ class ReadProjectStories
         // toBase(): the groups hold stories, and the rows built from them are not models.
         $byInitiative = $stories->toBase()->groupBy(fn (Story $s) => (string) $s->initiative);
 
-        // The same (initiative, status, n, parked) rows ReadProjectProgress's grouped query
-        // returns, counted here instead, so its rollup — counts, open work, order — is reused as is.
+        // (initiative, status, n, parked) rows, the shape StoryStatusOrder::rollup() takes, counted
+        // here from the list already held, so counts, open work and order need no second query.
         $rows = $byInitiative->flatMap(fn ($group) => $group->groupBy(fn (Story $s) => $s->status ?? '(none)')
             ->map(fn ($same, $status) => (object) [
                 'initiative' => $same->first()->initiative,
@@ -63,7 +62,7 @@ class ReadProjectStories
 
         $tallies = array_fill_keys(self::KINDS, 0);
         $initiatives = [];
-        foreach ($this->progress->rollup($rows) as $i => $initiative) {
+        foreach (StoryStatusOrder::rollup($rows) as $i => $initiative) {
             $group = $byInitiative->get((string) $initiative['name'])
                 // Natural order: BR-2 before BR-10, MT-2 before MT-2a. A row with no ID sorts by its path, last.
                 ->sort(fn (Story $a, Story $b) => (($a->story_id === null) <=> ($b->story_id === null))

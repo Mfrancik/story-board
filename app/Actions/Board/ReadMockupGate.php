@@ -2,6 +2,8 @@
 
 namespace App\Actions\Board;
 
+use App\Services\MockupGateParser;
+
 /**
  * Reads the human text of a story's "Design mockup gate" section for display on
  * the story page (SB-4): whether the story is visual at all, and the words
@@ -11,30 +13,26 @@ namespace App\Actions\Board;
 class ReadMockupGate
 {
     /**
+     * @param  MockupGateParser  $parser  finds the section and reads it as non-visual by the writer's own rule
+     */
+    public function __construct(private readonly MockupGateParser $parser) {}
+
+    /**
+     * The gate's words: whether the story is visual, and its Chosen and Why values as written.
+     *
      * @return array{visual: bool, chosen: string|null, why: string|null}
      */
     public function handle(string $markdown): array
     {
-        $section = $this->section($markdown);
+        $found = $this->parser->section($markdown);
+        $section = $found === null ? null : trim($found[0]);
 
         return [
             // The /story template writes `n/a — non-visual` (or just `n/a`) for stories with no gate.
-            'visual' => $section === null || ! preg_match('/^\s*n\/a\b/i', $section),
+            'visual' => $section === null || ! $this->parser->isNonVisual($section),
             'chosen' => $this->field($section, 'Chosen option'),
             'why' => $this->field($section, 'Why I chose it'),
         ];
-    }
-
-    /**
-     * The body of the `## Design mockup gate…` section, or null when absent.
-     */
-    private function section(string $markdown): ?string
-    {
-        if (! preg_match('/^##\s+Design mockup gate[^\n]*\n(.*?)(?=^##\s|\z)/ms', $markdown, $m)) {
-            return null;
-        }
-
-        return trim($m[1]);
     }
 
     /**

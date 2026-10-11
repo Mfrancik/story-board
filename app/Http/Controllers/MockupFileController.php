@@ -15,15 +15,6 @@ use Illuminate\Support\Facades\Log;
  */
 class MockupFileController extends Controller
 {
-    /** Types a mockup directory plausibly holds; anything else is served as opaque bytes. Shared with the gallery's frame route (SB-21). */
-    public const TYPES = [
-        'html' => 'text/html; charset=UTF-8', 'htm' => 'text/html; charset=UTF-8',
-        'css' => 'text/css; charset=UTF-8', 'js' => 'text/javascript; charset=UTF-8',
-        'json' => 'application/json', 'svg' => 'image/svg+xml', 'png' => 'image/png',
-        'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'gif' => 'image/gif', 'webp' => 'image/webp',
-        'woff2' => 'font/woff2', 'woff' => 'font/woff',
-    ];
-
     /**
      * The CSP `sandbox` directive gives the response an opaque origin even when
      * it is opened directly rather than in the board's iframe, so a mockup's
@@ -53,7 +44,7 @@ class MockupFileController extends Controller
         $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
         return response($bytes, 200, [
-            'Content-Type' => self::TYPES[$extension] ?? 'application/octet-stream',
+            'Content-Type' => MockupSetFileController::TYPES[$extension] ?? 'application/octet-stream',
             'Content-Security-Policy' => self::CSP,
             'X-Content-Type-Options' => 'nosniff',
             'Referrer-Policy' => 'no-referrer',

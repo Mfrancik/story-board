@@ -91,9 +91,3 @@ Route::get('/mockups/{project:name}/{story}/file/{file}', MockupSetFileControlle
     ->where(['story' => Story::ID_ROUTE, 'file' => '.*'])
     ->middleware(EnsureProjectIsShown::class)
     ->name('mockups.frame');
-
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::view('dashboard', 'dashboard')->name('dashboard');
-});
-
-require __DIR__.'/settings.php';

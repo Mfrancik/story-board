@@ -2,10 +2,10 @@
 
 namespace App\Livewire\Board;
 
-use App\Actions\Board\CheckProjectShown;
 use App\Actions\Board\ReadCurrentVersion;
 use App\Actions\Board\ReadMockupSets;
 use App\Exceptions\StoryPickRefusedException;
+use App\Livewire\Board\Concerns\GuardsProjectPage;
 use App\Models\Project;
 use App\Models\Story;
 use App\Services\StoryPickWriter;
@@ -32,13 +32,11 @@ use Livewire\Component;
 #[Layout('layouts.board')]
 class MockupViewer extends Component
 {
+    use GuardsProjectPage;
+
     /*
      * Locked: set by the server from the route, re-validated on every pick.
      */
-
-    /** The project's name. */
-    #[Locked]
-    public string $project = '';
 
     /** The story ID whose set is shown. */
     #[Locked]
@@ -47,9 +45,6 @@ class MockupViewer extends Component
     /** Why the last pick was refused, in one line for the dialog; null when nothing was refused. */
     #[Locked]
     public ?string $refusal = null;
-
-    /** Set by hydrate() when the project left the board mid-visit: render nothing, the redirect is on its way. */
-    private bool $gone = false;
 
     /**
      * The Current pane, read once per request: mount() needs it for the log line
@@ -83,19 +78,11 @@ class MockupViewer extends Component
     }
 
     /**
-     * Re-check on every request after the first that the project is still on the
-     * board (route middleware never sees Livewire updates, ADR-019 amendment).
+     * A viewer whose project left the board returns to the gallery, not home.
      */
-    public function hydrate(CheckProjectShown $check): void
+    protected function refusedRoute(): string
     {
-        $refusal = $check->refusal($this->project);
-        if ($refusal === null) {
-            return;
-        }
-
-        Log::info('board.project_page_refused', ['project' => $this->project, 'reason' => $refusal, 'request' => 'update']);
-        $this->gone = true;
-        $this->redirectRoute('mockups', navigate: true);
+        return 'mockups';
     }
 
     /**
@@ -120,7 +107,7 @@ class MockupViewer extends Component
         }
 
         try {
-            $writer->pick($project, $row, $set['options'], $option, $reason);
+            $picked = $writer->pick($project, $row, $set['options'], $option, $reason);
         } catch (StoryPickRefusedException $e) {
             $this->refusal = 'Pick refused: '.$e->getMessage().'.';
 
@@ -130,7 +117,7 @@ class MockupViewer extends Component
             $sets->forget($project);
         }
 
-        Flux::toast(variant: 'success', text: 'Picked option '.strtoupper($option)." for {$this->story}, committed on ".$writer->boardBranch($project).' (not pushed).');
+        Flux::toast(variant: 'success', text: 'Picked option '.strtoupper($option)." for {$this->story}, committed on {$picked['branch']} (not pushed).");
     }
 
     /**

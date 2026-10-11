@@ -6,7 +6,8 @@ use App\Exceptions\GitReaderException;
 use App\Models\Project;
 use App\Models\Story;
 use App\Services\GitReader;
-use App\Services\StoryPickWriter;
+use App\Services\MockupGateParser;
+use App\Services\StoryStatusOrder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -50,12 +51,12 @@ class ReadMockupSets
     /**
      * @param  GitReader  $git  story text at the ref, and the checkout's own branch
      * @param  ReadMockupGate  $gate  the gate's words, quoted
-     * @param  StoryPickWriter  $picks  the one rule for "can the board pick this" (pure methods only)
+     * @param  MockupGateParser  $parser  the one rule for "can the board pick this", shared with StoryPickWriter
      */
     public function __construct(
         private readonly GitReader $git,
         private readonly ReadMockupGate $gate,
-        private readonly StoryPickWriter $picks,
+        private readonly MockupGateParser $parser,
     ) {}
 
     /**
@@ -179,7 +180,7 @@ class ReadMockupSets
             $reading = $readings[$row->sha][$row->path] ?? null;
             $letter = $row->mockups['chosen'] ?? null;
             $awaiting = $letter === null && $reading !== null && $reading['pickable']
-                && in_array($row->status, StoryPickWriter::OPEN_STATUSES, true);
+                && StoryStatusOrder::isOpen($row->status);
 
             $sets[] = [
                 'project' => $project->name,
@@ -257,7 +258,7 @@ class ReadMockupSets
     private function readLocalPicks(Project $project, array $paths): array
     {
         try {
-            $branch = $this->picks->boardBranch($project);
+            $branch = $this->parser->boardBranch($project->ref, $this->git->remotes($project->path));
             if ($branch === $project->ref) {
                 // The board reads a local branch already: the ref's answer is the checkout's.
                 return [];
@@ -272,7 +273,7 @@ class ReadMockupSets
 
         $picks = [];
         foreach ($local as $path => $markdown) {
-            $letter = $markdown !== null ? $this->picks->pickedLetter($markdown) : null;
+            $letter = $markdown !== null ? $this->parser->pickedLetter($markdown) : null;
             if ($letter !== null) {
                 $picks[$path] = ['letter' => $letter, 'why' => $this->gate->handle((string) $markdown)['why']];
             }
@@ -322,7 +323,7 @@ class ReadMockupSets
                         if ($markdown !== null) {
                             $gate = $this->gate->handle($markdown);
                             $known[$path] = [
-                                'pickable' => $this->picks->refusalFor($markdown) === null,
+                                'pickable' => $this->parser->refusalFor($markdown) === null,
                                 'chosen' => $gate['chosen'],
                                 'why' => $gate['why'],
                                 'where' => self::where($markdown),

@@ -3,7 +3,7 @@
 namespace App\Actions\Board;
 
 use App\Models\Story;
-use stdClass;
+use App\Services\StoryStatusOrder;
 
 /**
  * One project's depth for its dashboard (SB-10): how each initiative is
@@ -13,11 +13,6 @@ use stdClass;
  */
 class ReadProjectProgress
 {
-    /** The statuses that count as open work, the order Progress by initiative sorts on. */
-    public const OPEN = ['draft', 'approved'];
-
-    public function __construct(private ListWhatNeedsMe $list) {}
-
     /**
      * The initiative rollup and the off-main counts for one project.
      *
@@ -54,43 +49,9 @@ class ReadProjectProgress
             ->groupBy('initiative', 'status')
             ->get();
 
-        return $this->rollup($rows);
-    }
-
-    /**
-     * Roll status counts up into one row per initiative, most open work first.
-     * The one copy of Progress by initiative's counting and order: SB-10 feeds it
-     * its grouped query, and SB-15's Stories page feeds it rows counted in PHP
-     * from the story list it already holds, so both pages agree without a second query.
-     *
-     * Each row is a plain object — a toBase() aggregate or one built in PHP — with
-     * `initiative` (null for none), `status` (a missing one as `(none)`), `n` (its
-     * count, a string from MySQL) and `parked`.
-     *
-     * @param  iterable<stdClass>  $rows  one row per (initiative, status); only read, never kept
-     * @return list<array{name: string|null, counts: array<string, int>, total: int, built: int, open: int, parked: bool}>
-     */
-    public function rollup(iterable $rows): array
-    {
-        $initiatives = collect($rows)->groupBy(fn ($row) => (string) $row->initiative)->map(function ($group) {
-            // Summed, not keyed: a null status and a literal "(none)" are two SQL rows
-            // with one key, and mapWithKeys would drop one of them.
-            $counts = $group->groupBy('status')->map(fn ($rows) => $rows->sum(fn ($row) => (int) $row->n))->all();
-
-            return [
-                'name' => $group->first()->initiative,
-                'counts' => $this->list->ordered($counts),
-                'total' => array_sum($counts),
-                'built' => $counts['built'] ?? 0,
-                'open' => array_sum(array_intersect_key($counts, array_flip(self::OPEN))),
-                'parked' => $group->contains(fn ($row) => (bool) $row->parked),
-            ];
-        })->values()->all();
-
-        // Most open work first; a tie reads A–Z, with the unnamed row after the named ones.
-        usort($initiatives, fn ($a, $b) => [$b['open'], $a['name'] === null, $a['name']] <=> [$a['open'], $b['name'] === null, $b['name']]);
-
-        return $initiatives;
+        // StoryStatusOrder owns the counting and the order, so the Stories page, which counts its
+        // rows in PHP from the list it already holds, agrees with this one without a second query.
+        return StoryStatusOrder::rollup($rows);
     }
 
     /**

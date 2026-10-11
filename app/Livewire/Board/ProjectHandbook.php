@@ -2,10 +2,10 @@
 
 namespace App\Livewire\Board;
 
-use App\Actions\Board\CheckProjectShown;
 use App\Actions\Board\ReadHandbook;
 use App\Actions\Board\ResolveKit;
 use App\Exceptions\GitReaderException;
+use App\Livewire\Board\Concerns\GuardsProjectPage;
 use App\Models\Project;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Log;
@@ -30,6 +30,8 @@ use Livewire\Component;
 #[Layout('layouts.board')]
 class ProjectHandbook extends Component
 {
+    use GuardsProjectPage;
+
     /** The sections, in tab order. */
     public const SECTIONS = ['rules', 'lessons', 'standards', 'runbook', 'decisions', 'skills'];
 
@@ -40,10 +42,6 @@ class ProjectHandbook extends Component
      * Locked: public Livewire properties are otherwise settable from the browser —
      * only the server's own actions may change these.
      */
-
-    /** The project's name. A name, not the model, so a project removed mid-visit is refused, not a crash. */
-    #[Locked]
-    public string $project = '';
 
     /** The kit's configured checkout, shown in the notice when it cannot be read. */
     #[Locked]
@@ -65,9 +63,6 @@ class ProjectHandbook extends Component
     #[Locked]
     public ?string $decisionRefusal = null;
 
-    /** Set by hydrate() when the project left the board mid-visit: return nothing, the redirect is on its way. */
-    private bool $gone = false;
-
     /**
      * Resolve the kit once per visit (logging `board.kit_unreachable` when it
      * cannot be read) and take a `?decision=` from the URL, checking its name
@@ -88,21 +83,12 @@ class ProjectHandbook extends Component
     }
 
     /**
-     * Re-check, on every request after the first, that the project is still on
-     * the board. Route middleware never sees Livewire update requests (ADR-019
-     * amendment), so a project switched off or removed mid-visit would otherwise
-     * keep being read from git. The owner is sent home instead.
+     * The handbook logs its own refusal event, with no path: the project, not a
+     * file in it, was refused.
      */
-    public function hydrate(CheckProjectShown $check): void
+    protected function logProjectRefused(string $reason): void
     {
-        $refusal = $check->refusal($this->project);
-        if ($refusal === null) {
-            return;
-        }
-
-        $this->refuse(null, $refusal);
-        $this->gone = true;
-        $this->redirectRoute('home', navigate: true);
+        $this->refuse(null, $reason);
     }
 
     /**

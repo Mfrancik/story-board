@@ -1,10 +1,8 @@
 <?php
 
-use App\Jobs\RefreshProjectJob;
 use App\Models\Project;
 use App\Models\Story;
 use Database\Seeders\ProjectSeeder;
-use Illuminate\Support\Facades\Bus;
 use Tests\Support\GitFixture;
 
 it('registers a project from its path, named after its directory', function () {
@@ -63,28 +61,22 @@ it('seeds the four kit projects from the home directory', function () {
     ]);
 });
 
-it('lists every project with its story count on the home page', function () {
+it('counts each project\'s own stories', function () {
     $project = Project::factory()->create(['name' => 'coins', 'indexed_at' => now()]);
     Story::factory()->count(3)->for($project)->create();
+    Story::factory()->for(Project::factory()->create(['name' => 'other']))->create();
 
-    $this->get('/')
-        ->assertOk()
-        ->assertSeeText('coins')
-        ->assertSee('data-story-count="3"', false);
+    expect(Project::withCount('stories')->where('name', 'coins')->sole()->stories_count)->toBe(3);
 });
 
-it('refreshes a project on page load once its snapshot is older than five minutes', function () {
-    Bus::fake();
+it('needs a refresh once its snapshot is older than five minutes, or when it was never read', function () {
     $stale = Project::factory()->create(['name' => 'stale', 'indexed_at' => now()->subMinutes(6)]);
     $never = Project::factory()->create(['name' => 'never', 'indexed_at' => null]);
-    Project::factory()->create(['name' => 'fresh', 'indexed_at' => now()->subMinutes(4)]);
-    Project::factory()->disabled()->create(['name' => 'off', 'indexed_at' => null]);
+    $fresh = Project::factory()->create(['name' => 'fresh', 'indexed_at' => now()->subMinutes(4)]);
 
-    $this->get('/')->assertOk();
-
-    Bus::assertDispatched(RefreshProjectJob::class, 2);
-    Bus::assertDispatched(RefreshProjectJob::class, fn ($job) => $job->project->is($stale));
-    Bus::assertDispatched(RefreshProjectJob::class, fn ($job) => $job->project->is($never));
+    expect($stale->needsRefresh())->toBeTrue()
+        ->and($never->needsRefresh())->toBeTrue()
+        ->and($fresh->needsRefresh())->toBeFalse();
 });
 
 it('refuses to register a project with a ref git would read as an option', function () {
@@ -98,13 +90,10 @@ it('refuses to register a project with a ref git would read as an option', funct
     $fixture->destroy();
 });
 
-it('does not retry a failing project on every page load', function () {
-    Bus::fake();
-    Project::factory()->create(['state' => Project::STATE_STALE, 'indexed_at' => now()->subHour(), 'refresh_attempted_at' => now()->subMinute()]);
+it('does not need a retry of a failing project until its last attempt is five minutes old', function () {
+    $tried = Project::factory()->create(['state' => Project::STATE_STALE, 'indexed_at' => now()->subHour(), 'refresh_attempted_at' => now()->subMinute()]);
     $due = Project::factory()->create(['state' => Project::STATE_STALE, 'indexed_at' => now()->subHour(), 'refresh_attempted_at' => now()->subMinutes(6)]);
 
-    $this->get('/')->assertOk();
-
-    Bus::assertDispatched(RefreshProjectJob::class, 1);
-    Bus::assertDispatched(RefreshProjectJob::class, fn ($job) => $job->project->is($due));
+    expect($tried->needsRefresh())->toBeFalse()
+        ->and($due->needsRefresh())->toBeTrue();
 });

@@ -2,13 +2,12 @@
 
 namespace App\Livewire\Board;
 
-use App\Actions\Board\CheckProjectShown;
 use App\Actions\Board\ReadProjectStories;
+use App\Livewire\Board\Concerns\GuardsProjectPage;
 use App\Models\Project;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 /**
@@ -25,15 +24,7 @@ use Livewire\Component;
 #[Layout('layouts.board')]
 class ProjectStories extends Component
 {
-    /**
-     * The project's name. A name, not the model, so a project removed mid-visit is
-     * refused, not a crash. Locked: only the server may set it.
-     */
-    #[Locked]
-    public string $project = '';
-
-    /** Set by hydrate() when the project left the board mid-visit: render nothing, the redirect is on its way. */
-    private bool $gone = false;
+    use GuardsProjectPage;
 
     /**
      * Keep the project's name. The story list is read in render(), not held in a
@@ -42,24 +33,6 @@ class ProjectStories extends Component
     public function mount(Project $project): void
     {
         $this->project = $project->name;
-    }
-
-    /**
-     * Re-check, on every request after the first, that the project is still on
-     * the board. Route middleware never sees Livewire update requests (ADR-019
-     * amendment), so a project switched off or removed mid-visit would otherwise
-     * keep rendering its stories. The owner is sent home instead.
-     */
-    public function hydrate(CheckProjectShown $check): void
-    {
-        $refusal = $check->refusal($this->project);
-        if ($refusal === null) {
-            return;
-        }
-
-        Log::info('board.project_page_refused', ['project' => $this->project, 'reason' => $refusal, 'request' => 'update']);
-        $this->gone = true;
-        $this->redirectRoute('home', navigate: true);
     }
 
     /**

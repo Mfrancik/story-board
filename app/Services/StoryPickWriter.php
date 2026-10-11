@@ -10,7 +10,6 @@ use Illuminate\Process\Exceptions\ProcessTimedOutException;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
-use Illuminate\Support\Str;
 
 /**
  * The only code in the board that writes to a registered project (SB-21,
@@ -22,9 +21,6 @@ use Illuminate\Support\Str;
  */
 class StoryPickWriter
 {
-    /** Statuses whose mockups are still picked; a built or cancelled story's unpicked set is history (as ListWhatNeedsMe). */
-    public const OPEN_STATUSES = ['draft', 'approved'];
-
     /** The longest reason written; the rest is cut so the gate line stays one readable line. */
     public const REASON_MAX = 200;
 
@@ -44,13 +40,11 @@ class StoryPickWriter
         'CHERRY_PICK_HEAD' => 'a cherry-pick', 'REVERT_HEAD' => 'a revert', 'BISECT_LOG' => 'a bisect',
     ];
 
-    /** A gate line: `- Chosen option: …` / `- **Why I chose it:** …`, bullet and optional bold kept as written. */
-    private const LINE = '/^(?<prefix>[ \t]*[-*][ \t]+(?:\*\*)?%s:(?:\*\*)?[ \t]*)(?<value>.*)$/mi';
-
     /**
-     * @param  GitReader  $git  every read of the checkout (branch, status, git dir)
+     * @param  GitReader  $git  every read of the checkout (branch, status, git dir, remotes)
+     * @param  MockupGateParser  $gate  where the gate is and whether it can take a pick — the gallery's own rule
      */
-    public function __construct(private readonly GitReader $git) {}
+    public function __construct(private readonly GitReader $git, private readonly MockupGateParser $gate) {}
 
     /**
      * Record `$option` as `$story`'s pick with the owner's `$reason`, and commit
@@ -61,11 +55,11 @@ class StoryPickWriter
      * `board.mockup_picked`, or `board.mockup_pick_refused` (warning) and throws.
      *
      * @param  list<string>  $options  the set's option letters; `$option` must be one of them
-     * @return string the new commit's SHA
+     * @return array{sha: string, branch: string} the new commit, and the branch it is on
      *
      * @throws StoryPickRefusedException with a one-line reason; nothing was written.
      */
-    public function pick(Project $project, Story $story, array $options, string $option, string $reason): string
+    public function pick(Project $project, Story $story, array $options, string $option, string $reason): array
     {
         $id = (string) $story->story_id;
         $refuse = function (string $why) use ($project, $id): StoryPickRefusedException {
@@ -84,13 +78,13 @@ class StoryPickWriter
         if (($letter = $story->mockups['chosen'] ?? null) !== null) {
             throw $refuse("this story already has a pick: {$letter}");
         }
-        if (! in_array($story->status, self::OPEN_STATUSES, true)) {
+        if (! StoryStatusOrder::isOpen($story->status)) {
             throw $refuse("this story is {$story->status}; only draft or approved stories take a pick");
         }
         $file = $this->storyPath($project, $story) ?? throw $refuse('the story file is not in the checkout');
 
         try {
-            $this->assertCheckoutReady($project);
+            $branch = $this->assertCheckoutReady($project);
             // Porcelain lists the file when it is modified, staged or untracked: any of them is the owner's unsaved work.
             $dirty = trim($this->git->run($project->path, ['status', '--porcelain', '--', $story->path], config: ['core.fsmonitor=false']));
         } catch (StoryPickRefusedException $e) {
@@ -103,7 +97,7 @@ class StoryPickWriter
         }
 
         $original = File::get($file);
-        $why = $this->refusalFor($original);
+        $why = $this->gate->refusalFor($original);
         if ($why !== null) {
             throw $refuse($why);
         }
@@ -120,61 +114,7 @@ class StoryPickWriter
 
         Log::info('board.mockup_picked', ['project' => $project->name, 'story' => $id, 'option' => $option, 'commit' => $sha]);
 
-        return $sha;
-    }
-
-    /**
-     * Why a story's text cannot take a pick from the board, or null when it can:
-     * it has a `## Design mockup gate` section with a `Chosen option:` line that
-     * still holds the template's placeholder. Pure, so the gallery decides
-     * "awaiting pick" by the very rule the writer enforces.
-     */
-    public function refusalFor(string $markdown): ?string
-    {
-        $section = $this->section($markdown);
-        if ($section === null) {
-            return 'this story has no Design mockup gate section';
-        }
-        if (preg_match('/^\s*n\/a\b/i', $section[0])) {
-            return 'this story is marked non-visual (n/a) in its mockup gate';
-        }
-        if (! preg_match(sprintf(self::LINE, 'Chosen option'), $section[0], $m)) {
-            return 'this story has no “Chosen option:” line in its mockup gate';
-        }
-        if (! $this->isPlaceholder($m['value'])) {
-            return 'this story already has a pick: '.Str::limit($this->plain($m['value']), 60);
-        }
-
-        return null;
-    }
-
-    /**
-     * The option letter a story's gate records as a single letter — what this
-     * writer leaves behind — or null. Used for the checkout's copy of a story,
-     * which the kit parser has not indexed.
-     */
-    public function pickedLetter(string $markdown): ?string
-    {
-        $section = $this->section($markdown);
-        if ($section === null || ! preg_match(sprintf(self::LINE, 'Chosen option'), $section[0], $m)) {
-            return null;
-        }
-
-        return preg_match('/^[a-z]$/i', $this->plain($m['value'])) ? strtolower($this->plain($m['value'])) : null;
-    }
-
-    /**
-     * The branch the board reads for `$project`: its ref without the remote
-     * (`origin/main` → `main`), or the ref itself when it names a local branch.
-     *
-     * @throws GitReaderException when the checkout cannot be read.
-     */
-    public function boardBranch(Project $project): string
-    {
-        $remotes = preg_split('/\s+/', trim($this->git->run($project->path, ['remote']))) ?: [];
-        [$first, $rest] = array_pad(explode('/', $project->ref, 2), 2, null);
-
-        return $rest !== null && in_array($first, $remotes, true) ? $rest : $project->ref;
+        return ['sha' => $sha, 'branch' => $branch];
     }
 
     /**
@@ -211,10 +151,12 @@ class StoryPickWriter
      * Refuse while git is part-way through another operation, or when the
      * checkout is on a different branch from the one the board reads.
      *
+     * @return string the board's branch, which the checkout is on
+     *
      * @throws StoryPickRefusedException
      * @throws GitReaderException
      */
-    private function assertCheckoutReady(Project $project): void
+    private function assertCheckoutReady(Project $project): string
     {
         $gitDir = trim($this->git->run($project->path, ['rev-parse', '--absolute-git-dir']));
         foreach (self::IN_PROGRESS as $marker => $what) {
@@ -224,11 +166,13 @@ class StoryPickWriter
         }
 
         $current = trim($this->git->run($project->path, ['rev-parse', '--abbrev-ref', 'HEAD']));
-        $board = $this->boardBranch($project);
+        $board = $this->gate->boardBranch($project->ref, $this->git->remotes($project->path));
         if ($current !== $board) {
             $current = $current === 'HEAD' ? 'a detached HEAD' : $current;
             throw new StoryPickRefusedException("the checkout is on {$current}, but the board reads {$board} ({$project->ref})");
         }
+
+        return $board;
     }
 
     /**
@@ -261,13 +205,13 @@ class StoryPickWriter
      */
     private function rewrite(string $markdown, string $option, string $why): string
     {
-        [$original, $offset] = $this->section($markdown) ?? throw new StoryPickRefusedException('this story has no Design mockup gate section');
+        [$original, $offset] = $this->gate->section($markdown) ?? throw new StoryPickRefusedException('this story has no Design mockup gate section');
         $section = $original;
 
-        $chosen = sprintf(self::LINE, 'Chosen option');
+        $chosen = sprintf(MockupGateParser::LINE, 'Chosen option');
         $section = (string) preg_replace_callback($this->withContinuation($chosen), fn ($m) => $m['prefix'].$option, $section, 1);
 
-        $whyLine = sprintf(self::LINE, 'Why I chose it');
+        $whyLine = sprintf(MockupGateParser::LINE, 'Why I chose it');
         if (preg_match($whyLine, $section)) {
             $section = (string) preg_replace_callback($this->withContinuation($whyLine), fn ($m) => $m['prefix'].$why, $section, 1);
         } else {
@@ -289,39 +233,5 @@ class StoryPickWriter
     private function withContinuation(string $pattern): string
     {
         return str_replace('(?<value>.*)$/mi', '(?<value>.*(?:\n[ \t]+\S.*)*)$/mi', $pattern);
-    }
-
-    /**
-     * The gate section's body and its byte offset in `$markdown`, or null.
-     *
-     * @return array{0: string, 1: int}|null
-     */
-    private function section(string $markdown): ?array
-    {
-        if (! preg_match('/^##\s+Design mockup gate[^\n]*\n(.*?)(?=^##\s|\z)/ms', $markdown, $m, PREG_OFFSET_CAPTURE)) {
-            return null;
-        }
-
-        return [$m[1][0], $m[1][1]];
-    }
-
-    /**
-     * Whether a Chosen value is the template's "not picked yet": empty,
-     * `_pending_`, a dash, TBD, or the template's `_(filled AFTER …)_` hint.
-     */
-    private function isPlaceholder(string $value): bool
-    {
-        $plain = $this->plain($value);
-
-        return in_array(strtolower($plain), ['', 'pending', '-', '—', '–', 'tbd'], true)
-            || (str_starts_with($plain, '(') && str_ends_with($plain, ')'));
-    }
-
-    /**
-     * A gate value without emphasis markers, backticks or surrounding space.
-     */
-    private function plain(string $value): string
-    {
-        return trim(str_replace(['**', '`'], '', $value), " \t*_");
     }
 }

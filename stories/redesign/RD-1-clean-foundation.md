@@ -1,5 +1,5 @@
 # RD-1 — Clean foundation
-Status: approved         Journey: none
+Status: built            Journey: none
 Source: owner 2026-10-10, redesign brief: *"if were going to have a bunch of dead obselete code id rather scrap the
 code too and just build on a good foundation. if some is reasonable we can keep it, if its only reuseable and
 clean. dont try to fit new stuff on bad fondation if it doesnt fit"*. Scope from the 2026-10-10 foundation audit.

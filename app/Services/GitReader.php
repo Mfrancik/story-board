@@ -67,14 +67,25 @@ class GitReader
     public function fetch(string $path, string $ref): void
     {
         $this->assertRef($ref);
-        $remotes = preg_split('/\s+/', trim($this->run($path, ['remote']))) ?: [];
         $remote = explode('/', $ref, 2)[0];
-        $args = in_array($remote, $remotes, true) ? [$remote] : [];
+        $args = in_array($remote, $this->remotes($path), true) ? [$remote] : [];
 
         // Auto-gc/maintenance would rewrite pack files in the project's .git; not ours to do.
         $this->run($path, ['fetch', '--quiet', '--no-tags', ...$args], timeout: 60, config: [
             'gc.auto=0', 'maintenance.auto=false',
         ]);
+    }
+
+    /**
+     * The checkout's remote names (`origin`, `upstream`, …), empty when it has none.
+     *
+     * @return list<string>
+     *
+     * @throws GitReaderException when `$path` is not a repository.
+     */
+    public function remotes(string $path): array
+    {
+        return preg_split('/\s+/', trim($this->run($path, ['remote'])), flags: PREG_SPLIT_NO_EMPTY) ?: [];
     }
 
     /**
