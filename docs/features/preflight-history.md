@@ -278,8 +278,8 @@ them. The record format (schema 1, every field required) is the contract in
   fixtures.
 - **Matching is a heuristic.** A record whose branch differs from the CSV row's, or whose clock is more than
   10 minutes off, stays unmatched. A run with no CSV row (the meter never reported) has nowhere to show.
-- The skipped-records notice says "not JSON, a schema other than 1, or missing a field"; files skipped for a
-  bad `runner`, `branch` or `finished_at` are counted there too. The log's `reason` is the precise one.
+- The skipped-records notice names every skip class (not JSON, schema, missing field, invalid runner/branch/finish
+  time); the log's `reason` says which one applied to each file.
 - **Adding a ledger column breaks the SB-19 browser tests**: `tests/Browser/ProjectPreflightTest.php` hard-codes
   the column lists (`PREFLIGHT_ALL_COLUMNS` and the `PREFLIGHT_TOGGLES` / `PREFLIGHT_HEADERS` expectations).
   Update them with the new key in table order.

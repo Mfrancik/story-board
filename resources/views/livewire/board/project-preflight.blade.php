@@ -60,7 +60,7 @@
                     <p><span class="font-medium">{{ $skipped }} {{ Str::plural('row', $skipped) }} could not be read</span> and {{ $skipped === 1 ? 'is' : 'are' }} not listed. Each had the wrong number of columns or a date that could not be parsed. The CSV itself is left as it is.</p>
                 @endif
                 @if ($recordsSkipped > 0)
-                    <p data-records-skipped><span class="font-medium">{{ $recordsSkipped }} run {{ Str::plural('record', $recordsSkipped) }} could not be read</span>, so {{ $recordsSkipped === 1 ? 'its run shows' : 'their runs show' }} — under Ran on. Each was not JSON, had a schema other than 1, or was missing a field. The files are left as they are.</p>
+                    <p data-records-skipped><span class="font-medium">{{ $recordsSkipped }} run {{ Str::plural('record', $recordsSkipped) }} could not be read</span>, so {{ $recordsSkipped === 1 ? 'its run shows' : 'their runs show' }} — under Ran on. Each was not JSON, had a schema other than 1, was missing a field, or had an invalid runner, branch or finish time. The files are left as they are.</p>
                 @endif
             </div>
         </div>
