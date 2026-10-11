@@ -10,6 +10,12 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-10-11 — A `git log --since` fixture silently dropped commits
+Symptom: a Shipped this week test seeded several build commits inside the 7-day window, but `GitReader::log()` returned fewer than seeded, with no error.
+Root cause: `git log --since` stops walking history at the first commit older than the cutoff. Fixture commits made with out-of-order dates (a newer one committed before an older one) put an "old" commit between HEAD and the rest, so git stopped there and never saw the in-window commits behind it.
+Fix: `tests/Support/GitFixture.php:commitAt()` sets author and committer dates, and tests write commits in date order (RD-7, `4d12af1`). Real repositories with skewed committer dates (rebases, clock drift) can hit the same cut-off; that is git's behaviour, accepted.
+Log trail: `board.shipped_read` `count` lower than the commits seeded; no `board.shipped_unreadable`.
+
 ## 2026-10-11 — A once-per-file-version warning test stayed green with its guard deleted
 Symptom: the RD-5 test for `board.live_session_unparsed` ("logged once per file version") passed with the `Cache::add` guard in `SessionReader::unparsed()` removed.
 Root cause: the test read the page twice, but `SessionReader::live()` caches its whole scan for 20 s under `board.sessions`. The second read came from that cache, never re-parsed the file, so it could not log a second warning with or without the guard.
