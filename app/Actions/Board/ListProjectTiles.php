@@ -25,17 +25,20 @@ class ListProjectTiles
 
     /**
      * @param  ReadPreflightHistory  $history  the one reader of preflight CSVs (SB-16)
+     * @param  ReadPreflightRuns  $records  the one reader of preflight run records (RD-8)
      */
-    public function __construct(private ReadPreflightHistory $history) {}
+    public function __construct(private ReadPreflightHistory $history, private ReadPreflightRuns $records) {}
 
     /**
      * Every covered project's tile, A–Z.
      *
-     * `preflight.ran_on` is always null here: RD-8 fills it with where the run was made
-     * ("on brain"), and the tile appends it when it is set.
+     * `preflight.ran_on` is where the last run was made — `brain`, `mac`, or null when
+     * no run record matches it (RD-8) — matched against all of the project's runs, as
+     * the Preflight page matches them, so the tile and that page's row always agree.
      *
-     * Side effects: reads each project's preflight CSVs; ReadPreflightHistory logs
-     * `board.preflight_history_unreadable` for one it cannot read.
+     * Side effects: reads each project's preflight CSVs and run records;
+     * ReadPreflightHistory logs `board.preflight_history_unreadable` for a CSV it cannot
+     * read, ReadPreflightRuns `board.preflight_run_record_skipped` for a record.
      *
      * @param  ProjectFilter|null  $filter  the projects to cover (RD-6); null is every enabled project
      * @return list<array{
@@ -61,7 +64,10 @@ class ListProjectTiles
 
         $tiles = [];
         foreach ($projects as $project) {
-            $run = $this->history->handle($project)['runs'][0] ?? null;
+            $runs = $this->history->handle($project)['runs'];
+            $run = $runs[0] ?? null;
+            // Only read records when there is a run to place: a project with no CSV has nothing to match.
+            $ranOn = $run === null ? null : $this->records->match($runs, $this->records->handle($project)['records'])[0];
             $tiles[] = [
                 'name' => $project->name,
                 'state' => $project->state,
@@ -71,7 +77,7 @@ class ListProjectTiles
                     'draft' => $kinds[$project->id]['draft'] ?? 0,
                 ],
                 'offmain' => (int) ($offMain[$project->id] ?? 0),
-                'preflight' => $run === null ? null : ['at' => $run['ts'], 'wall' => $run['wall'], 'mode' => $run['mode'], 'ran_on' => null],
+                'preflight' => $run === null ? null : ['at' => $run['ts'], 'wall' => $run['wall'], 'mode' => $run['mode'], 'ran_on' => $ranOn],
                 'prod' => $prod[$project->id] ?? null,
             ];
         }

@@ -11,6 +11,10 @@
     SB-19 adds the Columns picker to the filter row: every th and td carries its `data-col` key, and a column the
     viewer unticks is hidden by Alpine (x-show) and remembered in this browser only. When is the timeline's key and
     cannot be hidden.
+
+    RD-8 adds where each run happened: the Ran on column (Brain · Mac · —, from the run records ADR-055 fixes), the
+    Where it ran filter beside Mode (Alpine, no request), and — only when the window holds both brain and Mac runs —
+    each runner's median wall time under the trend figures. Run records that cannot be read join the notice.
 --}}
 @use('App\Actions\Board\ReadPreflightHistory', 'History')
 @php
@@ -18,8 +22,12 @@
     // What Alpine needs per run; `id` is the row's index in this newest-first list.
     $data = array_map(fn (array $r, int $i) => [
         'id' => $i, 'ts' => $r['ts']->getTimestampMs(), 'branch' => $r['branch'], 'where' => $r['where'],
-        'mode' => $r['mode'], 'wall' => $r['wall'], 'tokens' => $r['tokens'], 'flagged' => $r['flagged'],
+        'mode' => $r['mode'], 'wall' => $r['wall'], 'tokens' => $r['tokens'], 'flagged' => $r['flagged'], 'ranOn' => $r['ran_on'],
     ], $runs, array_keys($runs));
+    // Where it ran (RD-8): the filter's values, and how each reads in the Ran on column (`local` records read as Mac).
+    $ranOnLabels = ['all' => 'All', 'brain' => 'Brain', 'mac' => 'Mac', 'unknown' => 'Unknown'];
+    $ranOnCounts = ['all' => $count, 'unknown' => count(array_filter($runs, fn ($r) => $r['ran_on'] === null))]
+        + array_map(fn ($runner) => count(array_filter($runs, fn ($r) => $r['ran_on'] === $runner)), ['brain' => 'brain', 'mac' => 'mac']);
     $modes = ['all' => 'All', 'scoped' => 'Scoped', 'full' => 'Full'];
     $modeCounts = ['all' => $count, 'scoped' => count(array_filter($runs, fn ($r) => $r['mode'] === 'scoped')), 'full' => count(array_filter($runs, fn ($r) => $r['mode'] === 'full'))];
     $figures = [
@@ -29,7 +37,7 @@
     ];
     $num = fn (?int $n) => $n === null ? '—' : number_format($n);
     // The ledger's columns in table order: each key is the `data-col` on its th and tds and a checkbox in the picker.
-    $columns = ['when' => 'When', 'branch' => 'Branch', 'where' => 'Where', 'mode' => 'Mode', 'wall' => 'Wall', 'turns' => 'Turns',
+    $columns = ['when' => 'When', 'branch' => 'Branch', 'where' => 'Where', 'ran_on' => 'Ran on', 'mode' => 'Mode', 'wall' => 'Wall', 'turns' => 'Turns',
         'tools' => 'Tool calls', 'tokens' => 'Tokens', 'share' => 'Subagent', 'pack' => 'Pack', 'tier' => 'Audit tier', 'tests' => 'Tests'];
     // When stays: without it the rows are figures with no place on the timeline.
     $hideable = array_values(array_diff(array_keys($columns), ['when']));
@@ -44,10 +52,17 @@
         · read on page load · <a href="{{ route('projects.preflight', $model->name) }}" wire:navigate data-refresh class="font-medium text-ink hover:underline">Refresh</a>
     </x-board.project-header>
 
-    @if ($skipped > 0)
+    @if ($skipped > 0 || $recordsSkipped > 0)
         <div role="status" data-skipped class="mt-5 flex items-start gap-2 rounded-lg border border-edge bg-surface px-3 py-2.5 text-sm">
             <svg class="mt-0.5 size-4 shrink-0 text-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l9.5 17h-19L12 3z"/><path d="M12 10v4M12 17h.01"/></svg>
-            <p><span class="font-medium">{{ $skipped }} {{ Str::plural('row', $skipped) }} could not be read</span> and {{ $skipped === 1 ? 'is' : 'are' }} not listed. Each had the wrong number of columns or a date that could not be parsed. The CSV itself is left as it is.</p>
+            <div class="space-y-1">
+                @if ($skipped > 0)
+                    <p><span class="font-medium">{{ $skipped }} {{ Str::plural('row', $skipped) }} could not be read</span> and {{ $skipped === 1 ? 'is' : 'are' }} not listed. Each had the wrong number of columns or a date that could not be parsed. The CSV itself is left as it is.</p>
+                @endif
+                @if ($recordsSkipped > 0)
+                    <p data-records-skipped><span class="font-medium">{{ $recordsSkipped }} run {{ Str::plural('record', $recordsSkipped) }} could not be read</span>, so {{ $recordsSkipped === 1 ? 'its run shows' : 'their runs show' }} — under Ran on. Each was not JSON, had a schema other than 1, or was missing a field. The files are left as they are.</p>
+                @endif
+            </div>
         </div>
     @endif
 
@@ -72,6 +87,15 @@
                             class="rounded-md px-2.5 py-1 text-xs font-medium whitespace-nowrap"
                             x-bind:class="fMode === @js($mode) ? 'bg-accent text-accent-foreground' : 'text-ink-muted hover:text-ink'">
                             {{ $label }} <span class="tabular-nums opacity-60">{{ $modeCounts[$mode] }}</span>
+                        </button>
+                    @endforeach
+                </div>
+                <div role="group" aria-label="Where it ran" class="inline-flex rounded-lg border border-rim bg-surface p-0.5">
+                    @foreach ($ranOnLabels as $value => $label)
+                        <button type="button" data-ran-on-filter="{{ $value }}" x-on:click="fRan = @js($value)" x-bind:aria-pressed="fRan === @js($value)" aria-pressed="{{ $value === 'all' ? 'true' : 'false' }}"
+                            class="rounded-md px-2.5 py-1 text-xs font-medium whitespace-nowrap"
+                            x-bind:class="fRan === @js($value) ? 'bg-accent text-accent-foreground' : 'text-ink-muted hover:text-ink'">
+                            {{ $label }} <span class="tabular-nums opacity-60">{{ $ranOnCounts[$value] }}</span>
                         </button>
                     @endforeach
                 </div>
@@ -130,6 +154,15 @@
                         </div>
                     @endforeach
                 </div>
+                @if ($runnerWall !== null)
+                    {{-- RD-8: only when the window holds both brain and Mac runs; a filter that leaves one runner hides it. --}}
+                    <div data-runner-walls x-show="runnerWallShown" class="mt-2 flex flex-wrap items-baseline gap-x-4 gap-y-1 px-1 text-xs text-ink-muted">
+                        <span>Median wall time, last 30 days, by where it ran:</span>
+                        @foreach (['brain' => 'Brain', 'mac' => 'Mac'] as $runner => $label)
+                            <span data-runner-wall="{{ $runner }}">{{ $label }} <span data-median x-text="runnerWall(@js($runner))" class="font-semibold text-ink tabular-nums">{{ History::wall($runnerWall[$runner]) }}</span></span>
+                        @endforeach
+                    </div>
+                @endif
                 <div class="mt-4 grid gap-5 md:grid-cols-2">
                     @foreach (['wall' => ['Wall time per run', 'minutes'], 'tokens' => ['Tokens per run (in + out)', 'tokens']] as $metric => [$caption, $unit])
                         <figure class="min-w-0">
@@ -164,6 +197,7 @@
                             <th scope="col" data-col="when" class="sticky left-0 bg-ground px-3 py-2 text-left font-medium">When</th>
                             <th scope="col" data-col="branch" x-show="shown('branch')" class="px-3 py-2 text-left font-medium">Branch</th>
                             <th scope="col" data-col="where" x-show="shown('where')" class="px-3 py-2 text-left font-medium">Where</th>
+                            <th scope="col" data-col="ran_on" x-show="shown('ran_on')" class="px-3 py-2 text-left font-medium">Ran on</th>
                             <th scope="col" data-col="mode" x-show="shown('mode')" class="px-3 py-2 text-left font-medium">Mode</th>
                             <th scope="col" data-col="wall" x-show="shown('wall')" class="px-3 py-2 text-right font-medium">Wall</th>
                             <th scope="col" data-col="turns" x-show="shown('turns')" class="px-3 py-2 text-right font-medium">Turns</th>
@@ -184,6 +218,7 @@
                                 </td>
                                 <td data-col="branch" x-show="shown('branch')" class="px-3 py-1.5"><span class="block max-w-68 truncate font-mono text-xs" title="{{ $r['branch'] }}">{{ $r['branch'] ?? '—' }}</span></td>
                                 <td data-col="where" x-show="shown('where')" class="px-3 py-1.5 whitespace-nowrap text-ink-muted">{{ $r['where'] }}</td>
+                                <td data-col="ran_on" x-show="shown('ran_on')" @class(['px-3 py-1.5 whitespace-nowrap', 'text-ink-faint' => $r['ran_on'] === null])>{{ $r['ran_on'] === null ? '—' : $ranOnLabels[$r['ran_on']] }}</td>
                                 <td data-col="mode" x-show="shown('mode')" @class(['px-3 py-1.5', 'text-ink-faint' => $r['mode'] === null])>{{ $r['mode'] ?? '—' }}</td>
                                 <td data-col="wall" x-show="shown('wall')" class="px-3 py-1.5 text-right font-medium tabular-nums">{{ History::wall($r['wall']) }}</td>
                                 <td data-col="turns" x-show="shown('turns')" class="px-3 py-1.5 text-right tabular-nums">{{ $num($r['turns']) }}</td>

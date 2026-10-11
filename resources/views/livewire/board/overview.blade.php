@@ -334,7 +334,7 @@
                                 @else
                                     <span class="ml-auto font-mono text-ink-soft" title="{{ $run['at']->toDateTimeString() }}">{{ $runText }}</span>
                                     @if ($run['mode'] !== null)<x-shell.tag mono>{{ $run['mode'] }}</x-shell.tag>@endif
-                                    {{-- RD-8 sets where the run was made; until then this is always null. --}}
+                                    {{-- RD-8: where the run was made (brain or mac); nothing when no run record matches it. --}}
                                     @if ($run['ran_on'] !== null)<span data-tile-ran-on class="font-mono">on {{ $run['ran_on'] }}</span>@endif
                                 @endif
                             </span>

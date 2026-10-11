@@ -311,7 +311,7 @@ it('marks a tile live while a session is running in its project', function () {
         ->and(homeTile($html, 'ledger-app'))->not->toContain('data-tile-live');
 });
 
-it('leaves room in a tile\'s last preflight for where it ran (RD-8), empty for now', function () {
+it('leaves a tile\'s last preflight without where it ran when no run record matches it (RD-8)', function () {
     $project = Project::factory()->create(['name' => 'story-board', 'path' => '/work/story-board', ...$this->fresh]);
     $this->sessions->preflightCsv(SessionFixture::folderFor('/work/story-board'), [
         'ts,project,branch,mode,wall_s,turns,tool_calls,tokens_in,tokens_out,subagent_tokens,pack_bytes,audit_model',

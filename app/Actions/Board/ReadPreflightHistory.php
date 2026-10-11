@@ -63,7 +63,7 @@ class ReadPreflightHistory
     public function handle(Project $project): array
     {
         $root = rtrim((string) config('board.sessions_path'), '/');
-        $folder = (string) preg_replace(self::ENCODE, '-', rtrim($project->path, '/'));
+        $folder = self::folderFor($project);
         $now = CarbonImmutable::now();
 
         $runs = [];
@@ -134,24 +134,57 @@ class ReadPreflightHistory
 
     /**
      * Each CSV that belongs to the project, with the `where` label its runs get.
-     * A folder is the project's when it is the encoded path itself, or that path
-     * followed by a worktree or the plans suffix — so `story-board-x` is not
-     * `story-board`. Compared case-insensitively: macOS paths are, and a project
-     * registered as `~/code/x` must still find the `-Code-x` folder Claude made.
      *
      * @return array<string, string> file => where
      */
     private function files(Project $project, string $root, string $folder): array
     {
-        $entries = is_dir($root) ? @scandir($root) : false;
-        if ($entries === false) {
+        $folders = $this->folders($root, $folder);
+        if ($folders === null) {
             Log::warning('board.preflight_history_unreadable', ['project' => $project->name, 'file' => $root]);
 
             return [];
         }
 
-        $own = strtolower($folder);
         $files = [];
+        foreach ($folders as $path => $where) {
+            if (is_file($path.'/'.self::FILE)) {
+                $files[$path.'/'.self::FILE] = $where;
+            }
+        }
+
+        return $files;
+    }
+
+    /**
+     * The project's own Claude folder name: its path with every non-alphanumeric
+     * character turned into a dash, as Claude Code names it.
+     */
+    public static function folderFor(Project $project): string
+    {
+        return (string) preg_replace(self::ENCODE, '-', rtrim($project->path, '/'));
+    }
+
+    /**
+     * Every folder under `$root` that belongs to the project, with the `where` label
+     * of what runs there, or null when the root cannot be listed. Public since RD-8:
+     * the run records (ReadPreflightRuns) live in the same folders as the CSVs.
+     * A folder is the project's when it is the encoded path itself, or that path
+     * followed by a worktree or the plans suffix — so `story-board-x` is not
+     * `story-board`. Compared case-insensitively: macOS paths are, and a project
+     * registered as `~/code/x` must still find the `-Code-x` folder Claude made.
+     *
+     * @return array<string, string>|null folder path => where
+     */
+    public function folders(string $root, string $folder): ?array
+    {
+        $entries = is_dir($root) ? @scandir($root) : false;
+        if ($entries === false) {
+            return null;
+        }
+
+        $own = strtolower($folder);
+        $folders = [];
         foreach ($entries as $entry) {
             $name = strtolower($entry);
             $where = match (true) {
@@ -160,13 +193,12 @@ class ReadPreflightHistory
                 str_starts_with($name, $own.self::WORKTREES) && strlen($name) > strlen($own.self::WORKTREES) => substr($entry, strlen($own.self::WORKTREES)),
                 default => null,
             };
-            $file = "{$root}/{$entry}/".self::FILE;
-            if ($where !== null && is_file($file)) {
-                $files[$file] = $where;
+            if ($where !== null && is_dir("{$root}/{$entry}")) {
+                $folders["{$root}/{$entry}"] = $where;
             }
         }
 
-        return $files;
+        return $folders;
     }
 
     /**
@@ -245,9 +277,10 @@ class ReadPreflightHistory
     }
 
     /**
-     * The row's `ts` as a date, or null when it is not an ISO timestamp.
+     * `$value` as a date, or null when it is not a strict ISO timestamp. Public since
+     * RD-8: a run record's `finished_at` is held to the same rule as a row's `ts`.
      */
-    private function timestamp(?string $value): ?CarbonImmutable
+    public function timestamp(?string $value): ?CarbonImmutable
     {
         $value = trim((string) $value);
         if (preg_match(self::TS, $value) !== 1) {

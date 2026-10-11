@@ -45,7 +45,7 @@ function preflightRows(string $html): array
     preg_match_all('/<tr\b[^>]*data-run="\d+"[^>]*>(.*?)<\/tr>/s', $html, $rows);
 
     return array_map(function (string $row) {
-        preg_match_all('/<td\b[^>]*data-col="([a-z]+)"[^>]*>(.*?)<\/td>/s', $row, $cells, PREG_SET_ORDER);
+        preg_match_all('/<td\b[^>]*data-col="([a-z_]+)"[^>]*>(.*?)<\/td>/s', $row, $cells, PREG_SET_ORDER);
         $out = [];
         foreach ($cells as [, $col, $inner]) {
             $out[$col] = trim((string) preg_replace('/\s+/', ' ', html_entity_decode(strip_tags($inner))));
@@ -283,7 +283,7 @@ it('and hydrate() re-checks it: a project switched off mid-visit sends the owner
     'removed' => ['delete', 'unknown'],
 ]);
 
-it('Given the page loads, then board.preflight_history_viewed is logged with project, runs, skipped', function () {
+it('Given the page loads, then board.preflight_history_viewed is logged with project, runs, skipped, matched, unmatched', function () {
     $this->claude->preflightCsv($this->folder, [
         PREFLIGHT_OLD_HEADER,
         '2026-09-12T18:53:34Z,main,,187,14,13,4243249,8902,0,1117,',
@@ -295,7 +295,7 @@ it('Given the page loads, then board.preflight_history_viewed is logged with pro
     $this->get('/p/story-board/preflight')->assertOk();
 
     Log::shouldHaveReceived('info')->withArgs(fn ($e, $c = []) => $e === 'board.preflight_history_viewed'
-        && $c === ['project' => 'story-board', 'runs' => 2, 'skipped' => 1])->once();
+        && $c === ['project' => 'story-board', 'runs' => 2, 'skipped' => 1, 'matched' => 0, 'unmatched' => 2])->once();
 });
 
 it('adds a Preflight tab to the project tabs, marked current on this page', function () {
@@ -314,25 +314,25 @@ it('Given the page loads, then every th and td of the ledger carries its data-co
         '2026-09-12T18:53:34Z,a,scoped,187,14,13,100,1,0,0,sonnet',
         '2026-09-11T18:53:34Z,b,full,187,14,13,100,1,0,0,opus+sonnet',
     ]);
-    $keys = ['when', 'branch', 'where', 'mode', 'wall', 'turns', 'tools', 'tokens', 'share', 'pack', 'tier', 'tests'];
+    $keys = ['when', 'branch', 'where', 'ran_on', 'mode', 'wall', 'turns', 'tools', 'tokens', 'share', 'pack', 'tier', 'tests'];
 
     $html = $this->get('/p/story-board/preflight')->assertOk()->getContent();
 
     preg_match('/<thead\b.*?<\/thead>/s', $html, $thead);
     preg_match_all('/<th\b([^>]*)>/', $thead[0] ?? '', $ths);
-    $headerKeys = array_map(fn (string $attrs) => preg_match('/data-col="([a-z]+)"/', $attrs, $m) ? $m[1] : null, $ths[1]);
+    $headerKeys = array_map(fn (string $attrs) => preg_match('/data-col="([a-z_]+)"/', $attrs, $m) ? $m[1] : null, $ths[1]);
     expect($headerKeys)->toBe($keys);
 
     preg_match_all('/<tr\b[^>]*data-run="\d+"[^>]*>(.*?)<\/tr>/s', $html, $rows);
     expect($rows[1])->toHaveCount(2);
     foreach ($rows[1] as $row) {
         preg_match_all('/<td\b([^>]*)>/', $row, $tds);
-        $cellKeys = array_map(fn (string $attrs) => preg_match('/data-col="([a-z]+)"/', $attrs, $m) ? $m[1] : null, $tds[1]);
+        $cellKeys = array_map(fn (string $attrs) => preg_match('/data-col="([a-z_]+)"/', $attrs, $m) ? $m[1] : null, $tds[1]);
         expect($cellKeys)->toBe($keys);
     }
 
     // The picker offers the same keys in the same order, and nothing on it talks to the server.
-    preg_match_all('/data-col-toggle="([a-z]+)"/', $html, $toggles);
+    preg_match_all('/data-col-toggle="([a-z_]+)"/', $html, $toggles);
     expect($toggles[1])->toBe($keys)
         ->and($html)->not->toMatch('/data-col-toggle="[a-z]+"[^>]*wire:/')
         ->and($html)->toMatch('/data-col-toggle="when"[^>]*disabled/');

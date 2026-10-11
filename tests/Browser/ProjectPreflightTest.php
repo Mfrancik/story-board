@@ -113,7 +113,7 @@ const PREFLIGHT_HEADERS = "[...document.querySelectorAll('thead th[data-col]')].
 /** Script: the picker's checkboxes as key:checked:disabled, in list order. */
 const PREFLIGHT_TOGGLES = "[...document.querySelectorAll('[data-col-toggle]')].map(e => e.dataset.colToggle + ':' + (e.checked ? 1 : 0) + ':' + (e.disabled ? 1 : 0)).join()";
 
-const PREFLIGHT_ALL_COLUMNS = 'when,branch,where,mode,wall,turns,tools,tokens,share,pack,tier,tests';
+const PREFLIGHT_ALL_COLUMNS = 'when,branch,where,ran_on,mode,wall,turns,tools,tokens,share,pack,tier,tests';
 
 it('Given the Preflight page loads, then a Columns control lists every column except that When is disabled and always ticked', function () {
     $page = visit('/p/coins/preflight')->resize(1280, 900);
@@ -122,7 +122,7 @@ it('Given the Preflight page loads, then a Columns control lists every column ex
         ->assertMissing('[data-columns-panel]')
         ->click('[data-columns-button]')
         ->assertVisible('[data-columns-panel]')
-        ->assertScript(PREFLIGHT_TOGGLES, 'when:1:1,branch:1:0,where:1:0,mode:1:0,wall:1:0,turns:1:0,tools:1:0,tokens:1:0,share:1:0,pack:1:0,tier:1:0,tests:1:0')
+        ->assertScript(PREFLIGHT_TOGGLES, 'when:1:1,branch:1:0,where:1:0,ran_on:1:0,mode:1:0,wall:1:0,turns:1:0,tools:1:0,tokens:1:0,share:1:0,pack:1:0,tier:1:0,tests:1:0')
         ->assertSeeIn('[data-columns-panel]', 'Tool calls')
         ->assertSeeIn('[data-columns-panel]', 'Audit tier')
         // The disabled box says why, where a person hovering it will read it.
@@ -140,7 +140,7 @@ it('Given Tokens is unticked, then the Tokens header and every Tokens cell are h
     $page->click('[data-columns-button]')
         ->click('[data-col-toggle="tokens"]')
         ->assertScript(preflightColumnShown('tokens'), 0)
-        ->assertScript(PREFLIGHT_HEADERS, 'when,branch,where,mode,wall,turns,tools,share,pack,tier,tests')
+        ->assertScript(PREFLIGHT_HEADERS, 'when,branch,where,ran_on,mode,wall,turns,tools,share,pack,tier,tests')
         // Every other column is untouched: each still has its header and its 5 cells.
         ->assertScript(preflightColumnShown('turns'), 6)
         ->assertScript(PREFLIGHT_FETCHES, $before)
@@ -179,7 +179,7 @@ it('Given columns were hidden and the page is reloaded, then the same columns ar
         ->click('[data-col-toggle="tools"]')
         ->click('[data-col-toggle="pack"]')
         ->refresh()
-        ->assertScript(PREFLIGHT_HEADERS, 'when,branch,where,mode,wall,tokens,share,tier,tests')
+        ->assertScript(PREFLIGHT_HEADERS, 'when,branch,where,ran_on,mode,wall,tokens,share,tier,tests')
         ->assertScript(preflightColumnShown('tools'), 0)
         ->assertSeeIn('[data-columns-button]', 'Columns · 3 hidden')
         ->click('[data-columns-button]')

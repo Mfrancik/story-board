@@ -48,7 +48,7 @@ function writeHiddenColumns(key, hidden) {
  * The figures and formats mirror App\Actions\Board\ReadPreflightHistory, which renders the same
  * values into the page first; this recomputes them only when a filter narrows the runs.
  *
- * @param {Array<{id:number, ts:number, branch:?string, where:string, mode:?string, wall:?number, tokens:?number, flagged:boolean}>} runs newest first
+ * @param {Array<{id:number, ts:number, branch:?string, where:string, mode:?string, wall:?number, tokens:?number, flagged:boolean, ranOn:?string}>} runs newest first; `ranOn` is brain, mac or null (RD-8)
  * @param {number} now the server's "now" in ms, so the 30-day windows match the server-rendered figures
  * @param {string} main the `where` of a run in the project's own checkout
  * @param {string} project the project's name, which keys its saved columns so each project keeps its own
@@ -73,6 +73,7 @@ export function preflightHistory(runs, now, main, project, hideable) {
         fMode: 'all',
         fBranch: '',
         fWhere: 'all',
+        fRan: 'all',
         hoverId: null,
         hoverChart: null,
         w: { wall: 0, tokens: 0 },
@@ -94,11 +95,13 @@ export function preflightHistory(runs, now, main, project, hideable) {
             if (this.fBranch && !(r.branch ?? '').toLowerCase().includes(this.fBranch.toLowerCase())) return false;
             if (this.fWhere === 'main' && r.where !== main) return false;
             if (this.fWhere === 'worktrees' && r.where === main) return false;
+            // Where it ran (RD-8): `unknown` is a run no record matched.
+            if (this.fRan !== 'all' && (r.ranOn ?? 'unknown') !== this.fRan) return false;
             return true;
         },
         get visible() { return this.runs.filter((r) => this.keep(r.id)); },
-        get filtered() { return this.fMode !== 'all' || this.fBranch !== '' || this.fWhere !== 'all'; },
-        reset() { this.fMode = 'all'; this.fBranch = ''; this.fWhere = 'all'; },
+        get filtered() { return this.fMode !== 'all' || this.fBranch !== '' || this.fWhere !== 'all' || this.fRan !== 'all'; },
+        reset() { this.fMode = 'all'; this.fBranch = ''; this.fWhere = 'all'; this.fRan = 'all'; },
         /** Visible runs whose audit tier is not the pinned one (the "check the tier" flags). */
         get flaggedCount() { return this.visible.filter((r) => r.flagged).length; },
         modeCount(m) { return m === 'all' ? this.runs.length : this.runs.filter((r) => r.mode === m).length; },
@@ -150,6 +153,14 @@ export function preflightHistory(runs, now, main, project, hideable) {
             if (name === 'runs') return String(rows.length);
             if (name === 'wall') return this.fmtWall(this.median(rows.map((r) => r.wall)));
             return this.fmtTok(this.median(rows.map((r) => r.tokens)));
+        },
+
+        /** One runner's median wall time over the visible runs of the last 30 days (RD-8). */
+        runnerWall(runner) { return this.fmtWall(this.median(this.win(30, 0).filter((r) => r.ranOn === runner).map((r) => r.wall))); },
+        /** Per-runner figures only compare something when both runners are in the visible window. */
+        get runnerWallShown() {
+            const rows = this.win(30, 0);
+            return rows.some((r) => r.ranOn === 'brain') && rows.some((r) => r.ranOn === 'mac');
         },
 
         // ---- charts: one series each, two charts rather than a dual axis ----

@@ -143,6 +143,22 @@ class SessionFixture
     }
 
     /**
+     * Write one preflight run record (RD-8, ADR-055) into `$folder/preflight-runs/<run_id>.json`,
+     * as RD-10's runner will. `$record` is JSON-encoded unless it is already a string, so a
+     * test can write a file that is not JSON at all. Returns its full path.
+     *
+     * @param  array<string, mixed>|string  $record
+     */
+    public function preflightRun(string $folder, string $runId, array|string $record): string
+    {
+        $path = "{$this->root}/{$folder}/preflight-runs/{$runId}.json";
+        File::ensureDirectoryExists(dirname($path));
+        File::put($path, is_string($record) ? $record : (string) json_encode($record, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+
+        return $path;
+    }
+
+    /**
      * Remove the root and everything in it.
      */
     public function destroy(): void

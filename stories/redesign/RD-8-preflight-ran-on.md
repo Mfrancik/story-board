@@ -1,5 +1,5 @@
 # RD-8 — Preflight "Ran on" (the reading side)
-Status: approved         Journey: none
+Status: built            Journey: none
 Source: owner 2026-10-10: *"all should have a preflight run which shows stats from each preflight such as where it
 ran (brain or mac), speed, errors, etc."* and *"i dont want to make changes to preflight just yet, we can build the
 framework and revisit that part later"*. The writing side is RD-10 (parked); errors are SB-20 (parked).
