@@ -28,7 +28,7 @@ viewer, the file route, the sidebar count and the project page button. SB-24's a
 - `readings()`: reads each story file with **one** `GitReader::showMany()` (`git cat-file --batch`)
   per commit. From the text it takes:
   - the gate quote (`ReadMockupGate`);
-  - whether the board can pick it (`StoryPickWriter::refusalFor() === null`);
+  - whether the board can pick it (`MockupGateParser::refusalFor() === null`);
   - the **Where**: the first backticked `/path` on the story's `- Routes:` line.
 
   The result is cached as `board:mockup-gates:{project_id}:{sha}` for a day. The batch read exists because
@@ -42,7 +42,7 @@ viewer, the file route, the sidebar count and the project page button. SB-24's a
   Sort order: awaiting first, then newest `dated_on`, then higher ID.
 - `withLocalPicks()`: a board pick is committed but not pushed, so the ref still reads "awaiting".
   For **awaiting sets only**, the gallery re-reads those stories on the checkout's local branch
-  (`StoryPickWriter::boardBranch()`, e.g. `origin/main` → `main`). A set whose story now holds a single
+  (`MockupGateParser::boardBranch()` over `GitReader::remotes()`, e.g. `origin/main` → `main`). A set whose story now holds a single
   letter becomes picked with `pushed: false` ("Picked X · not pushed"). This is cached 300 s as
   `board:mockup-local:{project_id}`, fingerprinted on the project sha plus the awaiting paths, and
   `forget()` drops it after every pick attempt.
@@ -81,8 +81,8 @@ the empty state (`data-mockups-empty`), which says mockups come from `docs/mocku
 - **Pick.** Pick opens a dialog with a one-line reason field. `confirmPick()` calls the component's one
   server action, `pick($option, $reason)`. That action re-reads the set and row server-side, calls
   `StoryPickWriter::pick()`, and always calls `forget()`. The result is a success toast ("… committed on
-  <branch> (not pushed)"), or `refusal` shown in the dialog (`data-pick-refusal`). `hydrate()` re-checks the
-  project is still shown on every update (ADR-019 amendment).
+  <branch> (not pushed)", the branch from `pick()`'s return), or `refusal` shown in the dialog (`data-pick-refusal`). `hydrate()` (trait `GuardsProjectPage`) re-checks the
+  project is still shown on every update (ADR-019 amendment) and returns to `/mockups` if not.
 
 **Current pane** (`app/Actions/Board/ReadCurrentVersion.php:handle()`, rendered by
 `resources/views/components/board/mockup-current.blade.php`). It takes the set's Where and snapshot sha and
@@ -129,10 +129,10 @@ when no shot matched.
 6. rebase, merge, cherry-pick, revert or bisect in progress (marker files in the git dir);
 7. checkout on a different branch from the one the board reads (the reason names both);
 8. the file shows in `status --porcelain` (modified, staged or untracked);
-9. `refusalFor()`: no gate section, `n/a` gate, no `Chosen option:` line, or a Chosen value that is not
+9. `MockupGateParser::refusalFor()`: no gate section, `n/a` gate, no `Chosen option:` line, or a Chosen value that is not
    a placeholder (empty, `_pending_`, `-`/`—`, `TBD`, or the template's `_(filled AFTER …)_`).
 
-The gallery's "awaiting" uses the same `refusalFor()`, so gallery and writer cannot disagree.
+The gallery's "awaiting" uses the same parser method, so gallery and writer cannot disagree.
 
 `rewrite()` replaces only the Chosen value and the Why value in place, including their indented
 continuation lines. If there is no Why line, it inserts one under Chosen. The reason is written as
@@ -146,7 +146,7 @@ with a 30 s timeout, so other staged work stays staged and out of the commit. If
 `<dir>/` at the set's commit, and requires `<dir>/<file>` to be **exactly** in that listing. It never
 joins a path, so `../../.env` or `%2e%2e` is simply not in the listing. A miss logs
 `board.mockup_file_refused` and 404s without calling `show`. The response reuses
-`MockupFileController::TYPES` and sends `Content-Security-Policy: sandbox allow-scripts; default-src …;
+`MockupSetFileController::TYPES` (owned here since RD-1) and sends `Content-Security-Policy: sandbox allow-scripts; default-src …;
 frame-ancestors 'self'`. Unlike SB-4's route, this CSP does **not** include `allow-popups`.
 
 **Entry points.**
@@ -165,9 +165,9 @@ project's working-tree `storage/app/journey-shots/<j>/manifest.json` (via `ReadJ
 ## Interfaces
 - `ReadMockupSets::handle(?Project): list<MockupSet>`, plus `find()`, `awaitingCount()`, `countFor()`,
   `describe()` and `forget()`. The `MockupSet` shape is the `@phpstan-type` in the class docblock.
-- `StoryPickWriter::pick(Project, Story, list<string> $options, string $option, string $reason): string`
-  (commit sha), which throws `App\Exceptions\StoryPickRefusedException`. Its pure helpers are `refusalFor()`,
-  `pickedLetter()`, `boardBranch()` and `reasonLine()`.
+- `StoryPickWriter::pick(Project, Story, list<string> $options, string $option, string $reason): array{sha, branch}`,
+  which throws `App\Exceptions\StoryPickRefusedException`. Gate reading (`refusalFor()`, `pickedLetter()`,
+  `boardBranch()`) lives in `MockupGateParser` ([board foundation](board-foundation.md)); `reasonLine()` stays.
 - `GitReader::showMany(path, ref, files): array<path, ?bytes>` (one `cat-file --batch`). It refuses a path
   containing a newline. `GitReader::run()` gained an optional stdin `$input`. Both are reads only, and the
   allow-list is unchanged.
@@ -279,3 +279,4 @@ the Where (compare the story's `- Routes:` path with the manifest's `route`), or
 2026-09-29 — Gallery opens on "Awaiting pick", falling back to All when none await (SB-21, `b1a3ab7`)
 2026-09-29 — Opening status counts only the project the page opens on, so `?project=X` with nothing awaiting in X opens on All (SB-21, `680b4db`)
 2026-09-30 — Current pane: newest matching journey shot with capture time and stale label, new-page and uncovered states, opens Current vs option when a shot exists; `ReadCurrentVersion`, `ReadProjectRoutes`; `mockup_viewed` gains `current` (SB-23, `079a2c1`)
+2026-10-11 — Gate reading moved to `MockupGateParser`; `pick()` returns `{sha, branch}`; open statuses from `StoryStatusOrder`; `TYPES` owned by `MockupSetFileController`; viewer guard via `GuardsProjectPage` (RD-1, `6ad827b`)

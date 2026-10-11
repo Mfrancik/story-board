@@ -1,179 +1,142 @@
 # Project brief — story-board
-Last refreshed: 2026-09-30 (SB-22, SB-23, SB-25)
+Last refreshed: 2026-10-11 (RD-1)
 
 ## What it is, and for whom
 A localhost Laravel app for one owner. It reads the `stories/` folder of every project that uses
 the dev-standards kit and shows, in one place, what state each project's stories are in. It reads
 from git, at each project's ref (default `origin/main`). Its one write into a project is a mockup pick
-from the gallery: two lines of one story file, one local commit, never pushed (ADR-032). It can also read a project's production MySQL database, read-only, for headline numbers, shown side by side on `/prod` with
-daily history. Work not on the ref yet (unmerged branches, worktrees, untracked files) is shown beside it,
-labelled with where it lives, and never counts as status. Live Claude Code sessions are shown from
-their transcript metadata (never their messages). Each project's handbook shows how it has drifted
-from the kit. Each project's preflight runs are read from the cost CSVs the kit's meter leaves under
-`~/.claude/projects`. Each project's journeys are drawn as a clickable map of screens, generated from its
-journey docs, story files and mockups, with no change to the project. Its screenshots come from each
-project's own journey tests, via the kit's `journeyStep()` helper (SB-22).
+from the gallery: two lines of one story file, one local commit, never pushed (ADR-032).
+
+It also shows:
+- Each project's production numbers, from its production MySQL database read-only, side by side on
+  `/prod` with daily history.
+- Work not on the ref yet (unmerged branches, worktrees, untracked files), labelled with where it
+  lives. It never counts as status.
+- Live Claude Code sessions, from their transcript metadata (never their messages).
+- Each project's handbook, and how it has drifted from the kit.
+- Each project's preflight runs, from the kit meter's cost CSVs under `~/.claude/projects`.
+- A clickable map of each project's journeys, drawn from its journey docs, stories and mockups, with
+  screenshots from the project's own journey tests (`journeyStep()`).
+
+The app has no auth. The starter kit's auth was removed in RD-1 (ADR-037).
 
 ## Domain model
-- **Project**: a registered local checkout (`name`, `path`, `ref`, `is_enabled`; off hides it everywhere
-  and stops its refreshes, keeping its rows). Refresh `state` (`pending | ok | stale | unreachable`),
-  `sha`/`indexed_at` of its last good snapshot, and `refresh_attempted_at` (drives page-load staleness).
-- **Story**: one story file, as reported by the kit's `bin/story-index` (ID, title, status, initiative,
-  journey, path, source, depends_on, mockups, parse_errors), plus `is_parked` and `dated_on` computed at
-  refresh. Text and mockups are read from git at the row's SHA on demand. `location_kind` is null for
-  the ref's row, else `branch | worktree | untracked` with a `location` label; one row per version.
-- **ProjectLocation**: another checkout of a project: an `alias` (by hand) or a `worktree` (found on refresh).
-- **Snapshot**: a project's on-ref Story rows, replaced wholesale on each successful refresh and kept
-  as-is when one fails. Off-main rows are a second snapshot, replaced by each off-main scan.
-- **Live session** (not stored): a transcript changed in the last 10 min, reduced to `cwd`, branch and
-  times, matched to a project by path and to stories by branch name.
-- **Preflight run** (not stored): one row of a `preflight-cost.csv` in the project's own, worktree or plans
-  folder under `board.sessions_path`, read by header name on each load.
-- **Kit** (not stored, not a project): the dev-standards checkout at `board.kit_path` / `kit_ref`, read
-  through `GitReader` to badge each project's standards and skills.
-- **ProdConnection**: a project's one read-only production MySQL connection (credentials encrypted with
-  APP_KEY, `use_ssl`, `verified_at`). **ProdMetric**: a preset (table/column in `config`) or custom single
-  `SELECT`, `key` stable across saves, `position`, `is_enabled`. **ProdSnapshot**: one value per metric per
-  local day (`board.timezone`), upserted by every good read; the last read's outcome is a cache entry.
-- **ProductionReader**: the only code that opens a production connection. It uses runtime PDO, a
-  read-only 5 s session and a `SHOW GRANTS` proof on every open.
-- **GitReader**: the only code that runs git reads. Read-only subcommands only, plus `worktree list` and
-  `status --porcelain` in those forms only; `showMany()` batches reads through `cat-file --batch`.
-- **StoryPickWriter**: the only code that writes to a project: a story's `Chosen option:` / `Why I chose
-  it:` lines and a `git commit --only` of that file (SB-21).
-- **Mockup set** (not stored): an on-ref story whose snapshot mockup dir is `docs/mockups/<ID>` with
-  options; state `awaiting | picked | other`, read by `ReadMockupSets`.
-- **Journey map** (not stored): a project's `docs/journeys/*.md` parsed into ordered steps, each with its
-  story, state, route and picture, by `ReadJourneyMap`. **Journey shot**: an SB-22 PNG listed in a working-tree
-  `journey-shots/<j>/manifest.json`, served only by manifest lookup (`ReadJourneyShots`). Written by the
-  kit test helper `journeyStep()` when `JOURNEY_SHOTS=1`: a desktop and a 375 px PNG per step. **Current version**
-  (not stored): a mockup set's newest matching shot, or `new`/`uncovered`, by `ReadCurrentVersion`.
+- **Project**: a registered checkout (`name`, `path`, `ref`, `is_enabled`). Off hides it everywhere and stops its
+  refreshes but keeps its rows. It also holds refresh `state` (`pending | ok | stale | unreachable`), `sha` /
+  `indexed_at`, and `refresh_attempted_at`.
+- **Story**: one story file as reported by the kit's `bin/story-index`, plus `is_parked` and `dated_on`. Text and
+  mockups are read from git at the row's SHA on demand. `location_kind` is null on the ref, else
+  `branch | worktree | untracked`.
+- **ProjectLocation**: another checkout of a project, either an `alias` (added by hand) or a `worktree` (found on refresh).
+- **Snapshot**: a project's on-ref Story rows, replaced wholesale on each good refresh and kept when one fails.
+  Off-main rows are a second snapshot.
+- **Not stored, read on demand**: live sessions (transcripts changed in the last 10 min), preflight runs (cost-CSV
+  rows), the kit (`board.kit_path`), mockup sets (`ReadMockupSets`), journey maps (`ReadJourneyMap`), journey
+  shots (manifest lookup, `ReadJourneyShots`), and current version (`ReadCurrentVersion`).
+- **ProdConnection / ProdMetric / ProdSnapshot**: one read-only production connection per project. A metric is
+  a preset or a custom `SELECT`. A snapshot is one value per metric per local day.
+- **Gateways**:
+  - `GitReader` runs every git read (an allow-list), including `remotes()`.
+  - `ProductionReader` opens every production connection.
+  - `StoryPickWriter` makes every write to a project, and only writes.
+- **Shared rules** (pure, RD-1): `StoryStatusOrder` holds the status order, the open statuses and the
+  initiative rollup. `MockupGateParser` reads a story's mockup gate.
 
 ## Features
 | Feature | Status | Doc |
 |---|---|---|
 | Project registry and story reader: `board:project`, `board:refresh`, queued page-load refresh, `GitReader` | active (SB-2, SB-3) | [doc](features/project-registry-and-reader.md) |
-| All-projects dashboard: `/` leads with What needs me, then In flight, project tiles and collapsible sections | active (SB-3, SB-4, SB-5, SB-8, SB-9) | [doc](features/what-needs-me-home.md) |
-| Story page and mockups: `/p/{project}/s/{id}`, sandboxed mockup frames, full-screen compare, `?v=` versions | active (SB-4, SB-5) | [doc](features/story-page-and-mockups.md) |
-| Not on main: branches, worktrees and untracked stories/mockups, indexed at refresh; `board:project alias` | active (SB-5) | [doc](features/not-on-main.md) |
-| App shell and project switcher: sidebar, filterable project list, drawer below 768px, `/p/{project}` refusal | active (SB-7, SB-10) | [doc](features/app-shell-and-project-switcher.md) |
-| Story modal: `?story=<project>/<ID>` on `/` and `/p/{project}`; Back closes | active (SB-8) | [doc](features/story-modal.md) |
-| Single-project dashboard: `/p/{project}` header and refresh, scoped cards, Progress by initiative | active (SB-10) | [doc](features/single-project-dashboard.md) |
-| Manage projects: `/projects` switch on/off, add by folder, remove behind a confirmation | active (SB-12) | [doc](features/manage-projects.md) |
-| Live sessions: Live now panel on both dashboards (30 s poll) and sidebar live badge | active (SB-11, SB-25) | [doc](features/live-sessions.md) |
-| Project handbook: `/p/{project}/handbook` rules, lessons, standards, runbook, decisions, skills; kit badges | active (SB-14) | [doc](features/project-handbook.md) |
-| Stories by initiative: `/p/{project}/stories` two panes, status tags, Alpine filter chips, Expand all | active (SB-15) | [doc](features/stories-by-initiative.md) |
-| Preflight history: `/p/{project}/preflight` ledger of runs from the cost CSVs, trend figures, two SVG charts, Alpine filters, columns picker | active (SB-16, SB-19) | [doc](features/preflight-history.md) |
-| Production connection and metrics: read-only prod MySQL per project on `/projects`, presets and custom SQL | active (SB-17) | [doc](features/production-connection.md) |
-| Production dashboard: `/prod` projects × metrics with changes and trends, queued reads, nightly `board:prod-snapshot` | active (SB-18) | [doc](features/production-dashboard.md) |
-| Mockup gallery: `/mockups` cards awaiting-pick first, full-screen viewer, compare against today's page (journey shot), Pick commits the story file | active (SB-21, SB-23) | [doc](features/mockup-gallery.md) |
-| App map: `/p/{project}/map` journeys as screen flows, Alpine Back/Next, All flows with shared screens, SB-22 shots when present | active (SB-24) | [doc](features/app-map.md) |
-| Journey shots: kit Pest helper `journeyStep()`, desktop + 375 px PNG and manifest per step when `JOURNEY_SHOTS=1` | active (SB-22) | [doc](features/journey-shots.md) |
+| All-projects dashboard: `/` What needs me, In flight, project tiles, collapsible sections | active (SB-3–5, SB-8, SB-9) | [doc](features/what-needs-me-home.md) |
+| Story page and mockups: `/p/{project}/s/{id}`, sandboxed frames, compare, `?v=` versions | active (SB-4, SB-5) | [doc](features/story-page-and-mockups.md) |
+| Not on main: branches, worktrees and untracked stories/mockups, indexed at refresh | active (SB-5) | [doc](features/not-on-main.md) |
+| App shell and project switcher: sidebar, filterable list, drawer below 768px | active (SB-7, SB-10) | [doc](features/app-shell-and-project-switcher.md) |
+| Story modal: `?story=<project>/<ID>` on `/` and `/p/{project}` | active (SB-8) | [doc](features/story-modal.md) |
+| Single-project dashboard: `/p/{project}` header, refresh, scoped cards, Progress by initiative | active (SB-10) | [doc](features/single-project-dashboard.md) |
+| Manage projects: `/projects` on/off, add by folder, remove behind a confirmation | active (SB-12) | [doc](features/manage-projects.md) |
+| Live sessions: Live now panel (30 s poll) and sidebar badge | active (SB-11, SB-25) | [doc](features/live-sessions.md) |
+| Project handbook: `/p/{project}/handbook` with kit badges | active (SB-14) | [doc](features/project-handbook.md) |
+| Stories by initiative: `/p/{project}/stories` two panes, tags, filter chips | active (SB-15) | [doc](features/stories-by-initiative.md) |
+| Preflight history: `/p/{project}/preflight` ledger, trends, charts, filters, columns picker | active (SB-16, SB-19) | [doc](features/preflight-history.md) |
+| Production connection and metrics: read-only prod MySQL per project on `/projects` | active (SB-17) | [doc](features/production-connection.md) |
+| Production dashboard: `/prod` projects × metrics, queued reads, nightly snapshot | active (SB-18) | [doc](features/production-dashboard.md) |
+| Mockup gallery: `/mockups`, full-screen viewer, Current pane, Pick commits the story file | active (SB-21, SB-23) | [doc](features/mockup-gallery.md) |
+| App map: `/p/{project}/map` journeys as screen flows | active (SB-24) | [doc](features/app-map.md) |
+| Journey shots: kit Pest helper `journeyStep()` | active (SB-22) | [doc](features/journey-shots.md) |
+| Board foundation: `StoryStatusOrder`, `MockupGateParser`, `GuardsProjectPage`; starter kit removed | active (RD-1) | [doc](features/board-foundation.md) |
 
 ## Journeys
-None yet. Every SB story so far is `Journey: none`.
+None yet. Every SB and RD story so far is `Journey: none`.
 
 ## Stories
-- **built**: SB-2 registry and reader · SB-3 what needs me · SB-4 story and mockups · SB-5 not on main ·
-  SB-7 app shell · SB-8 story modal · SB-9 all-projects dashboard · SB-10 single-project dashboard ·
-  SB-11 live sessions · SB-12 manage projects · SB-14 project handbook · SB-15 stories by initiative ·
-  SB-16 preflight history · SB-17 production connection · SB-18 production dashboard · SB-19 preflight columns picker · SB-21 mockup gallery · SB-22 journey shots · SB-23 current pane · SB-24 app map · SB-25 live cards link own stories
-- **draft**: SB-20 preflight run errors
-- **cut**: SB-13 pick a mockup (2026-09-30; SB-21's pick covers it)
+- **built**:
+  - SB-2–5, SB-7–12, SB-14–19, SB-21–25.
+  - RD-1 clean foundation.
+- **approved**: RD-2 dark shell · RD-3 short story page · RD-4 re-skin kept pages · RD-5 home overview ·
+  RD-6 home project filter · RD-7 project tiles and Shipped · RD-8 preflight "Ran on" · RD-9 retire old pages
+- **draft**: SB-20 preflight run errors · RD-10 preflight run record (parked)
 - **draft (parked)**: SB-6 the board on an always-live domain
+- **cut**: SB-13 pick a mockup (SB-21's pick covers it)
 
 SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this repo.
 
 ## Key decisions
-- All git goes through `GitReader`, an allow-list with argument and ref guards →
-  [ADR-004](decisions/ADR-004-gitreader-read-only-git-gateway.md); four more read-only forms, untracked
-  files read only at refresh → [ADR-012](decisions/ADR-012-off-main-reads-stay-read-only-and-in-git.md)
-- Snapshots go stale on fetch failure and are replaced wholesale; refresh runs on the queue, unique per
-  project → [ADR-005](decisions/ADR-005-snapshot-refresh-model.md), [ADR-006](decisions/ADR-006-refresh-runs-on-the-queue.md)
-- Story text is read from git on demand, not stored → [ADR-007](decisions/ADR-007-story-text-read-on-expand.md)
-- Mockups are served from `git show` through one CSP-sandboxed route; an unparsed choice is quoted,
-  never guessed → [ADR-008](decisions/ADR-008-mockups-served-from-git-in-a-sandbox.md), [ADR-009](decisions/ADR-009-unparsed-choice-is-quoted-not-guessed.md)
-- Off-main work is what a branch changed since its merge-base, parsed by the kit's own `index_story()`
-  → [ADR-010](decisions/ADR-010-off-main-is-what-a-branch-changed-since-its-merge-base.md), [ADR-011](decisions/ADR-011-off-main-text-parsed-by-the-kits-own-parser.md)
-- An unknown or disabled project is refused by middleware before route binding; Livewire pages
-  re-check on every request → [ADR-013](decisions/ADR-013-project-refusal-runs-before-route-binding.md), ADR-019 amendment
-- `/p/{project}` is its own `ProjectPage` (supersedes ADR-014); the rollup is one grouped query →
-  [ADR-019](decisions/ADR-019-project-page-is-its-own-component.md), [ADR-020](decisions/ADR-020-initiative-rollup-is-one-grouped-query.md)
-- `/` leads with What needs me, drops the project filter; tiles and In flight ignore filters and add no
-  query → [ADR-017](decisions/ADR-017-dashboard-leads-with-what-needs-me-and-drops-the-project-filter.md), [ADR-018](decisions/ADR-018-portfolio-figures-ignore-filters-and-add-no-query.md)
-- The story modal drives history from Alpine; `?story` has one parser and names a story, not a version
-  → [ADR-015](decisions/ADR-015-story-modal-history-is-driven-by-alpine.md), [ADR-016](decisions/ADR-016-one-story-link-parser-and-one-version-picker.md)
-- Manage projects re-navigates after every write; Add reuses `RegisterProject` and re-runs its checks
-  → [ADR-021](decisions/ADR-021-manage-projects-re-navigates-so-the-sidebar-follows.md), [ADR-022](decisions/ADR-022-add-project-classifies-refusals-by-re-running-checks.md)
-- Live sessions read Claude Code's undocumented transcripts defensively, not via a kit hook →
-  [ADR-023](decisions/ADR-023-live-sessions-read-transcript-metadata-defensively.md); a live card never
-  falls back on the default branch and links untracked stories only from its own checkout →
-  [ADR-034](decisions/ADR-034-live-cards-link-untracked-stories-only-from-their-own-checkout.md)
-- Handbook sections load on first open via renderless calls and stay in Alpine; no re-render →
-  [ADR-024](decisions/ADR-024-handbook-sections-load-lazily-and-stay-client-side.md)
-- The Stories page is one query fed to `ReadProjectProgress::rollup()`, and it filters rows with one CSS class, not
-  Alpine per row → [ADR-025](decisions/ADR-025-stories-page-reuses-the-progress-rollup-over-one-query.md), [ADR-026](decisions/ADR-026-stories-page-filters-rows-with-css-not-alpine.md)
-- Preflight history reuses `board.sessions_path`, matches folders by exact encoded name (case-insensitive),
-  renders on the server and recomputes in Alpine → [ADR-027](decisions/ADR-027-preflight-history-reads-the-cost-csvs-by-folder-name-on-load.md), [ADR-028](decisions/ADR-028-preflight-page-renders-on-the-server-and-recomputes-in-alpine.md)
-- Production is read only through `ProductionReader`: raw PDO outside `config/`, a read-only session,
-  `SHOW GRANTS` proof on every open and an SQL guard. This amends "git only" →
-  [ADR-029](decisions/ADR-029-production-reads-go-through-one-read-only-gateway.md)
-- `/prod` keeps each project's last read outcome in the cache and settles rows by read count; the
-  nightly snapshot reads in-process, and the scheduler is documented, not bundled →
-  [ADR-030](decisions/ADR-030-production-read-outcome-lives-in-the-cache-and-rows-settle-by-read-count.md),
-  [ADR-031](decisions/ADR-031-daily-production-snapshot-reads-in-process.md)
-- The board writes to a project only through `StoryPickWriter`: one pick, one file, one local commit, never
-  pushed, refusing before any write → [ADR-032](decisions/ADR-032-the-board-writes-narrowly-one-pick-one-file-one-commit.md)
-- The app map is generated on the server from each project's own files; placeholders are one CSS element;
-  shots are a manifest lookup, never a path → [ADR-033](decisions/ADR-033-app-map-is-generated-server-side-from-project-files.md)
-- Journey shots are a kit test helper, switched by the shell env only, writing a manifest pinned to
-  `ReadJourneyShots` → [ADR-035](decisions/ADR-035-journey-shots-are-a-test-helper-with-a-pinned-manifest.md)
-- "New page" in the Current pane is read statically from a project's route files, never by running them,
-  and claimed only on positive evidence → [ADR-036](decisions/ADR-036-new-page-is-read-statically-from-route-files.md)
+- All git goes through `GitReader`, an allow-list with guards; untracked files are read only at refresh → ADR-004, ADR-012
+- Snapshots are replaced wholesale and go stale on fetch failure; refresh runs on the queue → ADR-005, ADR-006
+- Story text is read from git on demand → ADR-007. Mockups are served from git in a CSP sandbox, and an unparsed choice is quoted → ADR-008, ADR-009
+- Off-main work is what a branch changed since its merge-base, parsed by the kit's parser → ADR-010, ADR-011
+- Unknown or disabled projects are refused before route binding, and pages re-check on update → ADR-013, ADR-019
+- `/p/{project}` is its own component, and its rollup is one grouped query → ADR-019, ADR-020
+- `/` leads with What needs me. Its portfolio figures ignore filters → ADR-017, ADR-018
+- The story modal's history is driven by Alpine, through one `?story` parser → ADR-015, ADR-016
+- Manage projects re-navigates after writes, and Add re-runs `RegisterProject`'s checks → ADR-021, ADR-022
+- Live sessions read transcripts defensively, and cards link untracked stories only from their own checkout → ADR-023, ADR-034
+- Handbook sections load lazily and stay client-side → ADR-024
+- The Stories page is one query over the shared rollup, and it filters with CSS → ADR-025, ADR-026
+- Preflight history reads the cost CSVs by folder name, renders on the server and recomputes in Alpine → ADR-027, ADR-028
+- Production is read only through `ProductionReader`, and the read outcome is cached. The snapshot runs in-process → ADR-029–031
+- The board writes narrowly: one pick, one file, one local commit → [ADR-032](decisions/ADR-032-the-board-writes-narrowly-one-pick-one-file-one-commit.md)
+- The app map is generated server-side, and journey shots are a test helper with a pinned manifest → ADR-033, ADR-035
+- "New page" is read statically from route files → ADR-036
+- The auth starter kit and the `laravel/fortify` package are removed, not disabled → [ADR-037](decisions/ADR-037-starter-kit-and-fortify-package-removed.md)
+- Kept logic lives in pure shared classes: `StoryStatusOrder`, `MockupGateParser`, `pick()` returning its branch, and a guard trait with hooks → [ADR-038](decisions/ADR-038-kept-board-logic-moves-into-pure-shared-classes.md)
 - Preflight audit scope, audit cost record, build-artifact disposal (kit) → ADR-001 to ADR-003
 
 ## Current phase and what's next
-Phase 2: UI organisation. Phase 1 (SB-2 to SB-5) is built and retro'd. SB-7 to SB-12, SB-14 to SB-19,
-SB-21 to SB-25 are built. Next: owner confirms SB-19's native checkbox look; adopt `journeyStep()` in coins via the kit
-sync, then the real-data check of the app map and Current pane on coins; decide on the
-`--text-thumb` token; then the phase-2 retro and full sweep. SB-6 (hosted) stays
-parked. Backlog: F-2 (timeline of what was built), F-3 (meter tier labels), F-5 (preflight run record).
+Phase 3, the redesign (RD). RD-1, the clean foundation, is built. Next are RD-2 to RD-8 (the dark shell, the
+short story page, the re-skin, home, tiles, preflight "Ran on"). Then RD-9 retires the old pages, and it
+must keep the page-load refresh coverage that `HomePageTest` / `ProjectPageTest` hold today.
+
+Still open from phase 2:
+- The owner confirms SB-19's checkbox look.
+- `journeyStep()` is adopted in coins, followed by the real-data check of the app map and Current pane.
+- The `--text-thumb` token decision.
+
+Backlog: F-2 (build timeline), F-3 (meter tier labels), F-5 (preflight run record).
 
 ## Known limitations
-- Laravel 13 / Livewire 4 are installed (starter kit), while `CLAUDE.md` says 12 / 3. Flagged, unchanged.
-- Refresh and `/prod` reads need a queue worker; `composer run dev` starts one, a bare `artisan serve` does
-  not. A failing project is retried at most every 5 minutes. The nightly production snapshot also needs
-  `php artisan schedule:work`, which `composer run dev` does **not** start.
-- Until the kit parser reads `Chosen option: **B**` (F-1), "Awaiting a pick" over-reports and the story
-  page quotes such a choice without marking a frame.
-- Untracked stories and mockups are listed but cannot be shown (not in git). Off-main rows with
-  malformed IDs cannot open the modal (owner decision pending). `?v=` links break at the next refresh.
-- Layout classes still use the raw `zinc-*` palette; only status and state colours are theme tokens.
-- Initiative rows on the project dashboard open nothing; the Stories tab is where to see an initiative's stories.
-  Nothing on the board searches stories by ID or title.
-- The Stories page groups initiative names case-sensitively, but the dashboard (MySQL) groups them
-  case-insensitively. Names that differ only by case would split on one and merge on the other.
-- `/projects` has no auth, can add and delete projects and now holds production credentials. It is safe
-  only while localhost-only, and SB-6 must add auth first. A project's
-  path and ref cannot be edited (remove and re-add).
-- Live sessions rely on an undocumented format and file mtime (10 min); the sidebar badge does not poll.
-  A session on the default branch links only stories named in its branch; its untracked stories never link.
-- The handbook has no tab counts or drift summary, renders the runbook whole, and compares against the
-  kit checkout's last-fetched ref. Its real-data browser check is pending on the owner's side.
-- Production SSL is encrypted but not certificate-verified. Rotating APP_KEY breaks stored credentials.
-  The real coins production check (SB-17 and SB-18) awaits the owner's read-only user. `/prod` has no
-  auth either.
-- Preflight history has no test counts, failures or verdict (the CSV lacks them; F-5). Its median and
-  number formats exist in PHP and JS and must change together. Its hidden columns are saved per browser only.
-- Flux reads `localStorage` unguarded (`flux.appearance`), so a browser with site data blocked gets an
-  uncaught `SecurityError` on every page (RUNBOOK). Pre-existing, not fixed.
-- A board pick shows as "Picked X · not pushed" in the gallery at once, but the story modal, story page and
-  What needs me show it only after a push and refresh. Its `--no-verify` (skips project hooks) awaits owner
-  confirmation. The Current pane's "new page" can be wrong for routes not declared in `routes/*.php`, and
-  staleness is 14 days only (no commit-count rule; needs a `GitReader` change).
-- The app map puts every step of every journey in the page (coins: about 3.1 MB). Page weight is its cost driver.
-  Its `--text-thumb` type token awaits owner approval. Shots are read from the working tree, not the ref.
-- Journey shots rely on Pest's `@internal` screenshot folder (RUNBOOK), show on the map only when the
-  folder is named like a journey doc (the example `browse-the-board` has none), and must not run under
-  `--parallel`. The kit how-to sits at `docs/journey-shots.md` until the owner picks a home for kit docs.
-- Dev server runs on port 8010 (coins holds 8000/8001). No git remote for this repo, by owner ruling.
+- Laravel 13 / Livewire 4 are installed, while `CLAUDE.md` says 12 / 3. Flagged, unchanged.
+- Starter-kit leftovers are still unused: `resources/js/passkeys.js` and its Vite input, the
+  `@laravel/passkeys` npm dependency, `UserFactory::withTwoFactor()`, and the `users` / `passkeys` tables and
+  `two_factor_*` columns. These are left for the owner (RD-1).
+- Refresh and `/prod` reads need a queue worker (`composer run dev` starts one). The nightly snapshot also needs
+  `schedule:work`, which `composer run dev` does not start. A failing project is retried at most every 5 min.
+- Until the kit parser reads `Chosen option: **B**` (F-1), "Awaiting a pick" over-reports on the ref.
+- Untracked stories and mockups are listed but cannot be shown. Off-main rows with malformed IDs cannot open the
+  modal. `?v=` links break at the next refresh.
+- Layout classes use the raw `zinc-*` palette, and only status colours are tokens. Nothing searches stories by ID
+  or title. Initiative names group case-sensitively on Stories but not on the dashboard.
+- `/projects` and `/prod` have no auth, hold production credentials, and are safe only while localhost-only.
+  SB-6 must add auth first. A project's path and ref cannot be edited.
+- Live sessions rely on an undocumented transcript format and a 10-minute mtime, and the sidebar badge does not
+  poll.
+- The handbook compares against the kit checkout's last-fetched ref. Its real-data check is pending.
+- Production SSL is not certificate-verified, and rotating APP_KEY breaks stored credentials. The coins
+  production check awaits the owner's read-only user.
+- Preflight history has no test counts or verdict (F-5). Its median and number formats exist in both PHP and
+  JS. Its hidden columns are saved per browser.
+- Flux reads `localStorage` unguarded, so a browser that blocks site data errors on every page (RUNBOOK).
+- A board pick shows at once in the gallery, but elsewhere only after a push and refresh. Its `--no-verify`
+  awaits owner confirmation. "New page" can be wrong for routes not in `routes/*.php`.
+- The app map's page weight is its cost driver (coins: about 3.1 MB). Shots are read from the working tree,
+  not the ref. Journey shots must not run under `--parallel`.
+- The dev server runs on port 8010. By owner ruling, this repo has no git remote.

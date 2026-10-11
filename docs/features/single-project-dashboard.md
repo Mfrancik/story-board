@@ -49,11 +49,11 @@ whatever the number of initiatives:
   uses `toBase()`, because the rows are aggregates rather than `Story` models. PHP folds them into one
   row per initiative: `counts` (summed per status with `groupBy('status')`, not keyed with
   `mapWithKeys`: a null status and a literal `(none)` both coalesce to `(none)` and would overwrite
-  each other; ordered by `ListWhatNeedsMe::ordered()`, now public so bar segments
-  match the tiles), `total`, `built`, `open` (draft plus approved, `ReadProjectProgress::OPEN`) and
+  each other; ordered by `StoryStatusOrder::ordered()`, so bar segments
+  match the tiles), `total`, `built`, `open` (draft plus approved, `StoryStatusOrder::OPEN`) and
   `parked`. Stories with no initiative (sitting directly in `stories/`) become a row named `null`,
   shown as "No initiative". Order: most open work first, ties A–Z with the unnamed row after the
-  named ones. That fold is `ReadProjectProgress::rollup()`, public since SB-15 so the
+  named ones. That fold is `StoryStatusOrder::rollup()` (moved there by RD-1), so the
   [Stories page](stories-by-initiative.md) reuses the same counts and order (ADR-025).
 - `offMain()`: off-main rows counted by `location_kind`.
 
@@ -88,7 +88,7 @@ None owned; no migration. Reads `projects` and `stories` (`initiative`, `status`
 - Livewire actions: `refresh`, `showAll('pick'|'approval'|'build')`,
   `toggleKind('branch'|'worktree'|'untracked')`. Locked state: `project`, `expandedGroups`,
   `openKinds`, `notice`.
-- Constants: `ProjectPage::INITIATIVE_PAGE`, `ProjectPage::KINDS`, `ReadProjectProgress::OPEN`.
+- Constants: `ProjectPage::INITIATIVE_PAGE`, `ProjectPage::KINDS`, `StoryStatusOrder::OPEN`.
 - `ReadProjectProgress::handle(int $projectId): array{initiatives: list<{name, counts, total, built,
   open, parked}>, offmain: array<kind, int>}`.
 - Blade: `<x-board.needs-me-cards :pick :approval :build :parked :expanded :filtered :page />` (calls
@@ -166,3 +166,4 @@ refresh was not scoped. A `project_action_refused` line means something hand-cra
 ## Change history
 2026-09-29 — Single-project dashboard at `/p/{project}`: header refresh, scoped cards, Progress by initiative, Not on main by kind; replaces `Home` pinned (SB-10, `a062331`)
 2026-09-29 — `hydrate()` sends the owner home (logged) when the project leaves the board mid-visit, replacing a stale render or unlogged 404; status counts summed so null and `(none)` no longer collide (SB-10, `e9a2f6e`)
+2026-10-11 — Status order, open statuses and the initiative rollup moved to `StoryStatusOrder` (RD-1, `6ad827b`)
