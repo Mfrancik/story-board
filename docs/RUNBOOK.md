@@ -10,6 +10,12 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-10-11 — A missing-field skip test stayed green with the missing-field guard deleted
+Symptom: during RD-8's build, the "no `runner` field is skipped" case stayed green when the mutation check deleted the required-field loop in `ReadPreflightRuns::read()`.
+Root cause: `runner` is also value-checked a few lines later (`isset(RAN_ON[...])`), so a record with no `runner` was still skipped and counted, just with reason `runner` instead of `missing runner`. The case proved a skip happened, not which guard caused it.
+Fix: the skip dataset in `tests/Feature/Board/PreflightRanOnTest.php` gained a `no gates` case; `gates` is guarded only by the missing-field check, so that case goes red without it. The shipped test also pins the logged `reason` exactly (RD-8, `5811fe3`). When a field has two guards, mutation-check each with a case only that guard catches.
+Log trail: `board.preflight_run_record_skipped` `reason`: `runner` where `missing runner` was expected.
+
 ## 2026-10-11 — A `git log --since` fixture silently dropped commits
 Symptom: a Shipped this week test seeded several build commits inside the 7-day window, but `GitReader::log()` returned fewer than seeded, with no error.
 Root cause: `git log --since` stops walking history at the first commit older than the cutoff. Fixture commits made with out-of-order dates (a newer one committed before an older one) put an "old" commit between HEAD and the rest, so git stopped there and never saw the in-window commits behind it.

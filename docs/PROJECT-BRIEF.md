@@ -1,5 +1,5 @@
 # Project brief — story-board
-Last refreshed: 2026-10-11 (RD-7)
+Last refreshed: 2026-10-11 (RD-8)
 
 ## What it is, and for whom
 A localhost Laravel app for one owner, with no auth (removed in RD-1). It reads the `stories/` folder of
@@ -12,7 +12,8 @@ It also shows:
 - Work not on the ref yet (unmerged branches, worktrees, untracked files), labelled with where it lives. It never
   counts as status.
 - Live Claude Code sessions (transcript metadata, never messages); each project's handbook and its drift from the
-  kit; its preflight runs, from the kit meter's cost CSVs under `~/.claude/projects`.
+  kit; its preflight runs, from the kit meter's cost CSVs under `~/.claude/projects`, and where each ran (brain or
+  Mac) from per-run JSON records beside them, once RD-10 writes them.
 - A clickable map of each project's journeys, from its journey docs, stories and mockups, with screenshots from
   the project's own journey tests (`journeyStep()`).
 
@@ -27,7 +28,7 @@ It also shows:
 - **Snapshot**: a project's on-ref Story rows, replaced wholesale on each good refresh and kept when one fails.
   Off-main rows are a second snapshot.
 - **Not stored, read on demand**: live sessions (transcripts changed in the last 10 min), preflight runs (cost-CSV
-  rows), the kit (`board.kit_path`), mockup sets (`ReadMockupSets`), journey maps (`ReadJourneyMap`), journey
+  rows, matched to `preflight-runs/*.json` records by branch and time), the kit (`board.kit_path`), mockup sets (`ReadMockupSets`), journey maps (`ReadJourneyMap`), journey
   shots (manifest lookup, `ReadJourneyShots`), and current version (`ReadCurrentVersion`).
 - **ProdConnection / ProdMetric / ProdSnapshot**: one read-only production connection per project. A metric is
   a preset or a custom `SELECT`. A snapshot is one value per metric per local day.
@@ -38,7 +39,7 @@ It also shows:
   initiative rollup. `MockupGateParser` reads a story's mockup gate.
 
 ## Features
-20 features: 19 active; the SB-9 all-projects dashboard is deprecated (unrouted since RD-5, deleted in RD-9). `/` is the home overview (RD-5), with a project filter (RD-6), project tiles and Shipped this week (RD-7). Each one's route, summary and doc: [INDEX.md](INDEX.md); the stories behind it: its doc's
+20 features: 19 active; the SB-9 all-projects dashboard is deprecated (unrouted since RD-5, deleted in RD-9). `/` is the home overview (RD-5), with a project filter (RD-6), project tiles and Shipped this week (RD-7). The Preflight page and tiles say where each run ran (RD-8). Each one's route, summary and doc: [INDEX.md](INDEX.md); the stories behind it: its doc's
 header line.
 
 ## Journeys
@@ -46,8 +47,8 @@ None yet. Every SB and RD story so far is `Journey: none`.
 
 ## Stories
 - **built**: SB-2–5, SB-7–12, SB-14–19, SB-21–25 · RD-1 clean foundation · RD-2 dark shell and sidebar ·
-  RD-3 short story page · RD-4 re-skin kept pages · RD-5 home overview · RD-6 home project filter · RD-7 project tiles and Shipped
-- **approved**: RD-8 preflight "Ran on" · RD-9 retire old pages
+  RD-3 short story page · RD-4 re-skin kept pages · RD-5 home overview · RD-6 home project filter · RD-7 project tiles and Shipped · RD-8 preflight "Ran on"
+- **approved**: RD-9 retire old pages
 - **draft**: SB-20 preflight run errors · RD-10 preflight run record (parked)
 - **draft (parked)**: SB-6 the board on an always-live domain
 - **cut**: SB-13 pick a mockup (SB-21's pick covers it)
@@ -68,7 +69,7 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
 - The home overview: Needs me lists each story once (a pick outranks draft/ready) and In flight keeps the owner's definition; Live cards summarise the latest tool call and usage; panels fail alone; the old Home is tested at a test-only route → ADR-047–050. One `ProjectFilter` value, from `?projects=`, is handed to every home panel → [ADR-051](decisions/ADR-051-one-project-filter-value-for-every-home-panel.md). `git log` is admitted in one fixed form; Shipped is build commits cached per snapshot; tiles reuse existing rules and stored data only → ADR-052–054
 - Handbook sections load lazily and stay client-side → ADR-024
 - The Stories page is one query over the shared rollup, and it filters with CSS → ADR-025, ADR-026
-- Preflight history reads the cost CSVs by folder name, renders on the server and recomputes in Alpine → ADR-027, ADR-028
+- Preflight history reads the cost CSVs by folder name, renders on the server and recomputes in Alpine → ADR-027, ADR-028. Where a run ran is a per-run JSON record (schema 1) matched to its CSV row by branch within 10 min, nearest first → [ADR-055](decisions/ADR-055-preflight-run-record-format.md)
 - Production is read only through `ProductionReader`, and the read outcome is cached. The snapshot runs in-process → ADR-029–031
 - The board writes narrowly: one pick, one file, one local commit → [ADR-032](decisions/ADR-032-the-board-writes-narrowly-one-pick-one-file-one-commit.md)
 - The app map is generated server-side, and journey shots are a test helper with a pinned manifest → ADR-033, ADR-035
@@ -81,9 +82,9 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
 - Preflight audit scope, audit cost record, build-artifact disposal (kit) → ADR-001 to ADR-003
 
 ## Current phase and what's next
-Phase 3, the redesign (RD). RD-1 to RD-7 are built: foundation, dark shell, short story page, every kept page
-in the shell, and the home overview at `/` with its project filter, project tiles and Shipped this week. Next is RD-8
-(preflight "Ran on", which fills the tiles' empty `ran_on` slot); then RD-9
+Phase 3, the redesign (RD). RD-1 to RD-8 are built: foundation, dark shell, short story page, every kept page
+in the shell, the home overview at `/` with its project filter, project tiles and Shipped this week, and the
+reading side of preflight "Ran on". Next, RD-9
 deletes the old Home, the old dashboard, the story modal and `layouts/board`. Page-load refresh is tested at its middleware, so that costs no coverage.
 
 Still open from phase 2: the owner confirms SB-19's checkbox look; `journeyStep()` is adopted in coins, followed
@@ -114,7 +115,8 @@ Backlog: [BACKLOG.md](BACKLOG.md).
 - The handbook compares against the kit checkout's last-fetched ref. Its real-data check is pending.
 - Production SSL is not certificate-verified, and rotating APP_KEY breaks stored credentials. The coins
   production check awaits the owner's read-only user.
-- Preflight history has no test counts or verdict (F-5). Its median and number formats exist in both PHP and
+- Preflight history has no test counts or verdict (F-5). "Ran on" reads "—" everywhere until RD-10 (parked) writes
+  run records; matching is by branch and a 10-minute window, so a mismatched branch or clock stays unknown. Its median and number formats exist in both PHP and
   JS. Its hidden columns are saved per browser.
 - Flux reads `localStorage` unguarded, so a browser that blocks site data errors on every page (RUNBOOK).
 - A board pick shows at once in the gallery and on the story page, but elsewhere only after a push and refresh. Its `--no-verify`

@@ -1,5 +1,5 @@
 # Preflight history
-Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-16, SB-19, RD-2
+Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-16, SB-19, RD-2, RD-8
 
 ## Overview
 `/p/{project}/preflight` is a project's second tab (Stories | Preflight | Handbook | Map since RD-4).
@@ -9,7 +9,8 @@ figures sit above the table. `bin/preflight-meter.py report` appends one row per
 `preflight-cost.csv` outside the repo. CLAUDE.md calls that CSV "the record", but until this page it was
 only read with `cat`. The page answers "is preflight getting slower or more expensive, and since when".
 A Columns picker (SB-19) lets the viewer hide ledger columns they do not need, remembered per project in
-this browser.
+this browser. Since RD-8 each run also says where it ran (Brain · Mac · —), read from per-run JSON records
+that RD-10 will write; until then every run reads "—".
 
 ## How it works
 **Route.** `routes/web.php` registers `GET /p/{project:name}/preflight` (`projects.preflight`) behind
@@ -56,9 +57,9 @@ is in.
 option A, the dense ledger) has these parts:
 - `board/project-header` and `board/project-tabs current="preflight"`. The header shows the run count,
   the date range and a Refresh link that re-navigates, since the page reads files only on load.
-- The skipped-rows notice ("N rows could not be read").
-- The filters: mode (All / Scoped / Full, with counts), branch contains, and where (All / Main checkout
-  / Worktrees). "Worktrees" means anything that is not the main checkout, so `plans` is included.
+- The skipped-rows notice ("N rows could not be read"; since RD-8 also "N run records could not be read").
+- The filters: mode (All / Scoped / Full, with counts), where it ran (RD-8, below), branch contains, and
+  where (All / Main checkout / Worktrees). "Worktrees" means anything that is not the main checkout, so `plans` is included.
 - The Columns picker (SB-19), in the same row as the filters. See **Columns picker** below.
 - The trend strip, the two charts, and the table with a sticky header. The Tests column is greyed with
   zinc tokens and reads "needs F-5".
@@ -77,8 +78,8 @@ The server renders every row, the figures and the count, so HTTP tests can asser
 Nothing on the page calls the server after load
 ([ADR-028](../decisions/ADR-028-preflight-page-renders-on-the-server-and-recomputes-in-alpine.md)).
 
-**Columns picker (SB-19).** The view's `$columns` map lists the ledger's twelve keys in table order
-(`when, branch, where, mode, wall, turns, tools, tokens, share, pack, tier, tests`); every `th` and `td`
+**Columns picker (SB-19).** The view's `$columns` map lists the ledger's keys in table order
+(`when, branch, where, ran_on, mode, wall, …`); every `th` and `td`
 carries its key as `data-col`, and the picker renders one checkbox per key (`data-col-toggle`). `$hideable`
 is every key but `when`, passed to Alpine as the component's fifth argument. When is the timeline's key,
 so its checkbox is a static `checked disabled` input; the "always shown" tooltip is a `title` on its
@@ -104,6 +105,42 @@ so its checkbox is a static `checked disabled` input; the "always shown" tooltip
 - Columns and filters are independent: filters scope rows and the trend figures, columns only hide
   cells. The trend strip never follows the columns.
 
+**Where it ran (RD-8).** The cost CSV has no runner column and its format is off limits, so where a run
+happened comes from a second file: one JSON record per run at
+`<board.sessions_path>/<project folder>/preflight-runs/<run_id>.json`, in the schema-1 format
+[ADR-055](../decisions/ADR-055-preflight-run-record-format.md) fixes for RD-10's writer. Nothing writes these
+yet, so in practice every row reads "—" today.
+1. **Finding them.** `app/Actions/Board/ReadPreflightRuns.php:handle()` looks in the same folders as the CSVs
+   (main checkout, worktrees, plans). It does not copy the rule: `ReadPreflightHistory::folders()` and
+   `folderFor()` were made public for it, and `files()` now just looks for the CSV in each of those folders,
+   so the two readers cannot drift apart. A missing `preflight-runs/` folder is the normal state, not an error.
+2. **Reading one.** `read()` requires every one of the `FIELDS` (a missing `schema` is "missing schema"), skips
+   any `schema` other than `SCHEMA` rather than guessing at a newer format, and value-checks the three fields
+   matching uses: `runner` must be a key of `RAN_ON` (`brain`, or `local`, which the board calls `mac`),
+   `branch` a non-empty string, and `finished_at` strict ISO through `ReadPreflightHistory::timestamp()`
+   (public since RD-8, the same rule as a row's `ts`). The other fields are only checked for presence. A
+   skipped file is logged with its reason, counted, and left untouched.
+3. **Matching.** `ReadPreflightRuns::match($runs, $records)` pairs a CSV row with a record when both name the
+   same branch and the record's `finished_at` is within `WINDOW_S` (10 min, inclusive) of the row's `ts`. All
+   candidate pairs are sorted nearest first and each row and each record is used once, so two quick runs on
+   one branch cannot both claim one record. A row with a null branch never matches. The result is keyed like
+   `$runs`: `brain`, `mac`, or null.
+4. **The page.** `ProjectPreflight::render()` writes the match into each run as `ran_on`, logs the matched and
+   unmatched counts, and passes `recordsSkipped` and `runnerWall` to the view. The view adds:
+   - a **Ran on** column (`data-col="ran_on"`, after Where), part of the Columns picker like any other;
+   - a **Where it ran** segmented group next to Mode (All · Brain · Mac · Unknown, each with its count,
+     `data-ran-on-filter`). It sets `fRan` in `preflightHistory`; `keep()` treats a null `ranOn` as
+     `unknown`. No server request, and `reset()` / `filtered` include it;
+   - a second line in the skipped notice for run records (`data-records-skipped`);
+   - under the trend figures, each runner's median wall time over the last 30 days (`data-runner-walls`),
+     rendered only when `runnerWall()` finds both brain and Mac runs in that window. The median uses the CSV
+     row's `wall`, the same measure as the strip's other median, not the record's `wall_s`. In the browser
+     `runnerWall(runner)` recomputes it over the visible runs and `runnerWallShown` hides the line when a
+     filter leaves only one runner.
+
+The home tile's last-preflight line (RD-7) uses the same `match()` over all of the project's runs, so the tile
+and this page's newest row always agree ([Home overview](home-overview.md)).
+
 **Charts.** There is no chart library. Each chart has one series (wall time, tokens), drawn at its
 measured width (a `ResizeObserver`) so labels never stretch. The x-axis spans **all** runs, not only
 the visible ones, so a filter never rescales time. A dashed line marks the 30-day boundary the figures
@@ -113,22 +150,32 @@ compare across. The series colour is the new `--color-series` token in `resource
 (`stroke-hairline`, `stroke-rim`, `fill-ink-muted`) in `resources/js/preflight-history.js`.
 
 ## Data model
-None. No migration and nothing stored. The page reads `preflight-cost.csv` files under
-`board.sessions_path` on every load and never writes, locks or moves them.
+None. No migration and nothing stored. The page reads `preflight-cost.csv` files and
+`preflight-runs/*.json` records under `board.sessions_path` on every load and never writes, locks or moves
+them. The record format (schema 1, every field required) is the contract in
+[ADR-055](../decisions/ADR-055-preflight-run-record-format.md).
 
 ## Interfaces
 - Route: `GET /p/{project:name}/preflight` → `projects.preflight`. Returns 404 for an unknown or disabled
   project.
 - `ReadPreflightHistory::handle(Project): array{runs, skipped, looked, trend{current, previous}, now}`.
   Each run has `ts, branch, where, mode, wall, turns, tools, tokens, tokens_in, tokens_out, share, pack,
-  tier, flagged`. The full shape is in the docblock.
+  tier, flagged`. The full shape is in the docblock. The page adds `ran_on` (`brain` | `mac` | null).
+- `ReadPreflightHistory::folders(root, folder): ?array` (folder path → where; null when the root cannot be
+  listed), `folderFor(Project)` and `timestamp(?string)`: public since RD-8 so the run-record reader shares
+  the folder and date rules.
+- `ReadPreflightRuns::handle(Project): array{records, skipped}`; each record is `run_id, branch, ran_on,
+  finished_at, wall`. `match(runs, records): array<int, 'brain'|'mac'|null>`. Constants: `DIR`, `SCHEMA`,
+  `FIELDS`, `RAN_ON`, `WINDOW_S`.
 - Formatters: `ReadPreflightHistory::wall()` (`m:ss`), `tokens()` (`2.6M`, `517k`), `pack()` (KB).
   Constants: `MAIN`, `PLANS_WHERE`, `PINNED_TIER`, `WINDOW_DAYS`, `FILE`.
 - JS: `preflightHistory(runs, now, main, project, hideable)`, exported and registered as
   `Alpine.data('preflightHistory')`. `now` is the server's time, so client and server windows agree;
   `project` keys the saved columns; `hideable` is the `data-col` keys the picker may hide, in table order.
 - DOM hooks (for tests): `data-col` on every `th`/`td`, `data-col-toggle`, `data-col-option`,
-  `data-columns-button`, `data-columns-panel`, `data-columns-reset`.
+  `data-columns-button`, `data-columns-panel`, `data-columns-reset`; RD-8 adds `data-ran-on-filter`,
+  `data-records-skipped`, `data-runner-walls`, `data-runner-wall`.
+- Each run passed to Alpine carries `ranOn` (`brain` | `mac` | null).
 - Browser storage: `localStorage['board.preflight.hidden-columns.<project>']`, a JSON array. Per viewer
   only; the server never reads it.
 - `board/project-tabs` gains `preflight`. Test helper: `SessionFixture::preflightCsv($folder, $lines)`.
@@ -140,15 +187,22 @@ None. No migration and nothing stored. The page reads `preflight-cost.csv` files
   delete the `board.preflight.hidden-columns.<project>` key in the browser's storage.
 
 ## Observability
-- `board.preflight_history_viewed` (info): `project`, `runs`, `skipped`. There is one per page load.
+- `board.preflight_history_viewed` (info): `project`, `runs`, `skipped`, and since RD-8 `matched` /
+  `unmatched` (rows with and without a run record). There is one per page load.
   Skipped rows are **not** logged one by one. This count is the only log trace of them.
 - `board.preflight_history_unreadable` (warning): `project`, `file`. It fires for a missing root (with
   `file` = the root), a CSV that cannot be opened, or a CSV with no `ts` column (including an empty
   file).
+- `board.preflight_run_record_skipped` (warning): `project`, `file`, `reason` — one of `unreadable` (not
+  readable or not a JSON object), `schema`, `missing <field>`, `runner`, `branch`, `finished_at`. One line per
+  skipped file per load; the page's notice shows the count. The home tiles log it too, since they read the
+  same records.
 - `board.project_page_refused` (info, `request: update`): the project left the board mid-visit.
 - Healthy: one `viewed` line per visit, no `unreadable`, and no Livewire update requests while
   filtering, hovering or toggling columns. The Columns picker logs nothing by design (pure UI, and a
-  failed storage write is not something the server needs to know). If `runs: 0` appears for a project you know has runs, see the RUNBOOK entry
+  failed storage write is not something the server needs to know). `matched: 0` is expected until RD-10
+  writes records; once it does, `unmatched` rows beside a recent record usually mean a branch name or clock
+  disagreement between the record and the CSV row (check `finished_at` vs `ts`). If `runs: 0` appears for a project you know has runs, see the RUNBOOK entry
   "Preflight tab shows no runs".
 
 ## Testing & verification
@@ -168,6 +222,16 @@ None. No migration and nothing stored. The page reads `preflight-cost.csv` files
   no toggle is wired to Livewire.
 - Browser check (SB-19): `/p/coins/preflight` → Columns → untick Turns, Tool calls, Pack → the table
   narrows and the button reads "Columns · 3 hidden" → reload → still hidden → Reset columns → all back.
+- `tests/Feature/Board/PreflightRanOnTest.php` (RD-8): one `it()` per acceptance criterion, plus extras:
+  another branch never matches, nearest-first pairing leaves the second record for its own row, a dataset of
+  skip cases (schema 2, no runner, no gates), not-JSON / unknown runner / non-ISO `finished_at`, worktree
+  folders read and a look-alike project's folder ignored, records never written, one runner hides the
+  per-runner medians, the `matched`/`unmatched` log, and the tile's "on mac" / nothing. Records are written
+  with `SessionFixture::preflightRun($folder, $runId, $record)` (a string writes a non-JSON file).
+- `tests/Browser/PreflightRanOnTest.php` stands in for the story's manual check against a fixture root: the
+  matched row reads Brain, the Where it ran filter narrows with no fetch, the per-runner line hides under one
+  runner, the Ran on column hides and restores, and the home tile reads "on brain". The owner's hand check
+  (one real brain record beside story-board's CSV) was not run by the agent.
 - Real data (read-only, 2026-09-29): coins has 36 runs, 0 skipped, 15 scoped and 11 flagged, from Aug 26
   to Sep 28. story-board has 13 runs (main 9, sb-10 2, sb-15 1, plans 1).
 
@@ -184,6 +248,10 @@ None. No migration and nothing stored. The page reads `preflight-cost.csv` files
 - Columns picker: hidden columns are saved in `localStorage` per project, not in the DB or per user;
   they are a viewer convenience and the server never sees them. When cannot be hidden. No mockup round:
   the owner waived it for a small control inside the approved SB-16 layout.
+- Where it ran comes from a separate per-run JSON record matched by branch and a 10-minute window, not a
+  CSV column or a `run_id` in the CSV, because the CSV and meter are out of scope. Pairing is nearest-first,
+  one-to-one; per-runner medians use the CSV wall time →
+  [ADR-055](../decisions/ADR-055-preflight-run-record-format.md).
 - The picker's checkboxes are native inputs styled `size-4 accent-accent` (the existing `--color-accent`
   token). The board had no checkbox and no forms plugin; the owner has yet to confirm this look.
 
@@ -206,6 +274,15 @@ None. No migration and nothing stored. The page reads `preflight-cost.csv` files
   every column. Columns cannot be reordered or resized.
 - A column key renamed in `$columns` silently drops from viewers' saved choice (the read keeps only
   current `hideable` keys), which shows it again. That is the safe direction.
+- **Ran on is "—" everywhere until RD-10 writes records.** The reader, matching and UI are proven only on
+  fixtures.
+- **Matching is a heuristic.** A record whose branch differs from the CSV row's, or whose clock is more than
+  10 minutes off, stays unmatched. A run with no CSV row (the meter never reported) has nowhere to show.
+- The skipped-records notice says "not JSON, a schema other than 1, or missing a field"; files skipped for a
+  bad `runner`, `branch` or `finished_at` are counted there too. The log's `reason` is the precise one.
+- **Adding a ledger column breaks the SB-19 browser tests**: `tests/Browser/ProjectPreflightTest.php` hard-codes
+  the column lists (`PREFLIGHT_ALL_COLUMNS` and the `PREFLIGHT_TOGGLES` / `PREFLIGHT_HEADERS` expectations).
+  Update them with the new key in table order.
 - `preflightHistory` was the first `Alpine.data` registration in the codebase. Chart code was too big
   for an inline `x-data`.
 
@@ -216,3 +293,4 @@ of the project (main checkout, worktrees, plans), trend figures, two SVG charts,
 2026-09-30 — Columns picker in the filter row: hide any ledger column but When, "Columns · N hidden",
 Reset columns, saved per project in localStorage with a safe fallback (SB-19, `8e0fa41`)
 2026-10-11 — Moved into the dark shell (`layouts/shell`), restyled with its tokens, layout unchanged (RD-2, `43b01ed`)
+2026-10-11 — Where it ran: `ReadPreflightRuns` reads per-run JSON records (ADR-055) from the CSV folders and matches them to rows; Ran on column, Where it ran filter, per-runner medians, skipped-record notice (RD-8, `5811fe3`)

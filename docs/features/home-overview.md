@@ -1,5 +1,5 @@
 # Home overview
-Status: active   ·   Last updated: 2026-10-11   ·   Stories: RD-5, RD-6, RD-7
+Status: active   ·   Last updated: 2026-10-11   ·   Stories: RD-5, RD-6, RD-7, RD-8
 
 ## Overview
 `/` is the redesign's home, Home A "command center" ([`docs/mockups/RD-5/option-a.html`](../mockups/RD-5/option-a.html))
@@ -116,7 +116,7 @@ The card data comes from `app/Services/SessionReader.php`, extended under its ex
 
 **Projects grid (RD-7).** `ListProjectTiles::handle()` returns one tile per covered project, A–Z
 ([ADR-054](../decisions/ADR-054-project-tiles-reuse-existing-rules-and-stored-data.md)). It reads the board's
-database and the preflight CSVs only, never git and never a production database:
+database, the preflight CSVs and (since RD-8) the preflight run records only, never git and never a production database:
 - **Progress.** `kinds()` is one grouped `status` query over on-ref stories, mapped through
   `ReadProjectStories::kind()`, so the tile counts exactly as the project's Stories page does. The tile draws
   `<x-board.status-bar>` and "21 built · 2 in flight · 2 draft" (in flight is the `approved` kind).
@@ -124,7 +124,11 @@ database and the preflight CSVs only, never git and never a production database:
   "N off main", or "clean" at zero.
 - **Last preflight.** The newest run from `ReadPreflightHistory::handle()`: `Overview::ago()` ("6h ago", whole units
   rounded down), `Overview::duration()` wall time, and the CSV's mode as a tag. "no runs yet" with none. The data
-  carries `ran_on`, always null until RD-8; the tile appends "on X" when it is set.
+  carries `ran_on` (RD-8): `ReadPreflightRuns::match()` over **all** the project's runs and records, so it is
+  exactly what the Preflight page's newest row reads. The tile appends "on brain" / "on mac"
+  (`data-tile-ran-on`), and nothing when no record matches. Records are only read when the project has a run.
+  No writer exists until RD-10, so today the suffix never shows. How records are found and matched:
+  [Preflight history](preflight-history.md), [ADR-055](../decisions/ADR-055-preflight-run-record-format.md).
 - **Production.** `prod()`: only with a `ProdConnection` and an enabled metric, the first metric (by `position`, then
   id), its latest stored `ProdSnapshot` in the last `PROD_DAYS` (7) board-local days, formatted by
   `ListProductionDashboard::format()`, and a 7-day series drawn by `<x-board.sparkline decorative>`. With no
@@ -210,7 +214,8 @@ as for [Preflight history](preflight-history.md).
 | `board.live_session_unparsed` | warning | `SessionReader::unparsed()` | `file` (basename), `reason` (`usage` \| `tool`); once per file version |
 
 Plus the Live sessions events (`board.sessions_read`, `board.session_unreadable`, `board.session_ignored`) and
-`board.preflight_history_unreadable` from the CSV reader. Every line carries `request_id`.
+`board.preflight_history_unreadable` from the CSV reader and `board.preflight_run_record_skipped` (RD-8) from the
+run-record reader, once per skipped file per load. Every line carries `request_id`.
 - **Healthy:** one `board.overview_viewed` per page load, with no `board.overview_panel_failed` after it.
 - **The page shows every project although the URL names one:** look for `board.overview_filter_ignored`. The name
   is unknown (check its exact case against `/projects`) or the project is switched off.
@@ -247,7 +252,9 @@ Plus the Live sessions events (`board.sessions_read`, `board.session_unreadable`
   without snapshots or without a connection, fix/test counted and chore/refactor/malformed IDs ignored, a dataset of
   refused `log` forms (each logged), `GitReader::log()` reading a ref since a time, `board.shipped_read`, one git read
   per unchanged snapshot, an unreadable project named while the others list, the empty state, each new panel failing
-  alone, the live dot, and the empty `ran_on` slot.
+  alone, the live dot, and no `ran_on` when no run record matches (RD-8).
+- `tests/Feature/Board/PreflightRanOnTest.php` (RD-8) covers the tile's "on brain", "on mac" and nothing;
+  `tests/Browser/PreflightRanOnTest.php` checks "on brain" in a real browser.
 - `tests/Browser/HomeTilesTest.php`: a tile's counts match its Stories page and Shipped lists the build commits; the
   filter narrows tiles and shipped rows; no sideways scroll at 375 px.
 - `tests/Support/GitFixture.php` gained `commitAt($message, $at)`, which sets author and committer dates. Write
@@ -306,9 +313,10 @@ Plus the Live sessions events (`board.sessions_read`, `board.session_unreadable`
 - **Live dots depend on Live now.** If that panel fails, no tile is live.
 - Tiles fail as one panel; there is no per-field error state as in the mockup.
 - Wall time reads "4m 5s" (`Overview::duration()`), not the mockup's "4m 05s"; the mode tag shows the CSV value
-  (`scoped`/`full`) as written. "Ran on" is empty until RD-8.
+  (`scoped`/`full`) as written. "on brain" / "on mac" needs run records, which nothing writes until RD-10.
 
 ## Change history
 2026-10-11 — `/` becomes the overview: header sentence, four figures, Needs me, Live now with doing line and context bar; `ListNeedsMe`, `ReadOverviewFigures`, `ListLiveSessions::overview()`, `SessionReader` activity fields (RD-5, `6d6f3de`)
 2026-10-11 — Projects filter in the header: `?projects=` narrows Needs me, Live now and the figures through one `ProjectFilter`; chips, Clear, ignored-name warnings (RD-6, `a65ff4e`)
 2026-10-11 — Projects grid (progress, off main, last preflight, stored production headline, live dot) and Shipped this week (build commits via `GitReader::log()`, cached per snapshot); sparkline `decorative` (RD-7, `4d12af1`)
+2026-10-11 — The tile's last preflight reads "on brain" / "on mac" from the matched run record (RD-8, `5811fe3`)
