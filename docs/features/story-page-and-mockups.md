@@ -55,7 +55,7 @@ checkboxes dropped.
 - **Primary action** (`data-primary-action`). Shown only when the set is `AWAITING` and the mockups are servable.
   It reads "Pick option <choice>" and calls `$wire.pick(choice, reason)`. There is no confirm dialog (the
   mockup shows none). The result is an inline `data-pick-done` line or a `data-pick-refusal` alert, not a
-  toast, because the shell layout has no Flux toast host.
+  toast: the shell had no Flux toast host at RD-3 (RD-4 added one; this page kept its inline result).
 - **Mockups** (`data-story-mockups`). Rendered only when servable, which is the same rule as the file routes:
   the gate is visual, `mockups.dir` is exactly `docs/mockups/<ID>`, there are options, and the row is in git.
   - Alpine on `<main>` holds `view` (what the frame shows), `choice` (what a pick records), `reason` and `urls`.

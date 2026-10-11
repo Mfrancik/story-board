@@ -1,5 +1,5 @@
 # Manage projects
-Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-12, SB-17
+Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-12, SB-17, RD-4
 
 ## Overview
 `/projects` ("Manage projects") is where the owner adds a project by its folder, switches any project off
@@ -30,9 +30,10 @@ Flux toast and then calls `reload()`, a `redirectRoute('projects.manage', naviga
 - `render()`: every project, enabled or not, `withCount` of on-ref stories, ordered by name, plus
   `AddProject::home()` so the view can show paths under the home folder as `~/…`.
 
-**Why every action re-navigates.** The sidebar is rendered by `layouts/board`, not by this component, so it
-only gains or drops a project on a page load. The reload is `wire:navigate`, and the toast survives it
-because the layout now wraps `<flux:toast.group>` in `@persist('toast')`
+**Why every action re-navigates.** The sidebar is rendered by the layout (`layouts/shell` since RD-4, whose
+`shell/sidebar` lists enabled projects), not by this component, so it only gains or drops a project on a page
+load. The reload is `wire:navigate`, and the toast survives it because the layout wraps `<flux:toast.group>` in
+`@persist('toast')` (RD-4 added that host to the shell, [ADR-045](../decisions/ADR-045-flux-toasts-in-the-shell-behind-an-appearance-stub.md))
 ([ADR-021](../decisions/ADR-021-manage-projects-re-navigates-so-the-sidebar-follows.md)).
 
 **The actions** (`app/Actions/Board/`):
@@ -178,3 +179,4 @@ page showed. A `*_refused` with `reason: unknown` means a stale tab or a hand-ma
 ## Change history
 2026-09-29 — Manage projects page: switch on/off, add by folder, remove behind a confirmation modal; `board:project enable`; shared `board/switch` and `board/confirm-modal`; persisted toasts (SB-12, `617f555`)
 2026-09-29 — Production column and panel per row (SB-17, `c8bcfbe`); see production-connection.md
+2026-10-11 — Moved into the dark shell, restyled with its tokens, layout and behaviour unchanged; toasts kept (RD-4, `f722dbc`)

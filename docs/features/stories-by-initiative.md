@@ -1,8 +1,8 @@
 # Stories by initiative
-Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-15
+Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-15, RD-4
 
 ## Overview
-`/p/{project}/stories` is the project page's third tab (Dashboard | Handbook | Stories). It lists every
+`/p/{project}/stories` is a project's first tab (Stories | Preflight | Handbook | Map), in the dark shell since RD-4. It lists every
 on-ref story of the project, grouped by initiative, and tags each story with its status. Initiatives
 with their counts sit on the left, and the chosen initiative's stories are on the right. It answers the
 question Progress by initiative leaves open (SB-10's bars show *how much* is done, not *which* stories).
@@ -34,14 +34,13 @@ Livewire update requests (ADR-019 amendment). A project switched off mid-visit l
    `built | approved | draft | cancelled` are their own kind, and anything else, including no status,
    is `other`. Nothing is guessed, so rent-track's `done` is not Built.
 5. Only a well-formed ID gets a `link` (`<project>/<ID>`, from `Story::hasPage()`), as on every other
-   list. Other rows are plain and do not open the modal.
+   list. Other rows are plain and link nowhere.
 6. Each initiative gets a key `g0`, `g1`… by position. Names are not used as keys because they are
    free text, and "No initiative" has no name.
 
 **The view.** `resources/views/livewire/board/project-stories.blade.php` (mockup option C):
 - `board/project-header` (breadcrumb, name, state, ref; the slot adds "· N stories in M initiatives")
-  and `board/project-tabs` with `current="stories"`. The Handbook uses the same header. The Dashboard
-  keeps its own header, because it carries Refresh and the status tallies.
+  and `board/project-tabs` with `current="stories"`. Handbook, Preflight and Map use the same header.
 - Filter chips (Built, To do, Draft, Cancelled, Other) with the project-wide tally for each kind,
   "N of M initiatives", and Expand all / Collapse all.
 - Left pane: a `<nav>` of initiatives with name, a "parked" tag, "open / all" counts and a
@@ -50,8 +49,10 @@ Livewire update requests (ADR-019 amendment). A project switched off mid-visit l
   shows. When expanded, every group with visible rows shows, under sticky headers.
 - Each row shows the ID, the title and `board/status-chip variant="tag"`. A cancelled row is
   struck through and muted.
-- `<livewire:board.story-modal />` is embedded, so a row opens SB-8's modal, and `?story=` works on
-  this page too.
+- Each linked row is an `<a href>` to `stories.show` (`/p/{project}/s/{id}`, the RD-3 story page) with
+  `wire:navigate`, keeping `data-story-link`. RD-4 removed the embedded SB-8 modal, its delegated
+  `openStory()` click and `?story=` from this page, so a row opens in a new tab and Back returns to the list
+  ([ADR-046](../decisions/ADR-046-kept-pages-stop-linking-to-the-old-dashboard.md)).
 
 **Pure UI, sized for coins (946 rows).** Only the initiatives (about 60) are bound to Alpine: the root
 `x-data` holds `groups` (key, label, total, count by kind), `on` (the filter state), `sel` and `all`.
@@ -100,8 +101,7 @@ None.
 - `board.project_page_refused` (info), with `request: update`: a project left the board mid-visit
   (from `hydrate()`). A 404 at page load logs the same event, without `request`, from `EnsureProjectIsShown`.
 - Healthy: one `board.stories_viewed` per visit, and no Livewire update requests while clicking
-  initiatives, chips or Expand all. The only request comes from opening a story, which goes to
-  StoryModal.
+  initiatives, chips or Expand all. Opening a story is a navigation to its story page.
 
 ## Testing & verification
 - `tests/Feature/Board/ProjectStoriesTest.php`: one `it()` per acceptance criterion (order and counts,
@@ -115,7 +115,7 @@ None.
   - The Stories tab.
 - `tests/Browser/ProjectStoriesTest.php`: the Alpine behaviour. Covers selection with no server
   request, the Built chip hiding rows and an all-built initiative, Expand all jumping to a group and
-  Collapse all, a row opening the modal, and the select at 375px with no sideways scroll.
+  Collapse all, a row opening its story page, and the select at 375px with no sideways scroll.
 - Browser check: `/p/coins/stories`. Select acquisition and check that ACQ-22 is struck through as
   Cancelled. Turn off Built. Try Expand all and Collapse all. Open a story. Check that
   `/p/rent-track/stories` shows grey `in` and `done` tags.
@@ -142,10 +142,11 @@ None.
   this is fine. Paging would conflict with filtering and Expand all, which work on the whole list.
 - Selection, filters and Expand all are not remembered across visits (out of scope). There is no
   search by ID or title.
-- A row whose ID is not well formed is shown but does not open the modal.
-- Off-main stories are not listed. The Dashboard's Not on main panel owns them.
+- A row whose ID is not well formed is shown but has no link.
+- Off-main stories are not listed. The old dashboard's Not on main panel owns them until RD-9.
 
 ## Change history
 2026-09-29 — Stories tab at `/p/{project}/stories`: initiatives with counts, stories tagged by status,
 filter chips, Expand all; `rollup()` extracted; `board/project-header` shared with the Handbook (SB-15, `ae144cb`)
 2026-10-11 — Rollup moved to `StoryStatusOrder`, so this page no longer depends on `ReadProjectProgress`; guard via `GuardsProjectPage` (RD-1, `6ad827b`)
+2026-10-11 — In the dark shell; rows link to the story page and the embedded modal is gone (RD-4, `f722dbc`)

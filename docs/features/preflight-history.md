@@ -2,7 +2,7 @@
 Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-16, SB-19, RD-2
 
 ## Overview
-`/p/{project}/preflight` is the project page's fourth tab (Dashboard | Handbook | Stories | Preflight).
+`/p/{project}/preflight` is a project's second tab (Stories | Preflight | Handbook | Map since RD-4).
 It lists every recorded preflight run of the project as a ledger, newest first, with its wall time,
 turns, tool calls, tokens, subagent share, pack size and audit tier. Two line charts and three trend
 figures sit above the table. `bin/preflight-meter.py report` appends one row per run to a

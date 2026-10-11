@@ -10,6 +10,24 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-10-11 — Old pages forgot their light/dark choice after visiting a shell page
+Symptom: once `layouts/shell` loaded `flux.js` (for toasts), a light/dark choice saved on an old `layouts/board` page was lost after opening any shell page.
+Root cause: `flux.js` calls `window.Flux.applyAppearance()` on load and after every `wire:navigate` swap. The shell skips `@fluxAppearance`, so nothing defined it, and Flux's fallback clears the saved appearance.
+Fix: `resources/views/partials/head.blade.php` defines a shell-only stub `window.Flux = { applyAppearance() }` that only removes `.dark` from a `.shell` `<html>` and never touches the saved choice (RD-4, [ADR-045](decisions/ADR-045-flux-toasts-in-the-shell-behind-an-appearance-stub.md)). Any new layout that loads `@fluxScripts` without `@fluxAppearance` needs the same.
+Log trail: none. Check `localStorage['flux.appearance']` before and after visiting a shell page.
+
+## 2026-10-11 — A shell page drew in old light/dark colours after navigating from an old page
+Symptom: going from an old `layouts/board` page to a shell page by `wire:navigate` could leave `.dark` on `<html>` beside `.shell`, and the old `.dark` token block then competed with the shell's.
+Root cause: an old page's appearance script adds `.dark` to `<html>`; the swap keeps it until something removes it. The risk pre-existed for Preflight (RD-2) and grew with RD-4's pages.
+Fix: `resources/css/app.css` matches `.shell, .shell.dark` for the shell's token re-pointing, so the shell's colours win either way; the head stub above also strips `.dark` on shell pages (RD-4).
+Log trail: none. Inspect `<html>`'s class list after the navigation.
+
+## 2026-10-11 — `php artisan test --filter=…` ran browser tests unlocked
+Symptom: a quick `--filter` run for feature tests also launched `tests/Browser` files, outside `.claude/browser-lock.sh`, where they can clash with another session's browser run.
+Root cause: `--filter` with no suite or path matches test names in every suite, Browser included.
+Fix: for non-browser runs always pair the filter with a scope: `php artisan test --testsuite=Feature,Unit --filter=Name` or `php artisan test tests/Feature/... --filter=Name`. Run browser tests only through the lock (RD-4).
+Log trail: none. The run's output lists `Tests\Browser\…` files.
+
 ## 2026-10-11 — Story page's status tag text came out broken
 Symptom: on the RD-3 story page, the status tag's text (status plus "· awaiting your pick") rendered garbled once the suffix was added with an inline `@if` inside the tag.
 Root cause: Livewire wraps every Blade `@if` block in morph marker comments (`<!--[if BLOCK]><![endif]-->`). Inside a tag's inline text, those markers are injected into the label.

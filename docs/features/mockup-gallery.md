@@ -1,5 +1,5 @@
 # Mockup gallery
-Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-21, SB-23, RD-3
+Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-21, SB-23, RD-3, RD-4
 
 ## Overview
 `/mockups` lists every mockup set across the enabled projects as live-thumbnail cards, with the sets
@@ -282,3 +282,4 @@ the Where (compare the story's `- Routes:` path with the manifest's `route`), or
 2026-09-30 — Current pane: newest matching journey shot with capture time and stale label, new-page and uncovered states, opens Current vs option when a shot exists; `ReadCurrentVersion`, `ReadProjectRoutes`; `mockup_viewed` gains `current` (SB-23, `079a2c1`)
 2026-10-11 — Gate reading moved to `MockupGateParser`; `pick()` returns `{sha, branch}`; open statuses from `StoryStatusOrder`; `TYPES` owned by `MockupSetFileController`; viewer guard via `GuardsProjectPage` (RD-1, `6ad827b`)
 2026-10-11 — Pick logic moved into `PickMockup`, shared with the story page; the viewer keeps its toast (RD-3, `0e8542b`)
+2026-10-11 — Gallery and viewer moved into the dark shell, restyled, layout unchanged; viewer toast kept via the shell's toast host (RD-4, `f722dbc`)

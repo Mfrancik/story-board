@@ -1,5 +1,5 @@
 # App map
-Status: active   ·   Last updated: 2026-09-30   ·   Stories: SB-24
+Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-24, RD-4
 
 ## Overview
 `/p/{project}/map` draws a project's journeys as screens in order. Each journey is a numbered strip of
@@ -17,8 +17,8 @@ only when a project adopts SB-22's journey shots. The layout is mockup option A 
   `file` is `->where('file', '.*')` **on purpose**. A traversal attempt (`../x`, slashes) reaches the
   action, where it is refused and logged, instead of dying as an unlogged router 404.
 
-**Tab.** `board/project-tabs` gains **App map**. Five tabs do not fit at 375 px, so the row is
-`overflow-x-auto pb-px` and each tab is `shrink-0` (see RUNBOOK for why `pb-px`).
+**Tab.** `board/project-tabs` gained **App map** (labelled **Map** since RD-4, last of Stories | Preflight |
+Handbook | Map). The row stays `overflow-x-auto pb-px` with `shrink-0` tabs (see RUNBOOK for why `pb-px`).
 
 **Read, once per page load.** `ProjectAppMap::render()` calls `ReadJourneyMap::handle()` and logs
 `board.app_map_viewed`. The component has no actions, and a normal visit never re-renders it.
@@ -180,3 +180,4 @@ Every line carries `request_id`.
 2026-09-29 — App map tab, All flows overview with shared screens, flow stage/strip with Alpine stepping,
 `ReadJourneyMap`, `ReadJourneyShots`, `shots.file` route; project tabs scroll on phones (SB-24, `b838dcf`)
 2026-09-30 — Manifest format pinned by SB-22's `journeyStep()`; doc notes only, no code change (SB-22)
+2026-10-11 — In the dark shell as is (`.shell .map-page` wireframe colours, shell-token `map-screen`); redesign later (RD-4, `f722dbc`)

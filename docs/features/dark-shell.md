@@ -1,37 +1,61 @@
 # Dark shell and sidebar
-Status: active   ·   Last updated: 2026-10-11   ·   Stories: RD-2
+Status: active   ·   Last updated: 2026-10-11   ·   Stories: RD-2, RD-4
 
 ## Overview
 The redesign's command-center layout (Home A, [`docs/mockups/RD-2/option-a.html`](../mockups/RD-2/option-a.html)):
 a graphite ground, Geist type, and a sidebar holding the logo, Home, Mockups with its awaiting-pick count, and
 every enabled project with a state dot and story-ID prefix. Every later RD page is built inside it. The
-Preflight page is its first user. RD-2 also moved refresh-on-load out of the home and project pages and into a
+Preflight page was its first user; RD-4 moved the pages the owner kept (Stories, Handbook, Mockup gallery and
+viewer, Manage projects, App map) in, restyled with its tokens and with their layouts unchanged. RD-2 also moved refresh-on-load out of the home and project pages and into a
 middleware on all board page routes, so pages added later get it without doing anything.
 
 ## How it works
 **Layout.** `resources/views/layouts/shell.blade.php` puts `class="shell"` on `<html>` and includes
 `partials/head` with `shell => true`. That flag skips `@fonts` (Instrument Sans) and `@fluxAppearance`, so
-`.dark` is never set inside the shell and there is no theme switch. The body is `bg-ground font-sans text-ink`.
+the shell never sets `.dark` itself and there is no theme switch. In its place `partials/head` defines a
+stub `window.Flux.applyAppearance()` that only strips `.dark` from a `.shell` page (see Toasts below). The body is `bg-ground font-sans text-ink`.
 `x-data="{ open: false }"` holds the mobile drawer's state, which the sidebar's menu button, backdrop and aside
 all share. The page slot sits in `md:pl-58` beside the fixed sidebar. A page opts in with
-`#[Layout('layouts.shell')]` (currently `app/Livewire/Board/ProjectPreflight.php` and, since RD-3,
-`StoryPage.php`). Every other page still uses `layouts/board` until RD-4 moves it.
+`#[Layout('layouts.shell')]`. Since RD-4 that is every page except `Home`, `ProjectPage` (the old `/p/{project}`
+dashboard) and `ProductionDashboard`, which stay on `layouts/board` until RD-5/RD-9: `ProjectPreflight` (RD-2),
+`StoryPage` (RD-3), and `ProjectStories`, `ProjectHandbook`, `MockupGallery`, `MockupViewer`, `ManageProjects`,
+`ProjectAppMap` (RD-4), all in `app/Livewire/Board/`.
+([ADR-044](../decisions/ADR-044-kept-pages-move-into-the-shell-and-share-primitives-by-variant.md))
+
+**Toasts (RD-4).** Manage projects, its lazy `ProductionSettings` panels and the mockup viewer confirm with
+`Flux::toast`, so `layouts/shell.blade.php` now carries `<flux:toast.group>` inside `@persist('toast')` (a toast
+raised just before a `wire:navigate` reload survives it) plus `@fluxScripts`. Flux styles its toast for light and
+for a `.dark` ancestor, and the shell never puts `.dark` on `<html>`, so the group is wrapped in `<div class="dark">`
+to get the dark toast. Loading `flux.js` brings one hazard: it calls `window.Flux.applyAppearance()` on load and
+after every `wire:navigate` swap, and with none defined it deletes the light/dark choice the old pages saved. The
+stub in `resources/views/partials/head.blade.php` is defined first and only removes `.dark` from a `.shell` page,
+leaving the saved choice for the old pages' own appearance script.
+([ADR-045](../decisions/ADR-045-flux-toasts-in-the-shell-behind-an-appearance-stub.md))
 
 **Tokens.** `resources/css/app.css` adds the Home A palette to `@theme`: `ground / surface / raised` surfaces,
 `hairline / edge / rim` borders, `ink / ink-soft / ink-muted / ink-faint` text, and the signals `needs`
 (amber), `live` (blue), `go` (green) and `fail` (red), plus `--font-geist` and `--font-geist-mono`. An
-`@layer theme` `.shell { … }` block re-points the shared semantic tokens inside the shell (`ok→go`,
-`warning→needs`, `danger→fail`, `pending→ink-muted`, `series→live`, `accent→needs`, and `--font-sans` /
+`@layer theme` `.shell, .shell.dark { … }` block re-points the shared semantic tokens inside the shell (`ok→go`,
+`warning→needs`, `danger→fail`, `pending→ink-muted`, `series→live`, `accent→needs`, `gain→go`, `loss→fail` (RD-4, for the production panels), and `--font-sans` /
 `--font-mono` to Geist). Components that both old and new pages use, such as state dots and charts, therefore
-recolour with no per-view override. A base rule makes unclassed borders inside `.shell` `edge`, not the light
+recolour with no per-view override. The `.shell.dark` selector (RD-4) makes the
+block win even when an old page's appearance script has left `.dark` on `<html>` across a `wire:navigate` swap.
+`.shell .map-page` redraws the app map's placeholder wireframe in `surface` / `raised` / `rim`. A base rule makes unclassed borders inside `.shell` `edge`, not the light
 theme's gray. ([ADR-040](../decisions/ADR-040-dark-shell-is-scoped-by-a-shell-class-and-variant.md))
 
 **The `shell:` variant.** `@custom-variant shell (&:where(.shell, .shell *))`. Shared Blade components that the
 old light pages still render carry their dark look as `shell:` classes beside the existing `dark:` ones:
-- `components/board/project-header.blade.php` shows muted text, and its light/dark toggle is `shell:hidden`.
-- `components/board/project-tabs.blade.php` uses the hairline border, and its current/other tab tones come from `ink`.
+- `components/board/project-tabs.blade.php` uses the hairline border and `ink` tones. RD-4 set the tabs to
+  Stories · Preflight · Handbook · Map and dropped Dashboard; the old dashboard still renders them, none current.
+- `components/board/status-chip.blade.php` and `status-bar.blade.php` (RD-4): neutral text, ring and track tones.
 - `components/board/state.blade.php` gives the `pending` label `shell:text-ink-muted`. The dot colours need no
   variant, because the token re-pointing above handles them.
+
+Primitives that only shell pages render since RD-4 carry the shell tokens directly, with no `dark:` pair:
+`project-header` (whose breadcrumb's project link now opens the project's Stories page, and whose light/dark
+toggle is gone), `prose`, `kit-badge`, `handbook-empty`, `mockup-state`, `mockup-current`, `confirm-modal`,
+`switch`, `map-screen` and `metric-result`. Mockup iframes keep `bg-white` on purpose: a mockup is a light page.
+Primary buttons (Add project, Pick, Save) are amber `bg-needs`, as on the RD-3 story page.
 
 `wire:navigate` replaces `<html>` attributes on each page swap, so moving between a shell page and an old page
 adds or removes `.shell` correctly in both directions.
@@ -85,6 +109,7 @@ No tables or migrations. The sidebar reads `projects` (`id, name, state`) and `s
 - `<x-shell.sidebar />` is a class component with no props. It reads the current route itself.
 - `<x-shell.logo />` takes no props.
 - `RefreshStaleProjects` is route middleware with no parameters.
+- Toasts: any shell page can call `Flux::toast(...)`; the host is in the layout.
 - Test hooks: `data-shell-sidebar`, `data-shell-menu`, `data-shell-close`, `data-shell-no-projects`,
   `data-nav="home|mockups"`, `data-nav-project="<name>"`, `data-mockups-count="<n>"`, `data-id-prefix`. These
   names were chosen so they don't collide with the old `board/sidebar`'s hooks, which RD-9 deletes along with
@@ -113,6 +138,12 @@ None. The fonts are npm devDependencies. After pulling, run `npm install` and re
 - `tests/Browser/DarkShellTest.php` checks the 375 px drawer (open, close button, Escape, a menu button of at
   least 44 px, no sideways scroll) and the 1280 px column (current project marked, body computed in Geist,
   `document.fonts.check('16px Geist')`).
+- `tests/Feature/Board/ReskinKeptPagesTest.php` (RD-4): one `it()` per acceptance criterion, run over a dataset
+  of the kept pages (shell + current sidebar entry, Stories rows as links with no modal, the four tabs), plus
+  extras for the breadcrumb, toasts without `flux.appearance`, and `/` and `/p/{project}` still on `layouts/board`.
+  The existing feature tests of each kept page still pass, with selectors changed only where markup did.
+- `tests/Browser/ReskinKeptPagesTest.php`: each kept page and the viewer at 375 px with no sideways scroll and no
+  JS errors, and a Stories row click landing on `/p/{project}/s/{id}`.
 - `ProjectPageTest` "queues one refresh per stale project when the page loads" now expects every stale project
   to be refreshed, not just the page's own.
 - Browser check: `/p/story-board/preflight` at 1440 and 375 px against the Home A board.
@@ -124,6 +155,12 @@ None. The fonts are npm devDependencies. After pulling, run `npm install` and re
   ([ADR-040](../decisions/ADR-040-dark-shell-is-scoped-by-a-shell-class-and-variant.md)).
 - Refresh-on-load is one middleware on the page-route group
   ([ADR-041](../decisions/ADR-041-refresh-on-load-is-one-middleware-on-the-page-routes.md)).
+- Kept pages moved in while three old pages stay out; primitives shared with those get `shell:` variants, not forks
+  ([ADR-044](../decisions/ADR-044-kept-pages-move-into-the-shell-and-share-primitives-by-variant.md)).
+- Flux toasts were brought into the shell rather than replaced by inline messages, which would have changed
+  behaviour ([ADR-045](../decisions/ADR-045-flux-toasts-in-the-shell-behind-an-appearance-stub.md)).
+- Kept pages stop pointing at the old dashboard: Stories rows link to the story page, the Dashboard tab is gone,
+  the breadcrumb opens Stories ([ADR-046](../decisions/ADR-046-kept-pages-stop-linking-to-the-old-dashboard.md)).
 - `ink-faint` is `#8a8d93`, not the mockup's `#7E8187`. The mockup value is 4.19:1 on `raised` (the current
   nav item's background). The new value is 5.76 / 5.35 / 4.91:1 on ground / surface / raised. Every other text
   token is at least 6.02:1, and ink on amber is 8.9:1.
@@ -131,10 +168,13 @@ None. The fonts are npm devDependencies. After pulling, run `npm install` and re
   and `board/sidebar` rather than replacing them, because the old pages still need those until RD-9.
 
 ## Known limitations & gotchas
-- Two shells exist until RD-4/RD-9. `layouts/board` (light/dark, Flux, filterable sidebar, live badge) still
-  serves every page except Preflight. A fix to sidebar behaviour may need to land in both.
-- The shell sidebar does not yet include the old one's filter box, Production item, per-project counts or live
-  badge. Brain and Money items are later phases.
+- Two shells exist until RD-9. `layouts/board` (light/dark, filterable sidebar, live badge) still serves `/`, the
+  old `/p/{project}` dashboard and `/prod`. A fix to sidebar behaviour may need to land in both.
+- The shell sidebar has no filter box, Production item, per-project counts or live badge (owner, 2026-10-11:
+  none of the kept pages needs them; Production is backlog F-7). Brain and Money items are later phases.
+  `LiveSessionsTest` therefore checks the live badge on `/`, not `/projects`.
+- The Handbook's "unread" and "failed" states still say "Refresh the project from its dashboard". Revisit at RD-9.
+- The story modal component stays (old Home, old dashboard and Live sessions open it) until RD-9 deletes it.
 - `preflight-history.js` now uses shell-only token classes (`stroke-hairline`, `fill-ink-muted`, …). The charts
   would look wrong if that page ever went back to a light layout.
 - Only the latin subset of Geist is loaded. Text outside latin falls back to the system font.
@@ -145,3 +185,5 @@ None. The fonts are npm devDependencies. After pulling, run `npm install` and re
 ## Change history
 2026-10-11 — Dark shell layout, Home A tokens, Geist fonts, shell sidebar and drawer, `RefreshStaleProjects`
 middleware. The Preflight page is the first page moved in (RD-2, `43b01ed`)
+2026-10-11 — Stories, Handbook, Mockup gallery and viewer, Manage projects and App map moved in, restyled; Flux
+toasts and an appearance stub in the shell; `.shell.dark`; tabs Stories · Preflight · Handbook · Map (RD-4, `f722dbc`)

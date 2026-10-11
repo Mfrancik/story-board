@@ -1,5 +1,5 @@
 # Project handbook
-Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-14
+Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-14, RD-4
 
 ## Overview
 `/p/{project}/handbook` shows how one project is run: its rules (`CLAUDE.md`), lessons, standards,
@@ -68,8 +68,8 @@ are empty, contain `..`, `/` or `\`, start with `-`, or do not end in `.md`, **b
 because route middleware never sees update requests (ADR-019 amendment). A project switched off or
 removed mid-visit logs a refusal and redirects home, and the pending call returns nothing.
 
-**Page tabs.** `resources/views/components/board/project-tabs.blade.php` puts Dashboard | Handbook | Stories
-links under the project header on `/p/{project}`, the handbook and the Stories page. Since SB-15, the handbook's
+**Page tabs.** `resources/views/components/board/project-tabs.blade.php` puts Stories | Preflight | Handbook | Map
+links under the project header (RD-4 dropped Dashboard; the breadcrumb's project link opens Stories). Since SB-15, the handbook's
 header is the shared `board/project-header` component, which also renders the tabs. They are real links
 (`wire:navigate`), so each tab has its own URL.
 
@@ -121,8 +121,8 @@ Each line carries `request_id`.
 - `tests/Feature/Board/ProjectHandbookTest.php`: one `it()` per acceptance criterion, plus extras:
   comment/fence-safe lesson parsing, coins' kit-only `disposal-standards.md` badged Missing, a kit ref
   that does not resolve, the kit vanishing after page load, safe rendering, the `handbook_viewed` context,
-  unknown-section / not-found / no-snapshot refusals, the mid-visit redirect, the 404, the Dashboard |
-  Handbook tabs, and a project git failure. Fixtures are a project repo and a kit repo built with
+  unknown-section / not-found / no-snapshot refusals, the mid-visit redirect, the 404, the tabs and the
+  breadcrumb back to Stories, and a project git failure. Fixtures are a project repo and a kit repo built with
   `GitFixture`, never the real kit. The real-data counts in the criteria (16 / 5 / 2 lessons) are
   mirrored by fixture shapes.
 - `tests/Browser/ProjectHandbookTest.php`: reach the handbook from the project page and fill a tab on
@@ -160,3 +160,4 @@ Each line carries `request_id`.
 
 ## Change history
 2026-09-29 — Handbook page, `ReadHandbook`, `ResolveKit`, kit badges, Dashboard | Handbook tabs, `kit_path`/`kit_ref` config (SB-14, `95314c6`)
+2026-10-11 — In the dark shell, restyled with its tokens, layout unchanged; Dashboard tab gone (RD-4, `f722dbc`)
