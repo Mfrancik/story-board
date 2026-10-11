@@ -15,6 +15,13 @@ use Illuminate\Support\Str;
  */
 class RenderStory
 {
+    /** Raw HTML escaped, unsafe links dropped: story text is written in other repos and renders inside the board. */
+    private const SAFE = [
+        'html_input' => 'escape',
+        'allow_unsafe_links' => false,
+        'max_nesting_level' => 20,
+    ];
+
     /**
      * @param  GitReader  $git  the only way the board touches a project
      */
@@ -57,10 +64,15 @@ class RenderStory
      */
     public function toHtml(string $markdown): string
     {
-        return Str::markdown($markdown, [
-            'html_input' => 'escape',
-            'allow_unsafe_links' => false,
-            'max_nesting_level' => 20,
-        ]);
+        return Str::markdown($markdown, self::SAFE);
+    }
+
+    /**
+     * One line of markdown (a list item, say) to safe inline HTML — no wrapping
+     * paragraph — under the same rules as toHtml().
+     */
+    public function inline(string $markdown): string
+    {
+        return Str::inlineMarkdown($markdown, self::SAFE);
     }
 }

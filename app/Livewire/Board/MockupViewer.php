@@ -2,13 +2,11 @@
 
 namespace App\Livewire\Board;
 
+use App\Actions\Board\PickMockup;
 use App\Actions\Board\ReadCurrentVersion;
 use App\Actions\Board\ReadMockupSets;
-use App\Exceptions\StoryPickRefusedException;
 use App\Livewire\Board\Concerns\GuardsProjectPage;
 use App\Models\Project;
-use App\Models\Story;
-use App\Services\StoryPickWriter;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Log;
@@ -87,37 +85,21 @@ class MockupViewer extends Component
 
     /**
      * Record `$option` as this story's pick with `$reason`, committing the story
-     * file alone on the checkout's branch. Everything is re-validated here and in
-     * StoryPickWriter: the browser can send any option for any state.
+     * file alone on the checkout's branch. Everything is re-validated in
+     * PickMockup and StoryPickWriter: the browser can send any option for any state.
      *
      * Side effects: one file write and one commit in the project (never pushed),
      * or none when refused; a toast on success.
      */
-    public function pick(string $option, string $reason, ReadMockupSets $sets, StoryPickWriter $writer): void
+    public function pick(string $option, string $reason, PickMockup $picker): void
     {
-        $this->refusal = null;
-        $project = Project::where('name', $this->project)->first();
-        $set = $project ? $sets->find($project, $this->story) : null;
-        $row = $set ? Story::find($set['row']) : null;
-        if ($project === null || $set === null || $row === null) {
-            Log::warning('board.mockup_pick_refused', ['project' => $this->project, 'story' => $this->story, 'reason' => 'no mockup set']);
-            $this->refusal = 'This story has no mockup set on the board any more.';
-
+        $result = $picker->handle($this->project, $this->story, $option, $reason);
+        $this->refusal = $result['refusal'];
+        if ($result['refusal'] !== null) {
             return;
         }
 
-        try {
-            $picked = $writer->pick($project, $row, $set['options'], $option, $reason);
-        } catch (StoryPickRefusedException $e) {
-            $this->refusal = 'Pick refused: '.$e->getMessage().'.';
-
-            return;
-        } finally {
-            // A refused pick changes nothing, but a commit that landed must show at once.
-            $sets->forget($project);
-        }
-
-        Flux::toast(variant: 'success', text: 'Picked option '.strtoupper($option)." for {$this->story}, committed on {$picked['branch']} (not pushed).");
+        Flux::toast(variant: 'success', text: 'Picked option '.strtoupper($option)." for {$this->story}, committed on {$result['branch']} (not pushed).");
     }
 
     /**

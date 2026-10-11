@@ -1,5 +1,5 @@
 # RD-3 — Short story page
-Status: approved         Journey: none
+Status: built            Journey: none
 Source: owner 2026-10-10: *"id like to shorten the story pages a lot more, some are super supper long i wont read
 them. a title, short description, mockups, details can go below that"*.
 

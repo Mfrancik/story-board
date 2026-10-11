@@ -1,197 +1,225 @@
-{{-- SB-4 story page — mockup B (story above the mockups) plus the owner's full-screen compare. All UI state is Alpine. --}}
+{{--
+    RD-3 story page, short first (docs/mockups/RD-3/option-a.html, option A) in the RD-2 shell. Top to bottom: the ID,
+    status and initiative as tags and the title; one summary line; the one action the story waits for (a mockup pick);
+    the mockups — Today (a journey shot of the page, when one exists) and each option in one sandboxed frame, with full
+    screen and the existing side-by-side viewer; then Details, every section folded with its count on the header.
+
+    The option buttons are Alpine (`view` is what the frame shows, `choice` the option a pick would record; Today
+    changes only `view`), and Details are native <details>, so neither calls the server. The pick is the one server call.
+    The mockup's "Approve without a pick", "Edit story" and "Cost & history" are out of scope (RD-3) and not built.
+--}}
+@use('App\Actions\Board\ReadMockupSets')
+@use('App\Services\StoryPickWriter')
 @php
     $options = $story->mockups['options'] ?? [];
-    $servable = ($story->mockups['dir'] ?? null) === "docs/mockups/{$story->story_id}" && $options !== [] && $story->isInGit();
-    $chosen = $story->mockups['chosen'] ?? null;
-    $first = $chosen && in_array($chosen, $options, true) ? $chosen : ($options[0] ?? null);
-    $other = collect($options)->first(fn ($o) => $o !== $first) ?? $first;
-    $src = fn (string $o) => $story->mockupUrl("option-{$o}.html");
-    $page = fn (int $id, bool $onRef) => route('stories.show', ['project' => $project->name, 'storyId' => $story->story_id, ...($onRef ? [] : ['v' => $id])]);
-    $toggle = 'rounded-md border border-zinc-300 px-2 py-1 text-xs aria-pressed:bg-zinc-900 aria-pressed:text-white dark:border-zinc-700 dark:aria-pressed:bg-white dark:aria-pressed:text-zinc-900';
-    $chip = 'rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800';
+    // The same rule both file routes enforce: only the story's own folder, read from git.
+    $servable = $gate['visual'] && ($story->mockups['dir'] ?? null) === "docs/mockups/{$story->story_id}" && $options !== [] && $story->isInGit();
+    $awaiting = $set !== null && $set['state'] === ReadMockupSets::AWAITING;
+    $picked = $set !== null ? ($set['state'] === ReadMockupSets::PICKED ? $set['picked'] : null) : ($story->mockups['chosen'] ?? null);
+    $pickedWhy = $set !== null ? $set['reason'] : $gate['why'];
+    $first = $picked !== null && in_array($picked, $options, true) ? $picked : ($options[0] ?? null);
+    $urls = collect($options)->mapWithKeys(fn ($o) => [$o => $story->mockupUrl("option-{$o}.html")])->all();
+    $shotUrl = $today ? route('shots.file', ['project' => $model->name, 'journey' => $today['shot']['journey'], 'file' => $today['shot']['file']]) : null;
+    $page = fn (int $id, bool $onRef) => route('stories.show', ['project' => $model->name, 'storyId' => $story->story_id, ...($onRef ? [] : ['v' => $id])]);
+    $statusTone = match (true) {
+        $awaiting => 'needs',
+        $story->status === 'built' => 'go',
+        $story->status === 'approved' => 'live',
+        default => null,
+    };
+    $kindLabels = ['main' => 'on main', 'branch' => 'branch', 'worktree' => 'worktree', 'untracked' => 'untracked'];
+    $versionSummary = collect($versionKinds)->map(fn ($n, $kind) => "{$n} ".($kindLabels[$kind] ?? $kind))->implode(' · ');
+    $focus = 'outline-needs focus-visible:outline-2 focus-visible:outline-offset-2';
+    $link = "text-needs hover:underline underline-offset-4 {$focus}";
+    $optionButton = "min-h-11 rounded-lg border border-rim px-4 text-sm font-medium text-ink-soft hover:text-ink aria-pressed:border-ink aria-pressed:bg-ink aria-pressed:text-ground {$focus}";
+    $summary = "flex min-h-13 cursor-pointer list-none items-center gap-3 px-5 text-sm font-medium hover:bg-raised [&::-webkit-details-marker]:hidden {$focus}";
+    $chevron = '<svg class="size-4 shrink-0 text-ink-faint transition-transform group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+    $count = 'ml-auto text-right text-sm font-normal text-ink-muted';
+    $detailBody = 'px-5 pt-1 pb-5 text-sm leading-relaxed text-ink-soft';
 @endphp
-<div>
-    <header class="flex flex-wrap items-center gap-2 border-b border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
-        <a href="{{ route('home') }}" wire:navigate class="text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white">← What needs me</a>
-        <span class="text-zinc-300 dark:text-zinc-600" aria-hidden="true">/</span>
-        <a href="{{ route('projects.show', ['project' => $project->name]) }}" wire:navigate class="text-sm hover:underline">{{ $project->name }}</a>
-        <span class="text-zinc-300 dark:text-zinc-600" aria-hidden="true">/</span>
-        <span class="font-mono text-sm font-semibold">{{ $story->story_id }}</span>
-        <div class="ml-auto flex items-center gap-2">
-            @if ($story->status === 'approved')
-                <button type="button" x-data="{ copied: false }"
-                    x-on:click="navigator.clipboard?.writeText(@js('/build '.$story->story_id)); copied = true; setTimeout(() => copied = false, 1500)"
-                    class="rounded-md border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700">
-                    <span x-show="! copied">Copy <code>/build {{ $story->story_id }}</code></span>
-                    <span x-show="copied" x-cloak>Copied /build {{ $story->story_id }}</span>
-                </button>
-            @endif
-            <button type="button" x-data x-on:click="$flux.dark = ! $flux.dark" aria-label="Toggle dark mode"
-                class="rounded-md border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700">◐</button>
-        </div>
-    </header>
+<main class="mx-auto flex max-w-5xl flex-col gap-7 px-4 py-6 sm:px-8 lg:py-10"
+    @if ($servable) x-data="{ view: @js($first), choice: @js($first), reason: '', urls: @js($urls) }" @endif>
 
-    <main class="mx-auto max-w-6xl px-4 py-6">
+    <nav aria-label="Breadcrumb" class="text-sm text-ink-muted">
+        <a href="{{ route('projects.show', $model->name) }}" wire:navigate class="hover:text-ink {{ $focus }}">{{ $model->name }}</a>
+        <span aria-hidden="true">/</span>
+        <a href="{{ route('projects.stories', $model->name) }}" wire:navigate class="hover:text-ink {{ $focus }}">Stories</a>
+        <span aria-hidden="true">/</span>
+        <span class="font-mono">{{ $story->story_id }}</span>
+    </nav>
+
+    <header class="flex flex-col gap-3.5">
+        <div class="flex flex-wrap items-center gap-2">
+            <x-shell.tag mono data-tag="id">{{ $story->story_id }}</x-shell.tag>
+            <x-shell.tag :tone="$statusTone" data-tag="status">{{ ($story->status ?? 'no status').($awaiting ? ' · awaiting your pick' : '') }}</x-shell.tag>
+            @if ($story->initiative)<x-shell.tag data-tag="initiative">{{ $story->initiative }}</x-shell.tag>@endif
+            @if (count($story->parse_errors) > 0)<x-shell.tag tone="fail" data-tag="parse-errors">{{ count($story->parse_errors) }} parse {{ Str::plural('error', count($story->parse_errors)) }}</x-shell.tag>@endif
+        </div>
+        <h1 class="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">{{ $story->title ?? $story->story_id }}</h1>
+        @if ($outline['summary'])
+            <p data-summary class="max-w-2xl text-lg leading-relaxed text-ink-soft">{{ $outline['summary'] }}</p>
+        @endif
+
         @if ($story->location)
-            <p data-offmain-shown class="mb-3 rounded-lg border border-warning/50 bg-warning/10 px-3 py-2 text-sm">
-                <b>{{ ucfirst($story->placePhrase()) }} — not on main.</b>
-                @if ($onRef)<a href="{{ $page($onRef->id, true) }}" wire:navigate class="underline">See the version on main</a>@else It is not on main at all yet.@endif
+            <p data-offmain-shown class="text-sm text-needs">
+                {{ ucfirst($story->placePhrase()) }} — not on main.
+                @if ($onRef)<a href="{{ $page($onRef->id, true) }}" wire:navigate class="underline underline-offset-4 {{ $focus }}">See the version on main</a>@else It is not on main at all yet.@endif
             </p>
         @endif
-        @if ($versions !== [])
-            <ul data-offmain-banner class="mb-3 space-y-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-800 dark:bg-zinc-900">
-                @foreach ($versions as $v)
-                    <li><a href="{{ $page($v['id'], $v['onRef']) }}" wire:navigate class="{{ $v['onRef'] ? '' : 'text-warning' }} hover:underline">{{ $v['text'] }}</a></li>
-                @endforeach
-            </ul>
+        @if ($story->isInGit() && $body === null)
+            <p role="alert" data-read-failed class="text-sm text-fail">This story could not be read from git at {{ substr($story->sha, 0, 8) }}. Its summary and details are missing until it can be.</p>
         @endif
-        <article class="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-            <div class="flex flex-wrap items-center gap-1.5">
-                <x-board.status-chip :status="$story->status" :errors="count($story->parse_errors)" />
-                @if ($story->initiative)<span class="{{ $chip }}">initiative: {{ $story->initiative }}</span>@endif
-                @if ($story->journey)<span class="{{ $chip }}">journey: {{ $story->journey }}</span>@endif
-                @if ($story->depends_on !== [])
-                    <span class="{{ $chip }}">depends on
-                        @foreach ($story->depends_on as $dep)
-                            @if (in_array($dep, $known, true))
-                                <a href="{{ route('stories.show', ['project' => $project->name, 'storyId' => $dep]) }}" wire:navigate class="underline">{{ $dep }}</a>@if (! $loop->last),@endif
-                            @else
-                                {{ $dep }}@if (! $loop->last),@endif
-                            @endif
-                        @endforeach
-                    </span>
-                @endif
+
+        @if ($awaiting && $servable)
+            <div class="mt-1 flex flex-wrap items-center gap-2.5">
+                <button type="button" data-primary-action x-on:click="$wire.pick(choice, reason)" wire:loading.attr="disabled" wire:target="pick"
+                    class="inline-flex min-h-11 items-center gap-2 rounded-lg bg-needs px-4.5 text-sm font-medium text-needs-ink hover:brightness-110 disabled:opacity-60 {{ $focus }}">
+                    <span wire:loading.remove wire:target="pick">Pick option <span x-text="choice.toUpperCase()">{{ strtoupper((string) $first) }}</span></span>
+                    <span wire:loading wire:target="pick">Picking…</span>
+                </button>
             </div>
-            @if ($story->source)
-                <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Source: {{ $story->source }}</p>
+        @endif
+        @if ($refusal)
+            <p role="alert" data-pick-refusal class="rounded-lg border border-fail/40 bg-fail/10 px-3 py-2 text-sm text-fail">{{ $refusal }}</p>
+        @endif
+        @if ($done)
+            <p role="status" data-pick-done class="rounded-lg border border-go/40 bg-go/10 px-3 py-2 text-sm text-go">{{ $done }}</p>
+        @endif
+    </header>
+
+    @if ($servable)
+        <section data-story-mockups aria-labelledby="mockups-title" class="flex flex-col gap-3.5">
+            <div class="flex flex-wrap items-center gap-2.5">
+                <h2 id="mockups-title" class="text-lg font-semibold">Mockups</h2>
+                @if ($today)<span class="text-sm text-ink-muted">compare with today's screen</span>@endif
+                <div role="group" aria-label="Choose a mockup" class="flex flex-wrap gap-2 sm:ml-auto">
+                    @if ($today)
+                        <button type="button" data-mockup-option="today" x-on:click="view = 'today'" aria-pressed="false" x-bind:aria-pressed="(view === 'today').toString()" class="{{ $optionButton }}">Today</button>
+                    @endif
+                    @foreach ($options as $o)
+                        <button type="button" data-mockup-option="{{ $o }}" x-on:click="view = @js($o); choice = @js($o)" aria-pressed="{{ $o === $first ? 'true' : 'false' }}" x-bind:aria-pressed="(view === @js($o)).toString()" class="{{ $optionButton }}">Option {{ strtoupper($o) }}@if ($o === $picked) ✓@endif</button>
+                    @endforeach
+                </div>
+            </div>
+
+            @if ($picked)
+                <p data-picked class="flex flex-wrap items-center gap-2 text-sm text-ink-soft">
+                    <x-shell.tag tone="go">Picked {{ strtoupper($picked) }}</x-shell.tag>
+                    {{ $pickedWhy ?? 'No reason recorded.' }}
+                    @if ($set !== null && ! $set['pushed'])<span class="text-ink-muted">· committed in the checkout, not pushed yet</span>@endif
+                </p>
+            @elseif (! $awaiting && $gate['chosen'])
+                {{-- A choice the kit parser could not read as a letter (ADR-009): quote it, never guess. --}}
+                <p data-chosen-text class="text-sm text-ink-soft"><span class="font-medium text-needs">Chosen, as written in the story:</span> {{ $gate['chosen'] }}</p>
             @endif
-            <p class="mt-1 font-mono text-xs text-zinc-500 dark:text-zinc-400">{{ $project->name }} · {{ $story->path }} @ {{ $story->location_kind === null ? $project->ref.' '.substr($story->sha, 0, 8) : ($story->isInGit() ? $story->branch.' '.substr($story->sha, 0, 8) : $story->location) }}</p>
 
-            @if ($story->parse_errors !== [])
-                <ul class="mt-3 rounded border border-danger/30 bg-danger/5 px-3 py-2 text-xs text-danger">
-                    @foreach ($story->parse_errors as $error)<li>{{ $error }}</li>@endforeach
-                </ul>
-            @endif
-
-            <details open class="mt-3">
-                <summary class="cursor-pointer text-sm text-zinc-500 dark:text-zinc-400">Story text</summary>
-                @if (! $story->isInGit())
-                    <p class="mt-3 text-sm text-zinc-500 dark:text-zinc-400">An untracked file, {{ $story->location }} — not in git, so the board does not read its text. Open {{ $story->path }} in that checkout.</p>
-                @elseif ($body === null)
-                    <p class="mt-3 text-sm text-danger">This story could not be read from git at {{ substr($story->sha, 0, 8) }}.</p>
-                @else
-                    <div class="prose prose-zinc prose-code:before:content-none prose-code:after:content-none mt-3 max-w-3xl dark:prose-invert">{!! $body !!}</div>
-                @endif
-            </details>
-        </article>
-
-        @if ($gate['visual'])
-            <section data-mockups class="mt-6"
-                x-data="{ mode: 'side', width: 375, current: @js($first), compare: false, left: @js($first), right: @js($other), options: @js($options) }"
-                x-on:keydown.escape.window="compare = false">
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                    <h2 class="text-lg font-semibold">Mockups <span class="text-zinc-500">{{ count($options) }}</span></h2>
-                    @if ($servable)
-                        <div class="flex flex-wrap items-center gap-2">
-                            <div class="flex gap-1" role="group" aria-label="Layout">
-                                <button type="button" x-on:click="mode = 'side'" x-bind:aria-pressed="(mode === 'side').toString()" class="{{ $toggle }}">Side by side</button>
-                                <button type="button" x-on:click="mode = 'one'" x-bind:aria-pressed="(mode === 'one').toString()" class="{{ $toggle }}">One at a time</button>
-                            </div>
-                            <div class="flex gap-1" role="group" aria-label="Frame width">
-                                @foreach ([375, 768, 1280] as $w)
-                                    <button type="button" x-on:click="width = {{ $w }}" x-bind:aria-pressed="(width === {{ $w }}).toString()" class="{{ $toggle }} tabular-nums">{{ $w }}</button>
-                                @endforeach
-                            </div>
-                            <div class="flex gap-1" role="group" aria-label="Option" x-show="mode === 'one'" x-cloak>
-                                @foreach ($options as $o)
-                                    <button type="button" x-on:click="current = @js($o)" x-bind:aria-pressed="(current === @js($o)).toString()" class="{{ $toggle }} font-mono">{{ strtoupper($o) }}{{ $o === $chosen ? ' ✓' : '' }}</button>
-                                @endforeach
-                            </div>
-                            @if (count($options) > 1)
-                                <button type="button" data-compare x-on:click="compare = true" class="rounded-md bg-zinc-900 px-3 py-1 text-xs font-medium text-white dark:bg-white dark:text-zinc-900">Compare two…</button>
-                            @endif
-                        </div>
+            <div class="flex flex-col gap-3 rounded-xl border border-edge bg-surface p-4">
+                <div class="relative h-110 overflow-hidden rounded-lg bg-white">
+                    @if ($today)
+                        <div x-show="view === 'today'" x-cloak class="absolute inset-0"><x-board.mockup-current :current="$today" :project="$model->name" /></div>
+                    @endif
+                    <div x-show="view !== 'today'" class="absolute inset-0 overflow-hidden" x-data="mockupFit(() => 1280)">
+                        <iframe data-mockup-frame src="{{ $urls[$first] }}" x-bind:src="urls[choice]" sandbox="allow-scripts" title="{{ $story->story_id }} mockup"
+                            class="absolute top-0 left-0 origin-top-left border-0 bg-white" x-bind:style="frameStyle"></iframe>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+                    <span class="text-ink-soft" x-text="view === 'today' ? 'Today: the page as its journey test last saw it.' : 'Option ' + view.toUpperCase()">Option {{ strtoupper((string) $first) }}</span>
+                    <a data-full-screen href="{{ $urls[$first] }}" x-bind:href="view === 'today' ? @js($shotUrl) : urls[view]" target="_blank" rel="noopener" class="sm:ml-auto inline-flex min-h-11 items-center {{ $link }}">Full screen ↗</a>
+                    @if ($set !== null)
+                        <a href="{{ route('mockups.show', ['project' => $model->name, 'story' => $story->story_id]) }}" wire:navigate class="inline-flex min-h-11 items-center {{ $link }}">Side by side</a>
                     @endif
                 </div>
+            </div>
 
-                @if (! $servable)
-                    <p class="mt-3 rounded-lg border border-dashed border-zinc-300 px-3 py-4 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">No mockups {{ $story->location ? $story->placePhrase() : 'at '.$project->ref }} for {{ $story->story_id }}{{ $story->isInGit() ? '' : ' that the board can serve (untracked files are not in git)' }}.</p>
-                @else
-                    @if ($chosen)
-                        <div class="mt-3 rounded-lg border border-built/50 bg-built/10 p-3 text-sm">
-                            <b>Chosen: option {{ strtoupper($chosen) }}.</b>
-                            @if ($gate['why'])<span class="text-zinc-700 dark:text-zinc-300">{{ $gate['why'] }}</span>
-                            @elseif ($gate['chosen'])<span class="text-zinc-700 dark:text-zinc-300">{{ $gate['chosen'] }}</span>@endif
-                        </div>
-                    @elseif ($gate['chosen'])
-                        {{-- The story records a choice the kit parser could not read as a letter (F-1): quote it, never guess. --}}
-                        <div data-chosen-text class="mt-3 rounded-lg border border-warning/50 bg-warning/10 p-3 text-sm">
-                            <b>Chosen, as written in the story:</b> {{ $gate['chosen'] }}
-                            <span class="block text-xs text-zinc-600 dark:text-zinc-400">The story parser could not read an option letter from this line, so no frame is marked (backlog F-1).</span>
-                        </div>
-                    @else
-                        <p class="mt-3 text-sm text-zinc-500 dark:text-zinc-400">No option chosen yet.</p>
-                    @endif
+            @if ($awaiting)
+                <label for="pick-reason" class="flex flex-col gap-1.5 text-sm text-ink-muted">Why this one? (optional, saved with the pick)
+                    <input id="pick-reason" type="text" x-model="reason" maxlength="{{ StoryPickWriter::REASON_MAX }}" placeholder="One line"
+                        class="min-h-11 rounded-lg border border-rim bg-surface px-3.5 text-sm text-ink placeholder:text-ink-faint {{ $focus }}">
+                </label>
+            @endif
+        </section>
+    @endif
 
-                    <div class="mt-3 flex gap-4 overflow-x-auto pb-4">
-                        @foreach ($options as $o)
-                            <figure data-mockup-frame="{{ $o }}" @if ($o === $chosen) data-chosen @endif class="shrink-0"
-                                x-show="mode === 'side' || current === @js($o)">
-                                <figcaption class="mb-1 flex items-center gap-2 text-sm">
-                                    <span class="font-mono font-semibold">option-{{ $o }}</span>
-                                    @if ($o === $chosen)<span class="rounded bg-built px-1.5 text-xs font-medium text-white">chosen</span>@endif
-                                    <a href="{{ $src($o) }}" target="_blank" rel="noopener" class="ml-auto text-xs text-zinc-500 underline dark:text-zinc-400">open ↗</a>
-                                </figcaption>
-                                <div class="overflow-hidden rounded-lg bg-white {{ $o === $chosen ? 'ring-2 ring-built' : 'ring-1 ring-zinc-200 dark:ring-zinc-800' }}">
-                                    <iframe src="{{ $src($o) }}" sandbox="allow-scripts" loading="lazy" title="Option {{ $o }}"
-                                        class="mockup-frame" x-bind:style="`width: ${width}px`"></iframe>
-                                </div>
-                            </figure>
-                        @endforeach
-                    </div>
+    <section aria-labelledby="details-title" class="overflow-hidden rounded-xl border border-edge bg-surface">
+        <h2 id="details-title" class="px-5 py-4 text-lg font-semibold">Details</h2>
 
-                    {{-- Compare: any two options, full window, 50/50. Esc or × closes. --}}
-                    {{-- x-if, not x-show: the two frames (two git reads) are created only while the overlay is open.
-                         x-trap moves focus in on open and hands it back to "Compare two…" on close. --}}
-                    <template x-teleport="body">
-                        <template x-if="compare">
-                        <div x-trap.noscroll="compare" x-transition.opacity role="dialog" aria-modal="true" aria-label="Compare two mockups"
-                            class="fixed inset-0 z-50 flex flex-col bg-zinc-100 dark:bg-zinc-950">
-                            <div class="flex flex-wrap items-center gap-2 border-b border-zinc-200 bg-white px-4 py-2 dark:border-zinc-800 dark:bg-zinc-900">
-                                <span class="text-sm font-semibold">Compare · {{ $story->story_id }}</span>
-                                <label class="sr-only" for="cmp-left">Left option</label>
-                                <select id="cmp-left" x-model="left" class="rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-900">
-                                    <template x-for="o in options" :key="o"><option :value="o" x-text="'Option ' + o.toUpperCase()"></option></template>
-                                </select>
-                                <span class="text-sm text-zinc-500">vs</span>
-                                <label class="sr-only" for="cmp-right">Right option</label>
-                                <select id="cmp-right" x-model="right" class="rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-900">
-                                    <template x-for="o in options" :key="o"><option :value="o" x-text="'Option ' + o.toUpperCase()"></option></template>
-                                </select>
-                                <button type="button" x-on:click="[left, right] = [right, left]" class="rounded-md border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700" aria-label="Swap sides">⇄</button>
-                                <div class="flex gap-1" role="group" aria-label="Frame width">
-                                    @foreach ([375, 768, 1280] as $w)
-                                        <button type="button" x-on:click="width = {{ $w }}" x-bind:aria-pressed="(width === {{ $w }}).toString()" class="{{ $toggle }} tabular-nums">{{ $w }}</button>
-                                    @endforeach
-                                </div>
-                                <button type="button" x-on:click="compare = false" class="ml-auto rounded-md border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700" aria-label="Close compare">× Close</button>
-                            </div>
-                            <div class="grid min-h-0 flex-1 grid-cols-2 gap-2 p-2">
-                                <template x-for="side in [left, right]">
-                                    <div class="flex min-h-0 flex-col">
-                                        <p class="mb-1 font-mono text-xs"><span x-text="'option-' + side"></span><span x-show="side === @js($chosen)" class="ml-1 rounded bg-built px-1 text-white">chosen</span></p>
-                                        <div class="min-h-0 flex-1 overflow-auto rounded-lg bg-white ring-1 ring-zinc-200 dark:ring-zinc-800">
-                                            <iframe x-bind:src="@js($story->mockupUrl('__FILE__')).replace('__FILE__', 'option-' + side + '.html')"
-                                                sandbox="allow-scripts" title="Compared option" class="h-full border-0" x-bind:style="`width: ${width}px`"></iframe>
-                                        </div>
-                                    </div>
-                                </template>
-                            </div>
-                        </div>
-                        </template>
-                    </template>
+        <details data-detail="criteria" class="group border-t border-hairline">
+            <summary class="{{ $summary }}">{!! $chevron !!}Done when
+                <span class="ml-auto">@if ($outline['criteria'] !== [])<x-shell.tag>{{ count($outline['criteria']) }} {{ count($outline['criteria']) === 1 ? 'criterion' : 'criteria' }}</x-shell.tag>@else<span class="text-sm font-normal text-ink-muted">None written</span>@endif</span>
+            </summary>
+            @if ($outline['criteria'] !== [])
+                <ol class="{{ $detailBody }} flex list-decimal flex-col gap-2 pl-10">
+                    @foreach ($outline['criteria'] as $criterion)<li>{!! $criterion !!}</li>@endforeach
+                </ol>
+            @else
+                <p class="{{ $detailBody }}">The story has no Acceptance criteria section.</p>
+            @endif
+        </details>
+
+        <details data-detail="depends" class="group border-t border-hairline">
+            <summary class="{{ $summary }}">{!! $chevron !!}Depends on<span class="{{ $count }}">{{ $story->depends_on !== [] ? implode(', ', $story->depends_on) : 'None' }}</span></summary>
+            @if ($story->depends_on !== [])
+                <ul class="{{ $detailBody }} flex flex-col gap-1.5">
+                    @foreach ($story->depends_on as $dep)
+                        <li>
+                            @if ($depends->has($dep))
+                                <a href="{{ route('stories.show', ['project' => $model->name, 'storyId' => $dep]) }}" wire:navigate class="font-mono {{ $link }}">{{ $dep }}</a>
+                                {{ $depends[$dep]->title }} <span class="text-ink-muted">({{ $depends[$dep]->status ?? 'no status' }})</span>
+                            @else
+                                <span class="font-mono">{{ $dep }}</span> <span class="text-ink-muted">— not on the board</span>
+                            @endif
+                        </li>
+                    @endforeach
+                </ul>
+            @else
+                <p class="{{ $detailBody }}">This story depends on no other story.</p>
+            @endif
+        </details>
+
+        <details data-detail="untouchable" class="group border-t border-hairline">
+            <summary class="{{ $summary }}">{!! $chevron !!}Do not touch<span class="{{ $count }}">{{ $outline['untouchable'] !== [] ? count($outline['untouchable']).' '.Str::plural('item', count($outline['untouchable'])) : 'None listed' }}</span></summary>
+            @if ($outline['untouchable'] !== [])
+                <ul class="{{ $detailBody }} flex list-disc flex-col gap-1.5 pl-10">
+                    @foreach ($outline['untouchable'] as $item)<li>{!! $item !!}</li>@endforeach
+                </ul>
+            @else
+                <p class="{{ $detailBody }}">The story lists nothing it must not touch.</p>
+            @endif
+        </details>
+
+        <details data-detail="versions" class="group border-t border-hairline">
+            <summary class="{{ $summary }}">{!! $chevron !!}Other versions<span class="{{ $count }}">{{ $versionSummary !== '' ? $versionSummary : 'None' }}</span></summary>
+            @if ($versions !== [])
+                <ul data-offmain-banner class="{{ $detailBody }} flex flex-col gap-1.5">
+                    @foreach ($versions as $v)
+                        <li><a href="{{ $page($v['id'], $v['onRef']) }}" wire:navigate class="{{ $v['onRef'] ? 'text-ink' : 'text-needs' }} hover:underline underline-offset-4 {{ $focus }}">{{ $v['text'] }}</a></li>
+                    @endforeach
+                </ul>
+            @else
+                <p class="{{ $detailBody }}">No copy of this story is on a branch, in a worktree or untracked.</p>
+            @endif
+        </details>
+
+        <details data-detail="text" class="group border-t border-hairline">
+            <summary class="{{ $summary }}">{!! $chevron !!}Full story text
+                <span class="{{ $count }} font-mono text-xs">{{ $story->path }} · {{ $lines !== null ? $lines.' '.Str::plural('line', $lines) : ($story->isInGit() ? 'not read' : 'not in git') }}</span>
+            </summary>
+            <div class="{{ $detailBody }}">
+                <p class="font-mono text-xs text-ink-muted">{{ $model->name }} · {{ $story->path }} @ {{ $story->location_kind === null ? $model->ref.' '.substr($story->sha, 0, 8) : ($story->isInGit() ? $story->branch.' '.substr($story->sha, 0, 8) : $story->location) }}</p>
+                @if ($story->parse_errors !== [])
+                    <ul class="mt-3 rounded-lg border border-fail/40 bg-fail/10 px-3 py-2 text-xs text-fail">
+                        @foreach ($story->parse_errors as $error)<li>{{ $error }}</li>@endforeach
+                    </ul>
                 @endif
-            </section>
-        @endif
-    </main>
-</div>
+                @if (! $story->isInGit())
+                    <p class="mt-3">An untracked file, {{ $story->location }} — not in git, so the board does not read its text. Open {{ $story->path }} in that checkout.</p>
+                @elseif ($body === null)
+                    <p class="mt-3 text-fail">Not read: git could not read this file at {{ substr($story->sha, 0, 8) }}.</p>
+                @else
+                    <div class="prose prose-invert mt-3 max-w-none prose-code:before:content-none prose-code:after:content-none">{!! $body !!}</div>
+                @endif
+            </div>
+        </details>
+    </section>
+</main>
