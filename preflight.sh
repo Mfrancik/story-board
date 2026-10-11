@@ -289,6 +289,23 @@ ui_inventory_gate() (
 PF_ROW_MAX_INDEX="${PF_ROW_MAX_INDEX:-300}"
 PF_ROW_MAX_INVENTORY="${PF_ROW_MAX_INVENTORY:-600}"
 
+# --- docs test pins resolve (L-9) ---
+# A doc that pins a test by name (`StoryPageTest` "does not load …") asserts a
+# fact tests/ can answer. RD-3 deleted a pinned test and the RUNBOOK kept citing
+# it until a full audit noticed (L-2's class). A line saying the pin is
+# superseded or no longer exists is skipped. WARN-only, like the row gate.
+docs_test_pins_gate() (
+  cd "$SCRIPT_DIR" 2>/dev/null || { echo "cannot cd to script dir: $SCRIPT_DIR"; exit 2; }
+  [ -d docs ] && [ -d tests ] || exit 0
+  rc=0
+  while IFS=$'\t' read -r loc name; do
+    grep -rqF -- "$name" tests || { echo "$loc pins a test that is not in tests/: \"$name\""; rc=1; }
+  done < <(grep -rnE '`[A-Z][A-Za-z0-9]+Test`' docs 2>/dev/null | grep -viE 'superseded|no longer exists' \
+    | perl -ne 'print "$1\t$2\n" if /^([^:]+:\d+):.*?`[A-Z][A-Za-z0-9]+Test`[^.\n]{0,12}?["\x{201C}\x27]([^"\x{201D}\x27]{8,})["\x{201D}\x27]/')
+  [ "$rc" = 0 ] || echo "  -> rename the pin to the test's current name, or mark the entry superseded"
+  exit "$rc"
+)
+
 docs_row_length_gate() (
   cd "$SCRIPT_DIR" 2>/dev/null || { echo "cannot cd to script dir: $SCRIPT_DIR"; exit 2; }
   rc=0
@@ -793,6 +810,7 @@ check "journey refs resolve" "journey_refs_gate"
 check "UI inventory current" "ui_inventory_gate"
 check "audit pack <= cap"    "audit_pack_gate"
 warn  "docs rows are pointers" "docs_row_length_gate"
+warn  "docs test pins resolve" "docs_test_pins_gate"
 warn  "workspace growth"      "workspace_growth_gate"
 
 # --- expensive tail ---
