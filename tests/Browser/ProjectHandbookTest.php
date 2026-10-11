@@ -38,8 +38,8 @@ afterEach(function () {
     $this->kit->destroy();
 });
 
-it('opens the handbook from the project page and fills a tab the first time it opens', function () {
-    $page = visit('/p/coins')->resize(1280, 900);
+it('opens the handbook from the Stories page and fills a tab the first time it opens', function () {
+    $page = visit('/p/coins/stories')->resize(1280, 900);
 
     $page->click('[data-project-tab="handbook"]')
         ->assertPathIs('/p/coins/handbook')

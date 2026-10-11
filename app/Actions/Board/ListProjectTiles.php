@@ -6,6 +6,7 @@ use App\Models\ProdMetric;
 use App\Models\ProdSnapshot;
 use App\Models\Project;
 use App\Models\Story;
+use App\Services\Production\MetricNumber;
 use App\Services\ProjectFilter;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
@@ -129,7 +130,7 @@ class ListProjectTiles
             return [];
         }
 
-        // The board's local day, as the Production page and the snapshot writer count days.
+        // The board's local day, as the snapshot writer counts days.
         $today = CarbonImmutable::parse(ReadProductionProject::today());
         $since = $today->subDays(self::PROD_DAYS - 1);
         $byDay = [];
@@ -154,7 +155,7 @@ class ListProjectTiles
             $headlines[$projectId] = [
                 'label' => $metric->label,
                 'value' => $value,
-                'text' => ListProductionDashboard::format($value),
+                'text' => MetricNumber::format($value),
                 'series' => $series,
             ];
         }

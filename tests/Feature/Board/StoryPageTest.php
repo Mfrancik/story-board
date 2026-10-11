@@ -172,8 +172,24 @@ it('renders the page in the RD-2 shell with the tags, and links Depends on to th
         ->getContent();
 
     expect($html)->toMatch('/data-nav-project="fx"\s+aria-current="page"/')
-        ->toContain('href="'.route('stories.show', ['project' => 'fx', 'storyId' => 'FX-3']).'"');
+        ->toContain('href="'.route('stories.show', ['project' => 'fx', 'storyId' => 'FX-3']).'"')
+        // Ported from SB-7's AppShellTest (RD-9): the shell's 375 px menu, and the breadcrumb back to Stories.
+        ->toContain('aria-label="Open menu"')
+        ->toContain('href="'.route('projects.stories', ['project' => 'fx']).'"');
 });
+
+// Ported from SB-7's AppShellTest (RD-9): EnsureProjectIsShown refuses the story page before binding, and says why.
+it('refuses the story page of an unknown or disabled project and logs board.project_page_refused with the reason', function (string $url, string $reason) {
+    Log::spy();
+    Project::factory()->disabled()->create(['name' => 'acme-site']);
+
+    $this->get($url)->assertNotFound();
+
+    Log::shouldHaveReceived('info')->withArgs(fn ($e, $c = []) => $e === 'board.project_page_refused' && $c['reason'] === $reason)->once();
+})->with([
+    'unknown' => ['/p/nope/s/AB-1', 'unknown'],
+    'disabled' => ['/p/acme-site/s/AB-1', 'disabled'],
+]);
 
 it('shows one sandboxed frame of the selected option, never with same-origin access, and links full screen and side by side', function () {
     $html = $this->get('/p/fx/s/FX-1')->assertOk()->getContent();

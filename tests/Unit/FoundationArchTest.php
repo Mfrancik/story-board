@@ -1,18 +1,10 @@
 <?php
 
 /**
- * RD-1: kept backend code stands on its own, untied from the pages the redesign
- * replaces. ListWhatNeedsMe and ReadProjectProgress serve the old home and
- * project pages; nothing kept may reach into them for shared rules.
+ * RD-1: kept backend code stands on its own. RD-9 deleted the old home and project
+ * pages' actions that the first two arches here fenced off; RetireOldPagesTest now
+ * holds that nothing references them.
  */
-arch('ReadProjectStories depends on neither ListWhatNeedsMe nor ReadProjectProgress')
-    ->expect('App\Actions\Board\ReadProjectStories')
-    ->not->toUse(['App\Actions\Board\ListWhatNeedsMe', 'App\Actions\Board\ReadProjectProgress']);
-
-arch('StoryPickWriter depends on neither ListWhatNeedsMe nor ReadProjectProgress')
-    ->expect('App\Services\StoryPickWriter')
-    ->not->toUse(['App\Actions\Board\ListWhatNeedsMe', 'App\Actions\Board\ReadProjectProgress']);
-
 arch('ReadMockupSets reads the gate through the parser, not the writer')
     ->expect('App\Actions\Board\ReadMockupSets')
     ->not->toUse('App\Services\StoryPickWriter');

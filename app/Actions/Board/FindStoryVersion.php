@@ -8,8 +8,8 @@ use Illuminate\Support\Collection;
 
 /**
  * Which version of a story to show, and how to describe the others (SB-5). One
- * place for the rule, read by the story page (SB-4) and the story modal (SB-8),
- * so the two never disagree about which copy of a story is "the" story.
+ * place for the rule, read by the story page (SB-4) and the live sessions'
+ * story links, so they never disagree about which copy of a story is "the" story.
  */
 class FindStoryVersion
 {

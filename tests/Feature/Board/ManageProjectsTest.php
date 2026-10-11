@@ -64,8 +64,8 @@ it('lists all 5 projects with acme-site switched off, given 4 enabled and a disa
         ->and($html)->toContain('Refreshed');
 });
 
-it('links Manage projects from the sidebar', function () {
-    $this->get(oldHome())->assertOk()->assertSee('Manage projects')->assertSee(route('projects.manage'));
+it('links Manage projects from the overview\'s Projects panel', function () {
+    $this->get('/')->assertOk()->assertSee('Manage projects')->assertSee(route('projects.manage'));
 });
 
 it('switches coins off: is_enabled false, gone from the sidebar and /, stories kept, board.project_disabled logged with source=ui', function () {
@@ -78,7 +78,7 @@ it('switches coins off: is_enabled false, gone from the sidebar and /, stories k
 
     expect($this->coins->fresh()->is_enabled)->toBeFalse()
         ->and(Story::where('project_id', $this->coins->id)->count())->toBe(2);
-    $this->get(oldHome())->assertOk()->assertDontSeeHtml('data-sidebar-project="coins"');
+    $this->get('/')->assertOk()->assertDontSeeHtml('data-nav-project="coins"');
     loggedWith('info', 'board.project_disabled', ['project' => 'coins', 'source' => 'ui']);
     Queue::assertNothingPushed();
 });

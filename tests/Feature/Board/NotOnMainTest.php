@@ -1,7 +1,7 @@
 <?php
 
 use App\Actions\Board\IndexOffMain;
-use App\Actions\Board\ListWhatNeedsMe;
+use App\Actions\Board\ListNeedsMe;
 use App\Exceptions\GitReaderException;
 use App\Models\Project;
 use App\Models\Story;
@@ -43,13 +43,13 @@ it('shows a pick made only on an unmerged branch', function () {
         ->and($this->project->stories()->onRef()->where('story_id', 'FX-1')->sole()->mockups['chosen'])->toBeNull();
 });
 
-it('lists a story that exists only on an unmerged branch, and keeps it out of the home groups', function () {
+it('lists a story that exists only on an unmerged branch, and keeps it out of the overview\'s Needs me', function () {
     $this->fixture->story('FX-9', 'draft')->pushBranch('docs/FX-9-story');
 
     $this->artisan('board:refresh')->assertSuccessful();
 
     expect(offMain($this->project)->pluck('story_id')->all())->toBe(['FX-9'])
-        ->and(collect(app(ListWhatNeedsMe::class)->handle()['approval'])->pluck('story_id')->all())->toBe(['FX-2']);
+        ->and(collect(app(ListNeedsMe::class)->handle()['rows'])->where('kind', ListNeedsMe::DRAFT)->map(fn ($r) => $r['story']->story_id)->values()->all())->toBe(['FX-2']);
 });
 
 it('produces no rows for a branch whose stories match the ref', function () {

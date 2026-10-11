@@ -4,16 +4,13 @@ use App\Http\Controllers\JourneyShotController;
 use App\Http\Controllers\MockupFileController;
 use App\Http\Controllers\MockupSetFileController;
 use App\Http\Middleware\EnsureProjectIsShown;
-use App\Http\Middleware\RedirectProjectFilter;
 use App\Http\Middleware\RefreshStaleProjects;
 use App\Livewire\Board\ManageProjects;
 use App\Livewire\Board\MockupGallery;
 use App\Livewire\Board\MockupViewer;
 use App\Livewire\Board\Overview;
-use App\Livewire\Board\ProductionDashboard;
 use App\Livewire\Board\ProjectAppMap;
 use App\Livewire\Board\ProjectHandbook;
-use App\Livewire\Board\ProjectPage;
 use App\Livewire\Board\ProjectPreflight;
 use App\Livewire\Board\ProjectStories;
 use App\Livewire\Board\StoryPage;
@@ -23,15 +20,12 @@ use Illuminate\Support\Facades\Route;
 // The board's pages (RD-2): every page load queues a refresh of each stale enabled project. The file routes
 // below are left out on purpose — a page's frames and images hit them many times per load.
 Route::middleware(RefreshStaleProjects::class)->group(function () {
-    // The home overview (RD-5). The old SB-9 dashboard component stays in the code, unrouted, until RD-9.
-    // The pre-SB-7 `/?project=x` filter URL now lives at /p/x.
-    Route::livewire('/', Overview::class)->middleware(RedirectProjectFilter::class)->name('home');
+    // The home overview (RD-5). RD-9 retired the old dashboard, the bare `/p/{project}` page and the legacy
+    // `/?project=` redirect: a stray `project` query is now ignored and the overview renders unfiltered.
+    Route::livewire('/', Overview::class)->name('home');
 
-    // One project's dashboard (SB-10; the route is SB-7's). EnsureProjectIsShown is the one
-    // place an unknown or disabled project is refused, before binding (ADR-013).
-    Route::livewire('/p/{project:name}', ProjectPage::class)
-        ->middleware(EnsureProjectIsShown::class)
-        ->name('projects.show');
+    // EnsureProjectIsShown, on each project page below, is the one place an unknown or disabled project is
+    // refused, before binding (ADR-013).
 
     // One project's handbook (SB-14): its rules, lessons, standards, runbook, decisions and skills,
     // with each standards file and kit skill badged against the dev-standards kit.
@@ -66,10 +60,6 @@ Route::middleware(RefreshStaleProjects::class)->group(function () {
     // Switch projects on and off, add and remove them (SB-12). No auth: the board is localhost-only;
     // a hosted board (SB-6) would need auth in front of this page first.
     Route::livewire('/projects', ManageProjects::class)->name('projects.manage');
-
-    // Every connected project's production numbers side by side (SB-18). Reads go through the queue and
-    // ProductionReader; the page itself only reads the board's own database.
-    Route::livewire('/prod', ProductionDashboard::class)->name('prod');
 
     // Every enabled project's mockup sets (SB-21) and a full-screen viewer per set; the set's files are
     // served by `mockups.frame` below.

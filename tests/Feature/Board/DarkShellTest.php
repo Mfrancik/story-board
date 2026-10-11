@@ -83,7 +83,28 @@ it('Given a project that needs a refresh, when any board page loads, then exactl
     Queue::assertPushed(RefreshProjectJob::class, fn (RefreshProjectJob $job) => $job->project->is($this->coins));
     Log::shouldHaveReceived('info')->withArgs(fn ($event, $ctx = []) => $event === 'board.stale_refresh_dispatched'
         && $ctx === ['project' => 'coins'])->once();
-})->with(['/p/coins/preflight', '/', '/p/coins', '/mockups', '/projects']);
+})->with(['/p/coins/preflight', '/', '/p/coins/stories', '/mockups', '/projects']);
+
+// Ported from SB-3's HomePageTest when RD-9 deleted the old home: the job carries the request's id, so the
+// refresh's log lines join the page load that queued them.
+it('tags the refresh job a page load queues with that request\'s id', function () {
+    $this->coins->update(['indexed_at' => null, 'refresh_attempted_at' => null]);
+
+    $this->get('/', ['X-Request-Id' => 'req-123'])->assertOk()->assertHeader('X-Request-Id', 'req-123');
+
+    Queue::assertPushed(RefreshProjectJob::class, fn (RefreshProjectJob $job) => $job->requestId === 'req-123');
+});
+
+// Ported from SB-3's HomePageTest (RD-9): repeated loads of any board page must not stack refreshes.
+it('queues one refresh per project however many times the board pages load', function () {
+    $this->coins->update(['indexed_at' => null, 'refresh_attempted_at' => null]);
+
+    $this->get('/')->assertOk();
+    $this->get('/')->assertOk();
+    $this->get('/p/coins/stories')->assertOk();
+
+    expect(collect(Queue::pushedJobs()[RefreshProjectJob::class] ?? [])->filter(fn ($p) => $p['job']->project->is($this->coins)))->toHaveCount(1);
+});
 
 it('queues nothing on a board page load when every project is fresh, and never for a disabled one', function () {
     Project::factory()->disabled()->create(['name' => 'acme-site', 'indexed_at' => null, 'refresh_attempted_at' => null]);

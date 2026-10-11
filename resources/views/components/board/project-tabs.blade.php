@@ -1,9 +1,9 @@
 {{-- The page tabs under a project's header (SB-14, design A; RD-4 order): Stories (SB-15) | Preflight (SB-16) | Handbook |
      Map (SB-24). Real links, one URL each, so a tab can be opened in a new window and Back works as expected. The row
      scrolls sideways if it ever outgrows a phone; pb-px keeps the active tab's -mb-px underline inside the scroll box
-     instead of adding a 1px vertical scroll. RD-4 dropped the Dashboard tab: the old dashboard is going (RD-9), and until
-     then it still shows these tabs with none marked. Inside the dark shell the tones come from the shell tokens
-     (`shell:`); the light/dark ones serve that old dashboard, which is still on layouts/board. --}}
+     instead of adding a 1px vertical scroll. RD-4 dropped the Dashboard tab and RD-9 deleted the old dashboard, so every
+     page that shows these tabs marks one current. Inside the dark shell the tones come from the shell tokens
+     (`shell:`); the light/dark ones served that old dashboard's light layout. --}}
 @props(['project', 'current'])
 @php
     $tabs = ['stories' => ['Stories', route('projects.stories', $project)], 'preflight' => ['Preflight', route('projects.preflight', $project)],

@@ -1,6 +1,5 @@
 <?php
 
-use App\Actions\Board\ReadProjectProgress;
 use App\Actions\Board\ReadProjectStories;
 use App\Livewire\Board\ProjectStories;
 use App\Models\Project;
@@ -12,7 +11,7 @@ use Livewire\Livewire;
 
 /**
  * SB-15 acceptance criteria: `/p/{project}/stories` lists a project's on-ref stories grouped by
- * initiative, most open work first (ReadProjectProgress's order), each story tagged with its status.
+ * initiative, most open work first (StoryStatusOrder::rollup's order), each story tagged with its status.
  * The shapes mirror the dev data checked on 2026-09-29: coins' branding (7 built, 3 draft), its
  * cancelled acquisition stories, rent-track's off-list `in` and `done`, coins at 946 stories in 57
  * initiatives. The client-side half (selection, filters, Expand all) is in tests/Browser.
@@ -321,7 +320,9 @@ it('reads every on-ref story in one query at coins\' size (946 stories, 57 initi
         ->and($data['initiatives'])->toHaveCount(57);
 });
 
-it('orders the initiatives exactly as ReadProjectProgress does, and counts them the same', function () {
+// RD-9 deleted the old project page's progress action this test once compared against; the order and counts are now pinned
+// directly: most open work first, then named before unnamed, then A–Z, and a null status counted with "(none)".
+it('orders the initiatives by most open work, named before none, then A–Z, and counts a missing status as (none)', function () {
     brandingAndAcquisition($this->coins);
     storyIn($this->coins, 'zeta', 'Z-1', 'draft');
     storyIn($this->coins, 'alpha', 'A-1', 'draft');
@@ -329,24 +330,29 @@ it('orders the initiatives exactly as ReadProjectProgress does, and counts them 
     storyIn($this->coins, 'mixed', 'M-1', null);
     storyIn($this->coins, 'mixed', 'M-2', '(none)');
 
-    $progress = app(ReadProjectProgress::class)->handle($this->coins->id)['initiatives'];
-    $stories = app(ReadProjectStories::class)->handle($this->coins)['initiatives'];
+    $stories = collect(app(ReadProjectStories::class)->handle($this->coins)['initiatives'])->keyBy(fn ($g) => $g['name'] ?? '(no initiative)');
 
-    expect(array_column($stories, 'name'))->toBe(array_column($progress, 'name'))
-        ->and(array_map(fn ($g) => [$g['counts'], $g['total'], $g['open'], $g['parked']], $stories))
-        ->toBe(array_map(fn ($g) => [$g['counts'], $g['total'], $g['open'], $g['parked']], $progress));
+    expect($stories->keys()->all())->toBe(['acquisition', 'branding', 'alpha', 'zeta', '(no initiative)', 'mixed'])
+        ->and($stories->map(fn ($g) => [$g['counts'], $g['total'], $g['open']])->all())->toBe([
+            'acquisition' => [['approved' => 4, 'built' => 2, 'cancelled' => 1], 7, 4],
+            'branding' => [['draft' => 3, 'built' => 7], 10, 3],
+            'alpha' => [['draft' => 1], 1, 1],
+            'zeta' => [['draft' => 1], 1, 1],
+            '(no initiative)' => [['draft' => 1], 1, 1],
+            'mixed' => [['(none)' => 2], 2, 0],
+        ]);
 });
 
 it('links each well-formed story row to its story page (RD-4: no SB-8 modal) and reaches the page through a Stories tab', function () {
     brandingAndAcquisition($this->coins);
     storyIn($this->coins, 'branding', 'odd_mockup_dir', 'draft');
 
-    $html = $this->get('/p/coins/stories')->assertOk()->assertDontSeeLivewire('board.story-modal')->getContent();
+    $html = $this->get('/p/coins/stories')->assertOk()->getContent();
 
     expect(storyRowHtml($html, 'BR-1'))->toContain('data-story-link="coins/BR-1"')
         ->toContain('href="'.route('stories.show', ['project' => 'coins', 'storyId' => 'BR-1']).'"')
         ->and(storyRowHtml($html, 'odd_mockup_dir'))->not->toContain('data-story-link')->not->toContain('href=');
-    $this->get('/p/coins')->assertOk()->assertSee(route('projects.stories', 'coins'), false);
+    $this->get('/p/coins/preflight')->assertOk()->assertSee(route('projects.stories', 'coins'), false);
     $this->get('/p/coins/handbook')->assertSee(route('projects.stories', 'coins'), false);
     expect($html)->toMatch('/data-project-tab="stories"[^>]*aria-current="page"/');
 });

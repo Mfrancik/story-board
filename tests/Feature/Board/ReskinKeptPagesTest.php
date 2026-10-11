@@ -73,8 +73,6 @@ it('marks Mockups current in the sidebar on the mockup viewer as well as the gal
 
 it('Given the Stories page, then no story modal is on the page, and each row links to /p/{project}/s/{id}', function () {
     $html = $this->get('/p/alpha/stories')->assertOk()
-        ->assertDontSeeLivewire('board.story-modal')
-        ->assertDontSeeHtml('story-modal')
         ->assertDontSeeHtml('?story=')
         ->assertDontSeeHtml('aria-haspopup="dialog"')
         ->getContent();
@@ -128,9 +126,3 @@ it('keeps Flux toasts on the shell pages that raise them, without the old pages\
         ->assertSeeHtml('/flux/flux')
         ->assertDontSeeHtml('flux.appearance');
 })->with(['/projects', '/mockups/alpha/AL-1']);
-
-it('leaves the old home and project dashboard on the board layout, still rendering', function (string $url) {
-    $this->get($url)->assertOk()
-        ->assertDontSeeHtml('class="shell"')
-        ->assertSeeHtml('data-sidebar-project="alpha"');
-})->with([fn () => oldHome(), '/p/alpha']);

@@ -174,22 +174,13 @@ it('logs board.mockups_viewed on the gallery and board.mockup_viewed on the view
 });
 
 it('puts Mockups in the sidebar with the awaiting count', function () {
-    $this->get(oldHome())->assertOk()->assertSee('data-sidebar-mockups', false)->assertSee('data-awaiting-count="1"', false);
+    $this->get('/')->assertOk()->assertSee('data-nav="mockups"', false)->assertSee('data-mockups-count="1"', false);
 });
 
-it('links a story\'s modal and its project page to the gallery', function () {
-    $this->get('/p/alpha?story=alpha/AL-2')->assertOk()
-        ->assertSee('data-open-gallery', false)
+it('links a story\'s page to its set in the gallery', function () {
+    // RD-9 retired the story modal and the project page that also linked here; the story page is the one left.
+    $this->get('/p/alpha/s/AL-2')->assertOk()
         ->assertSee(route('mockups.show', ['project' => 'alpha', 'story' => 'AL-2']), false);
-    $this->get('/p/alpha')->assertOk()->assertSee('data-project-mockups', false)
-        ->assertSee(route('mockups', ['project' => 'alpha']), false);
-});
-
-it('shows no Mockups button on a project page without sets', function () {
-    [$this->gamma] = galleryProject('gamma', fn (GitFixture $f) => $f->story('GA-1', 'draft'));
-    $this->artisan('board:refresh', ['project' => 'gamma'])->assertSuccessful();
-
-    $this->get('/p/gamma')->assertOk()->assertDontSee('data-project-mockups', false);
 });
 
 it('still lists a project\'s sets, without reasons, when git cannot read its checkout, and logs why', function () {

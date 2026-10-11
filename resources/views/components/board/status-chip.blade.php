@@ -3,8 +3,8 @@
      `variant="tag"` (SB-15 Stories page) words the kit's statuses for reading — Built, To do, Draft,
      Cancelled — gives `cancelled` a muted outline, and shows any other value grey with its raw text
      ("no status" for none). Only that page asks for it, so the danger tone everywhere else is unchanged.
-     RD-4: inside the dark shell the neutral tones come from the shell tokens (`shell:`); the light/dark ones serve the
-     pages still on layouts/board (old Home and dashboard) until RD-9. --}}
+     RD-4: inside the dark shell the neutral tones come from the shell tokens (`shell:`). The light/dark ones served the
+     old light layout, which RD-9 retired; every page that renders this chip is in the shell now. --}}
 @props(['status', 'errors' => 0, 'count' => null, 'variant' => null])
 @php
     // Unpassed, `errors` resolves to Laravel's shared ViewErrorBag, not the default 0.

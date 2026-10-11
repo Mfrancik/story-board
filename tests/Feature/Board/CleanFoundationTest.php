@@ -48,7 +48,6 @@ it('still returns 200 for each existing board route', function (string $url) {
     $this->get($url)->assertOk();
 })->with([
     '/',
-    '/p/fx',
     '/p/fx/handbook',
     '/p/fx/stories',
     '/p/fx/preflight',
@@ -56,7 +55,6 @@ it('still returns 200 for each existing board route', function (string $url) {
     '/p/fx/s/RD-1',
     '/p/fx/m/RD-1/option-a.html',
     '/projects',
-    '/prod',
     '/mockups',
     '/mockups/fx/RD-1',
     '/mockups/fx/RD-1/file/option-a.html',

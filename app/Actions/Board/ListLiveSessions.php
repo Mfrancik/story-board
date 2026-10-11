@@ -36,7 +36,7 @@ class ListLiveSessions
 
     /**
      * @param  SessionReader  $reader  the only reader of transcript files
-     * @param  FindStoryVersion  $versions  picks the story version a linked ID stands for, as the modal does
+     * @param  FindStoryVersion  $versions  picks the story version a linked ID stands for, as the story page does
      * @param  RenderStory  $render  reads a linked story's markdown from git at its row's SHA
      */
     public function __construct(
@@ -52,14 +52,14 @@ class ListLiveSessions
      * Side effects: logs `board.session_ignored` (debug) for a session outside every
      * enabled project; git reads for linked stories whose line is not cached yet.
      *
-     * @return array{status: string, sessions: list<array{key: string, project: string, checkout: string, branch: string|null, active_at: Carbon, stories: list<array{story: Story, line: string|null, thumb: string|null, chosen: string|null}>}>}
+     * @return array{status: string, sessions: list<array{key: string, project: string, checkout: string, branch: string|null, active_at: Carbon, stories: list<array{story: Story, line: string|null, chosen: string|null}>}>}
      */
     public function handle(?string $project = null): array
     {
         $live = $this->reader->live();
         $cards = [];
 
-        foreach ($this->matched($live['sessions'], log: true) as [$session, $model, $checkout]) {
+        foreach ($this->matched($live['sessions']) as [$session, $model, $checkout]) {
             if ($project !== null && $model->name !== $project) {
                 continue;
             }
@@ -97,7 +97,7 @@ class ListLiveSessions
         $live = $this->reader->live();
         $cards = [];
 
-        foreach ($this->matched($live['sessions'], log: true) as [$session, $model]) {
+        foreach ($this->matched($live['sessions']) as [$session, $model]) {
             // Filtered out by the owner's choice, not ignored: the filter is logged once by the overview, not per card.
             if (! $filter->includes($model->name)) {
                 continue;
@@ -136,21 +136,6 @@ class ListLiveSessions
     }
 
     /**
-     * Live sessions per enabled project, for the sidebar badge. No story links, no git.
-     *
-     * @return array<string, int> project name => live sessions
-     */
-    public function counts(): array
-    {
-        $counts = [];
-        foreach ($this->matched($this->reader->live()['sessions'], log: false) as [, $model]) {
-            $counts[$model->name] = ($counts[$model->name] ?? 0) + 1;
-        }
-
-        return $counts;
-    }
-
-    /**
      * Each session that sits in an enabled project, with that project and its
      * checkout name. The deepest registered path wins, so a worktree registered as
      * a location beats the main checkout it sits under.
@@ -158,7 +143,7 @@ class ListLiveSessions
      * @param  list<array{file: string, cwd: string, branch: string|null, timestamp: string|null, session_id: string|null, version: string|null, mtime: int, started: int|null, doing: string|null, tokens: int|null, model: string|null}>  $sessions
      * @return list<array{0: array{file: string, cwd: string, branch: string|null, timestamp: string|null, session_id: string|null, version: string|null, mtime: int, started: int|null, doing: string|null, tokens: int|null, model: string|null}, 1: Project, 2: string}>
      */
-    private function matched(array $sessions, bool $log): array
+    private function matched(array $sessions): array
     {
         if ($sessions === []) {
             return [];
@@ -180,13 +165,11 @@ class ListLiveSessions
 
             if ($best === null || ! $best['project']->is_enabled) {
                 // Story-board's own sessions and any unregistered folder land here on every poll: debug, not warning.
-                if ($log) {
-                    Log::debug('board.session_ignored', [
-                        'cwd' => $cwd,
-                        'reason' => $best === null ? 'unregistered' : 'disabled',
-                        'project' => $best['project']->name ?? null,
-                    ]);
-                }
+                Log::debug('board.session_ignored', [
+                    'cwd' => $cwd,
+                    'reason' => $best === null ? 'unregistered' : 'disabled',
+                    'project' => $best['project']->name ?? null,
+                ]);
 
                 continue;
             }
@@ -248,7 +231,7 @@ class ListLiveSessions
      * or checkout rule drops fallback rows.
      *
      * @param  string  $cwd  the session's working directory, which ties it to one checkout
-     * @return list<array{story: Story, line: string|null, thumb: string|null, chosen: string|null}>
+     * @return list<array{story: Story, line: string|null, chosen: string|null}>
      */
     private function links(Project $project, ?string $branch, string $cwd): array
     {
@@ -260,7 +243,6 @@ class ListLiveSessions
             return [
                 'story' => $row,
                 'line' => $this->firstSentence($row),
-                'thumb' => $hasChosen ? $row->mockupUrl("option-{$chosen}.html") : null,
                 'chosen' => $hasChosen ? $chosen : null,
             ];
         }, $this->storyRows($project, $branch, $cwd));

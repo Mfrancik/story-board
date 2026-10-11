@@ -7,7 +7,8 @@ use App\Models\Project;
 /**
  * Whether a project name may have a page on the board (SB-7): it must be
  * registered and enabled. The one place that decides it, read by the
- * project-page guard and by the old `/?project=` redirect.
+ * route middleware (EnsureProjectIsShown) and the Livewire page guard
+ * (GuardsProjectPage).
  */
 class CheckProjectShown
 {

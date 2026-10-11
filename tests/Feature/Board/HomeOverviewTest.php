@@ -1,7 +1,6 @@
 <?php
 
 use App\Actions\Board\ListNeedsMe;
-use App\Http\Middleware\RedirectProjectFilter;
 use App\Livewire\Board\Overview;
 use App\Models\Project;
 use App\Models\Story;
@@ -10,7 +9,6 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
 use Tests\Support\SessionFixture;
 
@@ -197,11 +195,25 @@ it('given the session reader throws, then Live now shows its error state and the
 
 // Beyond the criteria: the page's wiring, states, guards and log lines.
 
-it('routes / to the overview in the RD-2 shell and keeps the old ?project= redirect', function () {
-    expect(Route::getRoutes()->getByName('home')->gatherMiddleware())->toContain(RedirectProjectFilter::class);
-
+it('routes / to the overview in the RD-2 shell, and no longer redirects the old ?project= URL (RD-9)', function () {
     $this->get('/')->assertOk()->assertSeeLivewire(Overview::class)->assertSee('class="shell"', false);
-    $this->get('/?project=coins')->assertRedirect('/p/coins');
+    $this->get('/?project=coins')->assertOk()->assertSeeLivewire(Overview::class)->assertDontSeeHtml('data-filter-active');
+});
+
+// Ported from SB-3's WhatNeedsMeTest when RD-9 deleted SB-3's needs action: the pick predicate's edges, at the action.
+it('lists as awaiting a pick only an open story with options and no choice, never a built, cancelled, chosen or empty set', function () {
+    $mockups = fn ($chosen, array $options = ['a', 'b']) => ['dir' => 'docs/mockups/X', 'options' => $options, 'chosen' => $chosen];
+    Story::factory()->for($this->coins)->create(['story_id' => 'MOB-65', 'status' => 'approved', 'mockups' => $mockups(null)]);
+    Story::factory()->for($this->coins)->create(['story_id' => 'MOB-56', 'status' => 'approved', 'mockups' => $mockups('a')]);
+    // Built and cancelled stories are history, not a pending decision, even without a parseable pick.
+    Story::factory()->for($this->coins)->create(['story_id' => 'OLD-1', 'status' => 'built', 'mockups' => $mockups(null)]);
+    Story::factory()->for($this->coins)->create(['story_id' => 'OLD-2', 'status' => 'cancelled', 'mockups' => $mockups(null)]);
+    // A mockup directory with no option files has nothing to pick from.
+    Story::factory()->for($this->coins)->create(['story_id' => 'DIR-1', 'status' => 'draft', 'mockups' => $mockups(null, [])]);
+
+    $picks = collect(app(ListNeedsMe::class)->handle()['rows'])->where('kind', ListNeedsMe::PICK)->map(fn ($r) => $r['story']->story_id)->values()->all();
+
+    expect($picks)->toBe(['MOB-65']);
 });
 
 it('refreshes every 30 s with one wire:poll on Live now and nowhere else', function () {

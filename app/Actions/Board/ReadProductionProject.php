@@ -14,8 +14,8 @@ use Illuminate\Support\Facades\Log;
 /**
  * Read one project's enabled production metrics and keep what came back (SB-18):
  * each good value upserts today's snapshot, and the outcome of the read — ok, or
- * why not — is remembered for the Production page. Shared by the queued
- * ReadProductionMetrics job (page loads, Refresh) and `board:prod-snapshot`.
+ * why not — is remembered (outcome()). Called by `board:prod-snapshot`, whose
+ * daily snapshots feed RD-7's project tiles.
  * Every production access goes through ProductionReader and its grants check.
  */
 class ReadProductionProject

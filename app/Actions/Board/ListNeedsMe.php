@@ -11,8 +11,8 @@ use Illuminate\Database\Eloquent\Builder;
  * The overview's Needs me (RD-5): every story of an enabled project, on its ref,
  * that waits on the owner — a mockup set awaiting a pick, a draft awaiting approval,
  * an approved story ready to build — as one list, oldest first. The three
- * predicates are the ones SB-3's ListWhatNeedsMe used; it now calls them from here,
- * so both pages agree on what counts. The home project filter (RD-6) narrows it to
+ * predicates are SB-3's, moved here by RD-5 and public so the not-on-main rules
+ * and the overview agree on what counts. The home project filter (RD-6) narrows it to
  * the chosen projects. Reads the stored snapshot only, never git.
  */
 class ListNeedsMe

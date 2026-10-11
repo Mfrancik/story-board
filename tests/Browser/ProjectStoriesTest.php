@@ -43,7 +43,7 @@ const VISIBLE_ROWS = "[...document.querySelectorAll('[data-story-row]')].filter(
 const FETCHES = "performance.getEntriesByType('resource').filter(e => e.initiatorType === 'fetch').length";
 
 it('opens on the initiative with the most open work and lists another\'s stories in natural ID order without asking the server', function () {
-    $page = visit('/p/coins')->resize(1280, 900)->click('[data-project-tab="stories"]')->assertPathIs('/p/coins/stories');
+    $page = visit('/p/coins/handbook')->resize(1280, 900)->click('[data-project-tab="stories"]')->assertPathIs('/p/coins/stories');
 
     $page->assertScript(VISIBLE_ROWS, 'ACQ-20,ACQ-21,ACQ-22,ACQ-25,ACQ-26,ACQ-27,ACQ-28')
         ->assertScript("getComputedStyle(document.querySelector('[data-story-row=\"ACQ-22\"] span')).textDecorationLine", 'line-through')

@@ -11,8 +11,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * One production metric's value on one local day (SB-18). Written only by
  * ReadProductionProject, which upserts today's row on every good read, so the
- * last read of the day is the one kept. The Production page compares against
- * these rows and draws its trend lines from them.
+ * last read of the day is the one kept. The overview's project tiles (RD-7)
+ * show the latest of these rows and draw their trend lines from them.
  *
  * @property int $id
  * @property int $project_id

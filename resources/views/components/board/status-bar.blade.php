@@ -6,8 +6,8 @@
     An empty count set draws the bare track, never a missing bar.
     `variant="tag"` (SB-15 Stories page) matches status-chip's tag variant: any other value is a grey
     segment there, not danger. Nowhere else passes it.
-    RD-4: inside the dark shell the track and the grey segment take the shell tokens (`shell:`); the light/dark ones
-    serve the pages still on layouts/board until RD-9.
+    RD-4: inside the dark shell the track and the grey segment take the shell tokens (`shell:`). The light/dark ones
+    served the old light layout, which RD-9 retired; every page that renders this bar is in the shell now.
 --}}
 @props(['counts', 'label' => null, 'variant' => null])
 @php

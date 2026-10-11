@@ -10,8 +10,9 @@ use Illuminate\Support\Facades\Log;
 /**
  * `board:prod-snapshot` — read every shown, connected project's production
  * metrics once and snapshot them (SB-18). Scheduled daily at 23:55 in
- * board.timezone (routes/console.php), so a day nobody opened /prod still has a
- * point on the trend line. Needs the scheduler running (`schedule:work`).
+ * board.timezone (routes/console.php). Since RD-9 deleted /prod this is the only
+ * production read, and the overview's project tiles (RD-7) draw from its snapshots.
+ * Needs the scheduler running (`schedule:work`).
  */
 class BoardProdSnapshot extends Command
 {
@@ -33,7 +34,7 @@ class BoardProdSnapshot extends Command
     public function handle(ReadProductionProject $read): int
     {
         $projects = Project::has('prodConnection')->with('prodConnection')->orderBy('name')->get();
-        // Switched-off projects keep their connection but are not read (the same rule as /prod).
+        // Switched-off projects keep their connection but are not read: the board does not show them.
         [$shown, $off] = $projects->partition(fn (Project $p) => $p->is_enabled);
 
         $ok = 0;

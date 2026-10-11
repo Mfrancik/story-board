@@ -9,9 +9,10 @@ use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Refuses a `/p/{project}` page — the project page and the story page under it —
- * for a project that is unknown or disabled (SB-7), so both routes 404 in one place
- * and say why in the log. It runs before SubstituteBindings
+ * Refuses a `/p/{project}/…` page — Stories, Preflight, Handbook, Map and the story
+ * page — and a project's mockup viewer, journey shots and mockup sets, for a project
+ * that is unknown or disabled (SB-7), so every one 404s in one place and says why in
+ * the log. It runs before SubstituteBindings
  * (bootstrap/app.php priority), so an unknown name is refused and logged here
  * rather than failing silently in Livewire's route-model binding.
  */

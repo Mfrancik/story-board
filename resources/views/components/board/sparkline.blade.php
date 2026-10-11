@@ -1,6 +1,6 @@
 {{--
-    A 30-day trend line (SB-18), inline SVG — no chart library. `series` is ListProductionDashboard's list of
-    {day, value|null}, oldest first; a missing day is a gap in the x axis, not a zero. The SVG stretches to its box
+    A 30-day trend line (SB-18), inline SVG — no chart library. `series` is a list of
+    {day, value|null} (ListProjectTiles builds it), oldest first; a missing day is a gap in the x axis, not a zero. The SVG stretches to its box
     (preserveAspectRatio none, non-scaling stroke), so points are placed in percent and the end dot and hover
     readout are HTML over it. Hover is pure UI, so it is Alpine: the nearest day with a value and its number.
     `tone` is a full text-colour class (text-series-N, or text-zinc-400 for a greyed last-good line).
@@ -22,7 +22,7 @@
             // 12–88 % of the height, so the stroke and end dot are never clipped.
             'y' => round(12 + 76 * (1 - ($s['value'] - $lo) / ($hi - $lo)), 2),
             'd' => $s['day'],
-            'v' => \App\Actions\Board\ListProductionDashboard::format((float) $s['value']),
+            'v' => \App\Services\Production\MetricNumber::format((float) $s['value']),
         ];
     }
     $drawn = array_values(array_filter($points));
