@@ -5,13 +5,13 @@ Every reusable component. Consult BEFORE building any new UI (design-standards
 | Component | Type (Blade/Livewire/Filament) | Purpose | Used in |
 |---|---|---|---|
 | Home | Livewire (Board) | The old all-projects dashboard (SB-9): What needs me cards, In flight, tiles, sections; embeds StoryModal; unrouted since RD-5, RD-9 deletes it | tests only (`/test/old-home`) |
-| Overview | Livewire (Board) | Home overview (RD-5, RD-6): Projects filter (checkbox dropdown + removable chips, `?projects=`), count sentence, four shell/figure figures, Needs me, Live now cards; `wire:poll.30s` | `/` |
+| Overview | Livewire (Board) | Home overview (RD-5–7): `?projects=` filter, count sentence, figures, Needs me, Live now cards, Projects tiles, Shipped this week; `wire:poll.30s` | `/` |
 | shell/figure | Blade | One headline figure: uppercase label, mono number ("—" when null), accent toned needs/live, one line below | Overview |
 | board/section | Blade | Boxed list with heading, count, hint; `collapsible` for closed-by-default sections | Home (collapsible sections), ProjectPage (open Not on main kinds) |
 | board/story-row | Blade | One story row opening StoryModal via `board-story`; `variant="card"` is the compact What needs me card row; shows where an off-main version lives | Home, ProjectPage, needs-me-cards |
 | board/project-card | Blade | The dashboard tile, a link to `/p/{project}`: state, story total, status bar, count chips, not-on-main, refresh age, parse errors | Home |
 | board/status-chip | Blade | A story's raw status with parse-error marker; danger tone for out-of-vocabulary values; `count` makes a tally chip; `variant="tag"` reads Built/To do/Draft/Cancelled, others grey; `shell:` tones | Home, story-row, project-card, ProjectStories |
-| board/status-bar | Blade | Stacked bar of counts by raw status; out-of-vocabulary values get a danger-toned segment (grey with `variant="tag"`); `shell:` tones | project-card, ProjectPage initiative rows, ProjectStories |
+| board/status-bar | Blade | Stacked bar of counts by raw status; out-of-vocabulary values get a danger-toned segment (grey with `variant="tag"`); `shell:` tones | project-card, ProjectPage initiative rows, ProjectStories, Overview |
 | layouts/board | Blade layout | The old board shell (until RD-9): board/sidebar beside the page, persisted Flux toasts, no auth, Flux appearance for light/dark | Home, ProjectPage, ProductionDashboard |
 | board/sidebar | Blade (class) | Project switcher: filter box (⌘K), All projects, Production (connected/shown), Mockups (awaiting-pick count), enabled projects with state dot, count and live badge; drawer below 768px; Manage slot | layouts/board |
 | layouts/shell | Blade layout | The RD-2 dark command-center shell (Home A): `.shell` on `<html>`, Geist, shell/sidebar beside the page, dark only; persisted Flux toasts behind an appearance stub (RD-4) | ProjectPreflight, StoryPage, ProjectStories, ProjectHandbook, ProjectAppMap, MockupGallery, MockupViewer, ManageProjects, Overview |
@@ -22,7 +22,7 @@ Every reusable component. Consult BEFORE building any new UI (design-standards
 | StoryModal | Livewire (Board) | Design-A story modal at `?story=<project>/<ID>`: text, details, dependency chips, mockup thumbnails and Open in mockup gallery, versions off main; opened by `board-story`; RD-9 deletes it | ProjectPage, Home (unrouted) |
 | ProjectPage | Livewire (Board) | One project's dashboard (SB-10): header with Refresh this project, scoped What needs me cards, Progress by initiative, Not on main by kind; embeds StoryModal | `/p/{project}` |
 | board/needs-me-cards | Blade | The three What needs me cards (pick, approval, build) with count, top rows and Show all calling the host's `showAll()` | Home, ProjectPage |
-| board/state | Blade | A project's snapshot state: `part="dot"` coloured dot, `part="label"` word (none for `ok`, danger for unknown states); dark-shell tones via tokens | sidebar, shell/sidebar, project-card, ProjectPage header |
+| board/state | Blade | A project's snapshot state: `part="dot"` coloured dot, `part="label"` word (none for `ok`, danger for unknown states); dark-shell tones via tokens | sidebar, shell/sidebar, project-card, ProjectPage header, Overview |
 | ManageProjects | Livewire (Board) | Manage projects (SB-12): every project with its switch, path, ref, state, count, refresh age, Production summary opening its panel; Add project form; Remove via confirm-modal | `/projects` |
 | board/switch | Blade | On/off `role="switch"` button showing the stored state; the caller's `wire:click` writes it; disables while `target` runs | ManageProjects, ProductionSettings |
 | board/confirm-modal | Blade | Alpine confirmation for a destructive action: `show` var, `title` slot, body, Cancel + red `confirm` button running `action` | ManageProjects (Remove), ProductionSettings (Remove connection) |
@@ -40,7 +40,7 @@ Every reusable component. Consult BEFORE building any new UI (design-standards
 | board/prod-stat | Blade | One production metric: value, change vs yesterday and 7 days ago, trend, read time, greyed when last-good; `layout="cell"` or `"line"` | ProductionDashboard |
 | board/prod-change | Blade | A signed change with ▲/▼ and gain/loss colour, "—" when no snapshot that day | prod-stat |
 | board/prod-row-status | Blade | Under a project's name on /prod: Reading… / read time, and the failed read's badge and sentence | ProductionDashboard |
-| board/sparkline | Blade | Inline-SVG 30-day trend line, gaps for missing days, end dot, Alpine hover readout; no chart library | prod-stat |
+| board/sparkline | Blade | Inline-SVG trend line, gaps for missing days, end dot, Alpine hover readout; `decorative` is a bare aria-hidden line | prod-stat, Overview |
 | ProjectPreflight | Livewire (Board) | A project's preflight runs (SB-16): trend figures and two SVG line charts over a ledger table; Alpine filters, hover and columns picker (`preflightHistory` in resources/js) | `/p/{project}/preflight` |
 | MockupGallery | Livewire (Board) | Mockup gallery (SB-21): every set as a live-thumbnail card grouped by project, awaiting first; Alpine status/project/search filters, Show all per project | `/mockups` |
 | MockupViewer | Livewire (Board) | Full-screen mockup viewer (SB-21): title bar, description, Where, Current/A/B/C tabs (opens Current vs option when a shot exists), width switch, side by side with per-pane picker and swap, Pick with reason | `/mockups/{project}/{story}` |

@@ -1,5 +1,5 @@
 # Project brief — story-board
-Last refreshed: 2026-10-11 (RD-6)
+Last refreshed: 2026-10-11 (RD-7)
 
 ## What it is, and for whom
 A localhost Laravel app for one owner, with no auth (removed in RD-1). It reads the `stories/` folder of
@@ -31,14 +31,14 @@ It also shows:
   shots (manifest lookup, `ReadJourneyShots`), and current version (`ReadCurrentVersion`).
 - **ProdConnection / ProdMetric / ProdSnapshot**: one read-only production connection per project. A metric is
   a preset or a custom `SELECT`. A snapshot is one value per metric per local day.
-- **Gateways**: `GitReader` runs every git read, including `remotes()`. `ProductionReader` opens every production
+- **Gateways**: `GitReader` runs every git read, including `remotes()` and one fixed `log` form (RD-7). `ProductionReader` opens every production
   connection. `StoryPickWriter` makes every write to a project, and only writes; both pick surfaces reach it
   through `PickMockup` (RD-3).
 - **Shared rules** (pure, RD-1): `StoryStatusOrder` holds the status order, the open statuses and the
   initiative rollup. `MockupGateParser` reads a story's mockup gate.
 
 ## Features
-20 features: 19 active; the SB-9 all-projects dashboard is deprecated (unrouted since RD-5, deleted in RD-9). `/` is the home overview (RD-5), with a project filter (RD-6). Each one's route, summary and doc: [INDEX.md](INDEX.md); the stories behind it: its doc's
+20 features: 19 active; the SB-9 all-projects dashboard is deprecated (unrouted since RD-5, deleted in RD-9). `/` is the home overview (RD-5), with a project filter (RD-6), project tiles and Shipped this week (RD-7). Each one's route, summary and doc: [INDEX.md](INDEX.md); the stories behind it: its doc's
 header line.
 
 ## Journeys
@@ -46,9 +46,8 @@ None yet. Every SB and RD story so far is `Journey: none`.
 
 ## Stories
 - **built**: SB-2–5, SB-7–12, SB-14–19, SB-21–25 · RD-1 clean foundation · RD-2 dark shell and sidebar ·
-  RD-3 short story page · RD-4 re-skin kept pages · RD-5 home overview · RD-6 home project filter
-- **approved**: RD-7 project tiles and Shipped ·
-  RD-8 preflight "Ran on" · RD-9 retire old pages
+  RD-3 short story page · RD-4 re-skin kept pages · RD-5 home overview · RD-6 home project filter · RD-7 project tiles and Shipped
+- **approved**: RD-8 preflight "Ran on" · RD-9 retire old pages
 - **draft**: SB-20 preflight run errors · RD-10 preflight run record (parked)
 - **draft (parked)**: SB-6 the board on an always-live domain
 - **cut**: SB-13 pick a mockup (SB-21's pick covers it)
@@ -66,7 +65,7 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
 - The story modal's history is driven by Alpine, through one `?story` parser → ADR-015, ADR-016
 - Manage projects re-navigates after writes, and Add re-runs `RegisterProject`'s checks → ADR-021, ADR-022
 - Live sessions read transcripts defensively, and cards link untracked stories only from their own checkout → ADR-023, ADR-034
-- The home overview: Needs me lists each story once (a pick outranks draft/ready) and In flight keeps the owner's definition; Live cards summarise the latest tool call and usage; panels fail alone; the old Home is tested at a test-only route → ADR-047–050. One `ProjectFilter` value, from `?projects=`, is handed to every home panel → [ADR-051](decisions/ADR-051-one-project-filter-value-for-every-home-panel.md)
+- The home overview: Needs me lists each story once (a pick outranks draft/ready) and In flight keeps the owner's definition; Live cards summarise the latest tool call and usage; panels fail alone; the old Home is tested at a test-only route → ADR-047–050. One `ProjectFilter` value, from `?projects=`, is handed to every home panel → [ADR-051](decisions/ADR-051-one-project-filter-value-for-every-home-panel.md). `git log` is admitted in one fixed form; Shipped is build commits cached per snapshot; tiles reuse existing rules and stored data only → ADR-052–054
 - Handbook sections load lazily and stay client-side → ADR-024
 - The Stories page is one query over the shared rollup, and it filters with CSS → ADR-025, ADR-026
 - Preflight history reads the cost CSVs by folder name, renders on the server and recomputes in Alpine → ADR-027, ADR-028
@@ -82,9 +81,9 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
 - Preflight audit scope, audit cost record, build-artifact disposal (kit) → ADR-001 to ADR-003
 
 ## Current phase and what's next
-Phase 3, the redesign (RD). RD-1 to RD-6 are built: foundation, dark shell, short story page, every kept page
-in the shell, and the home overview at `/` with its project filter. Next are RD-7 and RD-8 (tiles and Shipped, which must take the
-home's `ProjectFilter`, and preflight "Ran on"); then RD-9
+Phase 3, the redesign (RD). RD-1 to RD-7 are built: foundation, dark shell, short story page, every kept page
+in the shell, and the home overview at `/` with its project filter, project tiles and Shipped this week. Next is RD-8
+(preflight "Ran on", which fills the tiles' empty `ran_on` slot); then RD-9
 deletes the old Home, the old dashboard, the story modal and `layouts/board`. Page-load refresh is tested at its middleware, so that costs no coverage.
 
 Still open from phase 2: the owner confirms SB-19's checkbox look; `journeyStep()` is adopted in coins, followed
@@ -108,6 +107,8 @@ Backlog: [BACKLOG.md](BACKLOG.md).
   project-tabs carry `dark:` and `shell:` tones side by side. The shell sidebar has no live badge and no Manage projects link (reachable from `/` only via the no-projects empty state).
 - `/projects` and `/prod` have no auth, hold production credentials, and are safe only while localhost-only.
   SB-6 must add auth first. A project's path and ref cannot be edited.
+- Home tiles show production from stored nightly snapshots only, first metric only; Shipped this week lists only
+  `feat|fix|test(<ID>)` commits and can lag a new commit by up to 5 min (cached per snapshot).
 - Live sessions rely on an undocumented transcript format and a 10-minute mtime; the sidebar badge does not poll. A home
   card shows a session's Bash command line (first line, 120 chars), accepted for localhost only (ADR-048); a 1M context is inferred.
 - The handbook compares against the kit checkout's last-fetched ref. Its real-data check is pending.

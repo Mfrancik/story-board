@@ -1,5 +1,5 @@
 # Home overview
-Status: active   ·   Last updated: 2026-10-11   ·   Stories: RD-5, RD-6
+Status: active   ·   Last updated: 2026-10-11   ·   Stories: RD-5, RD-6, RD-7
 
 ## Overview
 `/` is the redesign's home, Home A "command center" ([`docs/mockups/RD-5/option-a.html`](../mockups/RD-5/option-a.html))
@@ -8,7 +8,9 @@ is being built right now, and how preflight is doing. A header sentence ("7 thin
 building.") sits over four headline figures, then two panels: **Needs me** (oldest first) and **Live now** (one card
 per running Claude Code session, with what it is doing and how full its context is). It replaces the SB-9
 [all-projects dashboard](what-needs-me-home.md), which stays in the code, unrouted, until RD-9. A **Projects** filter
-in the header (RD-6) narrows every panel to chosen projects; by default it covers them all.
+in the header (RD-6) narrows every panel to chosen projects; by default it covers them all. Below the two panels
+(RD-7, [`docs/mockups/RD-7/option-a.html`](../mockups/RD-7/option-a.html)) sit a **Projects** grid, one tile per
+project, and **Shipped this week**, the build commits of the last 7 days.
 
 ## How it works
 **Route.** `routes/web.php` maps `/` (name `home`) to `app/Livewire/Board/Overview.php`, inside the
@@ -18,10 +20,12 @@ middleware does not touch.
 
 **Render.** `Overview::render()` first counts enabled projects. With none, the page renders one empty state linking
 to `/projects` (Manage projects) and no panels. Otherwise it resolves the project filter once (below), then fetches
-three sources, each through `Overview::attempt()`, a per-panel `try/catch`, and each handed the same filter:
+five sources, each through `Overview::attempt()`, a per-panel `try/catch`, and each handed the same filter:
 - `needs`: `app/Actions/Board/ListNeedsMe.php:handle($filter)`
 - `live`: `app/Actions/Board/ListLiveSessions.php:overview($filter)`
 - `figures`: `app/Actions/Board/ReadOverviewFigures.php:handle($filter)`
+- `tiles`: `app/Actions/Board/ListProjectTiles.php:handle($filter)` (RD-7)
+- `shipped`: `app/Actions/Board/ListShippedThisWeek.php:handle($filter)` (RD-7)
 
 A source that throws becomes `null`, logs `board.overview_panel_failed`, and that panel (and any figure built from
 it) shows its error state ("could not be read", or a red alert with Try again, which is `wire:click="$refresh"`).
@@ -41,7 +45,7 @@ one `app/Services/ProjectFilter.php` value:
   "enabled", so a project switched off mid-session still drops out.
 
 This is the only home of the "which projects" rule; no action reads the URL. RD-7's tiles and Shipped this week
-must take the same value ([ADR-051](../decisions/ADR-051-one-project-filter-value-for-every-home-panel.md)).
+take the same value ([ADR-051](../decisions/ADR-051-one-project-filter-value-for-every-home-panel.md)).
 
 The header control (`resources/views/livewire/board/overview.blade.php`) uses the Preflight page's
 popover-of-checkboxes style:
@@ -110,14 +114,52 @@ The card data comes from `app/Services/SessionReader.php`, extended under its ex
 - A present but malformed usage or tool record leaves that field null and logs `board.live_session_unparsed`
   once per file version (`Cache::add` keyed on file, mtime and reason).
 
+**Projects grid (RD-7).** `ListProjectTiles::handle()` returns one tile per covered project, A–Z
+([ADR-054](../decisions/ADR-054-project-tiles-reuse-existing-rules-and-stored-data.md)). It reads the board's
+database and the preflight CSVs only, never git and never a production database:
+- **Progress.** `kinds()` is one grouped `status` query over on-ref stories, mapped through
+  `ReadProjectStories::kind()`, so the tile counts exactly as the project's Stories page does. The tile draws
+  `<x-board.status-bar>` and "21 built · 2 in flight · 2 draft" (in flight is the `approved` kind).
+- **Off main.** A count of the project's stored off-main story rows (`Story::offMain()`), not of distinct branches;
+  "N off main", or "clean" at zero.
+- **Last preflight.** The newest run from `ReadPreflightHistory::handle()`: `Overview::ago()` ("6h ago", whole units
+  rounded down), `Overview::duration()` wall time, and the CSV's mode as a tag. "no runs yet" with none. The data
+  carries `ran_on`, always null until RD-8; the tile appends "on X" when it is set.
+- **Production.** `prod()`: only with a `ProdConnection` and an enabled metric, the first metric (by `position`, then
+  id), its latest stored `ProdSnapshot` in the last `PROD_DAYS` (7) board-local days, formatted by
+  `ListProductionDashboard::format()`, and a 7-day series drawn by `<x-board.sparkline decorative>`. With no
+  snapshot in the window, no production row shows. `ProductionReader` is never called.
+- **Live dot.** Computed in the view from the Live now cards (`$cards`), so a tile reads "session running" exactly
+  when a card for its project is shown. If Live now failed, no tile is live.
+
+Each tile is one link to `/p/{project}/stories` (`projects.stories`). The header carries a Manage projects link. A
+failed source shows the panel's error with Try again; an empty filter result reads "No projects match the filter."
+
+**Shipped this week (RD-7).** `ListShippedThisWeek::handle()` walks the covered projects A–Z
+([ADR-053](../decisions/ADR-053-shipped-this-week-is-build-commits-cached-per-snapshot.md)):
+- `read()` calls `GitReader::log($path, $ref, now − 7 days)`, the one `log` form `GitReader` admits
+  ([ADR-052](../decisions/ADR-052-git-log-is-admitted-in-one-fixed-form.md)), and keeps subjects matching
+  `BUILD_COMMIT`, `^(feat|fix|test)\(<ID>\):`. `docs`, `chore` and `refactor` never count. The result is cached
+  `CACHE_SECONDS` (300) under `board.shipped:<project id>:<sha1(ref|sha)>`, so the 30 s poll does not re-run git and
+  a refresh that moves the sha reads afresh.
+- A `GitReaderException` for one project logs `board.shipped_unreadable`, and the panel names it ("Could not read git
+  history for …") above the other projects' rows.
+- Rows sort newest first (ties by project, then ID). One row per commit, so a story with a `feat` and a `fix` this
+  week shows twice. `titles()` fetches each story's on-ref title in one query. A story not in the snapshot shows the
+  commit's subject, unlinked; the rest link to the story page.
+- Each row: day and time (`D H:i`, app timezone), ID tag, title, project. None: "Nothing shipped in the last 7 days."
+
 **Polling.** `wire:poll.30s` sits on the Live now `<section>` only, but it re-renders the whole component, so the
-figures and the header sentence follow the cards. The session scan itself is still cached 20 s
-(`board.sessions`).
+figures, the header sentence and the tiles follow the cards; each poll re-queries the tiles. The session scan itself
+is still cached 20 s (`board.sessions`), and each project's shipped read 5 min.
 
 ## Data model
 None. No migration. Reads `stories` (`status`, `is_parked`, `mockups`, `dated_on`, `location_kind`), `projects`
 (`is_enabled`), the preflight cost CSVs and the session transcripts. Cache keys added:
-`board.live_session_unparsed:<sha1(file|mtime|reason)>` (the once-per-version marker, `LIVE_MINUTES`).
+`board.live_session_unparsed:<sha1(file|mtime|reason)>` (the once-per-version marker, `LIVE_MINUTES`) and, RD-7,
+`board.shipped:<project id>:<sha1(ref|sha)>` (one project's build commits, 300 s). RD-7 also reads
+`stories.title`, `prod_connections`, `prod_metrics` (`is_enabled`, `position`) and `prod_snapshots` (`day`, `value`),
+and runs `git log` through `GitReader`.
 
 ## Interfaces
 - `ProjectFilter` (`app/Services/ProjectFilter.php`, `final readonly`): `all()`, `only(array $names)`, public
@@ -130,14 +172,26 @@ None. No migration. Reads `stories` (`status`, `is_parked`, `mockups`, `dated_on
 - `ListLiveSessions::overview(?ProjectFilter $filter = null): array{status, sessions: list<{key, project, branch, stories, started_at,
   active_at, doing, tokens, window}>}`; `CONTEXT_WINDOW`, `LONG_CONTEXT_WINDOW`.
 - `SessionReader::live()` sessions gain `started`, `doing`, `tokens`, `model`; constants `HEAD_BYTES`, `DOING_MAX`.
-- `Overview::duration(int|float $value, bool $seconds = true): string`.
+- `Overview::duration(int|float $value, bool $seconds = true): string`; `Overview::ago(CarbonInterface): string`
+  (`just now`, `12m ago`, `6h ago`, `3d ago`).
+- `ListProjectTiles::handle(?ProjectFilter $filter = null): list<{name, state, stories: {built, approved, draft},
+  offmain, preflight: {at, wall, mode, ran_on}|null, prod: {label, value, text, series}|null}>`; `PROD_DAYS = 7`.
+- `ListShippedThisWeek::handle(?ProjectFilter $filter = null): array{rows: list<{at, story_id, title, project,
+  linked}>, failed: list<string>}`; `DAYS = 7`, `CACHE_SECONDS = 300`.
+- `GitReader::log(string $path, string $ref, DateTimeInterface $since): list<{sha, at, subject}>`;
+  `GitReader::LOG_FORMAT`.
+- Blade `<x-board.sparkline decorative>`: a bare `aria-hidden` SVG line, no label, hover or end dot; `label` is
+  optional with it.
 - Blade `<x-shell.figure key label value accent tone>`; `tone` is `needs | live | null`.
 - Test hooks: `data-overview-empty`, `data-figure="live|needs|preflight|in-flight"` with `data-figure-value`,
   `data-needs-panel="ok|empty|error"`, `data-needs-row="<kind>"`, `data-needs-story="<project>/<ID>"`,
   `data-live-now="<state>"`, `data-live-card`, `data-live-story`, `data-doing`, `data-context`,
   `data-context-pct`, `data-context-label`; the filter has `data-filter-button`, `data-filter-label`,
   `data-filter-panel`, `data-filter-option`/`data-filter-toggle="<name>"`, `data-filter-clear`, `data-filter-active`,
-  `data-filter-chip="<name>"` and `data-filter-clear-chips`.
+  `data-filter-chip="<name>"` and `data-filter-clear-chips`; RD-7 adds `data-tiles-panel="ok|empty|error"`,
+  `data-tile="<name>"`, `data-tile-live`, `data-tile-counts`, `data-tile-offmain="<n>"`, `data-tile-prod`,
+  `data-tile-preflight`, `data-tile-ran-on`, `data-sparkline`, `data-shipped-panel="ok|empty|error"`,
+  `data-shipped-failed="<names>"` and `data-shipped-row="<project>/<ID>"`.
 
 ## Configuration
 None new. `board.sessions_path` (`BOARD_SESSIONS_PATH`) as for [Live sessions](live-sessions.md); the preflight CSVs
@@ -146,8 +200,11 @@ as for [Preflight history](preflight-history.md).
 ## Observability
 | Event | Level | Where | Context |
 |---|---|---|---|
-| `board.overview_viewed` | info | `Overview::logViewed()` | `projects`, `needs`, `picks`, `drafts`, `ready`, `sessions`, `preflight_runs`, `in_flight` (null for a failed panel). Full page loads only, not the 30 s polls |
-| `board.overview_panel_failed` | error | `Overview::attempt()` | `panel` (`needs` \| `live` \| `figures`), `error` (exception class), `message` |
+| `board.overview_viewed` | info | `Overview::logViewed()` | `projects`, `needs`, `picks`, `drafts`, `ready`, `sessions`, `preflight_runs`, `in_flight`, `tiles`, `shipped` (null for a failed panel). Full page loads only, not the 30 s polls |
+| `board.overview_panel_failed` | error | `Overview::attempt()` | `panel` (`needs` \| `live` \| `figures` \| `tiles` \| `shipped`), `error` (exception class), `message` |
+| `board.shipped_read` | info | `ListShippedThisWeek::read()` | `project`, `count` (build commits). Once per real git read, not per poll (5 min cache) |
+| `board.shipped_unreadable` | warning | `ListShippedThisWeek::handle()` | `project`, `error`. That project is named in the panel; the others still list |
+| `board.git_refused` | warning | `GitReader::refuse()` | `reason`, `subcommand`. For `log`, any form but the fixed one |
 | `board.overview_filtered` | info | `Overview::logFiltered()` | `projects` (resolved names; `[]` after a clear). On a page load that names projects, and on every change (tick, chip, Clear, Back/Forward); never on a poll |
 | `board.overview_filter_ignored` | warning | `ResolveProjectFilter::logIgnored()` | `reason` (`unknown` \| `disabled`), `names` (≤ 20, each ≤ 60 chars). One per reason, on load or change only |
 | `board.live_session_unparsed` | warning | `SessionReader::unparsed()` | `file` (basename), `reason` (`usage` \| `tool`); once per file version |
@@ -159,6 +216,12 @@ Plus the Live sessions events (`board.sessions_read`, `board.session_unreadable`
   is unknown (check its exact case against `/projects`) or the project is switched off.
 - **A panel shows "could not be read":** find `board.overview_panel_failed` with that `panel`. The class and
   message name the cause (a query error for `needs`/`figures`, the reader for `live`).
+- **Shipped this week names a project it could not read:** `board.shipped_unreadable` carries the git error (a
+  missing checkout or a bad ref). A `board.git_refused` with `subcommand: log` means code built a `log` call other
+  than `GitReader::log()`'s form.
+- **A story built this week is missing from Shipped:** check the commit subject is `feat|fix|test(<ID>):` on the
+  project's ref, and that its committer date is in the window. Up to 5 minutes of cache can hide a brand-new commit
+  if the sha has not moved (no refresh yet).
 - **A card shows "—" or "No tool calls yet" while the session is clearly working:** look for
   `board.live_session_unparsed`. Repeated `usage` or `tool` reasons on every file mean Claude Code changed its
   transcript shape (see ADR-023, ADR-048).
@@ -180,6 +243,19 @@ Plus the Live sessions events (`board.sessions_read`, `board.session_unreadable`
 - `tests/Browser/HomeProjectFilterTest.php`: choosing a project narrows every panel and the URL without a reload,
   and Back returns all projects. A chip click widens the panels again. There is no sideways scroll at 375 px with
   the dropdown open and a chip shown.
+- `tests/Feature/Board/HomeTilesTest.php` (RD-7): one `it()` per acceptance criterion, plus extras: production hidden
+  without snapshots or without a connection, fix/test counted and chore/refactor/malformed IDs ignored, a dataset of
+  refused `log` forms (each logged), `GitReader::log()` reading a ref since a time, `board.shipped_read`, one git read
+  per unchanged snapshot, an unreadable project named while the others list, the empty state, each new panel failing
+  alone, the live dot, and the empty `ran_on` slot.
+- `tests/Browser/HomeTilesTest.php`: a tile's counts match its Stories page and Shipped lists the build commits; the
+  filter narrows tiles and shipped rows; no sideways scroll at 375 px.
+- `tests/Support/GitFixture.php` gained `commitAt($message, $at)`, which sets author and committer dates. Write
+  fixture commits in date order: `git log --since` stops at the first older commit (RUNBOOK 2026-10-11).
+- `log --output=x` is refused by both the `log` form guard and the older `--output` guard; the refused-forms dataset
+  is what proves each guard on its own.
+- Browser check (RD-7): open `/`; story-board's tile matches its Stories page counts; Shipped this week lists any
+  story built in the last 7 days.
 - Browser check (RD-6): choose one project and confirm every panel narrows and the URL changes. Press Back and
   confirm all projects return.
 - Browser check (story): with a session running, `/` shows its card with branch, doing line and context bar.
@@ -194,6 +270,13 @@ Plus the Live sessions events (`board.sessions_read`, `board.session_unreadable`
 - One `ProjectFilter` value, resolved once per render, is handed to every panel. Names are matched exactly in PHP.
   Ignored names are logged once per load or change, and left in the URL until the next change →
   [ADR-051](../decisions/ADR-051-one-project-filter-value-for-every-home-panel.md).
+- `git log` is admitted in one fixed form: fixed format, `--since=@<unix>`, a ref, `--`, signatures off →
+  [ADR-052](../decisions/ADR-052-git-log-is-admitted-in-one-fixed-form.md).
+- Shipped is one row per build commit, titled from the snapshot, cached per project and sha, failing per project →
+  [ADR-053](../decisions/ADR-053-shipped-this-week-is-build-commits-cached-per-snapshot.md).
+- Tiles reuse the Stories page's kind rule, stored off-main rows, stored production snapshots and Live now's
+  sessions; the sparkline gained a `decorative` prop →
+  [ADR-054](../decisions/ADR-054-project-tiles-reuse-existing-rules-and-stored-data.md).
 - The old Home is unrouted and kept under test at a test-only route until RD-9 →
   [ADR-050](../decisions/ADR-050-old-home-is-tested-at-a-test-only-route-until-rd-9.md).
 
@@ -213,10 +296,19 @@ Plus the Live sessions events (`board.sessions_read`, `board.session_unreadable`
 - `board.overview_viewed`'s `projects` is the count of every enabled project, not of the filter.
 - The filter is project-only, and it is not saved: a bare `/` is always every project. The sidebar's project
   links are unchanged.
-- RD-7's tiles and Shipped this week must accept the `ProjectFilter` too. Out of scope here: those panels (RD-7)
-  and any metric picker.
-- `docs/mockups/RD-7/` landed on this branch too; it belongs to RD-7.
+- Out of scope: spend per project and the spend card (Money), the Full timeline link (F-2), and any tile
+  customization or metric picker.
+- **Shipped can lag 5 minutes** behind a new commit until the next refresh moves the stored sha, and its window can
+  reach that far past 7 days. A non-conventional subject never appears.
+- **Off main counts story rows, not branches**: a branch touching three stories adds three.
+- The production row shows only the first enabled metric, from the nightly stored snapshot, and vanishes after 7
+  days with none. It is not a live read.
+- **Live dots depend on Live now.** If that panel fails, no tile is live.
+- Tiles fail as one panel; there is no per-field error state as in the mockup.
+- Wall time reads "4m 5s" (`Overview::duration()`), not the mockup's "4m 05s"; the mode tag shows the CSV value
+  (`scoped`/`full`) as written. "Ran on" is empty until RD-8.
 
 ## Change history
 2026-10-11 — `/` becomes the overview: header sentence, four figures, Needs me, Live now with doing line and context bar; `ListNeedsMe`, `ReadOverviewFigures`, `ListLiveSessions::overview()`, `SessionReader` activity fields (RD-5, `6d6f3de`)
 2026-10-11 — Projects filter in the header: `?projects=` narrows Needs me, Live now and the figures through one `ProjectFilter`; chips, Clear, ignored-name warnings (RD-6, `a65ff4e`)
+2026-10-11 — Projects grid (progress, off main, last preflight, stored production headline, live dot) and Shipped this week (build commits via `GitReader::log()`, cached per snapshot); sparkline `decorative` (RD-7, `4d12af1`)
