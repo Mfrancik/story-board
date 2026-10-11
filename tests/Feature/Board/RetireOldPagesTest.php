@@ -116,3 +116,15 @@ it('Given the codebase, then nothing in app, resources, routes, bootstrap or tes
 
     expect($hits)->toBe([]);
 });
+
+it('Given the views, then no copy sends the owner to the retired project dashboard to refresh', function () {
+    // The "Refresh this project" button died with the old project page; the handbook and app-map error states
+    // now point at refresh-on-load and `board:refresh` instead.
+    $hits = collect(File::allFiles(resource_path('views')))
+        ->filter(fn ($file) => str_contains($file->getContents(), 'from its dashboard'))
+        ->map(fn ($file) => $file->getRelativePathname())
+        ->values()
+        ->all();
+
+    expect($hits)->toBe([]);
+});

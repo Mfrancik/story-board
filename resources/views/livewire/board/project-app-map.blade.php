@@ -43,7 +43,7 @@
     @if ($unreadable)
         <div role="status" data-unreadable class="mt-5 flex items-start gap-2 rounded-lg border px-3 py-2.5 text-sm border-edge bg-surface">
             <svg class="mt-0.5 size-4 shrink-0 text-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l9.5 17h-19L12 3z"/><path d="M12 10v4M12 17h.01"/></svg>
-            <p><span class="font-medium">The journeys could not be read from git.</span> The snapshot commit is not in {{ $model->name }}'s checkout. Refresh the project from its dashboard, then reload this page.</p>
+            <p><span class="font-medium">The journeys could not be read from git.</span> The snapshot commit is not in {{ $model->name }}'s checkout. The board refreshes it within a few minutes of a page load, or run <code class="font-mono">php artisan board:refresh {{ $model->name }}</code>. Then reload this page.</p>
         </div>
     @endif
 
