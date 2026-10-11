@@ -33,6 +33,7 @@ Symptom: a quick `--filter` run for feature tests also launched `tests/Browser` 
 Root cause: `--filter` with no suite or path matches test names in every suite, Browser included.
 Fix: for non-browser runs always pair the filter with a scope: `php artisan test --testsuite=Feature,Unit --filter=Name` or `php artisan test tests/Feature/... --filter=Name`. Run browser tests only through the lock (RD-4).
 Log trail: none. The run's output lists `Tests\Browser\…` files.
+Enforced since 2026-10-11 (L-7): `tests/Pest.php` fails any Browser test run outside `bin/browser-lock.sh`, so a bare `--filter` now stops with "Browser tests run only under the lock" instead of running unlocked.
 
 ## 2026-10-11 — Story page's status tag text came out broken
 Symptom: on the RD-3 story page, the status tag's text (status plus "· awaiting your pick") rendered garbled once the suffix was added with an inline `@if` inside the tag.

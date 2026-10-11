@@ -53,17 +53,13 @@ Scope: PROMOTE
 
 Retro finding (owner-approved capture): three times this phase the cost label read "audit opus" or "opus+sonnet" when the preflight audit ran on Sonnet. The meter counts every subagent that ran in its window, so a documenter subagent (session model) was reported as the audit tier. It should count only `preflight`-type subagents toward the audit tier. Fix in the kit, proven with bin/preflight-ab.sh.
 
+2026-10-11 (redesign-phase retro, L-8, owner chose to defer the code): four more meter failures in one session. (1) The Stop hook fires when the turn ends while an async preflight subagent is still running, bounces, and clears the marker on the next stop, so `report` then says "no start marker". (2) A second preflight dispatch in the same session started no marker. (3) `report` run from a worktree printed "tokens unavailable (no transcript)": the transcript lookup keys on the cwd, not the primary checkout. (4) `csv_path()` keys on the cwd too, so the "one record" is ten per-worktree CSVs under ~/.claude/projects/. Fix together with the tier bug.
+
 ### F-5 — 2026-09-29 — Preflight run record: tests, failures, gates, verdict · Story: SB-20, RD-10
 Area: kit tooling (preflight.sh) · feeds SB-16 preflight history
 Scope: PROMOTE
 
 Owner wants preflight history to show "the tests that ran, failures, which fialures, time it took to run". The cost CSV holds none of that and preflight.sh keeps nothing after it exits. Proposal: preflight.sh writes one JSON per run (gates with pass/fail and seconds, pest counts per suite, failing test names, verdict) to ~/.claude/projects/<p>/preflight-runs/. Deferred by owner 2026-09-29: "I dont want to make too many changes to the preflight scripts right now".
-
-### F-6 — 2026-10-11 — /story writes a one-line Summary: for the story page
-Area: kit tooling (/story skill, story template) · feeds RD-3 story page
-Scope: PROMOTE
-
-Captured from RD-3's Out of scope: the short story page shows a story's `Summary:` line under its title, and falls back to the first sentence of `## Story` (logged `board.story_summary_fallback`, debug) when there is none. No story has one yet because the kit's /story does not write it. Have /story write a `Summary:` line of at most 200 characters in the header.
 
 ### F-7 — 2026-10-11 — Production item in the shell sidebar
 Area: shell sidebar (RD-2) · /prod
@@ -84,6 +80,13 @@ Scope: PROJECT
 With RD-9: ~45 hand-pasted inline SVG icons (sidebars, the empty-state glyph in six views, search magnifier, warning triangle, chevron, spinner) plus per-view icon closures (mockup-viewer.blade.php:37 $icon, project-app-map.blade.php:30 $arrow, production-settings.blade.php:97-98 $tick/$cross, story-page.blade.php:36 $chevron). Replace with one <x-shell.icon name=… class=…> component; mockup-viewer's $icon closure is the closest starting point. (Found by the redesign phase full preflight sweep, 2026-10-11.)
 
 ## Cut
+
+### F-6 — 2026-10-11 — /story writes a one-line Summary: for the story page
+Area: kit tooling (/story skill, story template) · feeds RD-3 story page
+Scope: PROMOTE
+Cut: 2026-10-11 — PROMOTE-scoped; moved to the central (kit) backlog at the redesign-phase retro.
+
+Captured from RD-3's Out of scope: the short story page shows a story's `Summary:` line under its title, and falls back to the first sentence of `## Story` (logged `board.story_summary_fallback`, debug) when there is none. No story has one yet because the kit's /story does not write it. Have /story write a `Summary:` line of at most 200 characters in the header.
 
 ### F-1 — 2026-09-29 — Kit parser misses bold Chosen option picks
 Area: story-index parser (kit, SB-1) · home "Awaiting a mockup pick"

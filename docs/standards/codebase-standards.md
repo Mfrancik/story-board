@@ -81,6 +81,8 @@ standards, story files).
   ships in the same commit with a test that triggers it and a log line saying why
   (logging-standards §What must be logged). List the guards in the diff before
   calling the story done; the happy path is not the whole contract.
+  Prove each guard's test by deleting the guard: it must go red. A test that
+  stays green without its guard pins nothing (RD-4's appearance-stub test did).
 - Factories for all models; states for meaningful variants (`suspended()`).
 - A skipped test needs a comment with a story ID and a reason.
 - **Journey tests** live in `tests/Browser/Journeys/` using Pest's browser

@@ -44,3 +44,33 @@ Root cause: /story writes counts, rules and examples as facts without executing 
 Enforced at: process → .claude/skills/story/SKILL.md step 7 "Run every fact the stories assert against the real project" + Test plan template line "Checked against real data".
 Scope: PROMOTE TO CENTRAL
 
+
+## L-7 — 2026-10-11 — Browser runs locked per session, so not locked at all
+Symptom: an RD-4 builder ran browser tests unlocked through a bare `--filter`; each session locked its own scratchpad file, so two sessions never excluded each other; CLAUDE.md and /build named a `.claude/browser-lock.sh` that never existed (and `/.claude` is gitignored, so it could not reach a worktree).
+Root cause: the lock was a convention with a per-caller path and nothing refusing an unlocked run.
+Enforced at: check → `bin/browser-lock.sh` (one machine-wide `~/.claude/browser.lock`, exports BROWSER_LOCK_HELD, re-entrant) + `tests/Pest.php` Browser-suite guard (CI exempt) + preflight.sh browser/journey gates take the lock; test → tests/Unit/BrowserLockTest.php.
+Scope: PROMOTE TO CENTRAL
+
+## L-8 — 2026-10-11 — Preflight meter assumes a synchronous audit in the primary checkout
+Symptom: one session lost two runs' labels and CSV rows — the Stop hook bounced while an async audit was running and cleared the marker; a re-dispatch started none; `report` in a worktree found no transcript; the CSV is split across ten per-cwd files.
+Root cause: the meter keys state on the cwd and treats turn end as run end.
+Enforced at: deferred by owner (no code) → docs/BACKLOG.md F-3 addendum, to fix with the tier bug and prove with bin/preflight-ab.sh.
+Scope: PROMOTE TO CENTRAL
+
+## L-9 — 2026-10-11 — A `full` audit scoped itself; a dead test pin survived
+Symptom: the phase sweep's first `full` run audited the 4-file diff (13 tool calls) and left the asked-for items unaudited; the RUNBOOK kept pinning a test RD-3 deleted until a second run scripted a check.
+Root cause: a deterministic doc check was left to the audit (L-2 class), and nothing holds `full` mode to the whole tree.
+Enforced at: check → preflight.sh `docs test pins resolve` (warn-only). Audit bullet drafted, NOT applied (CLAUDE.md: audit tooling changes need bin/preflight-ab.sh first): "In `full` mode the scope line must read the whole tree; a `full` report scoped to the diff is invalid — start from the sweep items, not the diff."
+Scope: PROMOTE TO CENTRAL
+
+## L-10 — 2026-10-11 — Disposal blocked on files every worktree has
+Symptom: rd-1..rd-4 were all SKIPPED on 3b for `.env`, compiled views, test logs and `bin/__pycache__`, and needed a one-off PF_IGNORED_ALLOW.
+Root cause: the 3b allow-list omitted Laravel's regenerable runtime output, so "dispose at merge" could never run unattended.
+Enforced at: check → bin/dispose-worktree.sh allow-list (+ `.env` only while identical to the primary's), bin/disposal-fixture.sh runtime/runtimeenv cases; rule → disposal-standards.md §The ignored allow-list.
+Scope: PROMOTE TO CENTRAL
+
+## L-11 — 2026-10-11 — A guard test that never went red
+Symptom: the WARN-1 browser test for the shell's appearance stub passed with the stub deleted (flux.js only runs the stub when a session starts on a shell page); in the same phase two more guards shipped without a test or log (L-5 repeating).
+Root cause: a guard's test was accepted on green alone, never shown to fail without the guard.
+Enforced at: rule → codebase-standards.md §Testing, appended to L-5's bullet ("prove each guard's test by deleting the guard").
+Scope: PROMOTE TO CENTRAL

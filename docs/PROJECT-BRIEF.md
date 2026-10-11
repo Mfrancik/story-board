@@ -2,23 +2,19 @@
 Last refreshed: 2026-10-11 (RD-4)
 
 ## What it is, and for whom
-A localhost Laravel app for one owner. It reads the `stories/` folder of every project that uses
-the dev-standards kit and shows, in one place, what state each project's stories are in. It reads
-from git, at each project's ref (default `origin/main`). Its one write into a project is a mockup pick
-(from the gallery or the story page): two lines of one story file, one local commit, never pushed (ADR-032).
+A localhost Laravel app for one owner, with no auth (removed in RD-1). It reads the `stories/` folder of
+every project that uses the dev-standards kit, from git at each project's ref (default `origin/main`), and
+shows in one place what state each project's stories are in. Its one write into a project is a mockup pick
+(from the gallery or the story page): two lines of one story file, one local commit, never pushed.
 
 It also shows:
-- Each project's production numbers, from its production MySQL database read-only, side by side on
-  `/prod` with daily history.
-- Work not on the ref yet (unmerged branches, worktrees, untracked files), labelled with where it
-  lives. It never counts as status.
-- Live Claude Code sessions, from their transcript metadata (never their messages).
-- Each project's handbook, and how it has drifted from the kit.
-- Each project's preflight runs, from the kit meter's cost CSVs under `~/.claude/projects`.
-- A clickable map of each project's journeys, drawn from its journey docs, stories and mockups, with
-  screenshots from the project's own journey tests (`journeyStep()`).
-
-The app has no auth. The starter kit's auth was removed in RD-1 (ADR-037).
+- Each project's production numbers, read-only from its production MySQL, side by side on `/prod` with daily history.
+- Work not on the ref yet (unmerged branches, worktrees, untracked files), labelled with where it lives. It never
+  counts as status.
+- Live Claude Code sessions (transcript metadata, never messages); each project's handbook and its drift from the
+  kit; its preflight runs, from the kit meter's cost CSVs under `~/.claude/projects`.
+- A clickable map of each project's journeys, from its journey docs, stories and mockups, with screenshots from
+  the project's own journey tests (`journeyStep()`).
 
 ## Domain model
 - **Project**: a registered checkout (`name`, `path`, `ref`, `is_enabled`). Off hides it everywhere and stops its
@@ -35,46 +31,24 @@ The app has no auth. The starter kit's auth was removed in RD-1 (ADR-037).
   shots (manifest lookup, `ReadJourneyShots`), and current version (`ReadCurrentVersion`).
 - **ProdConnection / ProdMetric / ProdSnapshot**: one read-only production connection per project. A metric is
   a preset or a custom `SELECT`. A snapshot is one value per metric per local day.
-- **Gateways**:
-  - `GitReader` runs every git read (an allow-list), including `remotes()`.
-  - `ProductionReader` opens every production connection.
-  - `StoryPickWriter` makes every write to a project, and only writes. Both pick surfaces reach it through
-    `PickMockup` (RD-3).
+- **Gateways**: `GitReader` runs every git read, including `remotes()`. `ProductionReader` opens every production
+  connection. `StoryPickWriter` makes every write to a project, and only writes; both pick surfaces reach it
+  through `PickMockup` (RD-3).
 - **Shared rules** (pure, RD-1): `StoryStatusOrder` holds the status order, the open statuses and the
   initiative rollup. `MockupGateParser` reads a story's mockup gate.
 
 ## Features
-| Feature | Status | Doc |
-|---|---|---|
-| Project registry and story reader: `board:project`, `board:refresh`, queued refresh, `GitReader` | active (SB-2, SB-3) | [doc](features/project-registry-and-reader.md) |
-| All-projects dashboard: `/` What needs me, In flight, project tiles, collapsible sections | active (SB-3–5, SB-8, SB-9) | [doc](features/what-needs-me-home.md) |
-| Story page and mockups: `/p/{project}/s/{id}` short first in the shell: summary, Pick, one frame with Today, folded details, `?v=` | active (SB-4, SB-5, RD-3) | [doc](features/story-page-and-mockups.md) |
-| Not on main: branches, worktrees and untracked stories/mockups, indexed at refresh | active (SB-5) | [doc](features/not-on-main.md) |
-| App shell and project switcher: the old sidebar on `/`, `/p/{project}`, `/prod` until RD-9 | active (SB-7, SB-10) | [doc](features/app-shell-and-project-switcher.md) |
-| Story modal: `?story=<project>/<ID>` on `/` and `/p/{project}` until RD-9 | active (SB-8) | [doc](features/story-modal.md) |
-| Single-project dashboard: `/p/{project}` header, refresh, scoped cards, Progress by initiative | active (SB-10) | [doc](features/single-project-dashboard.md) |
-| Manage projects: `/projects` on/off, add by folder, remove behind a confirmation | active (SB-12) | [doc](features/manage-projects.md) |
-| Live sessions: Live now panel (30 s poll) and sidebar badge | active (SB-11, SB-25) | [doc](features/live-sessions.md) |
-| Project handbook: `/p/{project}/handbook` with kit badges | active (SB-14) | [doc](features/project-handbook.md) |
-| Stories by initiative: `/p/{project}/stories` two panes, tags, filter chips | active (SB-15) | [doc](features/stories-by-initiative.md) |
-| Preflight history: `/p/{project}/preflight` ledger, trends, charts, filters, columns picker | active (SB-16, SB-19) | [doc](features/preflight-history.md) |
-| Production connection and metrics: read-only prod MySQL per project on `/projects` | active (SB-17) | [doc](features/production-connection.md) |
-| Production dashboard: `/prod` projects × metrics, queued reads, nightly snapshot | active (SB-18) | [doc](features/production-dashboard.md) |
-| Mockup gallery: `/mockups`, full-screen viewer, Current pane, Pick commits the story file | active (SB-21, SB-23) | [doc](features/mockup-gallery.md) |
-| App map: `/p/{project}/map` journeys as screen flows | active (SB-24) | [doc](features/app-map.md) |
-| Journey shots: kit Pest helper `journeyStep()` | active (SB-22) | [doc](features/journey-shots.md) |
-| Board foundation: `StoryStatusOrder`, `MockupGateParser`, `GuardsProjectPage`; starter kit removed | active (RD-1) | [doc](features/board-foundation.md) |
-| Dark shell and sidebar: `layouts/shell` for every kept page, Home A tokens, Geist, toasts, page-load refresh | active (RD-2, RD-4) | [doc](features/dark-shell.md) |
+All 19 are active. Each one's route, summary and doc: [INDEX.md](INDEX.md); the stories behind it: its doc's
+header line.
 
 ## Journeys
 None yet. Every SB and RD story so far is `Journey: none`.
 
 ## Stories
-- **built**:
-  - SB-2–5, SB-7–12, SB-14–19, SB-21–25.
-  - RD-1 clean foundation · RD-2 dark shell and sidebar · RD-3 short story page · RD-4 re-skin kept pages.
-- **approved**: RD-5 home overview ·
-  RD-6 home project filter · RD-7 project tiles and Shipped · RD-8 preflight "Ran on" · RD-9 retire old pages
+- **built**: SB-2–5, SB-7–12, SB-14–19, SB-21–25 · RD-1 clean foundation · RD-2 dark shell and sidebar ·
+  RD-3 short story page · RD-4 re-skin kept pages
+- **approved**: RD-5 home overview · RD-6 home project filter · RD-7 project tiles and Shipped ·
+  RD-8 preflight "Ran on" · RD-9 retire old pages
 - **draft**: SB-20 preflight run errors · RD-10 preflight run record (parked)
 - **draft (parked)**: SB-6 the board on an always-live domain
 - **cut**: SB-13 pick a mockup (SB-21's pick covers it)
@@ -111,13 +85,10 @@ Phase 3, the redesign (RD). RD-1 to RD-4 are built: foundation, dark shell, shor
 in the shell. Next are RD-5 to RD-8 (home, filter, tiles, preflight "Ran on"); then RD-9 retires `/`'s old form, the
 old dashboard, the story modal and `layouts/board`. Page-load refresh is tested at its middleware, so that costs no coverage.
 
-Still open from phase 2:
-- The owner confirms SB-19's checkbox look.
-- `journeyStep()` is adopted in coins, followed by the real-data check of the app map and Current pane.
-- The `--text-thumb` token decision.
+Still open from phase 2: the owner confirms SB-19's checkbox look; `journeyStep()` is adopted in coins, followed
+by the real-data check of the app map and Current pane; the `--text-thumb` token decision.
 
-Backlog: F-2 (build timeline), F-3 (meter tier labels), F-5 (preflight run record), F-6 (/story writes a
-`Summary:` line), F-7 (Production item in the shell sidebar).
+Backlog: [BACKLOG.md](BACKLOG.md).
 
 ## Known limitations
 - Laravel 13 / Livewire 4 are installed, while `CLAUDE.md` says 12 / 3. Flagged, unchanged.
@@ -135,8 +106,7 @@ Backlog: F-2 (build timeline), F-3 (meter tier labels), F-5 (preflight run recor
   project-tabs carry `dark:` and `shell:` tones side by side. The shell sidebar has no live badge.
 - `/projects` and `/prod` have no auth, hold production credentials, and are safe only while localhost-only.
   SB-6 must add auth first. A project's path and ref cannot be edited.
-- Live sessions rely on an undocumented transcript format and a 10-minute mtime, and the sidebar badge does not
-  poll.
+- Live sessions rely on an undocumented transcript format and a 10-minute mtime; the sidebar badge does not poll.
 - The handbook compares against the kit checkout's last-fetched ref. Its real-data check is pending.
 - Production SSL is not certificate-verified, and rotating APP_KEY breaks stored credentials. The coins
   production check awaits the owner's read-only user.
