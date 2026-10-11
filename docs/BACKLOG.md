@@ -59,6 +59,18 @@ Scope: PROMOTE
 
 Owner wants preflight history to show "the tests that ran, failures, which fialures, time it took to run". The cost CSV holds none of that and preflight.sh keeps nothing after it exits. Proposal: preflight.sh writes one JSON per run (gates with pass/fail and seconds, pest counts per suite, failing test names, verdict) to ~/.claude/projects/<p>/preflight-runs/. Deferred by owner 2026-09-29: "I dont want to make too many changes to the preflight scripts right now".
 
+### F-6 — 2026-10-11 — /story writes a one-line Summary: for the story page
+Area: kit tooling (/story skill, story template) · feeds RD-3 story page
+Scope: PROMOTE
+
+Captured from RD-3's Out of scope: the short story page shows a story's `Summary:` line under its title, and falls back to the first sentence of `## Story` (logged `board.story_summary_fallback`, debug) when there is none. No story has one yet because the kit's /story does not write it. Have /story write a `Summary:` line of at most 200 characters in the header.
+
+### F-7 — 2026-10-11 — Production item in the shell sidebar
+Area: shell sidebar (RD-2) · /prod
+Scope: PROJECT
+
+Owner, 2026-10-11: the shell sidebar has no Production item, so /prod is reachable only from the old Home's sidebar until RD-9. Add a Production item with RD-5/RD-9.
+
 ## Cut
 
 ### F-1 — 2026-09-29 — Kit parser misses bold Chosen option picks

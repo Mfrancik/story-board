@@ -1,11 +1,11 @@
 # Project brief — story-board
-Last refreshed: 2026-10-11 (RD-2)
+Last refreshed: 2026-10-11 (RD-3)
 
 ## What it is, and for whom
 A localhost Laravel app for one owner. It reads the `stories/` folder of every project that uses
 the dev-standards kit and shows, in one place, what state each project's stories are in. It reads
 from git, at each project's ref (default `origin/main`). Its one write into a project is a mockup pick
-from the gallery: two lines of one story file, one local commit, never pushed (ADR-032).
+(from the gallery or the story page): two lines of one story file, one local commit, never pushed (ADR-032).
 
 It also shows:
 - Each project's production numbers, from its production MySQL database read-only, side by side on
@@ -38,7 +38,8 @@ The app has no auth. The starter kit's auth was removed in RD-1 (ADR-037).
 - **Gateways**:
   - `GitReader` runs every git read (an allow-list), including `remotes()`.
   - `ProductionReader` opens every production connection.
-  - `StoryPickWriter` makes every write to a project, and only writes.
+  - `StoryPickWriter` makes every write to a project, and only writes. Both pick surfaces reach it through
+    `PickMockup` (RD-3).
 - **Shared rules** (pure, RD-1): `StoryStatusOrder` holds the status order, the open statuses and the
   initiative rollup. `MockupGateParser` reads a story's mockup gate.
 
@@ -47,7 +48,7 @@ The app has no auth. The starter kit's auth was removed in RD-1 (ADR-037).
 |---|---|---|
 | Project registry and story reader: `board:project`, `board:refresh`, queued refresh, `GitReader` | active (SB-2, SB-3) | [doc](features/project-registry-and-reader.md) |
 | All-projects dashboard: `/` What needs me, In flight, project tiles, collapsible sections | active (SB-3–5, SB-8, SB-9) | [doc](features/what-needs-me-home.md) |
-| Story page and mockups: `/p/{project}/s/{id}`, sandboxed frames, compare, `?v=` versions | active (SB-4, SB-5) | [doc](features/story-page-and-mockups.md) |
+| Story page and mockups: `/p/{project}/s/{id}` short first in the shell: summary, Pick, one frame with Today, folded details, `?v=` | active (SB-4, SB-5, RD-3) | [doc](features/story-page-and-mockups.md) |
 | Not on main: branches, worktrees and untracked stories/mockups, indexed at refresh | active (SB-5) | [doc](features/not-on-main.md) |
 | App shell and project switcher: sidebar, filterable list, drawer below 768px | active (SB-7, SB-10) | [doc](features/app-shell-and-project-switcher.md) |
 | Story modal: `?story=<project>/<ID>` on `/` and `/p/{project}` | active (SB-8) | [doc](features/story-modal.md) |
@@ -71,8 +72,8 @@ None yet. Every SB and RD story so far is `Journey: none`.
 ## Stories
 - **built**:
   - SB-2–5, SB-7–12, SB-14–19, SB-21–25.
-  - RD-1 clean foundation · RD-2 dark shell and sidebar.
-- **approved**: RD-3 short story page · RD-4 re-skin kept pages · RD-5 home overview ·
+  - RD-1 clean foundation · RD-2 dark shell and sidebar · RD-3 short story page.
+- **approved**: RD-4 re-skin kept pages · RD-5 home overview ·
   RD-6 home project filter · RD-7 project tiles and Shipped · RD-8 preflight "Ran on" · RD-9 retire old pages
 - **draft**: SB-20 preflight run errors · RD-10 preflight run record (parked)
 - **draft (parked)**: SB-6 the board on an always-live domain
@@ -102,12 +103,13 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
 - Kept logic lives in pure shared classes: `StoryStatusOrder`, `MockupGateParser`, `pick()` returning its branch, and a guard trait with hooks → [ADR-038](decisions/ADR-038-kept-board-logic-moves-into-pure-shared-classes.md)
 - The dark shell: Geist from fontsource packages, not Vercel's `geist` package; styling scoped by `.shell` and a `shell:` variant, not by forked components → ADR-039, ADR-040
 - Refresh on load is one middleware on the page-route group, not per-page `mount()` → [ADR-041](decisions/ADR-041-refresh-on-load-is-one-middleware-on-the-page-routes.md)
+- One pick action, `PickMockup`, serves the viewer and the story page; the short story page replaced the long one in place, trimmed to the approved mockup → [ADR-042](decisions/ADR-042-one-pick-action-shared-by-story-page-and-viewer.md), [ADR-043](decisions/ADR-043-short-story-page-replaces-the-long-one-in-place.md)
 - Preflight audit scope, audit cost record, build-artifact disposal (kit) → ADR-001 to ADR-003
 
 ## Current phase and what's next
-Phase 3, the redesign (RD). RD-1 (clean foundation) and RD-2 (dark shell, with Preflight as its first page) are
-built. Next are RD-3 to RD-8: the short story page, the re-skin that moves the remaining pages into the shell,
-home, tiles, and preflight "Ran on". Then RD-9 retires the old pages and `layouts/board`. The page-load refresh
+Phase 3, the redesign (RD). RD-1 (clean foundation), RD-2 (dark shell, with Preflight as its first page) and RD-3
+(the short story page, now in the shell) are built. Next are RD-4 to RD-8: the re-skin that moves the remaining
+pages into the shell, home, tiles, and preflight "Ran on". Then RD-9 retires the old pages and `layouts/board`. The page-load refresh
 is now tested at its middleware, so deleting those pages costs no coverage.
 
 Still open from phase 2:
@@ -115,7 +117,8 @@ Still open from phase 2:
 - `journeyStep()` is adopted in coins, followed by the real-data check of the app map and Current pane.
 - The `--text-thumb` token decision.
 
-Backlog: F-2 (build timeline), F-3 (meter tier labels), F-5 (preflight run record).
+Backlog: F-2 (build timeline), F-3 (meter tier labels), F-5 (preflight run record), F-6 (/story writes a
+`Summary:` line), F-7 (Production item in the shell sidebar).
 
 ## Known limitations
 - Laravel 13 / Livewire 4 are installed, while `CLAUDE.md` says 12 / 3. Flagged, unchanged.
@@ -127,6 +130,8 @@ Backlog: F-2 (build timeline), F-3 (meter tier labels), F-5 (preflight run recor
 - Until the kit parser reads `Chosen option: **B**` (F-1), "Awaiting a pick" over-reports on the ref.
 - Untracked stories and mockups are listed but cannot be shown. Off-main rows with malformed IDs cannot open the
   modal. `?v=` links break at the next refresh.
+- Story summaries mostly fall back to the first sentence of `## Story` until the kit writes `Summary:` (F-6). The
+  shell sidebar has no Production item (F-7). The story modal keeps the long form until RD-9.
 - Two layouts coexist until RD-4/RD-9. The dark shell is fully tokenised, while old pages still use raw `zinc-*`.
   Shared components carry `dark:` and `shell:` tones side by side. Nothing searches stories by ID
   or title. Initiative names group case-sensitively on Stories but not on the dashboard.
@@ -140,7 +145,7 @@ Backlog: F-2 (build timeline), F-3 (meter tier labels), F-5 (preflight run recor
 - Preflight history has no test counts or verdict (F-5). Its median and number formats exist in both PHP and
   JS. Its hidden columns are saved per browser.
 - Flux reads `localStorage` unguarded, so a browser that blocks site data errors on every page (RUNBOOK).
-- A board pick shows at once in the gallery, but elsewhere only after a push and refresh. Its `--no-verify`
+- A board pick shows at once in the gallery and on the story page, but elsewhere only after a push and refresh. Its `--no-verify`
   awaits owner confirmation. "New page" can be wrong for routes not in `routes/*.php`.
 - The app map's page weight is its cost driver (coins: about 3.1 MB). Shots are read from the working tree,
   not the ref. Journey shots must not run under `--parallel`.
