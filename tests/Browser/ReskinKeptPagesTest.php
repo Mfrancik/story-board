@@ -65,3 +65,37 @@ it('opens a clicked Stories row on its RD-3 story page, with no modal', function
         ->assertSee('Story FX-1')
         ->assertNoJavaScriptErrors();
 });
+
+/**
+ * WARN-1 (ADR-045): the shell's appearance stub must leave the old pages' saved light/dark choice alone.
+ * The browser runs in dark mode, so an old page that lost the saved "light" would fall back to dark.
+ * flux.js takes `Flux.applyAppearance` once, on the first full load, and reuses it on every wire:navigate,
+ * so only a session that STARTS on a shell page runs the stub: the second leg is the one that guards it.
+ */
+it('keeps the light choice an old page saved through a wire:navigate round trip into the shell', function () {
+    $page = visit('/p/fx')->inDarkMode()->resize(1280, 900);
+    $page->script("localStorage.setItem('flux.appearance', 'light')");
+
+    $page->navigate('/p/fx')
+        ->assertScript("document.documentElement.classList.contains('dark')", false)
+        ->click('[data-project-tab="stories"]')
+        ->assertPathIs('/p/fx/stories')
+        ->assertPresent('html.shell')
+        ->assertScript("document.documentElement.classList.contains('dark')", false)
+        ->assertScript("localStorage.getItem('flux.appearance')", 'light')
+        ->back()
+        ->assertPathIs('/p/fx')
+        ->assertMissing('html.shell')
+        ->assertScript("document.documentElement.classList.contains('dark')", false)
+        ->assertScript("localStorage.getItem('flux.appearance')", 'light')
+        // Second leg: a full load of a shell page first, then into an old page.
+        ->navigate('/p/fx/stories')
+        ->assertPresent('html.shell')
+        ->assertScript("localStorage.getItem('flux.appearance')", 'light')
+        ->click('[data-nav="home"]')
+        ->assertPathIs('/')
+        ->assertMissing('html.shell')
+        ->assertScript("document.documentElement.classList.contains('dark')", false)
+        ->assertScript("localStorage.getItem('flux.appearance')", 'light')
+        ->assertNoJavaScriptErrors();
+});
