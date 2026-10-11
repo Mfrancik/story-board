@@ -5,7 +5,7 @@ Every reusable component. Consult BEFORE building any new UI (design-standards
 | Component | Type (Blade/Livewire/Filament) | Purpose | Used in |
 |---|---|---|---|
 | Home | Livewire (Board) | The old all-projects dashboard (SB-9): What needs me cards, In flight, tiles, sections; embeds StoryModal; unrouted since RD-5, RD-9 deletes it | tests only (`/test/old-home`) |
-| Overview | Livewire (Board) | Home overview (RD-5): count sentence, four shell/figure figures, Needs me oldest first, Live now cards with doing line and context bar; `wire:poll.30s` on Live now | `/` |
+| Overview | Livewire (Board) | Home overview (RD-5, RD-6): Projects filter (checkbox dropdown + removable chips, `?projects=`), count sentence, four shell/figure figures, Needs me, Live now cards; `wire:poll.30s` | `/` |
 | shell/figure | Blade | One headline figure: uppercase label, mono number ("—" when null), accent toned needs/live, one line below | Overview |
 | board/section | Blade | Boxed list with heading, count, hint; `collapsible` for closed-by-default sections | Home (collapsible sections), ProjectPage (open Not on main kinds) |
 | board/story-row | Blade | One story row opening StoryModal via `board-story`; `variant="card"` is the compact What needs me card row; shows where an off-main version lives | Home, ProjectPage, needs-me-cards |

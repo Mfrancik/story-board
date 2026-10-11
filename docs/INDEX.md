@@ -4,7 +4,7 @@ One line per feature. /document maintains this file.
 | Feature | Summary | Status | Last updated | Doc |
 |---|---|---|---|---|
 | Project registry and story reader | Registers local project checkouts and keeps a read-only, git-sourced snapshot of each project's stories at its ref. | active | 2026-10-11 | [doc](features/project-registry-and-reader.md) |
-| Home overview | The `/` page in the dark shell: a sentence of counts, four headline figures, Needs me oldest first, and Live now cards with what each session is doing and its context bar. | active | 2026-10-11 | [doc](features/home-overview.md) |
+| Home overview | The `/` page in the dark shell: a sentence of counts, four headline figures, Needs me and Live now cards, all narrowed to chosen projects by a `?projects=` filter. | active | 2026-10-11 | [doc](features/home-overview.md) |
 | Not on main | Indexes stories and mockups on unmerged branches, in worktrees and untracked, and shows them labelled by location on the home page and story page. | active | 2026-09-29 | [doc](features/not-on-main.md) |
 | Story page and mockups | `/p/{project}/s/{id}` in the dark shell: tags, title, one summary line, Pick, the mockups in one sandboxed frame with Today, and every other detail folded below. | active | 2026-10-11 | [doc](features/story-page-and-mockups.md) |
 | All-projects dashboard | The SB-9 dashboard (What needs me cards, In flight, project tiles, sections), unrouted since RD-5 and kept for its tests until RD-9 deletes it. | deprecated | 2026-10-11 | [doc](features/what-needs-me-home.md) |
