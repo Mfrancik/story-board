@@ -202,7 +202,7 @@ constant `ReadCurrentVersion::STALE_DAYS`, not config.
 | `board.mockup_picked` | info | `StoryPickWriter::pick()` | `project`, `story`, `option`, `commit` |
 | `board.mockup_pick_refused` | warning | `StoryPickWriter::pick()`, `PickMockup::handle()` | `project`, `story`, `reason` |
 | `board.mockup_file_refused` | warning | `ReadMockupSetFile` | `project`, `path` |
-| `board.mockup_not_found` | info | `ReadMockupSetFile`, `MockupViewer::mount()` | `project`, `story`, `reason`, `file`? |
+| `board.mockup_not_found` | info | `ReadMockupSetFile`, `MockupViewer::mount()`, `MockupViewer::render()` (reason `set gone on render`: the set left the repo after mount) | `project`, `story`, `reason`, `file`? |
 | `board.mockup_served` | debug | `ReadMockupSetFile` | `project`, `story`, `file`, `bytes` |
 | `board.mockup_sets_unreadable` | warning (info for the local-branch check) | `ReadMockupSets` | `project`, `ref` or `story`, `error` |
 
@@ -218,7 +218,7 @@ the Where (compare the story's `- Routes:` path with the manifest's `route`), or
 ## Testing & verification
 - `tests/Feature/Board/MockupGalleryTest.php` has one `it()` per gallery/viewer acceptance criterion. It
   also covers the Story-line fallback, the sidebar count, the modal and project-page links, git failure,
-  and `showMany()`.
+  `showMany()`, and the logged 404 when a set is gone by a later render (`$refresh` after mount).
 - `tests/Feature/Board/MockupPickTest.php` has one `it()` per pick criterion, run against a throwaway fixture
   repo. It also has one per extra guard: merge in progress, unknown option, missing file, status,
   project off, symlink, commit failure restoring the file, and Why line insertion.
@@ -283,3 +283,4 @@ the Where (compare the story's `- Routes:` path with the manifest's `route`), or
 2026-10-11 — Gate reading moved to `MockupGateParser`; `pick()` returns `{sha, branch}`; open statuses from `StoryStatusOrder`; `TYPES` owned by `MockupSetFileController`; viewer guard via `GuardsProjectPage` (RD-1, `6ad827b`)
 2026-10-11 — Pick logic moved into `PickMockup`, shared with the story page; the viewer keeps its toast (RD-3, `0e8542b`)
 2026-10-11 — Gallery and viewer moved into the dark shell, restyled, layout unchanged; viewer toast kept via the shell's toast host (RD-4, `f722dbc`)
+2026-10-11 — `MockupViewer::render()` logs `board.mockup_not_found` (reason `set gone on render`) before its 404 when the set left the repo after mount (RD-4, `205e0b4`)

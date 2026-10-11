@@ -45,7 +45,9 @@ block win even when an old page's appearance script has left `.dark` on `<html>`
 `.shell .map-page` redraws the app map's placeholder wireframe in `surface` / `raised` / `rim`. A base rule makes unclassed borders inside `.shell` `edge`, not the light
 theme's gray. ([ADR-040](../decisions/ADR-040-dark-shell-is-scoped-by-a-shell-class-and-variant.md))
 
-**The `shell:` variant.** `@custom-variant shell (&:where(.shell, .shell *))`. Shared Blade components that the
+**The `shell:` variant.** `@custom-variant shell (&:where(.shell, .shell *))`. It and `dark` are both zero-specificity
+`:where()`, so `shell:` beats `dark:` only by coming later in the built CSS: keep `dark` declared above `shell`
+in `resources/css/app.css` (a comment there pins it). Shared Blade components that the
 old light pages still render carry their dark look as `shell:` classes beside the existing `dark:` ones:
 - `components/board/project-tabs.blade.php` uses the hairline border and `ink` tones. RD-4 set the tabs to
   Stories · Preflight · Handbook · Map and dropped Dashboard; the old dashboard still renders them, none current.
@@ -193,3 +195,4 @@ middleware. The Preflight page is the first page moved in (RD-2, `43b01ed`)
 2026-10-11 — Stories, Handbook, Mockup gallery and viewer, Manage projects and App map moved in, restyled; Flux
 toasts and an appearance stub in the shell; `.shell.dark`; tabs Stories · Preflight · Handbook · Map (RD-4, `f722dbc`)
 2026-10-11 — Browser test pins the appearance stub across a `wire:navigate` round trip (RD-4, `951e540`)
+2026-10-11 — `ProductionSettings` lazy placeholder on `text-ink-muted` (was zinc/`dark:`, low contrast on `/projects`); `app.css` comment pins `dark` above `shell` (RD-4, `205e0b4`)

@@ -246,7 +246,8 @@ Log trail: `board.offmain_indexed` `branch` count for `project=coins`.
 ## 2026-09-29 — Every story page view made two extra mockup requests
 Symptom: opening a story page served two more mockup files than it had option frames, even though the compare overlay was never opened.
 Root cause: the compare overlay's two iframes were inside an `x-show` container. `x-show` renders the element and only hides it with CSS, so both frames loaded their `src` (two requests, two `git show`s) on every view.
-Fix: the overlay is `<template x-teleport="body"><template x-if="compare">…`, so the frames are created only while it is open (`resources/views/livewire/board/story-page.blade.php`; SB-4, `e4c2d9e`). Use `x-if`, not `x-show`, for any hidden iframe. Pinned by `StoryPageTest` "does not load the compare frames until the overlay opens".
+Fix: the overlay was `<template x-teleport="body"><template x-if="compare">…`, so the frames were created only while it was open (SB-4, `e4c2d9e`). Use `x-if`, not `x-show`, for any hidden iframe.
+Superseded 2026-10-11: RD-3 removed the compare overlay from the story page, so `story-page.blade.php` no longer has that markup and the `StoryPageTest` pin ("does not load the compare frames until the overlay opens") no longer exists. The `x-if` lesson still stands.
 Log trail: per page view, more `board.mockup_served` (debug) lines than the story has options. Found by the preflight audit.
 
 ## 2026-09-29 — Horizontal scroll at 375 px on the home page
