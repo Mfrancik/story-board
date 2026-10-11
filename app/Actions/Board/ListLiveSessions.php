@@ -4,6 +4,7 @@ namespace App\Actions\Board;
 
 use App\Models\Project;
 use App\Models\Story;
+use App\Services\ProjectFilter;
 use App\Services\SessionReader;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -81,20 +82,27 @@ class ListLiveSessions
      * The overview's Live now (RD-5): one slim card per live session in an enabled
      * project, newest first — its project and branch, the IDs of the stories its
      * branch builds (no story text, so no git), when it started, what it is doing and
-     * how full its context is. Throws whatever the reader throws; the overview catches
-     * it per panel.
+     * how full its context is. Only the filter's projects (RD-6) are carded. Throws
+     * whatever the reader throws; the overview catches it per panel.
      *
      * Side effects: logs `board.session_ignored` (debug) for a session outside every
      * enabled project.
      *
+     * @param  ProjectFilter|null  $filter  the projects to cover; null is every enabled project
      * @return array{status: string, sessions: list<array{key: string, project: string, branch: string|null, stories: list<string>, started_at: Carbon|null, active_at: Carbon, doing: string|null, tokens: int|null, window: int|null}>}
      */
-    public function overview(): array
+    public function overview(?ProjectFilter $filter = null): array
     {
+        $filter ??= ProjectFilter::all();
         $live = $this->reader->live();
         $cards = [];
 
         foreach ($this->matched($live['sessions'], log: true) as [$session, $model]) {
+            // Filtered out by the owner's choice, not ignored: the filter is logged once by the overview, not per card.
+            if (! $filter->includes($model->name)) {
+                continue;
+            }
+
             $tokens = $session['tokens'] ?? null;
             $cards[] = [
                 // Derived from the file name, never the session's own text.

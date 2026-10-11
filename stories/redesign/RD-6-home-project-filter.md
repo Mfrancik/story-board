@@ -1,5 +1,5 @@
 # RD-6 — Home project filter
-Status: approved         Journey: none
+Status: built            Journey: none
 Source: owner 2026-10-10: *"on main dashboard id like the ability to filter whatever i need, by default unfilted.
 id filter by project."*
 

@@ -3,6 +3,7 @@
 namespace App\Actions\Board;
 
 use App\Models\Story;
+use App\Services\ProjectFilter;
 use App\Services\StoryStatusOrder;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -11,7 +12,8 @@ use Illuminate\Database\Eloquent\Builder;
  * that waits on the owner — a mockup set awaiting a pick, a draft awaiting approval,
  * an approved story ready to build — as one list, oldest first. The three
  * predicates are the ones SB-3's ListWhatNeedsMe used; it now calls them from here,
- * so both pages agree on what counts. Reads the stored snapshot only, never git.
+ * so both pages agree on what counts. The home project filter (RD-6) narrows it to
+ * the chosen projects. Reads the stored snapshot only, never git.
  */
 class ListNeedsMe
 {
@@ -30,14 +32,16 @@ class ListNeedsMe
      * A story awaiting a pick is also a draft or approved; the pick is what blocks
      * it, so it is listed once, as a pick.
      *
+     * @param  ProjectFilter|null  $filter  the projects to cover (RD-6); null is every enabled project
      * @return array{rows: list<array{kind: string, story: Story}>, counts: array{pick: int, draft: int, ready: int}}
      */
-    public function handle(): array
+    public function handle(?ProjectFilter $filter = null): array
     {
+        $filter ??= ProjectFilter::all();
         $rows = [];
         // Pick first, so a story that is also a draft or ready keeps the pick.
         foreach ([self::PICK => 'awaitingPick', self::DRAFT => 'toApprove', self::READY => 'readyToBuild'] as $kind => $predicate) {
-            foreach (self::$predicate($this->base())->get() as $story) {
+            foreach (self::$predicate($this->base($filter))->get() as $story) {
                 $rows[$story->id] ??= ['kind' => $kind, 'story' => $story];
             }
         }
@@ -94,16 +98,15 @@ class ListNeedsMe
     }
 
     /**
-     * Stories on the ref of enabled projects, with their project loaded for the row.
+     * Stories on the ref of the filter's projects (enabled ones only), with their
+     * project loaded for the row.
      *
      * @return Builder<Story>
      */
-    private function base(): Builder
+    private function base(ProjectFilter $filter): Builder
     {
         return Story::query()
-            ->select('stories.*')
-            ->join('projects', 'projects.id', '=', 'stories.project_id')
-            ->where('projects.is_enabled', true)
+            ->whereIn('stories.project_id', $filter->projects()->select('id'))
             // Off-main versions (SB-5) are not the story yet; the ref's row is.
             ->whereNull('stories.location_kind')
             ->with('project');

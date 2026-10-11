@@ -71,9 +71,64 @@
         $panelError = 'text-sm text-fail';
         $retry = "inline-flex min-h-11 items-center self-start rounded-lg border border-rim bg-raised px-4 text-sm font-medium hover:text-ink disabled:opacity-60 {$focus}";
     @endphp
-        <header class="flex flex-col gap-1">
-            <p class="text-xs font-medium tracking-wider text-ink-muted uppercase">{{ now()->format('l j F') }}</p>
-            <h1 class="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">{{ $sentence !== '' ? $sentence : 'Overview' }}</h1>
+        @php
+            $chosen = $filter->names;
+            $filterLabel = match (count($chosen)) {
+                0 => 'All projects',
+                1 => $chosen[0],
+                default => count($chosen).' projects',
+            };
+            $clear = "inline-flex min-h-11 items-center rounded-md px-2.5 text-sm text-ink-muted underline underline-offset-4 hover:text-ink {$focus}";
+        @endphp
+        <header class="flex flex-wrap items-start gap-4">
+            <div class="mr-auto flex min-w-0 flex-col gap-1">
+                <p class="text-xs font-medium tracking-wider text-ink-muted uppercase">{{ now()->format('l j F') }}</p>
+                <h1 class="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">{{ $sentence !== '' ? $sentence : 'Overview' }}</h1>
+            </div>
+
+            {{-- RD-6 Projects filter, in the Preflight page's popover-of-checkboxes style. Open and close are Alpine (no
+                 round-trip); a tick calls toggleProject, which re-renders every panel and pushes the URL. Each box's
+                 ticked state follows $wire.projects, so Back (which changes the property, not the box) unticks it too. --}}
+            <div class="relative" x-data="{ open: false }" x-on:keydown.escape="if (open) { open = false; $refs.filterButton.focus() }">
+                <button type="button" data-filter-button x-ref="filterButton" x-on:click="open = ! open" x-bind:aria-expanded="open" aria-expanded="false" aria-controls="home-projects"
+                    class="inline-flex min-h-11 max-w-64 items-center gap-2 rounded-lg border border-rim bg-surface px-3 text-sm font-medium hover:border-ink-muted {{ $focus }}">
+                    <svg class="size-4 shrink-0 text-ink-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 5h18l-7 8v6l-4 2v-8L3 5z"/></svg>
+                    <span class="sr-only">Projects:</span>
+                    <span data-filter-label class="truncate">{{ $filterLabel }}</span>
+                    <svg class="size-4 shrink-0 text-ink-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
+                <div id="home-projects" data-filter-panel x-show="open" x-cloak x-on:click.outside="open = false" x-anchor.bottom-end.offset.4="$refs.filterButton"
+                    role="group" aria-label="Projects shown" class="absolute z-20 w-64 rounded-lg border border-edge bg-surface p-1 text-sm shadow-lg">
+                    @foreach ($options as $name)
+                        <label wire:key="filter-option-{{ $name }}" data-filter-option="{{ $name }}" class="flex min-h-11 cursor-pointer items-center gap-2.5 rounded-md px-2.5 hover:bg-raised">
+                            <input type="checkbox" data-filter-toggle="{{ $name }}" @checked(in_array($name, $chosen, true))
+                                x-bind:checked="$wire.projects.split(',').map(n => n.trim()).includes(@js($name))"
+                                wire:change="toggleProject(@js($name))" class="size-4 shrink-0 accent-accent">
+                            <span class="truncate">{{ $name }}</span>
+                        </label>
+                    @endforeach
+                    <div class="mt-1 border-t border-hairline pt-1">
+                        <button type="button" data-filter-clear wire:click="clearProjects" @disabled($chosen === []) class="{{ $clear }} w-full disabled:no-underline disabled:opacity-60">Clear · all projects</button>
+                    </div>
+                </div>
+            </div>
+
+            @if ($chosen !== [])
+                {{-- The chosen projects as removable chips, so a narrowed page never passes for the whole board. --}}
+                <div data-filter-active class="flex basis-full flex-wrap items-center gap-x-1 gap-y-0">
+                    <span class="mr-1 text-sm text-ink-muted">Showing</span>
+                    @foreach ($chosen as $name)
+                        <button type="button" wire:key="filter-chip-{{ $name }}" data-filter-chip="{{ $name }}" wire:click="toggleProject(@js($name))" aria-label="Remove {{ $name }} from the filter"
+                            class="inline-flex min-h-11 items-center rounded-full {{ $focus }}">
+                            <x-shell.tag tone="needs" mono class="hover:bg-raised">
+                                {{ $name }}
+                                <svg class="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+                            </x-shell.tag>
+                        </button>
+                    @endforeach
+                    <button type="button" data-filter-clear-chips wire:click="clearProjects" class="{{ $clear }}">Clear</button>
+                </div>
+            @endif
         </header>
 
         <section aria-label="Right now" class="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
