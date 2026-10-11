@@ -10,9 +10,15 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-10-11 — A browser test for the shell's appearance stub stayed green with the stub deleted
+Symptom: a test saving `flux.appearance = light` on an old page, then navigating into the shell and back, passed with the stub in `resources/views/partials/head.blade.php` removed.
+Root cause: `flux.js` captures `window.Flux.applyAppearance` once, at `alpine:init` on the first full page load, and reuses it on every `wire:navigate`. A session that starts on an old page captures the real `@fluxAppearance` function, so the stub never runs.
+Fix: add a leg that starts with a full load of a shell page (`/p/fx/stories`), then navigates to an old page; that leg goes red without the stub (RD-4, `951e540`, [ADR-045](decisions/ADR-045-flux-toasts-in-the-shell-behind-an-appearance-stub.md) amendment). General lesson: mutation-check a guard test by deleting the guard; it must go red.
+Log trail: none. Compare `localStorage['flux.appearance']` after each leg.
+
 ## 2026-10-11 — Old pages forgot their light/dark choice after visiting a shell page
 Symptom: once `layouts/shell` loaded `flux.js` (for toasts), a light/dark choice saved on an old `layouts/board` page was lost after opening any shell page.
-Root cause: `flux.js` calls `window.Flux.applyAppearance()` on load and after every `wire:navigate` swap. The shell skips `@fluxAppearance`, so nothing defined it, and Flux's fallback clears the saved appearance.
+Root cause: `flux.js` captures `window.Flux.applyAppearance` once, on the first full page load, and calls it on load and after every `wire:navigate` swap. When a session starts on a shell page, which skips `@fluxAppearance`, nothing has defined it, and Flux's fallback clears the saved appearance.
 Fix: `resources/views/partials/head.blade.php` defines a shell-only stub `window.Flux = { applyAppearance() }` that only removes `.dark` from a `.shell` `<html>` and never touches the saved choice (RD-4, [ADR-045](decisions/ADR-045-flux-toasts-in-the-shell-behind-an-appearance-stub.md)). Any new layout that loads `@fluxScripts` without `@fluxAppearance` needs the same.
 Log trail: none. Check `localStorage['flux.appearance']` before and after visiting a shell page.
 

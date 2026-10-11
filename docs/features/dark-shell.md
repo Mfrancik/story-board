@@ -26,10 +26,12 @@ dashboard) and `ProductionDashboard`, which stay on `layouts/board` until RD-5/R
 `Flux::toast`, so `layouts/shell.blade.php` now carries `<flux:toast.group>` inside `@persist('toast')` (a toast
 raised just before a `wire:navigate` reload survives it) plus `@fluxScripts`. Flux styles its toast for light and
 for a `.dark` ancestor, and the shell never puts `.dark` on `<html>`, so the group is wrapped in `<div class="dark">`
-to get the dark toast. Loading `flux.js` brings one hazard: it calls `window.Flux.applyAppearance()` on load and
-after every `wire:navigate` swap, and with none defined it deletes the light/dark choice the old pages saved. The
-stub in `resources/views/partials/head.blade.php` is defined first and only removes `.dark` from a `.shell` page,
-leaving the saved choice for the old pages' own appearance script.
+to get the dark toast. Loading `flux.js` brings one hazard: it captures `window.Flux.applyAppearance` once, on the
+first full page load, and calls it on load and after every `wire:navigate` swap; with none defined it deletes the
+light/dark choice the old pages saved. The stub in `resources/views/partials/head.blade.php` is defined first and
+only removes `.dark` from a `.shell` page, leaving the saved choice for the old pages' own appearance script. It
+only runs when a session starts with a full load of a shell page; a session that starts on an old page keeps the
+real function, which can add `.dark` inside the shell (hence `.shell.dark` in `app.css`).
 ([ADR-045](../decisions/ADR-045-flux-toasts-in-the-shell-behind-an-appearance-stub.md))
 
 **Tokens.** `resources/css/app.css` adds the Home A palette to `@theme`: `ground / surface / raised` surfaces,
@@ -144,6 +146,9 @@ None. The fonts are npm devDependencies. After pulling, run `npm install` and re
   The existing feature tests of each kept page still pass, with selectors changed only where markup did.
 - `tests/Browser/ReskinKeptPagesTest.php`: each kept page and the viewer at 375 px with no sideways scroll and no
   JS errors, and a Stories row click landing on `/p/{project}/s/{id}`.
+  It also pins the appearance stub: a dark-mode browser with `flux.appearance = light` saved keeps it through an
+  old page → shell → back round trip and through a full load of a shell page → old page. Only the second leg runs
+  the stub, so only it goes red without one.
 - `ProjectPageTest` "queues one refresh per stale project when the page loads" now expects every stale project
   to be refreshed, not just the page's own.
 - Browser check: `/p/story-board/preflight` at 1440 and 375 px against the Home A board.
@@ -187,3 +192,4 @@ None. The fonts are npm devDependencies. After pulling, run `npm install` and re
 middleware. The Preflight page is the first page moved in (RD-2, `43b01ed`)
 2026-10-11 — Stories, Handbook, Mockup gallery and viewer, Manage projects and App map moved in, restyled; Flux
 toasts and an appearance stub in the shell; `.shell.dark`; tabs Stories · Preflight · Handbook · Map (RD-4, `f722dbc`)
+2026-10-11 — Browser test pins the appearance stub across a `wire:navigate` round trip (RD-4, `951e540`)
