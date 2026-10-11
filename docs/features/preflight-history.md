@@ -1,5 +1,5 @@
 # Preflight history
-Status: active   ·   Last updated: 2026-09-30   ·   Stories: SB-16, SB-19
+Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-16, SB-19, RD-2
 
 ## Overview
 `/p/{project}/preflight` is the project page's fourth tab (Dashboard | Handbook | Stories | Preflight).
@@ -108,7 +108,9 @@ so its checkbox is a static `checked disabled` input; the "always shown" tooltip
 measured width (a `ResizeObserver`) so labels never stretch. The x-axis spans **all** runs, not only
 the visible ones, so a filter never rescales time. A dashed line marks the 30-day boundary the figures
 compare across. The series colour is the new `--color-series` token in `resources/css/app.css`
-(sky-600, and sky-400 in dark mode).
+(sky-600, and sky-400 in dark mode). Since RD-2 the page renders in the [dark shell](dark-shell.md), where
+`series` points at `live`. The chart's grid, axis and label classes are shell tokens
+(`stroke-hairline`, `stroke-rim`, `fill-ink-muted`) in `resources/js/preflight-history.js`.
 
 ## Data model
 None. No migration and nothing stored. The page reads `preflight-cost.csv` files under
@@ -213,3 +215,4 @@ of the project (main checkout, worktrees, plans), trend figures, two SVG charts,
 (SB-16, `baeeeb7`)
 2026-09-30 — Columns picker in the filter row: hide any ledger column but When, "Columns · N hidden",
 Reset columns, saved per project in localStorage with a safe fallback (SB-19, `8e0fa41`)
+2026-10-11 — Moved into the dark shell (`layouts/shell`), restyled with its tokens, layout unchanged (RD-2, `43b01ed`)

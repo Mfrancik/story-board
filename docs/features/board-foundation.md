@@ -118,8 +118,9 @@ No new events, and no event was renamed. The trait logs `board.project_page_refu
 ## Known limitations & gotchas
 - Some starter-kit leftovers are still unused: `resources/js/passkeys.js`, its `vite.config.js` input, the
   `@laravel/passkeys` npm dependency, and `UserFactory::withTwoFactor()`. They were left for the owner.
-- The page-load refresh dispatch is still proven only through the page tests (`HomePageTest`,
-  `ProjectPageTest`). RD-9 must keep or port that coverage when it deletes those pages.
+- Closed in RD-2: the page-load refresh used to be proven only through `HomePageTest` / `ProjectPageTest`.
+  It is now the `RefreshStaleProjects` middleware, tested directly in `tests/Feature/Board/DarkShellTest.php`
+  (exactly one job when stale, none when fresh), so RD-9 can delete those pages without losing coverage.
 - A new one-project page should `use GuardsProjectPage` and override a hook only if it must return elsewhere or
   keep its own event name. Do not copy `hydrate()` again.
 - `composer remove` runs `boost:update`, which rewrites `.claude/` and agent files. Use `--no-scripts` (RUNBOOK).

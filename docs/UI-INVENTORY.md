@@ -12,18 +12,21 @@ Every reusable component. Consult BEFORE building any new UI (design-standards
 | board/status-bar | Blade | Stacked bar of counts by raw status; out-of-vocabulary values get a danger-toned segment (grey with `variant="tag"`) | project-card, ProjectPage initiative rows, ProjectStories |
 | layouts/board | Blade layout | The board's shell: board/sidebar beside the page, persisted Flux toasts, no auth, Flux appearance for light/dark | Home, ProjectPage, StoryPage, ManageProjects, ProductionDashboard, MockupGallery, MockupViewer |
 | board/sidebar | Blade (class) | Project switcher: filter box (⌘K), All projects, Production (connected/shown), Mockups (awaiting-pick count), enabled projects with state dot, count and live badge; drawer below 768px; Manage slot | layouts/board |
+| layouts/shell | Blade layout | The RD-2 dark command-center shell (Home A): `.shell` on `<html>`, Geist, shell/sidebar beside the page, dark only, no Flux appearance | ProjectPreflight |
+| shell/sidebar | Blade (class) | Shell nav: logo, Home, Mockups (awaiting count), enabled projects with state dot and ID prefix, current marked; Alpine drawer below 768px | layouts/shell |
+| shell/logo | Blade | Logo mark and "Story Board", linking home | shell/sidebar |
 | StoryPage | Livewire (Board) | Story above its mockups (side-by-side / one-at-a-time, 375/768/1280), full-screen compare; `?v=` versions banner for off-main copies | `/p/{project}/s/{id}` |
 | StoryModal | Livewire (Board) | Design-A story modal at `?story=<project>/<ID>`: text, details, dependency chips, mockup thumbnails and Open in mockup gallery, versions off main; opened by `board-story` | Home, ProjectPage, ProjectStories |
 | ProjectPage | Livewire (Board) | One project's dashboard (SB-10): header with Refresh this project, scoped What needs me cards, Progress by initiative, Not on main by kind; embeds StoryModal | `/p/{project}` |
 | board/needs-me-cards | Blade | The three What needs me cards (pick, approval, build) with count, top rows and Show all calling the host's `showAll()` | Home, ProjectPage |
-| board/state | Blade | A project's snapshot state: `part="dot"` coloured dot, `part="label"` word (none for `ok`, danger for unknown states) | sidebar, project-card, ProjectPage header |
+| board/state | Blade | A project's snapshot state: `part="dot"` coloured dot, `part="label"` word (none for `ok`, danger for unknown states); dark-shell tones via tokens | sidebar, shell/sidebar, project-card, ProjectPage header |
 | ManageProjects | Livewire (Board) | Manage projects (SB-12): every project with its switch, path, ref, state, count, refresh age, Production summary opening its panel; Add project form; Remove via confirm-modal | `/projects` |
 | board/switch | Blade | On/off `role="switch"` button showing the stored state; the caller's `wire:click` writes it; disables while `target` runs | ManageProjects, ProductionSettings |
 | board/confirm-modal | Blade | Alpine confirmation for a destructive action: `show` var, `title` slot, body, Cancel + red `confirm` button running `action` | ManageProjects (Remove), ProductionSettings (Remove connection) |
 | ProjectStories | Livewire (Board) | A project's stories by initiative (SB-15): initiatives on the left, stories tagged by status on the right; Alpine filters and Expand all; rows open StoryModal | `/p/{project}/stories` |
-| board/project-header | Blade | A project sub-page's header (breadcrumb, name, state, ref; slot extends the ref line) above project-tabs | ProjectHandbook, ProjectStories, ProjectPreflight, ProjectAppMap |
+| board/project-header | Blade | A project sub-page's header (breadcrumb, name, state, ref; slot extends the ref line) above project-tabs; `shell:` tones, toggle hidden in the shell | ProjectHandbook, ProjectStories, ProjectPreflight, ProjectAppMap |
 | ProjectHandbook | Livewire (Board) | A project's handbook (SB-14): section tabs over one reading card; each section loads on first open; kit badges; decisions in a modal | `/p/{project}/handbook` |
-| board/project-tabs | Blade | Dashboard / Handbook / Stories / Preflight / App map page tabs under a project's header; scrolls sideways on a phone | ProjectPage, project-header |
+| board/project-tabs | Blade | Dashboard / Handbook / Stories / Preflight / App map page tabs under a project's header; scrolls sideways on a phone; `shell:` tones | ProjectPage, project-header |
 | board/kit-badge | Blade | How a file compares with the kit: Same as kit, Changed in this project, Missing, Project only; `dot` for a sub-tab | ProjectHandbook (standards, skills) |
 | board/handbook-empty | Blade | Empty state naming the project and the missing file, with a one-line hint slot | ProjectHandbook sections |
 | board/prose | Blade | Rendered markdown (from RenderStory::toHtml) in the reading width | ProjectHandbook sections, decision modal |

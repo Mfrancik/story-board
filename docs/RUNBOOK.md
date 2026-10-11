@@ -10,6 +10,18 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-10-11 — `package-lock.json` renamed to the worktree folder after `npm install`
+Symptom: after installing a package in a worktree, `package-lock.json`'s top-level `"name"` (and `packages[""].name`) changed from `story-board` to the worktree folder, for example `rd-2`.
+Root cause: npm writes the lock's name from the directory it runs in when `package.json` has no `name` field of its own. A worktree checkout's folder is named after its branch.
+Fix: reset both name fields to `"story-board"` before committing, and check `git diff package-lock.json` for a name-only hunk (RD-2).
+Log trail: none. It shows up in `git diff`.
+
+## 2026-10-11 — A stray `@emnapi/runtime` stayed in the lock after swapping packages
+Symptom: after removing one npm package (`geist`) and installing another (`@fontsource-variable/*`), `package-lock.json` still listed `@emnapi/runtime`, which nothing depends on any more.
+Root cause: most likely an orphan of the removed package's auto-installed peer tree (`geist` peers on `next`). Running the uninstall and install back to back did not prune it.
+Fix: restore `package.json` and `package-lock.json` from `HEAD`, run `npm prune`, then install only the wanted packages. The lock diff should then hold only those packages (RD-2, see ADR-039).
+Log trail: none. Check `git diff package-lock.json` for packages you did not ask for.
+
 ## 2026-10-11 — `composer remove` rewrites `.claude/` and agent files
 Symptom: removing `laravel/fortify` also changed files under `.claude/` and the agent guideline files, which are on RD-1's Do-NOT-touch list.
 Root cause: composer's post-update scripts run `boost:update`, which regenerates Laravel Boost's agent files.

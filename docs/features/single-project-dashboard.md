@@ -1,5 +1,5 @@
 # Single-project dashboard
-Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-10
+Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-10, RD-2
 
 ## Overview
 `/p/{project}` is one project's dashboard, in depth where the all-projects page shows breadth. It has a
@@ -19,8 +19,9 @@ before binding ([ADR-013](../decisions/ADR-013-project-refusal-runs-before-route
 
 **The component.** `app/Livewire/Board/ProjectPage.php`:
 - `mount()` stores the project **name** in the locked `$project` (not the model; see ADR-019), logs
-  `board.project_viewed`, and queues a `RefreshProjectJob` for this project only if `needsRefresh()`.
-  Other projects refresh when `/` or their own page loads.
+  `board.project_viewed`. Since RD-2, the `RefreshStaleProjects` middleware handles refresh on load and
+  queues every stale enabled project, not only this one
+  ([ADR-041](../decisions/ADR-041-refresh-on-load-is-one-middleware-on-the-page-routes.md)).
 - `refresh()` is "Refresh this project". It re-checks the name with
   `CheckProjectShown::refusal()`. A project disabled or removed since the page loaded logs
   `board.refresh_refused`, queues nothing and redirects to `/`. Otherwise it logs
@@ -167,3 +168,4 @@ refresh was not scoped. A `project_action_refused` line means something hand-cra
 2026-09-29 — Single-project dashboard at `/p/{project}`: header refresh, scoped cards, Progress by initiative, Not on main by kind; replaces `Home` pinned (SB-10, `a062331`)
 2026-09-29 — `hydrate()` sends the owner home (logged) when the project leaves the board mid-visit, replacing a stale render or unlogged 404; status counts summed so null and `(none)` no longer collide (SB-10, `e9a2f6e`)
 2026-10-11 — Status order, open statuses and the initiative rollup moved to `StoryStatusOrder` (RD-1, `6ad827b`)
+2026-10-11 — The page-load refresh moved to the `RefreshStaleProjects` middleware, so this page now refreshes every stale project (RD-2, `43b01ed`)

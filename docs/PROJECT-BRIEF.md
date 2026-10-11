@@ -1,5 +1,5 @@
 # Project brief — story-board
-Last refreshed: 2026-10-11 (RD-1)
+Last refreshed: 2026-10-11 (RD-2)
 
 ## What it is, and for whom
 A localhost Laravel app for one owner. It reads the `stories/` folder of every project that uses
@@ -45,7 +45,7 @@ The app has no auth. The starter kit's auth was removed in RD-1 (ADR-037).
 ## Features
 | Feature | Status | Doc |
 |---|---|---|
-| Project registry and story reader: `board:project`, `board:refresh`, queued page-load refresh, `GitReader` | active (SB-2, SB-3) | [doc](features/project-registry-and-reader.md) |
+| Project registry and story reader: `board:project`, `board:refresh`, queued refresh, `GitReader` | active (SB-2, SB-3) | [doc](features/project-registry-and-reader.md) |
 | All-projects dashboard: `/` What needs me, In flight, project tiles, collapsible sections | active (SB-3–5, SB-8, SB-9) | [doc](features/what-needs-me-home.md) |
 | Story page and mockups: `/p/{project}/s/{id}`, sandboxed frames, compare, `?v=` versions | active (SB-4, SB-5) | [doc](features/story-page-and-mockups.md) |
 | Not on main: branches, worktrees and untracked stories/mockups, indexed at refresh | active (SB-5) | [doc](features/not-on-main.md) |
@@ -63,6 +63,7 @@ The app has no auth. The starter kit's auth was removed in RD-1 (ADR-037).
 | App map: `/p/{project}/map` journeys as screen flows | active (SB-24) | [doc](features/app-map.md) |
 | Journey shots: kit Pest helper `journeyStep()` | active (SB-22) | [doc](features/journey-shots.md) |
 | Board foundation: `StoryStatusOrder`, `MockupGateParser`, `GuardsProjectPage`; starter kit removed | active (RD-1) | [doc](features/board-foundation.md) |
+| Dark shell and sidebar: `layouts/shell`, Home A tokens, Geist, `RefreshStaleProjects` page-load refresh | active (RD-2) | [doc](features/dark-shell.md) |
 
 ## Journeys
 None yet. Every SB and RD story so far is `Journey: none`.
@@ -70,8 +71,8 @@ None yet. Every SB and RD story so far is `Journey: none`.
 ## Stories
 - **built**:
   - SB-2–5, SB-7–12, SB-14–19, SB-21–25.
-  - RD-1 clean foundation.
-- **approved**: RD-2 dark shell · RD-3 short story page · RD-4 re-skin kept pages · RD-5 home overview ·
+  - RD-1 clean foundation · RD-2 dark shell and sidebar.
+- **approved**: RD-3 short story page · RD-4 re-skin kept pages · RD-5 home overview ·
   RD-6 home project filter · RD-7 project tiles and Shipped · RD-8 preflight "Ran on" · RD-9 retire old pages
 - **draft**: SB-20 preflight run errors · RD-10 preflight run record (parked)
 - **draft (parked)**: SB-6 the board on an always-live domain
@@ -99,12 +100,15 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
 - "New page" is read statically from route files → ADR-036
 - The auth starter kit and the `laravel/fortify` package are removed, not disabled → [ADR-037](decisions/ADR-037-starter-kit-and-fortify-package-removed.md)
 - Kept logic lives in pure shared classes: `StoryStatusOrder`, `MockupGateParser`, `pick()` returning its branch, and a guard trait with hooks → [ADR-038](decisions/ADR-038-kept-board-logic-moves-into-pure-shared-classes.md)
+- The dark shell: Geist from fontsource packages, not Vercel's `geist` package; styling scoped by `.shell` and a `shell:` variant, not by forked components → ADR-039, ADR-040
+- Refresh on load is one middleware on the page-route group, not per-page `mount()` → [ADR-041](decisions/ADR-041-refresh-on-load-is-one-middleware-on-the-page-routes.md)
 - Preflight audit scope, audit cost record, build-artifact disposal (kit) → ADR-001 to ADR-003
 
 ## Current phase and what's next
-Phase 3, the redesign (RD). RD-1, the clean foundation, is built. Next are RD-2 to RD-8 (the dark shell, the
-short story page, the re-skin, home, tiles, preflight "Ran on"). Then RD-9 retires the old pages, and it
-must keep the page-load refresh coverage that `HomePageTest` / `ProjectPageTest` hold today.
+Phase 3, the redesign (RD). RD-1 (clean foundation) and RD-2 (dark shell, with Preflight as its first page) are
+built. Next are RD-3 to RD-8: the short story page, the re-skin that moves the remaining pages into the shell,
+home, tiles, and preflight "Ran on". Then RD-9 retires the old pages and `layouts/board`. The page-load refresh
+is now tested at its middleware, so deleting those pages costs no coverage.
 
 Still open from phase 2:
 - The owner confirms SB-19's checkbox look.
@@ -123,7 +127,8 @@ Backlog: F-2 (build timeline), F-3 (meter tier labels), F-5 (preflight run recor
 - Until the kit parser reads `Chosen option: **B**` (F-1), "Awaiting a pick" over-reports on the ref.
 - Untracked stories and mockups are listed but cannot be shown. Off-main rows with malformed IDs cannot open the
   modal. `?v=` links break at the next refresh.
-- Layout classes use the raw `zinc-*` palette, and only status colours are tokens. Nothing searches stories by ID
+- Two layouts coexist until RD-4/RD-9. The dark shell is fully tokenised, while old pages still use raw `zinc-*`.
+  Shared components carry `dark:` and `shell:` tones side by side. Nothing searches stories by ID
   or title. Initiative names group case-sensitively on Stories but not on the dashboard.
 - `/projects` and `/prod` have no auth, hold production credentials, and are safe only while localhost-only.
   SB-6 must add auth first. A project's path and ref cannot be edited.

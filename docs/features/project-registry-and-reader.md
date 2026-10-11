@@ -1,5 +1,5 @@
 # Project registry and story reader
-Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-2, SB-3, SB-5
+Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-2, SB-3, SB-5, RD-2
 
 ## Overview
 The board keeps a list of local project checkouts and a snapshot of every story file at each
@@ -38,8 +38,10 @@ before touching git, then:
 A failure in one project never stops the others: `board:refresh`
 (`app/Console/Commands/BoardRefresh.php`) loops enabled projects and prints one line each.
 
-**Page-load refresh.** The home page (`app/Livewire/Board/Home.php:mount()`, see
-[What needs me](what-needs-me-home.md)) queues `RefreshProjectJob` for each enabled project where
+**Page-load refresh.** Every board page load passes through
+`app/Http/Middleware/RefreshStaleProjects.php` (RD-2, see [Dark shell](dark-shell.md) and
+[ADR-041](../decisions/ADR-041-refresh-on-load-is-one-middleware-on-the-page-routes.md); before that it
+was `Home::mount()`). It queues `RefreshProjectJob` for each enabled project where
 `Project::needsRefresh()` is true (`refresh_attempted_at ?? indexed_at` null or older than
 `Project::STALE_AFTER_MINUTES`). The page renders from the existing snapshot; a queue worker runs the
 refresh. The job is `ShouldBeUnique` per project, so repeated loads queue one refresh
@@ -184,3 +186,4 @@ the first line of git's stderr.
 2026-09-29 — Page-load refresh moved to the Livewire home and the queue; bare list removed; request IDs on refresh logs (SB-3)
 2026-09-29 — GitReader allow-list gains four read-only forms; `(project_id, path)` no longer unique; `board:project alias`; off-main scan after each refresh (SB-5)
 2026-09-29 — `board:project enable`; enable/disable go through `SwitchProject` and log `source` (SB-12)
+2026-10-11 — Page-load refresh is the `RefreshStaleProjects` middleware on every board page route (RD-2, `43b01ed`)

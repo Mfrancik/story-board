@@ -1,5 +1,5 @@
 # All-projects dashboard (What needs me)
-Status: active   ·   Last updated: 2026-09-29   ·   Stories: SB-3, SB-4, SB-5, SB-7, SB-8, SB-9, SB-10
+Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-3, SB-4, SB-5, SB-7, SB-8, SB-9, SB-10, RD-2
 
 ## Overview
 `/` is the all-projects dashboard. It leads with what is waiting on the owner: three **What needs me**
@@ -60,9 +60,9 @@ story. The page then says which status the story has and links to its
 
 **The component.** `app/Livewire/Board/Home.php` is the page, mounted at `/` with
 `Route::livewire('/', Home::class)` in `routes/web.php`.
-- `mount()` logs `board.home_viewed` and queues a `RefreshProjectJob` for each enabled project whose
-  `needsRefresh()` is true. Queued rather than run after the response; see
-  [ADR-006](../decisions/ADR-006-refresh-runs-on-the-queue.md).
+- `mount()` logs `board.home_viewed`. The stale-project refresh on load is no longer done here. Since RD-2 it
+  runs in the `RefreshStaleProjects` middleware on every board page route
+  ([ADR-041](../decisions/ADR-041-refresh-on-load-is-one-middleware-on-the-page-routes.md)).
 - `refresh()` is the Refresh button. It logs `board.refresh_requested`, queues a job for every
   enabled project, and sets the locked `notice` ("Refresh queued for N projects…"), shown as a
   `role="status"` line.
@@ -271,3 +271,4 @@ outlive a killed process until its TTL runs out, and that is expected.
 2026-09-29 — All-projects dashboard: What needs me cards (top 5), In flight, project tiles with `status-bar`, header refresh age; project filter removed; query-count test (SB-9, `a26153b`)
 2026-09-29 — `/p/{project}` moved to `ProjectPage`; `$pinned` removed; cards extracted to `board/needs-me-cards` (SB-10, `a062331`)
 2026-09-29 — `projects()` sums per-status counts instead of `mapWithKeys`, so null and `(none)` no longer overwrite each other (SB-10, `e9a2f6e`)
+2026-10-11 — Page-load refresh moved out of `mount()` into the `RefreshStaleProjects` middleware (RD-2, `43b01ed`)
