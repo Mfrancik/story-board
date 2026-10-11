@@ -4,21 +4,6 @@ Every reusable component. Consult BEFORE building any new UI (design-standards
 
 | Component | Type (Blade/Livewire/Filament) | Purpose | Used in |
 |---|---|---|---|
-| Logout | Livewire action | Starter kit: logs the user out (Fortify auth, unused by the board) | layouts/app sidebar user menu |
-| Appearance | Livewire | Starter kit: light/dark/system appearance setting | settings/appearance |
-| DeleteUserForm | Livewire | Starter kit: delete-account form with password confirm | settings/profile |
-| Profile | Livewire | Starter kit: name/email profile form | settings/profile |
-| Security | Livewire | Starter kit: password, passkeys and 2FA settings | settings/security |
-| RecoveryCodes | Livewire | Starter kit: shows/regenerates 2FA recovery codes | settings/security |
-| app-logo-icon | Blade | Starter kit: logo mark SVG | app-logo |
-| app-logo | Blade | Starter kit: logo mark plus app name | layouts/app sidebar, auth layouts |
-| auth-header | Blade | Starter kit: title + description heading on auth screens | auth pages |
-| auth-session-status | Blade | Starter kit: flash status line on auth screens | auth pages |
-| desktop-user-menu | Blade | Starter kit: user dropdown in the sidebar | layouts/app sidebar |
-| passkey-registration | Blade | Starter kit: register-a-passkey control | settings/security |
-| passkey-verify | Blade | Starter kit: sign in with a passkey | auth login |
-| placeholder-pattern | Blade | Starter kit: striped SVG placeholder | dashboard |
-| settings/layout | Blade | Starter kit: settings page shell with sub-nav | settings pages |
 | Home | Livewire (Board) | The all-projects dashboard (SB-9): What needs me cards, In flight, project tiles, collapsible sections; embeds StoryModal | `/` |
 | board/section | Blade | Boxed list with heading, count, hint; `collapsible` for closed-by-default sections | Home (collapsible sections), ProjectPage (open Not on main kinds) |
 | board/story-row | Blade | One story row opening StoryModal via `board-story`; `variant="card"` is the compact What needs me card row; shows where an off-main version lives | Home, ProjectPage, needs-me-cards |
@@ -57,3 +42,4 @@ Every reusable component. Consult BEFORE building any new UI (design-standards
 | board/mockup-current | Blade | Viewer's Current pane (SB-23): the matching journey shot with capture time and stale label, else new-page or uncovered state; props `current`, `project` | MockupViewer |
 | ProjectAppMap | Livewire (Board) | App map (SB-24): All flows lanes with lettered shared screens, one flow's stage and strip; Alpine stepping (`appMap`) | `/p/{project}/map` |
 | board/map-screen | Blade | One app-map screen in browser chrome with its route: journey shot, drawn placeholder (`.map-page`), chosen mockup frame, awaiting pick, no mockup, not linked; `size` sm/lg | ProjectAppMap |
+| GuardsProjectPage | Livewire trait | One-project page guard (RD-1): locked `$project`, `hydrate()` re-check and redirect; hooks `refusedRoute()`, `logProjectRefused()` | ProjectStories, ProjectPreflight, ProjectHandbook, ProjectAppMap, MockupViewer |

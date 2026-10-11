@@ -26,7 +26,7 @@ Livewire update requests (ADR-019 amendment). A project switched off mid-visit l
    initiative, is_parked, path`.
 2. Group by initiative in PHP, then build the same `(initiative, status, n, parked)` rows that
    SB-10's grouped SQL returns (a null status becomes `(none)`, as SB-10's `coalesce` does).
-3. Feed those rows to `ReadProjectProgress::rollup()`. That is the one copy of Progress by
+3. Feed those rows to `StoryStatusOrder::rollup()` (in `ReadProjectProgress` until RD-1). That is the one copy of Progress by
    initiative's counts, open work and order: most open work first, ties A–Z, "No initiative" last
    among equals. See [ADR-025](../decisions/ADR-025-stories-page-reuses-the-progress-rollup-over-one-query.md).
 4. For each initiative, sort its stories naturally by ID with `strnatcmp` (BR-2 before BR-10). A row
@@ -84,8 +84,8 @@ null) are excluded by `Story::onRef()`.
   status, kind, link}>}>}`.
 - `ReadProjectStories::kind(?string): string` and `ReadProjectStories::KINDS` (filter-chip order).
   `status-chip` calls `kind()` too, so there is one mapping.
-- `ReadProjectProgress::rollup(iterable<stdClass>): list<{name, counts, total, built, open, parked}>`.
-  It is public for this page. SB-10's `handle()` output shape is unchanged.
+- `StoryStatusOrder::rollup(iterable<stdClass>): list<{name, counts, total, built, open, parked}>`,
+  shared with the project dashboard. SB-10's `handle()` output shape is unchanged.
 - Props: `board/status-chip` and `board/status-bar` take `variant` (`null` or `'tag'`).
   `board/project-header` takes `model`, `page` and `current`, and its slot extends the ref line.
 - Event: a row dispatches `board-story` with `<project>/<ID>` (SB-8).
@@ -121,7 +121,7 @@ None.
   `/p/rent-track/stories` shows grey `in` and `done` tags.
 
 ## Key decisions & tradeoffs
-- One query, one ordering: the page counts in PHP and reuses `ReadProjectProgress::rollup()` rather
+- One query, one ordering: the page counts in PHP and reuses the rollup (`StoryStatusOrder::rollup()`) rather
   than calling `handle()` (three queries) or re-deriving the sort →
   [ADR-025](../decisions/ADR-025-stories-page-reuses-the-progress-rollup-over-one-query.md).
 - Rows are filtered by one container class and CSS variants, not by Alpine on each row →
@@ -148,3 +148,4 @@ None.
 ## Change history
 2026-09-29 — Stories tab at `/p/{project}/stories`: initiatives with counts, stories tagged by status,
 filter chips, Expand all; `rollup()` extracted; `board/project-header` shared with the Handbook (SB-15, `ae144cb`)
+2026-10-11 — Rollup moved to `StoryStatusOrder`, so this page no longer depends on `ReadProjectProgress`; guard via `GuardsProjectPage` (RD-1, `6ad827b`)

@@ -10,6 +10,24 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-10-11 — `composer remove` rewrites `.claude/` and agent files
+Symptom: removing `laravel/fortify` also changed files under `.claude/` and the agent guideline files, which are on RD-1's Do-NOT-touch list.
+Root cause: composer's post-update scripts run `boost:update`, which regenerates Laravel Boost's agent files.
+Fix: run `composer remove <pkg> --no-scripts` (RD-1). Check `git status` for `.claude/` changes after any composer change.
+Log trail: none. It shows only in `git status`.
+
+## 2026-10-11 — A project made by `AddProject` has a null `state` in tests
+Symptom: a direct action test asserted `state === 'pending'` on the project `AddProject` returned and got null.
+Root cause: `state` is filled by a database column default. Eloquent does not hydrate defaults back into the model on `create()`.
+Fix: re-read with `->fresh()` before asserting, as `ManageProjectsTest` does (`tests/Feature/Board/ProjectActionsTest.php`, RD-1).
+Log trail: none. It is a test-only symptom, and the row in MySQL is correct.
+
+## 2026-10-11 — `php artisan test --parallel tests/Feature tests/Unit` fails "Too many arguments"
+Symptom: `Too many arguments, expected arguments "path"` when running the Feature and Unit suites in parallel by path.
+Root cause: paratest accepts a single path argument.
+Fix: `php artisan test --parallel --testsuite=Feature,Unit`. Confirm the scope by the test count, because Browser tests run separately (RD-1).
+Log trail: none. The error comes from the CLI.
+
 ## 2026-09-30 — Uncaught `SecurityError` from Flux when localStorage is blocked
 Symptom: SB-19's "localStorage throws" browser test, which stubs `Storage.prototype` `getItem` / `setItem` / `removeItem` to throw `DOMException('SecurityError')` for every key, hits an uncaught error before the page's own code runs, even though the Columns picker wraps all its storage calls.
 Root cause: Flux reads `localStorage` unguarded for `flux.appearance`: once in the `@fluxAppearance` script in `<head>` and again in `flux.min.js` on `alpine:init`. A real browser with site data blocked hits the same throw on every board page. Pre-existing, outside SB-19.
