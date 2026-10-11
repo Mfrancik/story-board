@@ -1,5 +1,5 @@
 # Mockup gallery
-Status: active   ·   Last updated: 2026-09-30   ·   Stories: SB-21, SB-23
+Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-21, SB-23, RD-3
 
 ## Overview
 `/mockups` lists every mockup set across the enabled projects as live-thumbnail cards, with the sets
@@ -79,7 +79,8 @@ the empty state (`data-mockups-empty`), which says mockups come from `docs/mocku
 - **Keys.** Esc closes the pick dialog, or else goes back to the gallery. ←/→ step through the project's
   sets, ignored while focus is in an input, select or textarea.
 - **Pick.** Pick opens a dialog with a one-line reason field. `confirmPick()` calls the component's one
-  server action, `pick($option, $reason)`. That action re-reads the set and row server-side, calls
+  server action, `pick($option, $reason)`. It hands off to `PickMockup::handle()` (RD-3, shared with the
+  [story page](story-page-and-mockups.md); ADR-042), which re-reads the set and row server-side, calls
   `StoryPickWriter::pick()`, and always calls `forget()`. The result is a success toast ("… committed on
   <branch> (not pushed)", the branch from `pick()`'s return), or `refusal` shown in the dialog (`data-pick-refusal`). `hydrate()` (trait `GuardsProjectPage`) re-checks the
   project is still shown on every update (ADR-019 amendment) and returns to `/mockups` if not.
@@ -199,7 +200,7 @@ constant `ReadCurrentVersion::STALE_DAYS`, not config.
 | `board.project_routes_unreadable` | warning | `ReadProjectRoutes::handle()` | `project`, `ref`, `error` |
 | `board.journey_shot_refused` | warning | `ReadJourneyShots` (SB-24's, reused) | `project`, `path`, `reason` |
 | `board.mockup_picked` | info | `StoryPickWriter::pick()` | `project`, `story`, `option`, `commit` |
-| `board.mockup_pick_refused` | warning | `StoryPickWriter::pick()`, `MockupViewer::pick()` | `project`, `story`, `reason` |
+| `board.mockup_pick_refused` | warning | `StoryPickWriter::pick()`, `PickMockup::handle()` | `project`, `story`, `reason` |
 | `board.mockup_file_refused` | warning | `ReadMockupSetFile` | `project`, `path` |
 | `board.mockup_not_found` | info | `ReadMockupSetFile`, `MockupViewer::mount()` | `project`, `story`, `reason`, `file`? |
 | `board.mockup_served` | debug | `ReadMockupSetFile` | `project`, `story`, `file`, `bytes` |
@@ -252,9 +253,9 @@ the Where (compare the story's `- Routes:` path with the manifest's `route`), or
   than SB-4's `isPlainRelativePath()` and needs no traversal rules.
 
 ## Known limitations & gotchas
-- **A pick is visible in two places at different times.** The gallery shows "Picked X · not pushed" at
-  once. The story modal, story page and What needs me read the ref, so they show it only after a push
-  and a refresh.
+- **A pick is visible in two places at different times.** The gallery and the story page (RD-3) show
+  "Picked X · not pushed" at once. The story modal and What needs me read the ref, so they show it only after
+  a push and a refresh.
 - A pick committed **outside** the board (by hand in the checkout) can take up to 300 s to show in the gallery.
 - The sidebar's awaiting count checks placeholders, but the What needs me pick card does not, so the two
   can differ slightly.
@@ -280,3 +281,4 @@ the Where (compare the story's `- Routes:` path with the manifest's `route`), or
 2026-09-29 — Opening status counts only the project the page opens on, so `?project=X` with nothing awaiting in X opens on All (SB-21, `680b4db`)
 2026-09-30 — Current pane: newest matching journey shot with capture time and stale label, new-page and uncovered states, opens Current vs option when a shot exists; `ReadCurrentVersion`, `ReadProjectRoutes`; `mockup_viewed` gains `current` (SB-23, `079a2c1`)
 2026-10-11 — Gate reading moved to `MockupGateParser`; `pick()` returns `{sha, branch}`; open statuses from `StoryStatusOrder`; `TYPES` owned by `MockupSetFileController`; viewer guard via `GuardsProjectPage` (RD-1, `6ad827b`)
+2026-10-11 — Pick logic moved into `PickMockup`, shared with the story page; the viewer keeps its toast (RD-3, `0e8542b`)

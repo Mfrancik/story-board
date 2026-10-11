@@ -10,6 +10,18 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-10-11 — Story page's status tag text came out broken
+Symptom: on the RD-3 story page, the status tag's text (status plus "· awaiting your pick") rendered garbled once the suffix was added with an inline `@if` inside the tag.
+Root cause: Livewire wraps every Blade `@if` block in morph marker comments (`<!--[if BLOCK]><![endif]-->`). Inside a tag's inline text, those markers are injected into the label.
+Fix: build the label as one PHP string expression inside the tag, `{{ ($story->status ?? 'no status').($awaiting ? ' · awaiting your pick' : '') }}` (`resources/views/livewire/board/story-page.blade.php`; RD-3). In a Livewire view, compute conditional text in PHP, not with `@if` inside an inline element.
+Log trail: none. It is visual, so check the rendered HTML for `[if BLOCK]` comments.
+
+## 2026-10-11 — A page test hook matched the shell sidebar too
+Symptom: story page assertions on the mockups section hook `data-mockups` matched in the RD-2 shell even when the story had no mockups.
+Root cause: the shell sidebar carries `data-mockups-count`, and an attribute-prefix selector or string match on `data-mockups` hits both.
+Fix: the section's hook is `data-story-mockups` (RD-3). Name a page's test hooks after the page, not after a word the shell already uses.
+Log trail: none. It shows up as a false pass or fail in `StoryPageTest`.
+
 ## 2026-10-11 — `package-lock.json` renamed to the worktree folder after `npm install`
 Symptom: after installing a package in a worktree, `package-lock.json`'s top-level `"name"` (and `packages[""].name`) changed from `story-board` to the worktree folder, for example `rd-2`.
 Root cause: npm writes the lock's name from the directory it runs in when `package.json` has no `name` field of its own. A worktree checkout's folder is named after its branch.

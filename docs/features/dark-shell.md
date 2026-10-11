@@ -14,8 +14,8 @@ middleware on all board page routes, so pages added later get it without doing a
 `.dark` is never set inside the shell and there is no theme switch. The body is `bg-ground font-sans text-ink`.
 `x-data="{ open: false }"` holds the mobile drawer's state, which the sidebar's menu button, backdrop and aside
 all share. The page slot sits in `md:pl-58` beside the fixed sidebar. A page opts in with
-`#[Layout('layouts.shell')]` (currently only `app/Livewire/Board/ProjectPreflight.php`). Every other page
-still uses `layouts/board` until RD-4 moves it.
+`#[Layout('layouts.shell')]` (currently `app/Livewire/Board/ProjectPreflight.php` and, since RD-3,
+`StoryPage.php`). Every other page still uses `layouts/board` until RD-4 moves it.
 
 **Tokens.** `resources/css/app.css` adds the Home A palette to `@theme`: `ground / surface / raised` surfaces,
 `hairline / edge / rim` borders, `ink / ink-soft / ink-muted / ink-faint` text, and the signals `needs`
