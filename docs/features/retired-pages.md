@@ -113,10 +113,8 @@ Browser check (story): click every sidebar item and every project tab. No dead l
 - **No page lists off-main work any more.** The old dashboard's Not on main section is gone. Off-main work shows only
   as a count on the overview's project tiles and as the versions banner on a story page.
 - **Production figures update once a day, and only with the scheduler running.** No page load triggers a read.
-- **One SB-11 privacy check was not ported.** The deleted `LiveSessionsTest` "renders nothing from a session file but
-  cwd, gitBranch and the times" seeded message, version, `requestId` and slug sentinels and asserted none reached the
-  page. Its successors check less: `HomeOverviewTest` asserts only that the assistant text and the session id stay
-  off the overview card.
+- The SB-11 privacy check (message, version, `requestId`, slug sentinels never reach the page) now runs against `/`
+  in `LiveSessionLinksTest`.
 - Dead code left for later (backlog F-15): `ListLiveSessions::handle()`, its private helpers and the `chosen` field
   have no caller; `ReadMockupSets::countFor()` lost its only caller (the old project page's Mockups button);
   `ReadProductionProject::outcome()` / `outcomeKey()` are written but read only by the next write; the

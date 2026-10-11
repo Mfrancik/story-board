@@ -77,6 +77,24 @@ it('links the story named in the session\'s branch, and does not count a file la
         ->and($cards[0]['stories'])->toBe(['SET-42']);
 });
 
+it('renders nothing on the overview from a session file\'s message, version, request id or slug', function () {
+    // Ported from the deleted LiveSessionsTest privacy check: the overview card is the only page that renders a
+    // session now, so the sentinels must stay off `/` too.
+    $id = 'aaaaaaaa-0000-0000-0000-000000000099';
+    $this->sessions->file(SessionFixture::folderFor($this->set42), $id, [
+        SessionFixture::line($this->set42, 'feat/SET-42-lock-a-coin-in-its-slot', $id, 2, [
+            'message' => ['role' => 'user', 'content' => 'MESSAGE-BODY-SENTINEL'],
+            'version' => 'VERSION-SENTINEL',
+            'requestId' => 'REQUEST-SENTINEL',
+            'slug' => 'SLUG-SENTINEL',
+        ]),
+    ], 2);
+
+    $html = $this->get('/')->assertOk()->assertSee('data-live-story="coins/SET-42"', false)->getContent();
+
+    expect($html)->not->toContain('SENTINEL');
+});
+
 it('links the off-main row on the session\'s branch when the branch name carries no ID', function () {
     Story::factory()->for($this->coins)->create([
         'story_id' => 'BUL-70', 'title' => 'Bullion on the phone', 'status' => 'draft',
