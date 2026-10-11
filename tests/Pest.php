@@ -19,6 +19,15 @@ pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->in('Feature', 'Browser');
 
+// L-7: a Browser test runs only under bin/browser-lock.sh, which sets BROWSER_LOCK_HELD. Two unlocked runs on
+// 127.0.0.1 share Playwright cookies and flake each other; a bare `--filter` reaches this suite too. CI is one job
+// on its own runner, so it is exempt.
+pest()->beforeEach(function () {
+    if (getenv('BROWSER_LOCK_HELD') !== '1' && getenv('CI') === false) {
+        throw new RuntimeException('Browser tests run only under the lock: bin/browser-lock.sh php artisan test tests/Browser …');
+    }
+})->in('Browser');
+
 /*
 |--------------------------------------------------------------------------
 | Expectations

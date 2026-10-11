@@ -825,15 +825,17 @@ else
   # and unverified; serial holds until one is proven. If you change this, the
   # evidence is a --log-junit diff of test identities and statuses, not a count
   # or a green light — see codebase-standards.md §Testing (Pest).
+  # Browser runs take the machine-wide lock themselves (bin/browser-lock.sh, L-7); nested inside an outer
+  # wrap they run straight through, so wrapping all of preflight.sh is still safe.
   check "pest (unit+feature)"  "php artisan test --parallel --exclude-testsuite=Browser --compact ${PF_PEST_ARGS:-}"
-  check "pest (browser)"       "php artisan test tests/Browser --compact"
+  check "pest (browser)"       "bin/browser-lock.sh php artisan test tests/Browser --compact"
 
   # Journey regression as a GATE, not an audit bullet. The audit used to re-run
   # these by hand, paying tokens for output it then had to read; here it is a
   # pass/fail. Runs ALL journeys, because later stories breaking an earlier link
   # in a flow is the whole point — and that risk only grows with journey count.
   if [ -d tests/Browser/Journeys ]; then
-    check "journeys (all)"     "php artisan test tests/Browser/Journeys --compact"
+    check "journeys (all)"     "bin/browser-lock.sh php artisan test tests/Browser/Journeys --compact"
   fi
 
   check "vite build"           "npm run build --silent"
