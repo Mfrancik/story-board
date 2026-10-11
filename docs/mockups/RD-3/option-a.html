@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RD-3 option A — Story page, short first</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0E0F11}
+a{color:#F2A33A;text-decoration:none}a:hover{color:#FFC26B}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.card{background:#16181B;border:1px solid #26292E;border-radius:12px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid #33373D;color:#C9CBCF;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border-radius:8px;font:500 14px Geist,sans-serif;border:1px solid #33373D;background:#1D2024;color:#F2F1EE;cursor:pointer}
+.btn.pri{background:#F2A33A;border-color:#F2A33A;color:#1A1205}
+.opt{min-height:44px;padding:0 16px;border-radius:8px;border:1px solid #33373D;background:transparent;color:#C9CBCF;font:500 14px Geist,sans-serif;cursor:pointer}
+.opt[aria-pressed="true"]{background:#F2F1EE;color:#0E0F11;border-color:#F2F1EE}
+details{border-top:1px solid #1F2226}
+summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;min-height:52px;padding:0 20px;font-size:15px;font-weight:500}
+summary::-webkit-details-marker{display:none}
+summary:hover{background:#1A1D21}
+.wf{background:#F4F3EF;border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+.wl{height:8px;border-radius:4px;background:#D6D4CE}
+.oos{outline:1px dashed #5C4219;outline-offset:3px;opacity:.55}
+.mark{position:absolute;width:120px;height:58px;background:#E4E2DC;border-radius:6px}
+.row{display:flex;gap:12px;align-items:center}.row span:first-child{width:70px;height:8px;background:#C9C6BE;border-radius:4px}.row span:last-child{flex:1;height:30px;background:#E4E2DC;border-radius:6px}
+</style>
+</head>
+<body>
+<!-- Approved record — RD-3, redesign canvas board 'Story page — short first' (project/Story.dc.html), chosen option A (owner, 2026-10-10): 'these look good'. Source: https://claude.ai/artifact/Ervkp5duofs7VbUbbz7tDg
+     Saved as a static page; the option buttons switch the frame with a few lines of inline JS.
+     OUT OF SCOPE for RD-3 (owner, 2026-10-11), shown dashed and faded: 'Approve without a pick', 'Edit story', 'Cost & history'. -->
+<div style="min-height:100vh;background:#0E0F11;color:#F2F1EE;font-family:Geist,system-ui,sans-serif;box-sizing:border-box;padding:24px 32px 56px">
+  <div style="max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:28px">
+
+    <nav aria-label="Breadcrumb" style="font-size:13px;color:#9A9DA3"><a href="#" style="color:#9A9DA3">story-board</a> / Stories / SB-27</nav>
+
+    <header style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <span class="pill mono">SB-27</span>
+        <span class="pill" style="border-color:#5C4219;color:#F2A33A">Draft · awaiting your pick</span>
+        <span class="pill">Dashboards</span>
+      </div>
+      <h1 style="margin:0;font-size:40px;font-weight:600;letter-spacing:-.02em;line-height:1.1">Project timeline</h1>
+      <p style="margin:0;font-size:18px;line-height:1.5;color:#C9CBCF;max-width:680px">See every story a project has shipped, in the order it shipped, on one scrolling line, so you can tell what changed and when.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
+        <button class="btn pri" id="pick">Pick option B</button>
+        <button class="btn oos" title="Out of scope for RD-3">Approve without a pick</button>
+        <button class="btn oos" title="Out of scope for RD-3">Edit story</button>
+      </div>
+    </header>
+
+    <section aria-labelledby="mk" style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <h2 id="mk" style="margin:0;font-size:18px;font-weight:600">Mockups</h2>
+        <span style="font-size:13px;color:#9A9DA3">compare with today's screen</span>
+        <div role="group" aria-label="Choose a mockup" style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="opt" data-k="Today" aria-pressed="false">Today</button>
+          <button class="opt" data-k="A" aria-pressed="false">Option A</button>
+          <button class="opt" data-k="B" aria-pressed="true">Option B</button>
+          <button class="opt" data-k="C" aria-pressed="false">Option C</button>
+        </div>
+      </div>
+      <div class="card" style="padding:16px;display:flex;flex-direction:column;gap:12px">
+        <div class="wf" style="height:440px">
+          <div style="height:40px;background:#1E2226;display:flex;align-items:center;gap:8px;padding:0 14px"><span style="width:40px;height:6px;background:#F2A33A;border-radius:3px"></span><span style="width:60px;height:6px;background:#4B4F57;border-radius:3px"></span></div>
+          <div style="flex:1;padding:28px;display:flex;flex-direction:column;gap:18px">
+            <div class="wl" style="width:30%;height:14px;background:#B9B6AE"></div>
+            <div id="timeline" style="position:relative;height:200px">
+              <div style="position:absolute;left:0;right:0;top:100px;height:3px;background:#B9B6AE"></div>
+            </div>
+            <div id="list" style="display:none;flex-direction:column;gap:10px">
+              <div class="row"><span></span><span></span></div><div class="row"><span></span><span></span></div><div class="row"><span></span><span></span></div>
+              <div class="row"><span></span><span></span></div><div class="row"><span></span><span></span></div><div class="row"><span></span><span></span></div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <span id="caption" style="font-size:14px;color:#C9CBCF">B: one horizontal line, stories as cards above and below it.</span>
+          <a href="#" style="margin-left:auto;font-size:14px">Full screen</a>
+          <a href="#" style="font-size:14px">Side by side</a>
+        </div>
+      </div>
+      <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;color:#9A9DA3">Why this one? (optional, saved with the pick)
+        <input placeholder="One line" style="min-height:44px;padding:0 14px;border-radius:8px;border:1px solid #33373D;background:#16181B;color:#F2F1EE;font:14px Geist,sans-serif">
+      </label>
+    </section>
+
+    <section class="card" aria-labelledby="det" style="padding:0;overflow:hidden">
+      <h2 id="det" style="margin:0;padding:16px 20px;font-size:18px;font-weight:600">Details</h2>
+      <details>
+        <summary>Done when<span class="pill" style="margin-left:auto">6 criteria</span></summary>
+        <ol style="margin:0;padding:4px 20px 18px 42px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.5;color:#C9CBCF">
+          <li>Shipped stories appear on one line in commit order.</li>
+          <li>Each mark links to its story.</li>
+          <li>Filter by initiative.</li>
+          <li>Off-main work shows as hollow marks.</li>
+          <li>Phone width scrolls sideways, page does not.</li>
+          <li>Opens in under 300 ms with 200 stories.</li>
+        </ol>
+      </details>
+      <details>
+        <summary>Depends on<span style="margin-left:auto;font-size:13px;color:#9A9DA3">SB-2, SB-15</span></summary>
+        <div style="padding:4px 20px 18px;font-size:14px;color:#C9CBCF">SB-2 project registry (built) · SB-15 stories by initiative (built)</div>
+      </details>
+      <details>
+        <summary>Don't touch<span style="margin-left:auto;font-size:13px;color:#9A9DA3">2 paths</span></summary>
+        <div class="mono" style="padding:4px 20px 18px;font-size:13px;color:#C9CBCF">config/ · app/Board/GitReader.php</div>
+      </details>
+      <details>
+        <summary>Other versions<span style="margin-left:auto;font-size:13px;color:#9A9DA3">1 untracked</span></summary>
+        <div style="padding:4px 20px 18px;font-size:14px;color:#C9CBCF"><span class="pill">untracked</span> docs/mockups/SB-27/ · 3 files · 22h ago</div>
+      </details>
+      <details class="oos" title="Out of scope for RD-3">
+        <summary>Cost &amp; history<span style="margin-left:auto;font-size:13px;color:#9A9DA3">$2.10 so far</span></summary>
+        <div style="padding:4px 20px 18px;font-size:14px;color:#C9CBCF;display:flex;flex-direction:column;gap:6px"><span>Drafted 9 Oct by /story · $0.60</span><span>3 mockups made · $1.50</span></div>
+      </details>
+      <details>
+        <summary>Full story text<span style="margin-left:auto;font-size:13px;color:#9A9DA3">stories/SB-27.md · 412 lines</span></summary>
+        <div style="padding:4px 20px 18px;font-size:14px;color:#9A9DA3">The whole file, rendered, for when you need it.</div>
+      </details>
+    </section>
+  </div>
+</div>
+<script>
+// Static stand-in for the canvas board's option switcher.
+(function () {
+  var caps = {
+    Today: "Today: there is no timeline. Shipped stories are a list on the home page.",
+    A: "A: a dated list, newest first, grouped by week.",
+    B: "B: one horizontal line, stories as cards above and below it.",
+    C: "C: one line per initiative, stacked."
+  };
+  var lineB = [["2%", 20], ["18%", 118], ["34%", 20], ["50%", 118], ["66%", 20], ["82%", 118]];
+  var lineC = [["4%", 10], ["30%", 10], ["12%", 72], ["58%", 72], ["40%", 134], ["76%", 134]];
+  var colors = ["#F2A33A", "#6CA6F0", "#5FBF8F", "#F2A33A", "#6CA6F0", "#5FBF8F"];
+  var timeline = document.getElementById("timeline");
+  function show(k) {
+    document.querySelectorAll(".opt").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.k === k)); });
+    document.getElementById("pick").textContent = "Pick option " + (k === "Today" ? "B" : k);
+    document.getElementById("caption").textContent = caps[k];
+    var isTimeline = k === "B" || k === "C";
+    timeline.style.display = isTimeline ? "block" : "none";
+    document.getElementById("list").style.display = isTimeline ? "none" : "flex";
+    timeline.querySelectorAll(".mark").forEach(function (m) { m.remove(); });
+    (k === "C" ? lineC : lineB).forEach(function (p, i) {
+      var d = document.createElement("div");
+      d.className = "mark";
+      d.style.left = p[0]; d.style.top = p[1] + "px"; d.style.borderTop = "4px solid " + colors[i];
+      timeline.appendChild(d);
+    });
+  }
+  document.querySelectorAll(".opt").forEach(function (b) { b.addEventListener("click", function () { show(b.dataset.k); }); });
+  show("B");
+})();
+</script>
+</body>
+</html>
