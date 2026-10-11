@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RD-7 option A — Home, command center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:#0E0F11}
+a{color:#F2A33A;text-decoration:none}a:hover{color:#FFC26B}
+a:focus-visible,button:focus-visible{outline:2px solid #F2A33A;outline-offset:2px}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.card{background:#16181B;border:1px solid #26292E;border-radius:12px}
+.lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9A9DA3;font-weight:500}
+.navi{display:flex;align-items:center;gap:10px;padding:0 12px;border-radius:8px;color:#C9CBCF;font-size:14px;min-height:44px}
+.navi:hover{background:#1D2024;color:#F2F1EE}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid #33373D;color:#C9CBCF;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+.live{background:#6CA6F0;box-shadow:0 0 0 4px rgba(108,166,240,.18)}
+.btn{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border-radius:8px;font:500 14px Geist,sans-serif;border:1px solid #33373D;background:#1D2024;color:#F2F1EE;cursor:pointer}
+.btn.pri{background:#F2A33A;border-color:#F2A33A;color:#1A1205}
+.bar{height:6px;border-radius:3px;background:#26292E;overflow:hidden;display:flex}
+.oos{outline:1px dashed #5C4219;outline-offset:3px;opacity:.55}
+.ctx{opacity:.45}
+.sk{display:block;height:10px;border-radius:5px;background:#26292E}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.row{display:flex;align-items:center;gap:14px;padding:10px 20px;border-top:1px solid #1F2226;color:#F2F1EE;min-height:56px}
+.row:hover{background:#1A1D21;color:#F2F1EE}
+.ship{display:flex;gap:14px;align-items:center;padding:8px 0;border-top:1px solid #1F2226;min-height:44px;color:#F2F1EE;flex-wrap:wrap}
+.ship:hover{background:#1A1D21;color:#F2F1EE}
+.legend{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;font-size:13px;color:#C9CBCF;padding:12px 16px;border:1px solid #26292E;border-radius:10px;background:#121417}
+.legend i{display:inline-block;width:22px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:6px;background:#1D2024}
+main{flex:999 1 560px;min-width:0;padding:28px 32px 48px;display:flex;flex-direction:column;gap:28px}
+@media (max-width:640px){main{padding:20px 16px 40px}.navwrap{padding:16px!important}.sb{width:100%}}
+</style>
+</head>
+<body>
+<!-- Approved record — RD-7, redesign canvas board 'Home A — Command center' (project/Main.dc.html), Projects grid + Shipped this week, chosen option A (owner, 2026-10-10): 'A is better'. Source: https://claude.ai/artifact/Ervkp5duofs7VbUbbz7tDg
+     Rendered static. Adapted to the story: tiles drop the board's verdict pill, '$ this month' and 'shipped Nd ago' footer;
+     they gain a live dot, off-main count, last preflight (when · wall time · mode) and show the prod row only with a connection.
+     RD-5 panels are dimmed as context. OUT OF SCOPE, dashed and faded: Full timeline link (F-2), October spend, search, preflight button, Brain card. -->
+<div style="min-height:100vh;background:#0E0F11;color:#F2F1EE;font-family:Geist,system-ui,sans-serif;display:flex;flex-wrap:wrap">
+
+  <nav aria-label="Main" class="navwrap" style="flex:1 1 232px;max-width:100%;padding:20px 14px;border-right:1px solid #1F2226;display:flex;flex-direction:column;gap:22px">
+    <div style="display:flex;align-items:center;gap:10px;padding:0 6px">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="1" width="24" height="24" rx="7" fill="none" stroke="#F2A33A" stroke-width="2"></rect><path d="M8 9h10M8 13h6M8 17h8" stroke="#F2A33A" stroke-width="2" stroke-linecap="round"></path></svg>
+      <span style="font-weight:600;font-size:16px">Story Board</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <a class="navi" href="#" aria-current="page" style="background:#1D2024;color:#F2F1EE">Home</a>
+      <a class="navi" href="#">Money</a>
+      <a class="navi" href="#">Brain runner <span class="pill mono" style="margin-left:auto;border-color:#2B4A6E;color:#8EBBF2">1 running</span></a>
+      <a class="navi" href="#">Mockups &amp; flows <span class="pill mono" style="margin-left:auto">3</span></a>
+      <a class="navi" href="#">Backlog</a>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <span class="lbl" style="padding:0 12px 6px">Projects</span>
+      <a class="navi" href="#"><span class="dot" style="background:#6CA6F0"></span>story-board<span class="mono" style="margin-left:auto;color:#7E8187;font-size:12px">SB</span></a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>coins<span class="mono" style="margin-left:auto;color:#7E8187;font-size:12px">PRF</span></a>
+      <a class="navi" href="#"><span class="dot" style="background:#F59088"></span>ledger-app<span class="mono" style="margin-left:auto;color:#7E8187;font-size:12px">LA</span></a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>cozmic-site<span class="mono" style="margin-left:auto;color:#7E8187;font-size:12px">CZ</span></a>
+    </div>
+    <div class="card oos" title="Out of scope: the Brain card" style="margin-top:auto;padding:14px;display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;gap:8px"><span class="dot live"></span><span style="font-weight:600;font-size:14px">brain</span><span class="mono" style="margin-left:auto;font-size:12px;color:#9A9DA3">online</span></div>
+      <div class="mono" style="font-size:12px;color:#9A9DA3">CPU 62% · queue 2 · last GO 14m</div>
+    </div>
+  </nav>
+
+  <main>
+    <div class="legend" role="note" aria-label="Mockup legend">
+      <strong style="color:#F2F1EE">RD-7 · option A</strong>
+      <span><i style="border:1px solid #33373D"></i>solid = built by RD-7</span>
+      <span><i style="opacity:.45;border:1px solid #33373D"></i>dimmed = RD-5 (context)</span>
+      <span><i class="oos" style="outline-offset:0;opacity:1"></i>dashed + faded = out of scope</span>
+    </div>
+
+    <header class="ctx" style="display:flex;flex-wrap:wrap;align-items:center;gap:16px">
+      <div style="display:flex;flex-direction:column;gap:4px;margin-right:auto">
+        <span class="lbl">Saturday 10 October</span>
+        <h1 style="margin:0;font-size:28px;font-weight:600;letter-spacing:-.01em">6 things need you. 3 sessions are building.</h1>
+      </div>
+      <label class="oos sb" title="Out of scope: search" style="display:flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;border:1px solid #33373D;border-radius:8px;background:#16181B;color:#9A9DA3;font-size:14px;min-width:0;flex:0 1 260px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input aria-label="Search stories, projects, runs" placeholder="Jump to story, project, run…" disabled style="background:transparent;border:0;outline:0;color:#F2F1EE;font:14px Geist,sans-serif;flex:1;min-width:0">
+        <span class="mono" style="font-size:12px">⌘K</span>
+      </label>
+      <button class="btn pri oos" title="Out of scope: run preflight on brain" disabled>Run preflight on brain</button>
+    </header>
+    <div class="ctx">
+    <section aria-label="Right now" class="" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr));gap:14px">
+      <div class="card" style="padding:18px;display:flex;flex-direction:column;gap:10px">
+        <span class="lbl">Live sessions</span>
+        <div style="display:flex;align-items:baseline;gap:10px"><span class="mono" style="font-size:32px;font-weight:500;letter-spacing:-.02em">3</span><span style="font-size:13px;color:#8EBBF2">2 projects</span></div>
+        <span style="font-size:13px;color:#9A9DA3">Longest: RD-5, 1h 12m</span>
+      </div>
+      <div class="card" style="padding:18px;display:flex;flex-direction:column;gap:10px">
+        <span class="lbl">Needs me</span>
+        <div style="display:flex;align-items:baseline;gap:10px"><span class="mono" style="font-size:32px;font-weight:500;letter-spacing:-.02em">6</span><span style="font-size:13px;color:#F2A33A">1 over a day</span></div>
+        <span style="font-size:13px;color:#9A9DA3">2 picks · 1 draft · 3 ready</span>
+      </div>
+      <div class="card" style="padding:18px;display:flex;flex-direction:column;gap:10px">
+        <span class="lbl">Preflight · last 7 days</span>
+        <div style="display:flex;align-items:baseline;gap:10px"><span class="mono" style="font-size:32px;font-weight:500;letter-spacing:-.02em">5</span><span style="font-size:13px;color:#9A9DA3">runs</span></div>
+        <span style="font-size:13px;color:#9A9DA3">median 3m 12s</span>
+      </div>
+      <div class="card" style="padding:18px;display:flex;flex-direction:column;gap:10px">
+        <span class="lbl">In flight</span>
+        <div style="display:flex;align-items:baseline;gap:10px"><span class="mono" style="font-size:32px;font-weight:500;letter-spacing:-.02em">5</span><span style="font-size:13px;color:#9A9DA3">stories</span></div>
+        <span style="font-size:13px;color:#9A9DA3">approved, not yet built</span>
+      </div>
+    </section>
+    <div class="" style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+      <section class="card" aria-labelledby="needs" style="flex:1 1 420px;min-width:0;padding:6px 0">
+        <div style="display:flex;align-items:center;padding:14px 20px 10px"><h2 id="needs" style="margin:0;font-size:16px;font-weight:600">Needs me</h2><span style="margin-left:auto;font-size:13px;color:#9A9DA3">oldest first</span></div>
+        <a class="row" href="#">
+          <span class="pill" style="border-color:#5C4219;color:#F2A33A;min-width:64px;justify-content:center">Pick</span>
+          <span style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1"><span style="font-size:14px;font-weight:500">Project timeline</span><span class="mono" style="font-size:12px;color:#9A9DA3">story-board · SB-27 · 3 options</span></span>
+          <span style="font-size:12px;color:#7E8187;white-space:nowrap"><span class="sr">waiting </span>22h</span>
+        </a>
+        <a class="row" href="#">
+          <span class="pill" style="border-color:#2B4A6E;color:#8EBBF2;min-width:64px;justify-content:center">Draft</span>
+          <span style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1"><span style="font-size:14px;font-weight:500">Payout export CSV</span><span class="mono" style="font-size:12px;color:#9A9DA3">coins · PRF-15 · draft · 5 criteria</span></span>
+          <span style="font-size:12px;color:#7E8187;white-space:nowrap"><span class="sr">waiting </span>9h</span>
+        </a>
+        <a class="row" href="#">
+          <span class="pill" style="border-color:#2D5A44;color:#7CD1A4;min-width:64px;justify-content:center">Ready</span>
+          <span style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1"><span style="font-size:14px;font-weight:500">Home project filter</span><span class="mono" style="font-size:12px;color:#9A9DA3">story-board · RD-6 · approved</span></span>
+          <span style="font-size:12px;color:#7E8187;white-space:nowrap"><span class="sr">waiting </span>6h</span>
+        </a>
+        <a class="row" href="#">
+          <span class="pill" style="border-color:#5C4219;color:#F2A33A;min-width:64px;justify-content:center">Pick</span>
+          <span style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1"><span style="font-size:14px;font-weight:500">Wallet onboarding</span><span class="mono" style="font-size:12px;color:#9A9DA3">coins · PRF-16 · 2 options</span></span>
+          <span style="font-size:12px;color:#7E8187;white-space:nowrap"><span class="sr">waiting </span>5h</span>
+        </a>
+        <a class="row" href="#">
+          <span class="pill" style="border-color:#2D5A44;color:#7CD1A4;min-width:64px;justify-content:center">Ready</span>
+          <span style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1"><span style="font-size:14px;font-weight:500">Preflight ran on</span><span class="mono" style="font-size:12px;color:#9A9DA3">story-board · RD-8 · approved</span></span>
+          <span style="font-size:12px;color:#7E8187;white-space:nowrap"><span class="sr">waiting </span>3h</span>
+        </a>
+        <a class="row" href="#">
+          <span class="pill" style="border-color:#2D5A44;color:#7CD1A4;min-width:64px;justify-content:center">Ready</span>
+          <span style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1"><span style="font-size:14px;font-weight:500">Recurring entries</span><span class="mono" style="font-size:12px;color:#9A9DA3">ledger-app · LA-13 · approved</span></span>
+          <span style="font-size:12px;color:#7E8187;white-space:nowrap"><span class="sr">waiting </span>40m</span>
+        </a>
+      </section>
+
+      <section aria-labelledby="live" style="flex:1 1 380px;min-width:0;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:#6CA6F0"></span><h2 id="live" style="margin:0;font-size:16px;font-weight:600">Live now</h2><span style="margin-left:auto;font-size:13px;color:#9A9DA3">updates every 30s</span></div>
+        <article class="card" style="padding:16px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="font-weight:600;font-size:14px">story-board</span><span class="pill mono">feat/RD-5</span><span class="pill" style="border-color:#5C4219;color:#F2A33A">RD-5</span><span style="margin-left:auto;font-size:12px;color:#9A9DA3">1h 12m</span></div>
+          <div class="mono" style="font-size:13px;color:#C9CBCF;overflow-wrap:anywhere">Editing app/Livewire/Board/Overview.php</div>
+          <div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;color:#9A9DA3;width:52px">context</span><div class="bar" style="flex:1" aria-hidden="true"><div style="width:71%;background:#F2A33A"></div></div><span class="mono" style="font-size:12px;color:#C9CBCF;min-width:84px;text-align:right">142k / 200k</span></div>
+        </article>
+        <article class="card" style="padding:16px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="font-weight:600;font-size:14px">coins</span><span class="pill mono">fix/PRF-14</span><span class="pill" style="border-color:#5C4219;color:#F2A33A">PRF-14</span><span style="margin-left:auto;font-size:12px;color:#9A9DA3">24m</span></div>
+          <div class="mono" style="font-size:13px;color:#C9CBCF;overflow-wrap:anywhere">Reading tests/Feature/X.php</div>
+          <div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;color:#9A9DA3;width:52px">context</span><div class="bar" style="flex:1" aria-hidden="true"><div style="width:28%;background:#6CA6F0"></div></div><span class="mono" style="font-size:12px;color:#C9CBCF;min-width:84px;text-align:right">56k / 200k</span></div>
+        </article>
+        <article class="card" style="padding:16px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="font-weight:600;font-size:14px">story-board</span><span class="pill mono">main</span><span class="pill" style="color:#9A9DA3">no story matched</span><span style="margin-left:auto;font-size:12px;color:#9A9DA3">1m</span></div>
+          <div class="mono" style="font-size:13px;color:#C9CBCF;overflow-wrap:anywhere">Running php artisan test --filter=Overview</div>
+          <div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;color:#9A9DA3;width:52px">context</span><div class="bar" style="flex:1" aria-hidden="true"></div><span class="mono" style="font-size:12px;color:#C9CBCF;min-width:84px;text-align:right">—</span></div>
+        </article>
+      </section>
+    </div>
+    </div>
+    <section aria-labelledby="projs" class="" style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px"><h2 id="projs" style="margin:0;font-size:16px;font-weight:600">Projects</h2><a href="#" style="margin-left:auto;font-size:13px;min-height:44px;display:inline-flex;align-items:center">Manage projects</a></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:14px">
+          <a href="#" class="card" aria-label="story-board stories" style="padding:18px;display:flex;flex-direction:column;gap:14px;color:#F2F1EE">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span class="dot" style="background:#6CA6F0"></span><span style="font-weight:600;font-size:15px">story-board</span><span class="dot live" style="margin-left:auto"></span><span style="font-size:12px;color:#8EBBF2">session running</span></div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div class="bar" aria-hidden="true"><div style="width:84.0%;background:#5FBF8F"></div><div style="width:8.0%;background:#6CA6F0"></div><div style="width:8.0%;background:#F2A33A"></div></div>
+              <div style="display:flex;gap:14px;font-size:12px;color:#9A9DA3;flex-wrap:wrap"><span>21 built · 2 in flight · 2 draft</span><span style="margin-left:auto">2 off main</span></div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;font-size:12px;color:#9A9DA3;border-top:1px solid #1F2226;padding-top:12px;flex-wrap:wrap"><span>Last preflight</span><span style="margin-left:auto"></span><span class="mono" style="color:#C9CBCF">6h ago · 3m 12s</span><span class="pill mono" style="padding:1px 7px">diff</span></div>
+          </a>
+          <a href="#" class="card" aria-label="coins stories" style="padding:18px;display:flex;flex-direction:column;gap:14px;color:#F2F1EE">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span class="dot" style="background:#5FBF8F"></span><span style="font-weight:600;font-size:15px">coins</span><span class="dot live" style="margin-left:auto"></span><span style="font-size:12px;color:#8EBBF2">session running</span></div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div class="bar" aria-hidden="true"><div style="width:75.0%;background:#5FBF8F"></div><div style="width:8.3%;background:#6CA6F0"></div><div style="width:16.7%;background:#F2A33A"></div></div>
+              <div style="display:flex;gap:14px;font-size:12px;color:#9A9DA3;flex-wrap:wrap"><span>9 built · 1 in flight · 2 draft</span><span style="margin-left:auto">1 off main</span></div>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:12px">
+              <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;color:#9A9DA3">Active wallets <span style="color:#7E8187">(prod)</span></span><span class="mono" style="font-size:20px">1,284</span></div>
+              <svg width="110" height="34" viewBox="0 0 110 34" style="margin-left:auto;flex:none" aria-hidden="true" focusable="false"><polyline points="0,22 15,20 30,21 45,16 60,17 75,14 90,12 110,10" fill="none" stroke="#6CA6F0" stroke-width="2" stroke-linejoin="round"></polyline></svg>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;font-size:12px;color:#9A9DA3;border-top:1px solid #1F2226;padding-top:12px;flex-wrap:wrap"><span>Last preflight</span><span style="margin-left:auto"></span><span class="mono" style="color:#C9CBCF">1d ago · 4m 05s</span><span class="pill mono" style="padding:1px 7px">full</span></div>
+          </a>
+          <a href="#" class="card" aria-label="ledger-app stories" style="padding:18px;display:flex;flex-direction:column;gap:14px;color:#F2F1EE">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span class="dot" style="background:#F59088"></span><span style="font-weight:600;font-size:15px">ledger-app</span></div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div class="bar" aria-hidden="true"><div style="width:71.4%;background:#5FBF8F"></div><div style="width:0.0%;background:#6CA6F0"></div><div style="width:28.6%;background:#F2A33A"></div></div>
+              <div style="display:flex;gap:14px;font-size:12px;color:#9A9DA3;flex-wrap:wrap"><span>5 built · 0 in flight · 2 draft</span><span style="margin-left:auto">clean</span></div>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:12px">
+              <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;color:#9A9DA3">Invoices sent <span style="color:#7E8187">(prod)</span></span><span class="mono" style="font-size:20px">312</span></div>
+              <svg width="110" height="34" viewBox="0 0 110 34" style="margin-left:auto;flex:none" aria-hidden="true" focusable="false"><polyline points="0,28 15,26 30,22 45,24 60,18 75,16 90,17 110,12" fill="none" stroke="#6CA6F0" stroke-width="2" stroke-linejoin="round"></polyline></svg>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;font-size:12px;color:#9A9DA3;border-top:1px solid #1F2226;padding-top:12px;flex-wrap:wrap"><span>Last preflight</span><span style="margin-left:auto"></span><span style="color:#7E8187">no runs yet</span></div>
+          </a>
+          <a href="#" class="card" aria-label="cozmic-site stories" style="padding:18px;display:flex;flex-direction:column;gap:14px;color:#F2F1EE">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span class="dot" style="background:#5FBF8F"></span><span style="font-weight:600;font-size:15px">cozmic-site</span></div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div class="bar" aria-hidden="true"><div style="width:42.9%;background:#5FBF8F"></div><div style="width:0.0%;background:#6CA6F0"></div><div style="width:57.1%;background:#F2A33A"></div></div>
+              <div style="display:flex;gap:14px;font-size:12px;color:#9A9DA3;flex-wrap:wrap"><span>3 built · 0 in flight · 4 draft</span><span style="margin-left:auto">clean</span></div>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:12px">
+              <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;color:#9A9DA3">Visitors / day <span style="color:#7E8187">(prod)</span></span><span class="mono" style="font-size:20px">846</span></div>
+              <svg width="110" height="34" viewBox="0 0 110 34" style="margin-left:auto;flex:none" aria-hidden="true" focusable="false"><polyline points="0,20 15,24 30,18 45,22 60,16 75,20 90,14 110,12" fill="none" stroke="#6CA6F0" stroke-width="2" stroke-linejoin="round"></polyline></svg>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;font-size:12px;color:#9A9DA3;border-top:1px solid #1F2226;padding-top:12px;flex-wrap:wrap"><span>Last preflight</span><span style="margin-left:auto"></span><span class="mono" style="color:#C9CBCF">4d ago · 1m 48s</span><span class="pill mono" style="padding:1px 7px">diff</span></div>
+          </a>
+      </div>
+    </section>
+    <div class="" style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start">
+      <section class="card" aria-labelledby="shipped" style="flex:2 1 460px;min-width:0;padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px"><h2 id="shipped" style="margin:0;font-size:16px;font-weight:600">Shipped this week</h2><span style="font-size:13px;color:#9A9DA3">newest first · build commits only</span><a href="#" class="oos" title="Out of scope: full timeline (F-2)" style="margin-left:auto;font-size:13px">Full timeline</a></div>
+        <div style="display:flex;flex-direction:column">
+          <a class="ship" href="#">
+            <span class="mono" style="font-size:12px;color:#7E8187;width:72px">Sat 09:12</span>
+            <span class="pill mono" style="border-color:#2D5A44;color:#7CD1A4">RD-4</span>
+            <span style="font-size:14px;flex:1 1 160px;min-width:0">Reskin kept pages</span>
+            <span style="font-size:12px;color:#9A9DA3">story-board</span>
+          </a>
+          <a class="ship" href="#">
+            <span class="mono" style="font-size:12px;color:#7E8187;width:72px">Fri 17:40</span>
+            <span class="pill mono" style="border-color:#2D5A44;color:#7CD1A4">SB-19</span>
+            <span style="font-size:14px;flex:1 1 160px;min-width:0">Columns picker on preflight history</span>
+            <span style="font-size:12px;color:#9A9DA3">story-board</span>
+          </a>
+          <a class="ship" href="#">
+            <span class="mono" style="font-size:12px;color:#7E8187;width:72px">Fri 11:05</span>
+            <span class="pill mono" style="border-color:#2D5A44;color:#7CD1A4">PRF-13</span>
+            <span style="font-size:14px;flex:1 1 160px;min-width:0">Payout schedule</span>
+            <span style="font-size:12px;color:#9A9DA3">coins</span>
+          </a>
+          <a class="ship" href="#">
+            <span class="mono" style="font-size:12px;color:#7E8187;width:72px">Thu 15:22</span>
+            <span class="pill mono" style="border-color:#2D5A44;color:#7CD1A4">RD-3</span>
+            <span style="font-size:14px;flex:1 1 160px;min-width:0">Short story page</span>
+            <span style="font-size:12px;color:#9A9DA3">story-board</span>
+          </a>
+          <a class="ship" href="#">
+            <span class="mono" style="font-size:12px;color:#7E8187;width:72px">Wed 10:48</span>
+            <span class="pill mono" style="border-color:#2D5A44;color:#7CD1A4">LA-12</span>
+            <span style="font-size:14px;flex:1 1 160px;min-width:0">Client login with magic link</span>
+            <span style="font-size:12px;color:#9A9DA3">ledger-app</span>
+          </a>
+        </div>
+      </section>
+      <section class="card oos" title="Out of scope: October spend (Money phase)" aria-labelledby="spend" style="flex:1 1 300px;min-width:0;padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;align-items:center"><h2 id="spend" style="margin:0;font-size:16px;font-weight:600">October spend</h2><span style="margin-left:auto;font-size:13px;color:#F2A33A">Money</span></div>
+        <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span class="mono" style="font-size:30px">$612</span><span style="font-size:13px;color:#9A9DA3">of $1,400 budget</span></div>
+        <div class="bar" style="height:10px;border-radius:5px" aria-hidden="true"><div style="width:20%;background:#F2A33A"></div><div style="width:14%;background:#6CA6F0"></div><div style="width:10%;background:#A98BE0"></div></div>
+      </section>
+    </div>
+    <section aria-labelledby="states" style="display:flex;flex-direction:column;gap:14px;border-top:1px dashed #33373D;padding-top:24px">
+      <div><h2 id="states" style="margin:0;font-size:16px;font-weight:600">States (mockup annotation)</h2><p style="margin:4px 0 0;font-size:13px;color:#9A9DA3">Loading, empty and error for the RD-7 panels. In the grid above: ledger-app shows "no runs yet"; story-board shows no production row (no connection).</p></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:14px">
+        <figure class="card" style="margin:0;padding:0;overflow:hidden;display:flex;flex-direction:column">
+          <figcaption class="lbl" style="padding:10px 16px;border-bottom:1px solid #1F2226;color:#F2A33A">Loading</figcaption>
+          <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px"><h3 style="margin:0;font-size:14px;font-weight:600">Projects</h3><div aria-busy="true" style="display:flex;flex-direction:column;gap:12px"><span class="sk" style="width:80%"></span><span class="sk" style="width:60%"></span><span class="sk" style="width:70%"></span><span class="sr">Loading</span></div></div>
+        </figure>
+        <figure class="card" style="margin:0;padding:0;overflow:hidden;display:flex;flex-direction:column">
+          <figcaption class="lbl" style="padding:10px 16px;border-bottom:1px solid #1F2226;color:#F2A33A">Loading</figcaption>
+          <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px"><h3 style="margin:0;font-size:14px;font-weight:600">Shipped this week</h3><div aria-busy="true" style="display:flex;flex-direction:column;gap:12px"><span class="sk" style="width:80%"></span><span class="sk" style="width:60%"></span><span class="sk" style="width:70%"></span><span class="sr">Loading</span></div></div>
+        </figure>
+        <figure class="card" style="margin:0;padding:0;overflow:hidden;display:flex;flex-direction:column">
+          <figcaption class="lbl" style="padding:10px 16px;border-bottom:1px solid #1F2226;color:#F2A33A">Empty</figcaption>
+          <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px"><h3 style="margin:0;font-size:14px;font-weight:600">Shipped this week</h3><p style="margin:0;font-size:14px;color:#C9CBCF">Nothing shipped in the last 7 days.</p></div>
+        </figure>
+        <figure class="card" style="margin:0;padding:0;overflow:hidden;display:flex;flex-direction:column">
+          <figcaption class="lbl" style="padding:10px 16px;border-bottom:1px solid #1F2226;color:#F2A33A">Error</figcaption>
+          <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px"><h3 style="margin:0;font-size:14px;font-weight:600">Shipped this week</h3><p role="alert" style="margin:0;font-size:14px;color:#F59088">Could not read git history for coins. Other projects are listed.</p><button class="btn" style="align-self:flex-start">Try again</button></div>
+        </figure>
+        <figure class="card" style="margin:0;padding:0;overflow:hidden;display:flex;flex-direction:column">
+          <figcaption class="lbl" style="padding:10px 16px;border-bottom:1px solid #1F2226;color:#F2A33A">Error (one field)</figcaption>
+          <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px"><h3 style="margin:0;font-size:14px;font-weight:600">Projects tile</h3><p role="alert" style="margin:0;font-size:14px;color:#F59088">Off-main could not be read for ledger-app.</p><span style="font-size:13px;color:#9A9DA3">The tile still shows counts and last preflight.</span></div>
+        </figure>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>
