@@ -19,9 +19,10 @@ use Livewire\Component;
  * the shared-screen hover are Alpine over the page's own markup, so this
  * component has no actions and never re-renders in a normal visit. The route's
  * EnsureProjectIsShown has already refused an unknown or disabled project
- * before this mounts (ADR-013).
+ * before this mounts (ADR-013). In the RD-2 dark shell since RD-4, as is: the
+ * map's own redesign comes later.
  */
-#[Layout('layouts.board')]
+#[Layout('layouts.shell')]
 class ProjectAppMap extends Component
 {
     use GuardsProjectPage;

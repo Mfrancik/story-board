@@ -1,12 +1,13 @@
-{{-- The page tabs under a project's header (SB-14, design A): Dashboard (SB-10) | Handbook | Stories (SB-15) | Preflight (SB-16) | App map (SB-24). Real links,
-     one URL each, so a tab can be opened in a new window and Back works as expected. Five tabs outgrow a 375px phone, so
-     the row scrolls sideways; pb-px keeps the active tab's -mb-px underline inside the scroll box instead of adding a 1px vertical scroll.
-     RD-2: inside the dark shell the tones come from the shell tokens (`shell:`). --}}
+{{-- The page tabs under a project's header (SB-14, design A; RD-4 order): Stories (SB-15) | Preflight (SB-16) | Handbook |
+     Map (SB-24). Real links, one URL each, so a tab can be opened in a new window and Back works as expected. The row
+     scrolls sideways if it ever outgrows a phone; pb-px keeps the active tab's -mb-px underline inside the scroll box
+     instead of adding a 1px vertical scroll. RD-4 dropped the Dashboard tab: the old dashboard is going (RD-9), and until
+     then it still shows these tabs with none marked. Inside the dark shell the tones come from the shell tokens
+     (`shell:`); the light/dark ones serve that old dashboard, which is still on layouts/board. --}}
 @props(['project', 'current'])
 @php
-    $tabs = ['dashboard' => ['Dashboard', route('projects.show', $project)], 'handbook' => ['Handbook', route('projects.handbook', $project)],
-        'stories' => ['Stories', route('projects.stories', $project)], 'preflight' => ['Preflight', route('projects.preflight', $project)],
-        'map' => ['App map', route('projects.map', $project)]];
+    $tabs = ['stories' => ['Stories', route('projects.stories', $project)], 'preflight' => ['Preflight', route('projects.preflight', $project)],
+        'handbook' => ['Handbook', route('projects.handbook', $project)], 'map' => ['Map', route('projects.map', $project)]];
 @endphp
 <nav aria-label="Project pages" data-project-tabs {{ $attributes->class('mt-5 flex gap-4 sm:gap-6 overflow-x-auto pb-px border-b border-zinc-200 text-sm dark:border-zinc-800 shell:border-hairline') }}>
     @foreach ($tabs as $key => [$label, $url])

@@ -1,12 +1,13 @@
 {{-- How a project's file compares with the dev-standards kit (SB-14): same blob, changed, missing from the
-     project, or the project's own. `dot` renders only the coloured dot, for a sub-tab. --}}
+     project, or the project's own. `dot` renders only the coloured dot, for a sub-tab.
+     RD-4: only the dark shell uses it, so it carries the shell tokens alone (layout unchanged). --}}
 @props(['badge', 'dot' => false])
 @php
     [$label, $chip, $tone] = match ($badge) {
-        \App\Actions\Board\ReadHandbook::SAME => ['Same as kit', 'bg-built/10 text-zinc-800 ring-built/40 dark:text-zinc-100', 'bg-built'],
-        \App\Actions\Board\ReadHandbook::CHANGED => ['Changed in this project', 'bg-warning/10 text-zinc-800 ring-warning/40 dark:text-zinc-100', 'bg-warning'],
+        \App\Actions\Board\ReadHandbook::SAME => ['Same as kit', 'bg-built/10 ring-built/40 text-ink', 'bg-built'],
+        \App\Actions\Board\ReadHandbook::CHANGED => ['Changed in this project', 'bg-warning/10 ring-warning/40 text-ink', 'bg-warning'],
         \App\Actions\Board\ReadHandbook::MISSING => ['Missing', 'bg-danger/10 text-danger ring-danger/40', 'bg-danger'],
-        default => ['Project only', 'bg-zinc-400/10 text-zinc-600 ring-zinc-400/40 dark:text-zinc-300', 'bg-zinc-400'],
+        default => ['Project only', 'bg-raised ring-rim text-ink-soft', 'bg-ink-faint'],
     };
 @endphp
 @if ($dot)

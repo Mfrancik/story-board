@@ -9,7 +9,8 @@ use Tests\Support\GitFixture;
  * SB-15 in a real browser: the Stories tab, the first initiative (most open work) shown on arrival,
  * choosing another with no request to the server, the status filter chips hiding rows and emptied
  * initiatives while the counts stay whole, Expand all / Collapse all with a jump to a group, a row
- * opening the SB-8 modal, and the phone layout's select with no sideways scroll.
+ * opening its RD-3 story page (RD-4; it opened the SB-8 modal before), and the phone layout's select with no
+ * sideways scroll.
  */
 beforeEach(function () {
     Queue::fake();
@@ -95,15 +96,13 @@ it('lists every initiative grouped on Expand all, jumps to a group chosen on the
         ->assertNoJavaScriptErrors();
 });
 
-it('opens a clicked story row in the SB-8 modal', function () {
+it('opens a clicked story row on its story page (RD-4: the SB-8 modal is gone from this page)', function () {
     $page = visit('/p/coins/stories')->resize(1280, 900);
 
     $page->click('[data-initiative-entry="branding"]')
         ->click('[data-story-link="coins/BR-3"]')
-        ->assertVisible('[data-story-open="coins/BR-3"]')
-        ->assertSeeIn('#story-modal-title', 'Story BR-3')
-        ->assertQueryStringHas('story', 'coins/BR-3')
-        ->keys('[role="dialog"]', 'Escape')
+        ->assertPathIs('/p/coins/s/BR-3')
+        ->assertSee('Story BR-3')
         ->assertMissing('[role="dialog"]')
         ->assertNoJavaScriptErrors();
 });

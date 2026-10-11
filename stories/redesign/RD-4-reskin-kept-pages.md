@@ -1,5 +1,5 @@
 # RD-4 — Re-skin the kept pages
-Status: approved         Journey: none
+Status: built            Journey: none
 Source: owner 2026-10-10: *"i do want the rules, lessons, standards, run book decisions and skill ssection in the
 handbook section. i do like how we have stories currently also on the current version, wec an keep that, preflight
 as well, this layout is good"*; *"we can keep what we built for mockups too"*; on /projects: "Re-skin it for now".

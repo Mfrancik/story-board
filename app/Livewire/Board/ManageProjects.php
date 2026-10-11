@@ -20,8 +20,9 @@ use Livewire\Component;
  * inline Add project form. Writes go through the SwitchProject, AddProject and
  * RemoveProject actions; the remove confirmation itself is Alpine (pure UI).
  * Each row also opens its Production panel (SB-17), a lazy ProductionSettings.
+ * In the RD-2 dark shell since RD-4.
  */
-#[Layout('layouts.board')]
+#[Layout('layouts.shell')]
 #[Title('Manage projects')]
 class ManageProjects extends Component
 {

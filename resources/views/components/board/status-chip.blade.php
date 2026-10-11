@@ -2,7 +2,9 @@
      With `count` it labels a tally instead ("draft 11"), as on the SB-9 project tile.
      `variant="tag"` (SB-15 Stories page) words the kit's statuses for reading — Built, To do, Draft,
      Cancelled — gives `cancelled` a muted outline, and shows any other value grey with its raw text
-     ("no status" for none). Only that page asks for it, so the danger tone everywhere else is unchanged. --}}
+     ("no status" for none). Only that page asks for it, so the danger tone everywhere else is unchanged.
+     RD-4: inside the dark shell the neutral tones come from the shell tokens (`shell:`); the light/dark ones serve the
+     pages still on layouts/board (old Home and dashboard) until RD-9. --}}
 @props(['status', 'errors' => 0, 'count' => null, 'variant' => null])
 @php
     // Unpassed, `errors` resolves to Laravel's shared ViewErrorBag, not the default 0.
@@ -10,13 +12,13 @@
     $tag = $variant === 'tag';
     $kind = \App\Actions\Board\ReadProjectStories::kind($status);
     $tone = match (true) {
-        $status === 'draft' => 'bg-draft/15 text-zinc-800 ring-draft/40 dark:text-zinc-100',
-        $status === 'approved' => 'bg-approved/15 text-zinc-800 ring-approved/40 dark:text-zinc-100',
-        $status === 'built' => 'bg-built/15 text-zinc-800 ring-built/40 dark:text-zinc-100',
-        $tag && $status === 'cancelled' => 'bg-transparent text-zinc-500 ring-zinc-300 dark:text-zinc-400 dark:ring-zinc-700',
-        $status === 'cancelled' => 'bg-cancelled/15 text-zinc-700 ring-cancelled/40 dark:text-zinc-300',
+        $status === 'draft' => 'bg-draft/15 text-zinc-800 ring-draft/40 dark:text-zinc-100 shell:text-ink',
+        $status === 'approved' => 'bg-approved/15 text-zinc-800 ring-approved/40 dark:text-zinc-100 shell:text-ink',
+        $status === 'built' => 'bg-built/15 text-zinc-800 ring-built/40 dark:text-zinc-100 shell:text-ink',
+        $tag && $status === 'cancelled' => 'bg-transparent text-zinc-500 ring-zinc-300 dark:text-zinc-400 dark:ring-zinc-700 shell:text-ink-muted shell:ring-rim',
+        $status === 'cancelled' => 'bg-cancelled/15 text-zinc-700 ring-cancelled/40 dark:text-zinc-300 shell:text-ink-soft',
         // A project's own word is not an error on the Stories page: grey, raw, never guessed at.
-        $tag => 'bg-zinc-100 font-mono text-zinc-600 ring-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700',
+        $tag => 'bg-zinc-100 font-mono text-zinc-600 ring-zinc-300 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-700 shell:bg-raised shell:text-ink-soft shell:ring-rim',
         default => 'bg-danger/10 text-danger ring-danger/40',
     };
     $text = match (true) {

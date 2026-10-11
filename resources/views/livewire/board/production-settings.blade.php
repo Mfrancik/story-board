@@ -1,21 +1,22 @@
 {{-- SB-17 Production panel, mockup option A (docs/mockups/SB-17/option-a.html): opens in place under a project's
      row on /projects. Connection form + inline result, the paste-ready read-only user, then the metrics. Test results
-     are inline status, never a toast. Remove connection confirms through board/confirm-modal (Alpine `removing`). --}}
+     are inline status, never a toast. Remove connection confirms through board/confirm-modal (Alpine `removing`).
+     RD-4: in the RD-2 dark shell (layouts/shell), restyled with its tokens; layout and behaviour unchanged. --}}
 @php
     $pid = $project->id;
-    $input = 'mt-1 w-full min-w-0 rounded-lg border bg-white px-3 py-2 text-sm dark:bg-zinc-950';
-    $small = 'mt-1 w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-2 py-1.5 font-mono text-sm dark:border-zinc-700 dark:bg-zinc-950';
-    $border = fn (string $field) => $errors->has($field) ? 'border-danger' : 'border-zinc-300 dark:border-zinc-700';
-    $outline = 'rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-700 dark:hover:bg-zinc-800';
-    $primary = 'rounded-lg bg-zinc-800 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-60 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200';
-    $mini = 'rounded-md border border-zinc-300 px-2.5 py-1 text-xs font-medium hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-700 dark:hover:bg-zinc-800';
+    $input = 'mt-1 w-full min-w-0 rounded-lg border px-3 py-2 text-sm bg-ground';
+    $small = 'mt-1 w-full min-w-0 rounded-lg border px-2 py-1.5 font-mono text-sm border-rim bg-ground';
+    $border = fn (string $field) => $errors->has($field) ? 'border-danger' : 'border-rim';
+    $outline = 'rounded-lg border px-4 py-2 text-sm font-medium disabled:opacity-60 border-rim hover:bg-raised';
+    $primary = 'rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-60 bg-needs text-needs-ink hover:brightness-110';
+    $mini = 'rounded-md border px-2.5 py-1 text-xs font-medium disabled:opacity-60 border-rim hover:bg-raised';
     $connected = $connection !== null;
     $tables = array_keys($schema ?? []);
 @endphp
 <div class="px-4 py-5 sm:px-5" x-data="{ removing: null, copied: false }" data-prod-panel="{{ $project->name }}"
     @if ($connected && $schema === null && $schemaError === null) wire:init="loadSchema" @endif>
     <div class="flex flex-wrap items-center justify-between gap-2">
-        <h2 class="font-medium">{{ $project->name }} · Production <span class="font-normal text-zinc-500 dark:text-zinc-400">— read-only</span></h2>
+        <h2 class="font-medium">{{ $project->name }} · Production <span class="font-normal text-ink-muted">— read-only</span></h2>
         @if ($connected)
             <button type="button" data-prod-remove x-on:click="removing = true"
                 class="rounded-lg px-3 py-1.5 text-sm font-medium text-danger hover:bg-danger/10">Remove connection</button>
@@ -23,11 +24,11 @@
     </div>
 
     <div class="mt-4 grid gap-5 lg:grid-cols-5">
-        <section aria-labelledby="prod-{{ $pid }}-conn" class="space-y-4 rounded-xl border border-zinc-200 bg-white p-4 sm:p-5 lg:col-span-3 dark:border-zinc-800 dark:bg-zinc-900">
+        <section aria-labelledby="prod-{{ $pid }}-conn" class="space-y-4 rounded-xl border p-4 sm:p-5 lg:col-span-3 border-edge bg-surface">
             <div class="flex flex-wrap items-baseline justify-between gap-2">
                 <h3 id="prod-{{ $pid }}-conn" class="text-sm font-semibold">Connection</h3>
                 @if ($connection?->verified_at)
-                    <span class="text-xs text-zinc-500 dark:text-zinc-400">Last verified {{ $connection->verified_at->diffForHumans() }}</span>
+                    <span class="text-xs text-ink-muted">Last verified {{ $connection->verified_at->diffForHumans() }}</span>
                 @endif
             </div>
 
@@ -61,7 +62,7 @@
                     <input id="prod-{{ $pid }}-pass" type="password" wire:model="password" autocomplete="new-password"
                         placeholder="{{ $connected ? 'saved — leave blank to keep' : '' }}"
                         @error('password') aria-invalid="true" @enderror aria-describedby="prod-{{ $pid }}-pass-hint prod-{{ $pid }}-pass-err" class="{{ $input }} {{ $border('password') }}">
-                    <p id="prod-{{ $pid }}-pass-hint" class="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+                    <p id="prod-{{ $pid }}-pass-hint" class="mt-1.5 text-xs text-ink-muted">
                         {{ $connected ? 'Stored encrypted. It is never shown again, only replaced.' : 'Stored encrypted in the board database.' }}
                     </p>
                     <flux:error name="password" id="prod-{{ $pid }}-pass-err" class="mt-1.5" />
@@ -69,7 +70,7 @@
                 <div class="flex items-start gap-3 sm:col-span-2 sm:pt-7">
                     {{-- The switch only edits the form; nothing is stored until Save, so it is plain wire:model state. --}}
                     <x-board.switch :on="$useSsl" label="Use SSL" wire:click="$toggle('useSsl')" data-prod-ssl />
-                    <div class="text-sm leading-6"><span class="font-medium">SSL</span> <span class="text-zinc-500 dark:text-zinc-400">{{ $useSsl ? 'on' : 'off' }}</span></div>
+                    <div class="text-sm leading-6"><span class="font-medium">SSL</span> <span class="text-ink-muted">{{ $useSsl ? 'on' : 'off' }}</span></div>
                 </div>
             </div>
 
@@ -82,12 +83,12 @@
                     <span wire:loading.remove wire:target="save">Save connection</span>
                     <span wire:loading wire:target="save">Checking…</span>
                 </button>
-                <p class="basis-full text-xs text-zinc-500 dark:text-zinc-400">Saving runs the same check. A user that can write is refused and nothing is stored.</p>
+                <p class="basis-full text-xs text-ink-muted">Saving runs the same check. A user that can write is refused and nothing is stored.</p>
             </div>
 
             <div role="status" aria-live="polite" data-prod-result="{{ $check['status'] ?? '' }}">
                 <div wire:loading.flex wire:target="testConnection,save"
-                    class="items-center gap-2 rounded-lg border border-zinc-200 px-3 py-3 text-sm text-zinc-600 dark:border-zinc-800 dark:text-zinc-300">
+                    class="items-center gap-2 rounded-lg border px-3 py-3 text-sm border-edge text-ink-soft">
                     <svg class="size-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity=".25" stroke-width="3"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3"/></svg>
                     Connecting… (gives up after {{ \App\Services\ProductionReader::TIMEOUT_SECONDS }} s)
                 </div>
@@ -108,7 +109,7 @@
                         @else
                             <p @class(['font-medium', 'text-danger' => $check['status'] !== 'unreachable'])>{{ $check['message'] }}</p>
                         @endif
-                        <ul class="mt-2 space-y-1.5 text-zinc-700 dark:text-zinc-300">
+                        <ul class="mt-2 space-y-1.5 text-ink-soft">
                             @if ($check['status'] === 'unreachable')
                                 <li class="flex gap-2">{!! $cross !!}<span>Not reachable, so grants and version were not checked</span></li>
                             @elseif ($check['grants'] === [])
@@ -122,16 +123,16 @@
                                         Grants <span class="font-medium">SELECT only</span>
                                     @endif
                                     @foreach ($check['grants'] as $grant)
-                                        <span class="block font-mono text-xs break-all text-zinc-500 dark:text-zinc-400">{{ $grant }}</span>
+                                        <span class="block font-mono text-xs break-all text-ink-muted">{{ $grant }}</span>
                                     @endforeach
                                 </span></li>
-                                <li class="flex gap-2">{!! $check['privilege'] ? '<span class="mt-0.5 grid size-4 shrink-0 place-items-center text-zinc-400" aria-hidden="true">–</span>' : $tick !!}<span>MySQL {{ $check['version'] }} · <span class="tabular-nums">{{ $check['ms'] }} ms</span></span></li>
+                                <li class="flex gap-2">{!! $check['privilege'] ? '<span class="mt-0.5 grid size-4 shrink-0 place-items-center text-ink-faint" aria-hidden="true">–</span>' : $tick !!}<span>MySQL {{ $check['version'] }} · <span class="tabular-nums">{{ $check['ms'] }} ms</span></span></li>
                             @endif
                         </ul>
                         @if ($check['status'] === 'unreachable')
-                            <p class="mt-2 text-zinc-600 dark:text-zinc-400">Check the host and port, and that the database server accepts connections from this machine.@if ($saved) Nothing was saved.@endif</p>
+                            <p class="mt-2 text-ink-muted">Check the host and port, and that the database server accepts connections from this machine.@if ($saved) Nothing was saved.@endif</p>
                         @elseif ($check['status'] !== 'ok')
-                            <p class="mt-2 text-zinc-600 dark:text-zinc-400">{{ $saved ? 'Nothing was saved.' : 'Saving would be refused.' }}</p>
+                            <p class="mt-2 text-ink-muted">{{ $saved ? 'Nothing was saved.' : 'Saving would be refused.' }}</p>
                         @endif
                     </div>
                 @endif
@@ -139,33 +140,33 @@
         </section>
 
         <aside class="space-y-3 lg:col-span-2">
-            <div class="rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/60">
+            <div class="rounded-lg border p-3 border-edge bg-ground/60">
                 <div class="flex items-start justify-between gap-3">
-                    <p class="text-sm"><span class="font-medium">Create the read-only user</span><span class="block text-xs text-zinc-500 dark:text-zinc-400">Run once as an admin on the production server, with your own password in place of …</span></p>
+                    <p class="text-sm"><span class="font-medium">Create the read-only user</span><span class="block text-xs text-ink-muted">Run once as an admin on the production server, with your own password in place of …</span></p>
                     <button type="button" x-on:click="navigator.clipboard?.writeText($refs.oneLiner.textContent); copied = true; setTimeout(() => copied = false, 1800)"
                         class="{{ $mini }} shrink-0" :aria-label="copied ? 'Copied' : 'Copy SQL'"><span x-text="copied ? 'Copied' : 'Copy'">Copy</span></button>
                 </div>
-                <pre class="mt-2 font-mono text-xs leading-5 break-all whitespace-pre-wrap text-zinc-800 dark:text-zinc-200"><code x-ref="oneLiner">{{ $oneLiner }}</code></pre>
-                <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Swap <span class="font-mono">'%'</span> for this machine's address if you can. The board refuses any user that can do more than SELECT.</p>
+                <pre class="mt-2 font-mono text-xs leading-5 break-all whitespace-pre-wrap text-ink-soft"><code x-ref="oneLiner">{{ $oneLiner }}</code></pre>
+                <p class="mt-2 text-xs text-ink-muted">Swap <span class="font-mono">'%'</span> for this machine's address if you can. The board refuses any user that can do more than SELECT.</p>
             </div>
-            <div class="space-y-1.5 rounded-lg border border-zinc-200 p-3 text-xs text-zinc-600 dark:border-zinc-800 dark:text-zinc-400">
-                <p class="text-sm font-medium text-zinc-800 dark:text-zinc-200">How the board keeps it read-only</p>
+            <div class="space-y-1.5 rounded-lg border p-3 text-xs border-edge text-ink-muted">
+                <p class="text-sm font-medium text-ink-soft">How the board keeps it read-only</p>
                 <p>Every save and every read runs <span class="font-mono">SHOW GRANTS</span>. Anything beyond SELECT is refused.</p>
                 <p>Each query runs in a read-only session with a {{ \App\Services\ProductionReader::TIMEOUT_SECONDS }} s limit.</p>
             </div>
         </aside>
     </div>
 
-    <section aria-labelledby="prod-{{ $pid }}-metrics" class="mt-5 space-y-4 rounded-xl border border-zinc-200 bg-white p-4 sm:p-5 dark:border-zinc-800 dark:bg-zinc-900">
+    <section aria-labelledby="prod-{{ $pid }}-metrics" class="mt-5 space-y-4 rounded-xl border p-4 sm:p-5 border-edge bg-surface">
         <h3 id="prod-{{ $pid }}-metrics" class="text-sm font-semibold">Metrics</h3>
 
         @if (! $connected)
-            <div class="rounded-lg border border-dashed border-zinc-300 px-4 py-6 text-center dark:border-zinc-700">
+            <div class="rounded-lg border border-dashed px-4 py-6 text-center border-rim">
                 <p class="text-sm font-medium">Metrics come after the connection</p>
-                <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Save a connection that passes the read-only check. Its tables and columns then load here for the pickers.</p>
+                <p class="mt-1 text-sm text-ink-muted">Save a connection that passes the read-only check. Its tables and columns then load here for the pickers.</p>
             </div>
         @else
-            <p class="text-xs text-zinc-500 dark:text-zinc-400">
+            <p class="text-xs text-ink-muted">
                 "Today" is since 00:00 in the board's timezone (<span class="font-mono">{{ $today['timezone'] }}</span>), sent to production as UTC:
                 <span class="font-mono">{{ $today['since'] }}</span>.
                 @if ($schemaError)
@@ -177,8 +178,8 @@
             <datalist id="prod-{{ $pid }}-tables">@foreach ($tables as $t)<option value="{{ $t }}"></option>@endforeach</datalist>
 
             <div>
-                <h4 class="mb-2 text-xs font-semibold tracking-wider text-zinc-400 uppercase">Presets</h4>
-                <ul class="divide-y divide-zinc-100 rounded-lg border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+                <h4 class="mb-2 text-xs font-semibold tracking-wider text-ink-faint uppercase">Presets</h4>
+                <ul class="divide-y rounded-lg border divide-hairline border-edge">
                     @foreach (\App\Models\ProdMetric::PRESETS as $key => $preset)
                         @php
                             $form = $presets[$key];
@@ -190,7 +191,7 @@
                                 <x-board.switch :on="$form['enabled']" label="Use {{ $preset['label'] }}" wire:click="$toggle('presets.{{ $key }}.enabled')" />
                                 <div class="min-w-0 flex-1">
                                     <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                                        <p class="text-sm"><span class="font-medium">{{ $preset['label'] }}</span> <span class="text-zinc-500 dark:text-zinc-400">— {{ $preset['hint'] }}</span></p>
+                                        <p class="text-sm"><span class="font-medium">{{ $preset['label'] }}</span> <span class="text-ink-muted">— {{ $preset['hint'] }}</span></p>
                                         @if ($form['enabled'])
                                             <div class="flex items-center gap-2">
                                                 <x-board.metric-result :result="$result" target="testPreset('{{ $key }}')" />
@@ -202,27 +203,27 @@
                                         <div class="mt-3 space-y-2">
                                             <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
                                                 <div>
-                                                    <label for="prod-{{ $pid }}-{{ $key }}-t" class="block text-xs font-medium text-zinc-600 dark:text-zinc-400">Table</label>
+                                                    <label for="prod-{{ $pid }}-{{ $key }}-t" class="block text-xs font-medium text-ink-muted">Table</label>
                                                     <input id="prod-{{ $pid }}-{{ $key }}-t" type="text" list="prod-{{ $pid }}-tables" wire:model.blur="presets.{{ $key }}.table" autocomplete="off" spellcheck="false" class="{{ $small }}">
                                                     <flux:error name="presets.{{ $key }}.table" class="mt-1" />
                                                 </div>
                                                 @if (in_array('column', $preset['fields'], true))
                                                     <div>
-                                                        <label for="prod-{{ $pid }}-{{ $key }}-c" class="block text-xs font-medium text-zinc-600 dark:text-zinc-400">Timestamp column</label>
+                                                        <label for="prod-{{ $pid }}-{{ $key }}-c" class="block text-xs font-medium text-ink-muted">Timestamp column</label>
                                                         <input id="prod-{{ $pid }}-{{ $key }}-c" type="text" list="prod-{{ $pid }}-{{ $key }}-cols" wire:model.blur="presets.{{ $key }}.column" autocomplete="off" spellcheck="false" class="{{ $small }}">
                                                         <datalist id="prod-{{ $pid }}-{{ $key }}-cols">@foreach ($cols['timestamps'] ?? [] as $c)<option value="{{ $c }}"></option>@endforeach</datalist>
                                                     </div>
                                                 @endif
                                                 @if (in_array('distinct', $preset['fields'], true))
                                                     <div>
-                                                        <label for="prod-{{ $pid }}-{{ $key }}-d" class="block text-xs font-medium text-zinc-600 dark:text-zinc-400">Count distinct <span class="font-normal">(blank: every row)</span></label>
+                                                        <label for="prod-{{ $pid }}-{{ $key }}-d" class="block text-xs font-medium text-ink-muted">Count distinct <span class="font-normal">(blank: every row)</span></label>
                                                         <input id="prod-{{ $pid }}-{{ $key }}-d" type="text" list="prod-{{ $pid }}-{{ $key }}-ids" wire:model.blur="presets.{{ $key }}.distinct" autocomplete="off" spellcheck="false" class="{{ $small }}">
                                                         <datalist id="prod-{{ $pid }}-{{ $key }}-ids">@foreach ($cols['columns'] ?? [] as $c)<option value="{{ $c }}"></option>@endforeach</datalist>
                                                     </div>
                                                 @endif
                                             </div>
-                                            <details class="text-xs"><summary class="cursor-pointer text-zinc-500 dark:text-zinc-400">Show SQL</summary>
-                                                <pre class="mt-1 font-mono break-all whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">{{ $presetSql[$key] ?? '— pick a table and column first —' }}</pre></details>
+                                            <details class="text-xs"><summary class="cursor-pointer text-ink-muted">Show SQL</summary>
+                                                <pre class="mt-1 font-mono break-all whitespace-pre-wrap text-ink-soft">{{ $presetSql[$key] ?? '— pick a table and column first —' }}</pre></details>
                                         </div>
                                     @endif
                                 </div>
@@ -233,9 +234,9 @@
             </div>
 
             <div>
-                <h4 class="mb-2 text-xs font-semibold tracking-wider text-zinc-400 uppercase">Custom SQL</h4>
+                <h4 class="mb-2 text-xs font-semibold tracking-wider text-ink-faint uppercase">Custom SQL</h4>
                 @if ($customs === [])
-                    <p class="text-sm text-zinc-500 dark:text-zinc-400">No custom metrics. Add one for any number a single SELECT can count.</p>
+                    <p class="text-sm text-ink-muted">No custom metrics. Add one for any number a single SELECT can count.</p>
                 @endif
                 <ul class="space-y-3">
                     @foreach ($customs as $i => $custom)
@@ -243,21 +244,21 @@
                         <li wire:key="custom-{{ $custom['key'] }}" data-custom="{{ $custom['key'] }}" @class([
                             'rounded-lg border p-3',
                             'border-danger/40' => ($result['status'] ?? null) === 'refused' || $errors->has("customs.{$i}.sql"),
-                            'border-zinc-200 dark:border-zinc-800' => ! (($result['status'] ?? null) === 'refused' || $errors->has("customs.{$i}.sql")),
+                            'border-edge' => ! (($result['status'] ?? null) === 'refused' || $errors->has("customs.{$i}.sql")),
                         ])>
                             <div class="grid grid-cols-1 gap-3">
                                 <div class="flex items-end gap-2">
                                     <div class="min-w-0 flex-1">
-                                        <label for="prod-{{ $pid }}-n-{{ $custom['key'] }}" class="block text-xs font-medium text-zinc-600 dark:text-zinc-400">Name</label>
+                                        <label for="prod-{{ $pid }}-n-{{ $custom['key'] }}" class="block text-xs font-medium text-ink-muted">Name</label>
                                         <input id="prod-{{ $pid }}-n-{{ $custom['key'] }}" type="text" wire:model.blur="customs.{{ $i }}.label" placeholder="Paid subscribers" class="{{ $input }} {{ $border("customs.{$i}.label") }}">
                                     </div>
-                                    <button type="button" wire:click="dropCustom({{ $i }})" class="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800" aria-label="Delete metric {{ $custom['label'] ?: 'untitled' }}">
+                                    <button type="button" wire:click="dropCustom({{ $i }})" class="rounded-lg p-2 text-ink-muted hover:bg-raised" aria-label="Delete metric {{ $custom['label'] ?: 'untitled' }}">
                                         <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>
                                     </button>
                                 </div>
                                 <flux:error name="customs.{{ $i }}.label" />
                                 <div>
-                                    <label for="prod-{{ $pid }}-q-{{ $custom['key'] }}" class="block text-xs font-medium text-zinc-600 dark:text-zinc-400">SQL — one SELECT that returns one number</label>
+                                    <label for="prod-{{ $pid }}-q-{{ $custom['key'] }}" class="block text-xs font-medium text-ink-muted">SQL — one SELECT that returns one number</label>
                                     <textarea id="prod-{{ $pid }}-q-{{ $custom['key'] }}" wire:model.blur="customs.{{ $i }}.sql" rows="3" spellcheck="false"
                                         @if (($result['status'] ?? null) === 'refused' || $errors->has("customs.{$i}.sql")) aria-invalid="true" @endif
                                         class="{{ $input }} {{ $border("customs.{$i}.sql") }} font-mono text-xs leading-5"></textarea>

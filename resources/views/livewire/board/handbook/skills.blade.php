@@ -13,7 +13,7 @@
             @php($rows = array_values(array_filter($skills, fn ($s) => $from === 'all' || $s['from'] === $from)))
             @continue($rows === [])
             <div data-skill-group="{{ $from }}">
-                <h2 class="text-sm font-semibold tracking-wider text-zinc-500 uppercase dark:text-zinc-400">
+                <h2 class="text-sm font-semibold tracking-wider uppercase text-ink-muted">
                     {{ $title }} <span class="font-normal tabular-nums">· {{ count($rows) }}</span>
                 </h2>
                 <ul class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -22,7 +22,7 @@
                             @class([
                                 'flex flex-wrap items-center justify-between gap-2 rounded-lg border p-4',
                                 'border-dashed border-danger/40' => $skill['badge'] === \App\Actions\Board\ReadHandbook::MISSING,
-                                'border-zinc-200 dark:border-zinc-800' => $skill['badge'] !== \App\Actions\Board\ReadHandbook::MISSING,
+                                'border-edge' => $skill['badge'] !== \App\Actions\Board\ReadHandbook::MISSING,
                             ])>
                             <span class="font-mono text-sm font-medium">{{ $skill['name'] }}</span>
                             @if ($skill['badge'])

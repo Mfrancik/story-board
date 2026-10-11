@@ -16,40 +16,40 @@
             date(n) { return (n.match(/^\d{4}-\d{2}-\d{2}/) ?? [''])[0] },
             title(n) { const t = n.replace(/\.md$/, '').replace(/^\d{4}-\d{2}-\d{2}-/, '').replaceAll('-', ' '); return t.charAt(0).toUpperCase() + t.slice(1) },
         }">
-        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 px-5 py-3 dark:border-zinc-800">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-3 border-edge">
             <label class="relative w-full sm:w-96">
                 <span class="sr-only">Filter decisions by file name</span>
-                <svg class="absolute top-2.5 left-2.5 size-4 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+                <svg class="absolute top-2.5 left-2.5 size-4 text-ink-faint" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
                 <input type="search" data-decision-filter x-model="q" x-on:input="page = 1" placeholder="Filter by file name"
-                    class="w-full rounded-lg border border-zinc-300 bg-white py-2 pr-3 pl-8 text-sm focus:ring-2 focus:ring-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950">
+                    class="w-full rounded-lg border py-2 pr-3 pl-8 text-sm focus:ring-2 focus:ring-needs focus:outline-none border-rim bg-ground">
             </label>
-            <p class="text-xs text-zinc-500 tabular-nums dark:text-zinc-400">
+            <p class="text-xs tabular-nums text-ink-muted">
                 <span data-decision-count x-text="matches.length ? ((page - 1) * per + 1) + '–' + Math.min(page * per, matches.length) + ' of ' + matches.length.toLocaleString() : 'None'"></span>
                 of {{ number_format(count($names)) }} files
             </p>
         </div>
-        <ul class="divide-y divide-zinc-100 dark:divide-zinc-800">
+        <ul class="divide-y divide-hairline">
             <template x-for="n in rows" :key="n">
                 <li>
                     <button type="button" data-decision-row x-bind:data-decision-row="n" x-on:click="$dispatch('handbook-decision', n)"
-                        class="grid w-full gap-x-3 gap-y-0.5 px-5 py-2.5 text-left hover:bg-zinc-50 sm:grid-cols-[6.5rem_1fr] dark:hover:bg-zinc-800/60">
-                        <span class="pt-0.5 text-xs text-zinc-500 tabular-nums dark:text-zinc-400" x-text="date(n)"></span>
+                        class="grid w-full gap-x-3 gap-y-0.5 px-5 py-2.5 text-left sm:grid-cols-[6.5rem_1fr] hover:bg-raised">
+                        <span class="pt-0.5 text-xs tabular-nums text-ink-muted" x-text="date(n)"></span>
                         <span class="min-w-0">
                             <span class="block text-sm font-medium" x-text="title(n)"></span>
-                            <span class="block truncate font-mono text-xs text-zinc-400" x-text="n"></span>
+                            <span class="block truncate font-mono text-xs text-ink-faint" x-text="n"></span>
                         </span>
                     </button>
                 </li>
             </template>
         </ul>
-        <div x-show="! matches.length" x-cloak class="px-5 py-10 text-center text-sm text-zinc-500 dark:text-zinc-400">
+        <div x-show="! matches.length" x-cloak class="px-5 py-10 text-center text-sm text-ink-muted">
             No decision file names contain “<span x-text="q"></span>”.
-            <button type="button" x-on:click="q = ''" class="font-medium text-zinc-800 hover:underline dark:text-white">Clear the filter</button>
+            <button type="button" x-on:click="q = ''" class="font-medium hover:underline text-ink">Clear the filter</button>
         </div>
-        <div x-show="matches.length" class="flex items-center justify-between border-t border-zinc-200 px-5 py-3 text-sm dark:border-zinc-800">
-            <button type="button" data-decisions-prev x-on:click="page--" x-bind:disabled="page === 1" class="rounded-md px-3 py-1.5 font-medium hover:bg-zinc-100 disabled:opacity-40 dark:hover:bg-zinc-800">← Previous</button>
-            <span class="text-xs text-zinc-500 tabular-nums dark:text-zinc-400" x-text="'Page ' + page + ' of ' + pages"></span>
-            <button type="button" data-decisions-next x-on:click="page++" x-bind:disabled="page >= pages" class="rounded-md px-3 py-1.5 font-medium hover:bg-zinc-100 disabled:opacity-40 dark:hover:bg-zinc-800">Next →</button>
+        <div x-show="matches.length" class="flex items-center justify-between border-t px-5 py-3 text-sm border-edge">
+            <button type="button" data-decisions-prev x-on:click="page--" x-bind:disabled="page === 1" class="rounded-md px-3 py-1.5 font-medium disabled:opacity-40 hover:bg-raised">← Previous</button>
+            <span class="text-xs tabular-nums text-ink-muted" x-text="'Page ' + page + ' of ' + pages"></span>
+            <button type="button" data-decisions-next x-on:click="page++" x-bind:disabled="page >= pages" class="rounded-md px-3 py-1.5 font-medium disabled:opacity-40 hover:bg-raised">Next →</button>
         </div>
     </div>
 @endif

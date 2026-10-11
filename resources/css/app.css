@@ -103,8 +103,11 @@
 
 @layer theme {
     /* The shell re-points the board's shared semantic tokens at the command-center palette, so components
-       both shells use (state dots, charts) take the dark ground's colours with no per-view overrides. */
-    .shell {
+       both shells use (state dots, charts) take the dark ground's colours with no per-view overrides.
+       `.shell.dark` (RD-4): an old page's Flux appearance script can still add `.dark` to <html> when wire:navigate
+       swaps in a shell page; the extra class makes these win over the `.dark` block below either way. */
+    .shell,
+    .shell.dark {
         color-scheme: dark;
         --font-sans: var(--font-geist);
         --font-mono: var(--font-geist-mono);
@@ -113,6 +116,8 @@
         --color-warning: var(--color-needs);
         --color-danger: var(--color-fail);
         --color-series: var(--color-live);
+        --color-gain: var(--color-go);
+        --color-loss: var(--color-fail);
         --color-accent: var(--color-needs);
         --color-accent-content: var(--color-needs);
         --color-accent-foreground: var(--color-needs-ink);
@@ -214,6 +219,13 @@ select:focus[data-flux-control] {
     --map-fill: var(--color-zinc-800);
     --map-ink: var(--color-zinc-600);
     background-color: var(--color-zinc-900);
+}
+
+/* The app map in the RD-2 dark shell (RD-4): the same wireframe in the shell's surfaces. */
+.shell .map-page {
+    --map-fill: var(--color-raised);
+    --map-ink: var(--color-rim);
+    background-color: var(--color-surface);
 }
 
 /* The story modal (SB-8, design A): about 90% of the viewport, a bottom sheet a little taller on phones. */

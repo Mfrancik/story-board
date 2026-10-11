@@ -13,9 +13,10 @@ use Livewire\Component;
  * The mockup gallery at `/mockups` (SB-21, option A): every enabled project's
  * mockup sets as cards with a live thumbnail, grouped by project, awaiting-pick
  * first. The status, project and search filters are Alpine over the one render,
- * so the component has no actions; a card opens the full-screen viewer.
+ * so the component has no actions; a card opens the full-screen viewer. In the
+ * RD-2 dark shell since RD-4.
  */
-#[Layout('layouts.board')]
+#[Layout('layouts.shell')]
 class MockupGallery extends Component
 {
     /** The project filter to start on (`?project=`, from a project page's Mockups button); '' for all. */

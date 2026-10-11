@@ -15,6 +15,14 @@
 @endunless
 
 @vite(['resources/css/app.css', 'resources/js/app.js'])
-@unless ($shell ?? false)
+@if ($shell ?? false)
+    {{-- RD-4: the shell loads flux.js for its toasts. flux.js applies the light/dark choice through
+         window.Flux.applyAppearance on load and after every wire:navigate swap, and with none defined it deletes the
+         choice the old light/dark pages saved. The shell is dark only, so this one keeps `.dark` off a shell page and
+         leaves that saved choice alone; an old page's own appearance script still applies it there. --}}
+    <script>
+        window.Flux = { applyAppearance () { if (document.documentElement.classList.contains('shell')) document.documentElement.classList.remove('dark') } }
+    </script>
+@else
     @fluxAppearance
-@endunless
+@endif

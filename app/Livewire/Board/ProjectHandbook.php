@@ -26,8 +26,9 @@ use Livewire\Component;
  * re-renders: a re-render would resend every loaded section (coins' runbook is
  * ~20,000 lines) on each later click. The route's EnsureProjectIsShown has
  * already refused an unknown or disabled project before this mounts (ADR-013).
+ * In the RD-2 dark shell since RD-4.
  */
-#[Layout('layouts.board')]
+#[Layout('layouts.shell')]
 class ProjectHandbook extends Component
 {
     use GuardsProjectPage;

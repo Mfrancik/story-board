@@ -17,11 +17,11 @@ use Livewire\Component;
  *
  * The whole project's list is rendered once. Selection, filters and Expand all are
  * Alpine over that markup, so this component has no actions of its own and never
- * re-renders in a normal visit; a story row opens the SB-8 modal it embeds. The
+ * re-renders in a normal visit; a story row links to its RD-3 story page. The
  * route's EnsureProjectIsShown has already refused an unknown or disabled project
- * before this mounts (ADR-013).
+ * before this mounts (ADR-013). In the RD-2 dark shell since RD-4.
  */
-#[Layout('layouts.board')]
+#[Layout('layouts.shell')]
 class ProjectStories extends Component
 {
     use GuardsProjectPage;

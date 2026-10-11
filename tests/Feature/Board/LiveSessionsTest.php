@@ -276,7 +276,8 @@ it('shows a live badge with the count next to each project with a live session i
     $this->sessions->session($this->set42, 'feat/SET-42-lock-a-coin-in-its-slot', 'aaaaaaaa-0000-0000-0000-000000000016');
     $this->sessions->session($this->repo->project, 'main', 'aaaaaaaa-0000-0000-0000-000000000017');
 
-    $html = $this->get('/projects')->assertOk()
+    // The live badge is the old board sidebar's (SB-11); RD-4 moved /projects into the shell, whose sidebar has none.
+    $html = $this->get('/')->assertOk()
         ->assertSeeHtml('data-live-count="2"')
         ->assertSeeHtml('title="2 live sessions"')
         ->getContent();

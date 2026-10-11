@@ -9,6 +9,7 @@
     A decision row dispatches `handbook-decision`; the modal fetches its HTML with $wire.openDecision() and
     keeps `?decision=` in the URL (replaceState: the modal is not a history step), so a reload or a shared
     link lands on the same file.
+    RD-4: in the RD-2 dark shell (layouts/shell), restyled with its tokens; layout and behaviour unchanged.
 --}}
 @php
     $labels = ['rules' => 'Rules', 'lessons' => 'Lessons', 'standards' => 'Standards', 'runbook' => 'Runbook', 'decisions' => 'Decisions', 'skills' => 'Skills'];
@@ -74,7 +75,7 @@
             <svg class="size-5 shrink-0 text-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg>
             <div class="min-w-0">
                 <p class="font-medium break-words">Kit not found at {{ $kitPath }} — comparison unavailable</p>
-                <p class="mt-0.5 text-zinc-600 dark:text-zinc-300">Everything below is read from {{ $model->name }} as usual. Point <span class="font-mono text-xs">BOARD_KIT_PATH</span> at the kit's checkout to see which files differ.</p>
+                <p class="mt-0.5 text-ink-soft">Everything below is read from {{ $model->name }} as usual. Point <span class="font-mono text-xs">BOARD_KIT_PATH</span> at the kit's checkout to see which files differ.</p>
             </div>
         </div>
     @endunless
@@ -89,17 +90,17 @@
                 <button type="button" role="tab" data-handbook-tab="{{ $section }}" id="handbook-tab-{{ $section }}" aria-controls="handbook-{{ $section }}"
                     x-on:click="go(@js($section))" x-bind:aria-selected="tab === @js($section)"
                     class="inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-sm"
-                    x-bind:class="tab === @js($section) ? 'bg-zinc-800 font-medium text-white dark:bg-white dark:text-zinc-900' : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800'">
+                    x-bind:class="tab === @js($section) ? 'font-medium bg-ink text-ground' : 'text-ink-muted hover:bg-raised'">
                     {{ $labels[$section] }}
                 </button>
             @endforeach
         </div>
         @if ($kitOk)
-            <p data-kit-ref class="min-w-0 text-xs break-all text-zinc-500 dark:text-zinc-400">vs kit <span class="font-mono">{{ $kitPath }}</span> · <span class="font-mono">{{ substr($kitSha, 0, 7) }}</span></p>
+            <p data-kit-ref class="min-w-0 text-xs break-all text-ink-muted">vs kit <span class="font-mono">{{ $kitPath }}</span> · <span class="font-mono">{{ substr($kitSha, 0, 7) }}</span></p>
         @endif
     </div>
 
-    <section aria-label="Handbook" class="mt-4 rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+    <section aria-label="Handbook" class="mt-4 rounded-xl border border-edge bg-surface">
         @foreach (\App\Livewire\Board\ProjectHandbook::SECTIONS as $section)
             <div role="tabpanel" id="handbook-{{ $section }}" aria-labelledby="handbook-tab-{{ $section }}" data-section="{{ $section }}"
                 x-show="tab === @js($section)" @if ($section !== $initial) x-cloak @endif>
@@ -108,10 +109,10 @@
                 @else
                     {{-- Loading: a skeleton the height of a short section, so the card does not jump. --}}
                     <div x-show="loading === @js($section)" class="space-y-3 px-5 py-6" aria-label="Loading">
-                        <div class="h-3 w-1/3 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800"></div>
-                        <div class="h-3 w-full animate-pulse rounded bg-zinc-100 dark:bg-zinc-800"></div>
-                        <div class="h-3 w-5/6 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800"></div>
-                        <div class="h-3 w-2/3 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800"></div>
+                        <div class="h-3 w-1/3 animate-pulse rounded bg-raised"></div>
+                        <div class="h-3 w-full animate-pulse rounded bg-raised"></div>
+                        <div class="h-3 w-5/6 animate-pulse rounded bg-raised"></div>
+                        <div class="h-3 w-2/3 animate-pulse rounded bg-raised"></div>
                     </div>
                     <div x-html="bodies[@js($section)] ?? ''"></div>
                 @endif
@@ -121,15 +122,15 @@
 
     {{-- A decision file: the design-A centred modal (SB-8's shape), read from git when opened. --}}
     <div x-show="doc !== null" x-cloak class="fixed inset-0 z-60 flex items-end justify-center sm:items-center sm:p-6">
-        <div data-decision-backdrop x-on:click="closeDoc()" class="absolute inset-0 bg-zinc-950/50 backdrop-blur-xs" aria-hidden="true"></div>
+        <div data-decision-backdrop x-on:click="closeDoc()" class="absolute inset-0 bg-ground/70 backdrop-blur-xs" aria-hidden="true"></div>
         <div role="dialog" aria-modal="true" aria-labelledby="decision-title" x-trap.noscroll="doc !== null"
-            class="board-modal relative flex w-full max-w-3xl flex-col rounded-t-2xl bg-white shadow-2xl ring-1 ring-zinc-200 sm:rounded-2xl dark:bg-zinc-900 dark:ring-zinc-800">
-            <header class="flex items-start gap-3 border-b border-zinc-200 px-5 py-4 sm:px-6 dark:border-zinc-800">
+            class="board-modal relative flex w-full max-w-3xl flex-col rounded-t-2xl shadow-2xl ring-1 sm:rounded-2xl bg-surface ring-edge">
+            <header class="flex items-start gap-3 border-b px-5 py-4 sm:px-6 border-edge">
                 <div class="min-w-0 flex-1">
-                    <p class="font-mono text-xs break-all text-zinc-500 dark:text-zinc-400">{{ $model->name }} · docs/decisions/<span x-text="doc"></span></p>
+                    <p class="font-mono text-xs break-all text-ink-muted">{{ $model->name }} · docs/decisions/<span x-text="doc"></span></p>
                     <h2 id="decision-title" class="mt-1 text-lg font-semibold tracking-tight break-words" x-text="doc"></h2>
                 </div>
-                <button type="button" x-on:click="closeDoc()" autofocus class="shrink-0 rounded-md px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800">Close</button>
+                <button type="button" x-on:click="closeDoc()" autofocus class="shrink-0 rounded-md px-3 py-1.5 text-sm font-medium hover:bg-raised">Close</button>
             </header>
             <div class="flex-1 overflow-y-auto px-5 py-6 sm:px-8">
                 @if ($decisionHtml !== null)
@@ -138,11 +139,11 @@
                     </div>
                 @endif
                 <div x-show="docLoading" class="space-y-3" aria-label="Loading">
-                    <div class="h-3 w-1/3 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800"></div>
-                    <div class="h-3 w-full animate-pulse rounded bg-zinc-100 dark:bg-zinc-800"></div>
-                    <div class="h-3 w-5/6 animate-pulse rounded bg-zinc-100 dark:bg-zinc-800"></div>
+                    <div class="h-3 w-1/3 animate-pulse rounded bg-raised"></div>
+                    <div class="h-3 w-full animate-pulse rounded bg-raised"></div>
+                    <div class="h-3 w-5/6 animate-pulse rounded bg-raised"></div>
                 </div>
-                <p x-show="docMissing" x-cloak role="status" class="text-sm text-zinc-600 dark:text-zinc-300">
+                <p x-show="docMissing" x-cloak role="status" class="text-sm text-ink-soft">
                     Could not open <span class="font-mono" x-text="doc"></span>: it is not in {{ $model->name }} at this snapshot.
                 </p>
                 <div x-show="docHtml !== null" x-cloak>

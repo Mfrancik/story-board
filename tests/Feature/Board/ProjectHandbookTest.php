@@ -383,11 +383,12 @@ it('404s the handbook of an unknown or disabled project', function () {
     $this->get('/p/off/handbook')->assertNotFound();
 });
 
-it('reaches the handbook through a Handbook tab on the project page, and back', function () {
+it('reaches the handbook through a Handbook tab on the project page, and back to the project\'s Stories (RD-4: no Dashboard tab)', function () {
     coinsLike($this);
 
     $this->get('/p/coins')->assertOk()->assertSee(route('projects.handbook', 'coins'), false)->assertSee('Handbook');
-    $this->get('/p/coins/handbook')->assertOk()->assertSee(route('projects.show', 'coins'), false)->assertSee('Dashboard');
+    $this->get('/p/coins/handbook')->assertOk()->assertSee(route('projects.stories', 'coins'), false)
+        ->assertDontSeeHtml('data-project-tab="dashboard"');
 });
 
 it('says so, logged, when git cannot read the project at its snapshot SHA, and the other sections still load', function () {

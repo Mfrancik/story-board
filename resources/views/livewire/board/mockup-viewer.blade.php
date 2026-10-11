@@ -9,6 +9,7 @@
     "Current" is SB-23's pane (board/mockup-current): today's page from a journey shot, or why there is
     none. With a shot the viewer opens in compare, Current left and the first option right (option a, or
     the picked one). The one server call is the pick.
+    RD-4: in the RD-2 dark shell (layouts/shell), restyled with its tokens; layout and behaviour unchanged.
 --}}
 @php
     $frame = fn (string $o) => route('mockups.frame', ['project' => $set['project'], 'story' => $set['story'], 'file' => "option-{$o}.html"]);
@@ -17,12 +18,12 @@
     $gallery = route('mockups', ['project' => $set['project']]);
     $awaiting = $set['state'] === \App\Actions\Board\ReadMockupSets::AWAITING;
     $picked = $set['state'] === \App\Actions\Board\ReadMockupSets::PICKED ? $set['picked'] : null;
-    $btn = 'inline-flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-2.5 py-1 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800';
-    $primary = 'inline-flex shrink-0 items-center gap-1.5 rounded-md bg-zinc-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-700 disabled:opacity-60 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200';
-    $seg = 'shrink-0 rounded-lg border border-zinc-200 bg-white p-0.5 dark:border-zinc-800 dark:bg-zinc-900';
+    $btn = 'inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium border-rim bg-surface hover:bg-raised';
+    $primary = 'inline-flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium disabled:opacity-60 bg-needs text-needs-ink hover:brightness-110';
+    $seg = 'shrink-0 rounded-lg border p-0.5 border-edge bg-surface';
     $segBtn = 'rounded-md px-2.5 py-1 text-xs font-medium whitespace-nowrap';
-    $on = 'bg-zinc-800 text-white dark:bg-white dark:text-zinc-900';
-    $off = 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white';
+    $on = 'bg-ink text-ground';
+    $off = 'text-ink-muted hover:text-ink';
     $widths = [1280 => 'Desktop', 768 => 'Tablet', 375 => 'Phone'];
     // Current vs an option by default when a shot exists (SB-23); otherwise option vs option, as SB-21 opened.
     $hasShot = $current['state'] === \App\Actions\Board\ReadCurrentVersion::SHOT;
@@ -42,27 +43,27 @@
     x-on:keydown.escape.window="escape()"
     x-on:keydown.arrow-right.window="step($event, 'next')"
     x-on:keydown.arrow-left.window="step($event, 'prev')"
-    class="fixed inset-0 z-60 flex flex-col bg-zinc-100 dark:bg-zinc-950">
+    class="fixed inset-0 z-60 flex flex-col bg-ground">
 
-    <header class="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+    <header class="border-b border-edge bg-surface">
         <div class="flex h-11 items-center gap-2 px-2 sm:px-3">
-            <a href="{{ $gallery }}" wire:navigate data-viewer-close aria-label="Back to the gallery (Esc)" class="rounded-md p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800">{!! $icon('<path d="M6 6l12 12M18 6L6 18"/>') !!}</a>
-            <span class="shrink-0 font-mono text-xs whitespace-nowrap text-zinc-500 dark:text-zinc-400"><span class="hidden sm:inline">{{ $set['project'] }} · </span>{{ $set['story'] }}</span>
+            <a href="{{ $gallery }}" wire:navigate data-viewer-close aria-label="Back to the gallery (Esc)" class="rounded-md p-1.5 hover:bg-raised">{!! $icon('<path d="M6 6l12 12M18 6L6 18"/>') !!}</a>
+            <span class="shrink-0 font-mono text-xs whitespace-nowrap text-ink-muted"><span class="hidden sm:inline">{{ $set['project'] }} · </span>{{ $set['story'] }}</span>
             <h1 id="viewer-title" class="min-w-0 truncate text-sm font-semibold">{{ $set['title'] ?? $set['story'] }}</h1>
             <x-board.mockup-state :set="$set" />
-            <div class="ml-auto flex shrink-0 items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
-                <a href="{{ $show($prev) }}" wire:navigate aria-label="Previous set" class="rounded-md p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800">{!! $icon('<path d="M15 6l-6 6 6 6"/>') !!}</a>
+            <div class="ml-auto flex shrink-0 items-center gap-1 text-xs text-ink-muted">
+                <a href="{{ $show($prev) }}" wire:navigate aria-label="Previous set" class="rounded-md p-1.5 hover:bg-raised">{!! $icon('<path d="M15 6l-6 6 6 6"/>') !!}</a>
                 <span class="tabular-nums">{{ $position }} / {{ $count }}</span>
-                <a href="{{ $show($next) }}" wire:navigate aria-label="Next set" class="rounded-md p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800">{!! $icon('<path d="M9 6l6 6-6 6"/>') !!}</a>
+                <a href="{{ $show($next) }}" wire:navigate aria-label="Next set" class="rounded-md p-1.5 hover:bg-raised">{!! $icon('<path d="M9 6l6 6-6 6"/>') !!}</a>
             </div>
         </div>
         <div class="flex flex-wrap items-center gap-x-4 gap-y-0.5 px-3 pb-2 text-xs">
-            <p data-viewer-description class="min-w-0 text-zinc-600 dark:text-zinc-400">{{ $description ?? 'No description: the set has no index.html and the story no Story line.' }}</p>
-            <p data-viewer-where class="min-w-0 truncate text-zinc-500 dark:text-zinc-400">Where:
-                @if ($set['where'])<code class="font-mono text-zinc-800 dark:text-zinc-200">{{ $set['where'] }}</code>@else not named in the story @endif
+            <p data-viewer-description class="min-w-0 text-ink-muted">{{ $description ?? 'No description: the set has no index.html and the story no Story line.' }}</p>
+            <p data-viewer-where class="min-w-0 truncate text-ink-muted">Where:
+                @if ($set['where'])<code class="font-mono text-ink-soft">{{ $set['where'] }}</code>@else not named in the story @endif
             </p>
         </div>
-        <div class="flex items-center gap-2 overflow-x-auto border-t border-zinc-200 px-3 py-2 dark:border-zinc-800">
+        <div class="flex items-center gap-2 overflow-x-auto border-t px-3 py-2 border-edge">
             <div role="tablist" aria-label="Version" class="{{ $seg }} inline-flex" x-show="! compare">
                 <button type="button" role="tab" data-option-tab="current" x-on:click="opt = 'current'" x-bind:aria-selected="(opt === 'current').toString()"
                     class="{{ $segBtn }}" x-bind:class="opt === 'current' ? @js($on) : @js($off)">Current</button>
@@ -71,7 +72,7 @@
                         class="{{ $segBtn }}" x-bind:class="opt === @js($o) ? @js($on) : @js($off)">{{ strtoupper($o) }}@if ($o === $picked) ✓@endif</button>
                 @endforeach
             </div>
-            <span x-show="compare" x-cloak class="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">Pick a version in each pane ·</span>
+            <span x-show="compare" x-cloak class="shrink-0 text-xs text-ink-muted">Pick a version in each pane ·</span>
             <button type="button" data-compare-swap x-show="compare" x-cloak x-on:click="swap()" aria-label="Swap left and right" class="{{ $btn }}">⇄ Swap</button>
             <button type="button" data-compare-toggle x-on:click="compare = ! compare" x-bind:aria-pressed="compare.toString()"
                 class="{{ $btn }}" x-bind:class="compare && 'ring-2 ring-accent'">{!! $icon('<rect x="3" y="4" width="8" height="16" rx="1.5"/><rect x="13" y="4" width="8" height="16" rx="1.5"/>', 'size-3.5') !!} Side by side</button>
@@ -87,8 +88,8 @@
 
     <div class="min-h-0 flex-1 p-2 sm:p-3">
         {{-- One version at a time. --}}
-        <div x-show="! compare" class="relative h-full overflow-hidden rounded-lg border bg-white dark:bg-zinc-900"
-            x-bind:class="opt === @js($picked) ? 'border-built' : 'border-zinc-200 dark:border-zinc-800'">
+        <div x-show="! compare" class="relative h-full overflow-hidden rounded-lg border bg-surface"
+            x-bind:class="opt === @js($picked) ? 'border-built' : 'border-edge'">
             <div x-show="opt === 'current'" x-cloak class="absolute inset-0"><x-board.mockup-current :current="$current" :project="$set['project']" /></div>
             <div x-show="opt !== 'current'" class="absolute inset-0 overflow-hidden" x-data="mockupFit(() => width)">
                 <iframe data-viewer-frame src="{{ $urls[$first] }}" x-bind:src="url(opt)" sandbox="allow-scripts" title="{{ $set['story'] }} mockup"
@@ -100,12 +101,12 @@
         <template x-if="compare">
             <div class="grid h-full min-h-0 grid-rows-2 gap-3 md:grid-cols-2 md:grid-rows-1">
                 @foreach (['left' => 'Left', 'right' => 'Right'] as $side => $label)
-                    <section data-compare-pane="{{ $side }}" class="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border bg-white dark:bg-zinc-900"
-                        x-bind:class="{{ $side }} === @js($picked) ? 'border-built' : 'border-zinc-200 dark:border-zinc-800'">
-                        <div class="flex items-center justify-between gap-2 border-b border-zinc-200 px-2 py-1.5 dark:border-zinc-800">
+                    <section data-compare-pane="{{ $side }}" class="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border bg-surface"
+                        x-bind:class="{{ $side }} === @js($picked) ? 'border-built' : 'border-edge'">
+                        <div class="flex items-center justify-between gap-2 border-b px-2 py-1.5 border-edge">
                             <label class="flex min-w-0 items-center gap-2 text-xs">
-                                <span class="shrink-0 font-medium text-zinc-500 dark:text-zinc-400">{{ $label }}</span>
-                                <select x-model="{{ $side }}" class="min-w-0 truncate rounded-md border border-zinc-300 bg-white py-1 pr-7 pl-2 text-xs dark:border-zinc-700 dark:bg-zinc-900">
+                                <span class="shrink-0 font-medium text-ink-muted">{{ $label }}</span>
+                                <select x-model="{{ $side }}" class="min-w-0 truncate rounded-md border py-1 pr-7 pl-2 text-xs border-rim bg-surface">
                                     <option value="current">{{ $currentLabel }}</option>
                                     @foreach ($set['options'] as $o)
                                         <option value="{{ $o }}">Option {{ strtoupper($o) }}@if ($o === $picked) ✓ picked @endif</option>
@@ -126,20 +127,20 @@
         </template>
     </div>
 
-    <footer class="flex flex-wrap items-center gap-2 border-t border-zinc-200 bg-white px-3 py-2 text-xs dark:border-zinc-800 dark:bg-zinc-900">
+    <footer class="flex flex-wrap items-center gap-2 border-t px-3 py-2 text-xs border-edge bg-surface">
         @if ($awaiting)
-            <span class="font-medium text-zinc-800 dark:text-zinc-100">Not picked yet.</span>
-            <span class="text-zinc-500 dark:text-zinc-400">Pick one:</span>
+            <span class="font-medium text-ink">Not picked yet.</span>
+            <span class="text-ink-muted">Pick one:</span>
             @foreach ($set['options'] as $o)
                 <button type="button" data-pick="{{ $o }}" x-on:click="openPick(@js($o))" class="{{ $btn }}">Pick {{ strtoupper($o) }}</button>
             @endforeach
         @elseif ($picked)
-            <span class="min-w-0 flex-1 truncate text-zinc-600 dark:text-zinc-400">
-                <strong class="font-medium text-zinc-900 dark:text-zinc-100">Picked {{ strtoupper($picked) }}</strong> · {{ $set['reason'] ?? 'No reason recorded.' }}
+            <span class="min-w-0 flex-1 truncate text-ink-muted">
+                <strong class="font-medium text-ink">Picked {{ strtoupper($picked) }}</strong> · {{ $set['reason'] ?? 'No reason recorded.' }}
                 @unless ($set['pushed']) · committed in the checkout, not pushed yet @endunless
             </span>
         @else
-            <span class="min-w-0 flex-1 truncate text-zinc-600 dark:text-zinc-400">
+            <span class="min-w-0 flex-1 truncate text-ink-muted">
                 {{ $set['recorded'] ? 'Chosen, as written in the story: '.$set['recorded'] : 'No pick recorded, and this story does not take one from the board.' }}
             </span>
         @endif
@@ -147,15 +148,15 @@
 
     @if ($awaiting)
         {{-- Pick dialog: open/closed is Alpine; confirming is the one server call, re-validated there. --}}
-        <div x-show="picking" x-cloak x-on:click.self="picking = null" class="fixed inset-0 z-70 grid place-items-center bg-zinc-950/50 p-4">
+        <div x-show="picking" x-cloak x-on:click.self="picking = null" class="fixed inset-0 z-70 grid place-items-center bg-ground/70 p-4">
             <form x-trap="picking" x-on:submit.prevent="confirmPick()" role="dialog" aria-modal="true" aria-labelledby="pick-title" data-pick-dialog
-                class="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-5 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
+                class="w-full max-w-md rounded-2xl border p-5 shadow-xl border-edge bg-surface">
                 <h2 id="pick-title" class="font-semibold">Pick option <span x-text="picking && picking.toUpperCase()"></span> for {{ $set['story'] }}?</h2>
-                <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">The pick and your reason go into the story's mockup gate, committed on their own in the project's checkout. Nothing is pushed.</p>
-                <label for="pick-reason" class="mt-4 block text-sm font-medium">Why this one <span class="font-normal text-zinc-500 dark:text-zinc-400">(one line, optional)</span></label>
+                <p class="mt-1 text-sm text-ink-muted">The pick and your reason go into the story's mockup gate, committed on their own in the project's checkout. Nothing is pushed.</p>
+                <label for="pick-reason" class="mt-4 block text-sm font-medium">Why this one <span class="font-normal text-ink-muted">(one line, optional)</span></label>
                 <textarea id="pick-reason" x-ref="reason" x-model="reason" rows="2" maxlength="{{ \App\Services\StoryPickWriter::REASON_MAX }}"
                     x-on:keydown.enter.prevent="confirmPick()" placeholder="e.g. the split compare is what I asked for"
-                    class="mt-1 w-full rounded-lg border border-zinc-300 bg-white p-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"></textarea>
+                    class="mt-1 w-full rounded-lg border p-2 text-sm border-rim bg-ground"></textarea>
                 @if ($refusal)
                     <p role="alert" data-pick-refusal class="mt-2 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">{{ $refusal }}</p>
                 @endif

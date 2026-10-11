@@ -23,11 +23,12 @@ use Livewire\Component;
  * a / b / c with a one-line reason.
  * Everything but the pick is Alpine; the pick is the one server action, and it
  * writes only through StoryPickWriter. EnsureProjectIsShown has already refused
- * an unknown or disabled project before this mounts.
+ * an unknown or disabled project before this mounts. In the RD-2 dark shell
+ * since RD-4.
  *
  * @phpstan-import-type CurrentVersion from ReadCurrentVersion
  */
-#[Layout('layouts.board')]
+#[Layout('layouts.shell')]
 class MockupViewer extends Component
 {
     use GuardsProjectPage;

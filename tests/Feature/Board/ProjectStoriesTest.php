@@ -337,14 +337,15 @@ it('orders the initiatives exactly as ReadProjectProgress does, and counts them 
         ->toBe(array_map(fn ($g) => [$g['counts'], $g['total'], $g['open'], $g['parked']], $progress));
 });
 
-it('opens each well-formed story row in the SB-8 modal and reaches the page through a Stories tab', function () {
+it('links each well-formed story row to its story page (RD-4: no SB-8 modal) and reaches the page through a Stories tab', function () {
     brandingAndAcquisition($this->coins);
     storyIn($this->coins, 'branding', 'odd_mockup_dir', 'draft');
 
-    $html = $this->get('/p/coins/stories')->assertOk()->assertSeeLivewire('board.story-modal')->getContent();
+    $html = $this->get('/p/coins/stories')->assertOk()->assertDontSeeLivewire('board.story-modal')->getContent();
 
     expect(storyRowHtml($html, 'BR-1'))->toContain('data-story-link="coins/BR-1"')
-        ->and(storyRowHtml($html, 'odd_mockup_dir'))->not->toContain('data-story-link');
+        ->toContain('href="'.route('stories.show', ['project' => 'coins', 'storyId' => 'BR-1']).'"')
+        ->and(storyRowHtml($html, 'odd_mockup_dir'))->not->toContain('data-story-link')->not->toContain('href=');
     $this->get('/p/coins')->assertOk()->assertSee(route('projects.stories', 'coins'), false);
     $this->get('/p/coins/handbook')->assertSee(route('projects.stories', 'coins'), false);
     expect($html)->toMatch('/data-project-tab="stories"[^>]*aria-current="page"/');

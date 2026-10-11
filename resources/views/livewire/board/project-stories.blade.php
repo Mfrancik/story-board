@@ -1,5 +1,6 @@
 {{--
-    SB-15 stories by initiative, option C (docs/mockups/SB-15/option-c.html) inside the design-A shell:
+    SB-15 stories by initiative, option C (docs/mockups/SB-15/option-c.html), in the RD-2 dark shell since RD-4
+    (layouts/shell, restyled with its tokens, layout unchanged):
     status filter chips and Expand all above two panes — initiatives with their full counts on the left
     (a select below lg), the chosen initiative's stories on the right. Expand all turns the right pane into
     every initiative, grouped, under sticky headers; an initiative on the left then jumps to its group.
@@ -7,14 +8,15 @@
     Every story of the project is in this markup once, and nothing here calls the server: selection,
     filters and Expand all are Alpine. At coins' size (946 rows) the rows carry no Alpine of their own:
     a filter chip toggles one `hide-<kind>` class on the list and each row's `[.hide-<kind>_&]:hidden`
-    variant does the hiding in CSS, and one delegated click on the list opens the SB-8 modal. Only the
+    variant does the hiding in CSS. A row is a plain link to the RD-3 story page (RD-4 dropped the embedded SB-8
+    modal and its `?story=` links), so it opens in a new tab and Back returns to the list. Only the
     initiatives (at most ~60) are Alpine-bound. The page arrives complete, so no loading state is needed:
     groups other than the first are hidden in the markup itself, not after Alpine starts.
 --}}
 @php
     $kinds = \App\Actions\Board\ReadProjectStories::KINDS;
     $labels = ['built' => 'Built', 'approved' => 'To do', 'draft' => 'Draft', 'cancelled' => 'Cancelled', 'other' => 'Other'];
-    $dots = ['built' => 'bg-built', 'approved' => 'bg-approved', 'draft' => 'bg-draft', 'cancelled' => 'bg-cancelled', 'other' => 'bg-zinc-300 dark:bg-zinc-600'];
+    $dots = ['built' => 'bg-built', 'approved' => 'bg-approved', 'draft' => 'bg-draft', 'cancelled' => 'bg-cancelled', 'other' => 'bg-ink-faint'];
     // Literal class names, one per kind, so Tailwind's scanner of resources/views generates each variant.
     $hide = [
         'built' => '[.hide-built_&]:hidden',
@@ -58,10 +60,6 @@
             // Expanded: jump to the group. One at a time on a narrow screen: bring the list into view.
             if (this.all || innerWidth < 1024) this.$nextTick(() => document.getElementById(target)?.scrollIntoView({ block: 'start' }));
         },
-        openStory(event) {
-            const row = event.target.closest('[data-story-link]');
-            if (row) this.$dispatch('board-story', row.dataset.storyLink);
-        },
     }">
 
     <x-board.project-header :model="$model" page="Stories" current="stories">
@@ -70,14 +68,11 @@
         @endif
     </x-board.project-header>
 
-    {{-- SB-8: a story row opens here, and `?story=<project>/<ID>` opens straight in on this page too. --}}
-    <livewire:board.story-modal />
-
     @if ($stories === 0)
-        <div data-empty class="mt-6 rounded-xl border border-dashed border-zinc-300 bg-white px-6 py-14 text-center dark:border-zinc-700 dark:bg-zinc-900">
-            <svg class="mx-auto size-8 text-zinc-300 dark:text-zinc-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+        <div data-empty class="mt-6 rounded-xl border border-dashed px-6 py-14 text-center border-rim bg-surface">
+            <svg class="mx-auto size-8 text-ink-faint" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
             <p class="mt-3 font-medium">{{ $model->name }} has no stories on {{ $model->ref }} yet.</p>
-            <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Stories appear here once they are committed under <span class="font-mono text-xs">stories/</span> on the project's ref.</p>
+            <p class="mt-1 text-sm text-ink-muted">Stories appear here once they are committed under <span class="font-mono text-xs">stories/</span> on the project's ref.</p>
         </div>
     @else
         {{-- Status filter chips and Expand all. Chips hide rows; the counts beside them and on the left never change. --}}
@@ -86,27 +81,27 @@
                 @foreach ($kinds as $kind)
                     <button type="button" data-filter="{{ $kind }}" x-on:click="on.{{ $kind }} = ! on.{{ $kind }}" x-bind:aria-pressed="on.{{ $kind }}" aria-pressed="true"
                         class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset"
-                        x-bind:class="on.{{ $kind }} ? 'bg-white text-zinc-800 ring-zinc-300 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-zinc-700' : 'text-zinc-400 line-through ring-zinc-200 dark:ring-zinc-800'">
-                        <span class="size-2 rounded-full" x-bind:class="on.{{ $kind }} ? @js($dots[$kind]) : 'bg-zinc-200 dark:bg-zinc-700'"></span>
+                        x-bind:class="on.{{ $kind }} ? 'bg-surface text-ink ring-rim' : 'text-ink-faint line-through ring-edge'">
+                        <span class="size-2 rounded-full" x-bind:class="on.{{ $kind }} ? @js($dots[$kind]) : 'bg-rim'"></span>
                         {{ $labels[$kind] }}
-                        <span data-tally class="tabular-nums text-zinc-400">{{ number_format($tallies[$kind]) }}</span>
+                        <span data-tally class="tabular-nums text-ink-faint">{{ number_format($tallies[$kind]) }}</span>
                     </button>
                 @endforeach
                 <button type="button" data-show-all-filters x-show="filtered" x-cloak x-on:click="showAll()"
-                    class="ml-1 text-xs text-zinc-500 underline underline-offset-4 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200">Show all</button>
+                    class="ml-1 text-xs underline underline-offset-4 text-ink-muted hover:text-ink-soft">Show all</button>
             </div>
             <div class="flex items-center gap-3">
-                <p data-initiatives-shown class="text-xs text-zinc-500 tabular-nums dark:text-zinc-400"><span x-text="visible.length">{{ $groupCount }}</span> of {{ $groupCount }} initiatives</p>
+                <p data-initiatives-shown class="text-xs tabular-nums text-ink-muted"><span x-text="visible.length">{{ $groupCount }}</span> of {{ $groupCount }} initiatives</p>
                 <button type="button" data-expand-all x-on:click="all = ! all" x-bind:aria-expanded="all" aria-expanded="false" aria-controls="stories-pane"
-                    class="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700">
+                    class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium border-edge bg-surface hover:border-rim">
                     <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path x-show="! all" d="M7 9l5-5 5 5M7 15l5 5 5-5"/><path x-show="all" x-cloak d="M7 4l5 5 5-5M7 20l5-5 5 5"/></svg>
                     <span x-text="all ? 'Collapse all' : 'Expand all'">Expand all</span>
                 </button>
             </div>
         </div>
 
-        <div x-show="visible.length === 0" x-cloak data-all-filtered class="mt-4 rounded-xl border border-dashed border-zinc-300 px-6 py-10 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
-            No stories match these filters. <button type="button" x-on:click="showAll()" class="font-medium text-zinc-800 underline underline-offset-4 dark:text-white">Show all</button>
+        <div x-show="visible.length === 0" x-cloak data-all-filtered class="mt-4 rounded-xl border border-dashed px-6 py-10 text-center text-sm border-rim text-ink-muted">
+            No stories match these filters. <button type="button" x-on:click="showAll()" class="font-medium underline underline-offset-4 text-ink">Show all</button>
         </div>
 
         <div x-show="visible.length > 0" class="mt-4 items-start gap-4 lg:grid lg:grid-cols-[17rem_minmax(0,1fr)]">
@@ -114,33 +109,33 @@
             <div class="mb-3 lg:hidden">
                 <label for="initiative-select" class="sr-only">Initiative</label>
                 <select id="initiative-select" data-initiative-select x-on:change="choose($event.target.value)"
-                    class="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-800 dark:bg-zinc-900">
+                    class="w-full rounded-lg border px-3 py-2 text-sm border-edge bg-surface">
                     <template x-for="g in visible" :key="g.key">
                         <option :value="g.key" :selected="g.key === current" x-text="g.label"></option>
                     </template>
                 </select>
             </div>
 
-            <nav aria-label="Initiatives" class="hidden rounded-xl border border-zinc-200 bg-white py-1 lg:sticky lg:top-4 lg:block lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto dark:border-zinc-800 dark:bg-zinc-900">
-                <p class="flex justify-between px-3 pt-1.5 pb-1 text-xs font-semibold tracking-wider text-zinc-400 uppercase"><span>Initiative</span><span>open / all</span></p>
+            <nav aria-label="Initiatives" class="hidden rounded-xl border py-1 lg:sticky lg:top-4 lg:block lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto border-edge bg-surface">
+                <p class="flex justify-between px-3 pt-1.5 pb-1 text-xs font-semibold tracking-wider text-ink-faint uppercase"><span>Initiative</span><span>open / all</span></p>
                 <ul>
                     @foreach ($initiatives as $g)
                         <li x-show="shown(@js($g['key']))">
                             <button type="button" data-initiative-entry="{{ $g['name'] }}" x-on:click="choose(@js($g['key']))"
                                 x-bind:aria-current="! all && current === @js($g['key']) ? 'true' : 'false'"
                                 class="w-full border-l-2 px-3 py-1.5 text-left text-sm"
-                                x-bind:class="! all && current === @js($g['key']) ? 'border-zinc-800 bg-zinc-100 font-medium dark:border-white dark:bg-zinc-800' : 'border-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800/50'">
+                                x-bind:class="! all && current === @js($g['key']) ? 'font-medium border-ink bg-raised' : 'border-transparent hover:bg-raised'">
                                 <span class="flex items-center gap-2">
                                     @if ($g['name'] === null)
-                                        <span class="truncate text-zinc-500 italic dark:text-zinc-400">No initiative</span>
+                                        <span class="truncate italic text-ink-muted">No initiative</span>
                                     @else
                                         <span class="truncate">{{ $g['name'] }}</span>
                                     @endif
                                     @if ($g['parked'])
-                                        <span data-parked title="Its README says Status: draft group" class="shrink-0 rounded bg-cancelled/15 px-1.5 text-xs text-zinc-700 ring-1 ring-cancelled/40 ring-inset dark:text-zinc-300">parked</span>
+                                        <span data-parked title="Its README says Status: draft group" class="shrink-0 rounded bg-cancelled/15 px-1.5 text-xs ring-1 ring-cancelled/40 ring-inset text-ink-soft">parked</span>
                                     @endif
                                     {{-- Full counts, rendered once: the filters never change them. --}}
-                                    <span data-initiative-counts class="ml-auto text-xs whitespace-nowrap text-zinc-400 tabular-nums">@if ($g['open'] > 0)<span class="font-medium text-zinc-700 dark:text-zinc-200">{{ $g['open'] }} open</span> / @endif{{ $g['total'] }}</span>
+                                    <span data-initiative-counts class="ml-auto text-xs whitespace-nowrap text-ink-faint tabular-nums">@if ($g['open'] > 0)<span class="font-medium text-ink-soft">{{ $g['open'] }} open</span> / @endif{{ $g['total'] }}</span>
                                 </span>
                                 <x-board.status-bar :counts="$g['counts']" variant="tag" class="mt-1 h-1" />
                             </button>
@@ -150,21 +145,20 @@
             </nav>
 
             {{-- One list of every group. Collapsed, only the chosen group shows; expanded, every group with rows left. --}}
-            <div id="stories-pane" data-story-list class="min-w-0 scroll-mt-16 overflow-clip rounded-xl border border-zinc-200 bg-white md:scroll-mt-4 dark:border-zinc-800 dark:bg-zinc-900"
-                x-bind:class="{ @foreach ($kinds as $kind)'hide-{{ $kind }}': ! on.{{ $kind }}, @endforeach }"
-                x-on:click="openStory($event)">
+            <div id="stories-pane" data-story-list class="min-w-0 scroll-mt-16 overflow-clip rounded-xl border md:scroll-mt-4 border-edge bg-surface"
+                x-bind:class="{ @foreach ($kinds as $kind)'hide-{{ $kind }}': ! on.{{ $kind }}, @endforeach }">
                 @foreach ($initiatives as $g)
                     <section id="stories-{{ $g['key'] }}" data-group="{{ $g['name'] }}" aria-label="{{ $g['name'] ?? 'No initiative' }}"
                         x-show="open(@js($g['key']))" @if ($g['key'] !== $first) style="display: none" @endif
                         class="scroll-mt-16 md:scroll-mt-4">
-                        <div class="z-10 border-b border-zinc-100 bg-zinc-50/95 px-4 py-2 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/95"
+                        <div class="z-10 border-b px-4 py-2 backdrop-blur border-edge bg-ground/95"
                             x-bind:class="all && 'sticky top-14 md:top-0 border-t'">
                             <h2 class="flex flex-wrap items-center gap-x-3 gap-y-0.5">
                                 <span class="font-semibold {{ $g['name'] === null ? 'italic' : '' }}">{{ $g['name'] ?? 'No initiative' }}</span>
                                 @if ($g['parked'])
-                                    <span class="rounded bg-cancelled/15 px-1.5 text-xs font-normal text-zinc-700 ring-1 ring-cancelled/40 ring-inset dark:text-zinc-300">parked</span>
+                                    <span class="rounded bg-cancelled/15 px-1.5 text-xs font-normal ring-1 ring-cancelled/40 ring-inset text-ink-soft">parked</span>
                                 @endif
-                                <span class="flex flex-wrap gap-x-3 text-xs font-normal text-zinc-500 dark:text-zinc-400">
+                                <span class="flex flex-wrap gap-x-3 text-xs font-normal text-ink-muted">
                                     @foreach ($g['counts'] as $status => $n)
                                         <span class="inline-flex items-center gap-1 whitespace-nowrap">
                                             <span class="size-1.5 rounded-full {{ $dots[\App\Actions\Board\ReadProjectStories::kind($status === '(none)' ? null : $status)] }}" aria-hidden="true"></span>
@@ -175,29 +169,29 @@
                             </h2>
                             <x-board.status-bar :counts="$g['counts']" variant="tag" class="mt-2 h-1.5" x-show="! all" />
                         </div>
-                        <ul class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                        <ul class="divide-y divide-hairline">
                             @foreach ($g['stories'] as $s)
                                 @php $cancelled = $s['kind'] === 'cancelled'; @endphp
                                 <li data-story-row="{{ $s['story_id'] ?? $s['id'] }}" data-kind="{{ $s['kind'] }}" class="{{ $hide[$s['kind']] }}">
                                     @if ($s['link'])
-                                        <button type="button" data-story-link="{{ $s['link'] }}" aria-haspopup="dialog"
-                                            @class(['grid w-full grid-cols-[5rem_1fr_auto] items-center gap-x-3 px-4 py-1.5 text-left text-sm hover:bg-zinc-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent sm:grid-cols-[6rem_1fr_auto] dark:hover:bg-zinc-800/50', 'text-zinc-400 dark:text-zinc-500' => $cancelled])>
+                                        <a href="{{ route('stories.show', ['project' => $model->name, 'storyId' => $s['story_id']]) }}" wire:navigate data-story-link="{{ $s['link'] }}"
+                                            @class(['grid w-full grid-cols-[5rem_1fr_auto] items-center gap-x-3 px-4 py-1.5 text-left text-sm focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent sm:grid-cols-[6rem_1fr_auto] hover:bg-raised', 'text-ink-faint' => $cancelled])>
                                     @else
-                                        {{-- An ID that is not well formed cannot be linked by ?story= (SB-8): a plain row. --}}
-                                        <div @class(['grid w-full grid-cols-[5rem_1fr_auto] items-center gap-x-3 px-4 py-1.5 text-sm sm:grid-cols-[6rem_1fr_auto]', 'text-zinc-400 dark:text-zinc-500' => $cancelled])>
+                                        {{-- An ID that is not well formed has no story page (Story::hasPage): a plain row. --}}
+                                        <div @class(['grid w-full grid-cols-[5rem_1fr_auto] items-center gap-x-3 px-4 py-1.5 text-sm sm:grid-cols-[6rem_1fr_auto]', 'text-ink-faint' => $cancelled])>
                                     @endif
-                                        <span @class(['truncate font-mono text-xs', 'line-through' => $cancelled, 'text-zinc-500 dark:text-zinc-400' => ! $cancelled])>{{ $s['story_id'] ?? '—' }}</span>
+                                        <span @class(['truncate font-mono text-xs', 'line-through' => $cancelled, 'text-ink-muted' => ! $cancelled])>{{ $s['story_id'] ?? '—' }}</span>
                                         <span @class(['min-w-0 truncate', 'line-through' => $cancelled]) title="{{ $s['title'] }}">{{ $s['title'] }}</span>
                                         <x-board.status-chip :status="$s['status']" variant="tag" class="justify-self-end whitespace-nowrap" />
                                     @if ($s['link'])
-                                        </button>
+                                        </a>
                                     @else
                                         </div>
                                     @endif
                                 </li>
                             @endforeach
                         </ul>
-                        <p x-show="hiddenIn(@js($g['key'])) > 0" style="display: none" class="border-t border-zinc-100 px-4 py-2 text-xs text-zinc-400 dark:border-zinc-800">
+                        <p x-show="hiddenIn(@js($g['key'])) > 0" style="display: none" class="border-t px-4 py-2 text-xs text-ink-faint border-edge">
                             <span x-text="hiddenIn(@js($g['key']))"></span> hidden by the filters
                         </p>
                     </section>

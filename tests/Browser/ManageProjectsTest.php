@@ -22,14 +22,14 @@ beforeEach(function () {
 it('switches rent-track off and on, updating the sidebar and confirming with a toast', function () {
     visit('/projects')
         ->resize(1280, 900)
-        ->assertVisible('[data-sidebar-project="rent-track"]')
+        ->assertVisible('[data-nav-project="rent-track"]')
         ->click('[data-project-switch="rent-track"]')
         ->assertSee('rent-track switched off')
-        ->assertMissing('[data-sidebar-project="rent-track"]')
+        ->assertMissing('[data-nav-project="rent-track"]')
         ->assertAttribute('[data-project-switch="rent-track"]', 'aria-checked', 'false')
         ->click('[data-project-switch="rent-track"]')
         ->assertSee('rent-track switched on')
-        ->assertVisible('[data-sidebar-project="rent-track"]')
+        ->assertVisible('[data-nav-project="rent-track"]')
         ->assertAttribute('[data-project-switch="rent-track"]', 'aria-checked', 'true')
         ->assertNoJavaScriptErrors();
 
