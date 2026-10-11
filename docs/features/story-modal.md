@@ -1,13 +1,13 @@
 # Story modal
-Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-8, RD-4
+Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-8, RD-4, RD-5
 
 ## Overview
-Clicking any story row on `/` or `/p/{project}` opens a large modal with everything about that story:
+Clicking any story row on `/p/{project}` (and, before RD-5, on `/`) opens a large modal with everything about that story:
 its text, details, dependencies, mockup thumbnails and off-main versions. It replaced SB-3's
 expand-in-place rows, which pushed the list around and showed only part of the story. The modal is
 URL-addressable (`?story=<project>/<ID>`), so a reload or a shared link lands on the same story and
-Back closes it. Since RD-4 the Stories page no longer embeds it (its rows link to the story page); it remains on
-`/` and `/p/{project}`, still on `layouts/board`, until RD-9 deletes it. Layout is design A, view 3 (`docs/mockups/SB-7/option-a.html`). The full story page
+Back closes it. Since RD-4 the Stories page no longer embeds it (its rows link to the story page); since RD-5 `/` is the
+[home overview](home-overview.md), whose rows link to the story page too. It remains on `/p/{project}`, still on `layouts/board`, until RD-9 deletes it. Layout is design A, view 3 (`docs/mockups/SB-7/option-a.html`). The full story page
 (`/p/{project}/s/{id}`) stays for comparing mockups side by side.
 
 ## How it works
@@ -144,3 +144,4 @@ leaves the board) are client-side and leave no log line; see the RUNBOOK entry f
 ## Change history
 2026-09-29 — Story modal at `?story=<project>/<ID>` replaces expand-in-place; `ResolveStoryLink`, `FindStoryVersion` shared with the story page (SB-8, `f601c01`)
 2026-10-11 — No longer embedded on the Stories page, whose rows now link to the story page (RD-4, `f722dbc`)
+2026-10-11 — No longer on `/`: the home overview links rows to the story page; the modal remains on `/p/{project}` and the unrouted old Home (RD-5, `6d6f3de`)

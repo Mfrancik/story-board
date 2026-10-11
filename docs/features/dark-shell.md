@@ -19,7 +19,7 @@ all share. The page slot sits in `md:pl-58` beside the fixed sidebar. A page opt
 `#[Layout('layouts.shell')]`. Since RD-4 that is every page except `Home`, `ProjectPage` (the old `/p/{project}`
 dashboard) and `ProductionDashboard`, which stay on `layouts/board` until RD-5/RD-9: `ProjectPreflight` (RD-2),
 `StoryPage` (RD-3), and `ProjectStories`, `ProjectHandbook`, `MockupGallery`, `MockupViewer`, `ManageProjects`,
-`ProjectAppMap` (RD-4), all in `app/Livewire/Board/`.
+`ProjectAppMap` (RD-4), and `Overview` at `/` (RD-5, [home overview](home-overview.md)), all in `app/Livewire/Board/`.
 ([ADR-044](../decisions/ADR-044-kept-pages-move-into-the-shell-and-share-primitives-by-variant.md))
 
 **Toasts (RD-4).** Manage projects, its lazy `ProductionSettings` panels and the mockup viewer confirm with

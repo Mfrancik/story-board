@@ -1,5 +1,5 @@
 # App shell and project switcher
-Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-7, SB-10, RD-4
+Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-7, SB-10, RD-4, RD-5
 
 ## Overview
 Every board page sits in one frame: a left sidebar that lists the enabled projects and switches
@@ -7,7 +7,7 @@ between the all-projects view (`/`) and a single project's view (`/p/{project}`)
 only way to change project was the `project` dropdown in the home page's filter bar. That stops
 working as the number of projects grows. The frame is design A from `docs/mockups/SB-7/option-a.html`
 (owner pick). SB-8 to SB-10 filled it in; SB-12 switches on the Manage slot.
-Since RD-4 this layout serves only `/`, the old `/p/{project}` dashboard and `/prod`; every other page uses
+Since RD-4 this layout serves only `/`, the old `/p/{project}` dashboard and `/prod`, and since RD-5 not `/` either (the [home overview](home-overview.md) is in the shell); every other page uses
 the RD-2 dark shell and its own sidebar ([dark-shell.md](dark-shell.md)). RD-9 deletes this one.
 
 ## How it works
@@ -141,3 +141,4 @@ disabled project now logs `project_page_refused`, not `board.story_not_found`.
 2026-09-29 — Sidebar dots render through `board/state`; its own dot map removed (SB-10, `e9a2f6e`)
 2026-09-29 — Manage slot and empty state link to `/projects` now that the route exists (SB-12)
 2026-10-11 — Narrowed to `/`, `/p/{project}` and `/prod`; the kept pages moved to `layouts/shell` (RD-4, `f722dbc`)
+2026-10-11 — `/` moves to the dark shell as the home overview; this sidebar remains on `/p/{project}` and `/prod` (RD-5, `6d6f3de`)

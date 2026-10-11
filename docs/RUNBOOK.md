@@ -10,6 +10,12 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-10-11 — A once-per-file-version warning test stayed green with its guard deleted
+Symptom: the RD-5 test for `board.live_session_unparsed` ("logged once per file version") passed with the `Cache::add` guard in `SessionReader::unparsed()` removed.
+Root cause: the test read the page twice, but `SessionReader::live()` caches its whole scan for 20 s under `board.sessions`. The second read came from that cache, never re-parsed the file, so it could not log a second warning with or without the guard.
+Fix: the test calls `Cache::forget('board.sessions')` between the two reads (`tests/Feature/Board/HomeOverviewTest.php`), so the second read re-parses the file; it now goes red without the guard (RD-5, `6d6f3de`). Any test of reader-level behaviour across reads must clear `board.sessions` first.
+Log trail: count `board.live_session_unparsed` lines per `file`; with the scan cached, a second request logs no `board.sessions_read` either.
+
 ## 2026-10-11 — A browser test for the shell's appearance stub stayed green with the stub deleted
 Symptom: a test saving `flux.appearance = light` on an old page, then navigating into the shell and back, passed with the stub in `resources/views/partials/head.blade.php` removed.
 Root cause: `flux.js` captures `window.Flux.applyAppearance` once, at `alpine:init` on the first full page load, and reuses it on every `wire:navigate`. A session that starts on an old page captures the real `@fluxAppearance` function, so the stub never runs.

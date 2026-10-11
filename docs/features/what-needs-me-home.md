@@ -1,8 +1,13 @@
 # All-projects dashboard (What needs me)
-Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-3, SB-4, SB-5, SB-7, SB-8, SB-9, SB-10, RD-2
+Status: deprecated   ·   Last updated: 2026-10-11   ·   Stories: SB-3, SB-4, SB-5, SB-7, SB-8, SB-9, SB-10, RD-2, RD-5
 
 ## Overview
-`/` is the all-projects dashboard. It leads with what is waiting on the owner: three **What needs me**
+**Unrouted since RD-5.** `/` is now the [home overview](home-overview.md). This component (`Home`) stays in the
+code until RD-9 deletes it; its tests render it at the test-only `/test/old-home` from `tests/Pest.php:oldHome()`
+([ADR-050](../decisions/ADR-050-old-home-is-tested-at-a-test-only-route-until-rd-9.md)). Its three needs-me predicates
+now live in `ListNeedsMe` and are shared with the overview. The rest of this doc describes it as it was on `/`.
+
+It was the all-projects dashboard. It leads with what is waiting on the owner: three **What needs me**
 cards (Awaiting a pick, Drafts to approve, Ready to build), then the **In flight** figures, one
 **project tile** per enabled project, and the collapsible Not on main, Built and Parked drafts
 sections. One page says what to decide and where work stands. The order is an owner ruling (SB-9,
@@ -272,3 +277,4 @@ outlive a killed process until its TTL runs out, and that is expected.
 2026-09-29 — `/p/{project}` moved to `ProjectPage`; `$pinned` removed; cards extracted to `board/needs-me-cards` (SB-10, `a062331`)
 2026-09-29 — `projects()` sums per-status counts instead of `mapWithKeys`, so null and `(none)` no longer overwrite each other (SB-10, `e9a2f6e`)
 2026-10-11 — Page-load refresh moved out of `mount()` into the `RefreshStaleProjects` middleware (RD-2, `43b01ed`)
+2026-10-11 — Unrouted: `/` is the overview; the pick/approval/build predicates moved to `ListNeedsMe`; tests use `oldHome()` (RD-5, `6d6f3de`)

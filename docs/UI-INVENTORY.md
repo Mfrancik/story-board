@@ -4,7 +4,9 @@ Every reusable component. Consult BEFORE building any new UI (design-standards
 
 | Component | Type (Blade/Livewire/Filament) | Purpose | Used in |
 |---|---|---|---|
-| Home | Livewire (Board) | The all-projects dashboard (SB-9): What needs me cards, In flight, project tiles, collapsible sections; embeds StoryModal | `/` |
+| Home | Livewire (Board) | The old all-projects dashboard (SB-9): What needs me cards, In flight, tiles, sections; embeds StoryModal; unrouted since RD-5, RD-9 deletes it | tests only (`/test/old-home`) |
+| Overview | Livewire (Board) | Home overview (RD-5): count sentence, four shell/figure figures, Needs me oldest first, Live now cards with doing line and context bar; `wire:poll.30s` on Live now | `/` |
+| shell/figure | Blade | One headline figure: uppercase label, mono number ("—" when null), accent toned needs/live, one line below | Overview |
 | board/section | Blade | Boxed list with heading, count, hint; `collapsible` for closed-by-default sections | Home (collapsible sections), ProjectPage (open Not on main kinds) |
 | board/story-row | Blade | One story row opening StoryModal via `board-story`; `variant="card"` is the compact What needs me card row; shows where an off-main version lives | Home, ProjectPage, needs-me-cards |
 | board/project-card | Blade | The dashboard tile, a link to `/p/{project}`: state, story total, status bar, count chips, not-on-main, refresh age, parse errors | Home |
@@ -12,12 +14,12 @@ Every reusable component. Consult BEFORE building any new UI (design-standards
 | board/status-bar | Blade | Stacked bar of counts by raw status; out-of-vocabulary values get a danger-toned segment (grey with `variant="tag"`); `shell:` tones | project-card, ProjectPage initiative rows, ProjectStories |
 | layouts/board | Blade layout | The old board shell (until RD-9): board/sidebar beside the page, persisted Flux toasts, no auth, Flux appearance for light/dark | Home, ProjectPage, ProductionDashboard |
 | board/sidebar | Blade (class) | Project switcher: filter box (⌘K), All projects, Production (connected/shown), Mockups (awaiting-pick count), enabled projects with state dot, count and live badge; drawer below 768px; Manage slot | layouts/board |
-| layouts/shell | Blade layout | The RD-2 dark command-center shell (Home A): `.shell` on `<html>`, Geist, shell/sidebar beside the page, dark only; persisted Flux toasts behind an appearance stub (RD-4) | ProjectPreflight, StoryPage, ProjectStories, ProjectHandbook, ProjectAppMap, MockupGallery, MockupViewer, ManageProjects |
+| layouts/shell | Blade layout | The RD-2 dark command-center shell (Home A): `.shell` on `<html>`, Geist, shell/sidebar beside the page, dark only; persisted Flux toasts behind an appearance stub (RD-4) | ProjectPreflight, StoryPage, ProjectStories, ProjectHandbook, ProjectAppMap, MockupGallery, MockupViewer, ManageProjects, Overview |
 | shell/sidebar | Blade (class) | Shell nav: logo, Home, Mockups (awaiting count), enabled projects with state dot and ID prefix, current marked; Alpine drawer below 768px | layouts/shell |
 | shell/logo | Blade | Logo mark and "Story Board", linking home | shell/sidebar |
-| shell/tag | Blade | Shell outlined pill for an ID, status, initiative or count; `tone` needs/go/live/fail, `mono` for Geist Mono | StoryPage |
+| shell/tag | Blade | Shell outlined pill for an ID, status, initiative or count; `tone` needs/go/live/fail, `mono` for Geist Mono | StoryPage, Overview |
 | StoryPage | Livewire (Board) | Short story page (RD-3): tags, title, summary, Pick, one mockup frame with Today/option buttons, five folded `<details>`; `?v=` versions | `/p/{project}/s/{id}` |
-| StoryModal | Livewire (Board) | Design-A story modal at `?story=<project>/<ID>`: text, details, dependency chips, mockup thumbnails and Open in mockup gallery, versions off main; opened by `board-story`; RD-9 deletes it | Home, ProjectPage |
+| StoryModal | Livewire (Board) | Design-A story modal at `?story=<project>/<ID>`: text, details, dependency chips, mockup thumbnails and Open in mockup gallery, versions off main; opened by `board-story`; RD-9 deletes it | ProjectPage, Home (unrouted) |
 | ProjectPage | Livewire (Board) | One project's dashboard (SB-10): header with Refresh this project, scoped What needs me cards, Progress by initiative, Not on main by kind; embeds StoryModal | `/p/{project}` |
 | board/needs-me-cards | Blade | The three What needs me cards (pick, approval, build) with count, top rows and Show all calling the host's `showAll()` | Home, ProjectPage |
 | board/state | Blade | A project's snapshot state: `part="dot"` coloured dot, `part="label"` word (none for `ok`, danger for unknown states); dark-shell tones via tokens | sidebar, shell/sidebar, project-card, ProjectPage header |
@@ -31,7 +33,7 @@ Every reusable component. Consult BEFORE building any new UI (design-standards
 | board/kit-badge | Blade | How a file compares with the kit: Same as kit, Changed in this project, Missing, Project only; `dot` for a sub-tab | ProjectHandbook (standards, skills) |
 | board/handbook-empty | Blade | Empty state naming the project and the missing file, with a one-line hint slot | ProjectHandbook sections |
 | board/prose | Blade | Rendered markdown (from RenderStory::toHtml) in the reading width | ProjectHandbook sections, decision modal |
-| LiveSessions | Livewire (Board) | Live now (SB-11): a card per active Claude Code session with checkout, branch, age and linked stories; `wire:poll.30s` on the panel only | Home, ProjectPage |
+| LiveSessions | Livewire (Board) | Live now (SB-11): a card per active Claude Code session with checkout, branch, age and linked stories; `wire:poll.30s` on the panel only | ProjectPage, Home (unrouted) |
 | ProductionSettings | Livewire (Board) | A project's Production panel (SB-17), lazy under its row: read-only connection form + inline check, read-only user one-liner, preset and custom metrics with Test | ManageProjects |
 | board/metric-result | Blade | A production metric's last Test result inline: value + ms, timed out, or the refusal/error | ProductionSettings |
 | ProductionDashboard | Livewire (Board) | Production (SB-18): projects × metrics table (cards below 768px), skeleton per row until its queued read is back, Refresh per row, Not connected list | `/prod` |
