@@ -42,4 +42,4 @@ Every reusable component. Consult BEFORE building any new UI (design-standards
 | marketing/sub-nav | Blade | Marketing pages (Campaigns · Calendar · Library · Inspiration · Settings); lists a page only once its `projects.marketing.*` route exists | CampaignList, Settings, CampaignPage |
 | marketing/runway-bar | Blade | A campaign's next dates as coloured blocks (approved, to approve, open, skipped) + "N of 6 approved"; `legend` renders the key | CampaignList, CampaignPage |
 | marketing/alert-badge | Blade | One "needs you" pill on a campaign row: `tone` missed, photo, approve, open, thin or quiet; a label, not a control | CampaignList, marketing/occurrence-row |
-| marketing/occurrence-row | Blade | One timeline date: date/time, state dot and pill (approved, posted, drafts, open, skipped, missed), preview or draft thumbnails, amber edge when it needs the owner; Off schedule tag | CampaignPage |
+| marketing/occurrence-row | Blade | One timeline date: date/time, state dot and pill (approved, posted, drafts, open, skipped, missed), preview or draft thumbnails, amber edge; Off schedule tag; an open date's Fill / Drafting… / Retry (MK-8) | CampaignPage |

@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Services\Marketing\MarketingAi;
+use App\Services\Marketing\MarketingAiClient;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +17,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // MK-8: the marketing Actions ask an interface for copy, so the model behind it can change in one place.
+        $this->app->bind(MarketingAiClient::class, MarketingAi::class);
     }
 
     /**

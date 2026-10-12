@@ -3,19 +3,24 @@
 namespace App\Livewire\Marketing;
 
 use App\Actions\Marketing\BuildCampaignRunway;
+use App\Actions\Marketing\FillCampaign;
 use App\Actions\Marketing\ListCampaignOccurrences;
 use App\Actions\Marketing\SaveCampaign;
 use App\Actions\Marketing\ToggleCampaign;
 use App\Exceptions\CampaignScheduleException;
+use App\Exceptions\MarketingDraftRefusedException;
 use App\Livewire\Board\Concerns\GuardsProjectPage;
 use App\Models\MarketingAsset;
 use App\Models\MarketingCampaign;
 use App\Models\MarketingPost;
 use App\Models\Project;
+use App\Services\Marketing\DraftingStatus;
+use App\Services\Marketing\MarketingAiClient;
 use Carbon\CarbonImmutable;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
@@ -29,7 +34,11 @@ use Livewire\Component;
  *
  * The criteria inputs are deferred `wire:model`s, so typing makes no request; the "Unsaved changes" marker is Alpine,
  * comparing the inputs with `stored`. Adding or removing an own topic, Save, Discard and the switch are the only
- * round trips. Timeline rows are not controls yet: they open the studio with MK-9, and Fill arrives with MK-8.
+ * round trips. Timeline rows open the studio with MK-9.
+ *
+ * Fill (MK-8): each open row has Fill, and the Future posts header has "Fill N open dates" (the next two weeks).
+ * Both queue one DraftOccurrenceJob per date through FillCampaign; while any date is drafting the page polls, and
+ * a date whose job failed shows "Drafting failed · Retry". With no ANTHROPIC_API_KEY the buttons are disabled.
  *
  * The route's EnsureProjectIsShown refuses an unknown or disabled project before mount; mount() refuses a slug the
  * project does not have (another project's included); GuardsProjectPage re-checks the project on updates.
@@ -178,12 +187,33 @@ class CampaignPage extends Component
     }
 
     /**
+     * A row's Fill (or Retry): queue drafting for open date `$date` (Y-m-d in the campaign's timezone).
+     *
+     * Side effects: FillCampaign marks the date drafting and queues its job (logs `marketing.ai.fill.queued`); a
+     * refusal (no key, paused, not an open date) is logged there and toasted here.
+     */
+    public function fillDate(FillCampaign $fill, string $date): void
+    {
+        $this->queueFill($fill, $date);
+    }
+
+    /**
+     * "Fill N open dates": queue drafting for every open date in the next two weeks.
+     *
+     * Side effects: as fillDate(), for each date.
+     */
+    public function fillOpen(FillCampaign $fill): void
+    {
+        $this->queueFill($fill, null);
+    }
+
+    /**
      * Render the campaign page.
      *
      * Side effects: a campaign whose schedule cannot be read logs `marketing.runway.failed` (warning, source
      * campaign_page) and shows why in place of its timeline; the criteria still render so it can be fixed.
      */
-    public function render(ListCampaignOccurrences $occurrences, BuildCampaignRunway $runway): View|string
+    public function render(ListCampaignOccurrences $occurrences, BuildCampaignRunway $runway, FillCampaign $fill, DraftingStatus $drafting, MarketingAiClient $ai): View|string
     {
         if ($this->gone) {
             // Nothing of a project that is off the board may render.
@@ -197,6 +227,8 @@ class CampaignPage extends Component
         $status = null;
         $error = null;
         $past = collect();
+        $fillStates = [];
+        $openSoon = 0;
 
         if ($campaign !== null) {
             // One posts query feeds both the runway (status line) and the timeline.
@@ -204,6 +236,10 @@ class CampaignPage extends Component
             try {
                 $status = $runway->handle($campaign, $now);
                 $timeline = $occurrences->handle($campaign, $now);
+                $soon = array_map(fn (CarbonImmutable $at) => $at->toDateString(), $fill->openDates($campaign, $now));
+                $fillStates = $drafting->states($campaign->id, array_values(array_unique([...array_column($timeline, 'date'), ...$soon])));
+                // N counts what the button would queue: open dates in the window not already drafting.
+                $openSoon = count(array_filter($soon, fn (string $d) => ($fillStates[$d] ?? null) !== DraftingStatus::DRAFTING));
             } catch (CampaignScheduleException $e) {
                 Log::warning('marketing.runway.failed', ['project' => $model->name, 'campaign_id' => $campaign->id, 'reason' => $e->getMessage(), 'source' => 'campaign_page']);
                 $error = $e->getMessage();
@@ -226,6 +262,10 @@ class CampaignPage extends Component
             'status' => $status,
             'error' => $error,
             'past' => $past,
+            'fillStates' => $fillStates,
+            'openSoon' => $openSoon,
+            'isDrafting' => in_array(DraftingStatus::DRAFTING, $fillStates, true),
+            'aiReady' => $ai->isConfigured(),
             'menu' => $menu,
             // Picks whose idea was renamed or removed from the menu (ADR-065), shown so they can be unticked.
             'offMenu' => array_values(array_diff($this->ideas, $onMenu->all())),
@@ -233,6 +273,28 @@ class CampaignPage extends Component
             'sentence' => MarketingCampaign::describe($this->days, $this->time, ['ideas' => $this->ideas, 'own' => $this->own], $this->photoMode),
             'timezones' => \DateTimeZone::listIdentifiers(),
         ])->title(($campaign !== null ? $campaign->name : 'New campaign').' · '.$model->name.' · Marketing');
+    }
+
+    /**
+     * Queue Fill for `$date`, or every open date in the window when null, and say what happened.
+     */
+    private function queueFill(FillCampaign $fill, ?string $date): void
+    {
+        $campaign = $this->campaign() ?? abort(404);
+        try {
+            $queued = $fill->handle($campaign, CarbonImmutable::now(), $date);
+        } catch (MarketingDraftRefusedException $e) {
+            Flux::toast(variant: 'danger', text: $e->getMessage());
+
+            return;
+        } catch (CampaignScheduleException $e) {
+            Log::warning('marketing.runway.failed', ['project' => $this->project, 'campaign_id' => $campaign->id, 'reason' => $e->getMessage(), 'source' => 'fill']);
+            Flux::toast(variant: 'danger', text: 'This campaign\'s dates can\'t be worked out. Fix its days, time or timezone first.');
+
+            return;
+        }
+
+        Flux::toast(text: $queued === [] ? 'Those dates are already drafting' : 'Drafting '.count($queued).' '.Str::plural('date', count($queued)));
     }
 
     /**

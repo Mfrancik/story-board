@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -22,9 +23,11 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $scheduled_for
  * @property string $status
  * @property string $caption
+ * @property int $version 1 as drafted, +1 per revision (MK-8); earlier versions are in `versions`
  * @property int|null $asset_id
  * @property string $source
  * @property array<string, mixed>|null $generation_meta
+ * @property list<array{code: string, match: string}>|null $lint copy-rules warnings on the current caption (MK-8)
  * @property Carbon|null $posted_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -53,7 +56,16 @@ class MarketingPost extends Model
     public const STATUSES = [self::STATUS_DRAFT, self::STATUS_APPROVED, self::STATUS_POSTED, self::STATUS_SKIPPED, self::STATUS_DISCARDED];
 
     /** @var list<string> */
-    protected $fillable = ['project_id', 'campaign_id', 'scheduled_for', 'status', 'caption', 'asset_id', 'source', 'generation_meta', 'posted_at'];
+    protected $fillable = ['project_id', 'campaign_id', 'scheduled_for', 'status', 'caption', 'version', 'asset_id', 'source', 'generation_meta', 'lint', 'posted_at'];
+
+    /**
+     * A new post is version 1, so an unsaved or just-created post reads its version without a re-fetch.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'version' => 1,
+    ];
 
     /**
      * @return array<string, string>
@@ -64,6 +76,8 @@ class MarketingPost extends Model
             'scheduled_for' => 'datetime',
             'posted_at' => 'datetime',
             'generation_meta' => 'array',
+            'lint' => 'array',
+            'version' => 'integer',
         ];
     }
 
@@ -95,6 +109,26 @@ class MarketingPost extends Model
     public function asset(): BelongsTo
     {
         return $this->belongsTo(MarketingAsset::class, 'asset_id');
+    }
+
+    /**
+     * The post's earlier versions, oldest first (MK-8). The post row itself is always the current version.
+     *
+     * @return HasMany<MarketingPostVersion, $this>
+     */
+    public function versions(): HasMany
+    {
+        return $this->hasMany(MarketingPostVersion::class, 'post_id')->orderBy('version');
+    }
+
+    /**
+     * The owner's likes, dislikes and written feedback on this post (MK-8).
+     *
+     * @return HasMany<MarketingFeedback, $this>
+     */
+    public function feedback(): HasMany
+    {
+        return $this->hasMany(MarketingFeedback::class, 'post_id');
     }
 
     /**

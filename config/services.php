@@ -14,6 +14,12 @@ return [
     |
     */
 
+    // MK-8: Claude for marketing drafts. No key = Fill is disabled. The model defaults to the current Sonnet.
+    'anthropic' => [
+        'key' => env('ANTHROPIC_API_KEY'),
+        'model' => env('MARKETING_AI_MODEL', 'claude-sonnet-5-5'),
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],

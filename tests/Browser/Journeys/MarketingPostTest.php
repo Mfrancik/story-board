@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\RefreshProjectJob;
 use App\Models\MarketingCampaign;
 use App\Models\MarketingPost;
 use App\Models\Project;
@@ -9,12 +10,13 @@ use Illuminate\Support\Facades\Queue;
 /**
  * Journey marketing-post (docs/journeys/marketing-post.md): from a recurring campaign to approved posts, ready to
  * publish. Created by MK-1 with step 1; each later MK story adds its step (MK-2: step 2, the brand in Settings; MK-7:
- * step 3, the campaign page). Claude is faked once AI steps arrive
- * (MK-8). `JOURNEY_SHOTS=1` saves each step to `storage/app/journey-shots/marketing-post/`.
+ * step 3, the campaign page; MK-8: step 4, Fill). Claude is faked with Http::fake (fakeClaude()), and only
+ * RefreshProjectJob is faked on the queue, so Fill's DraftOccurrenceJob runs inline on the sync queue. `JOURNEY_SHOTS=1` saves each step to `storage/app/journey-shots/marketing-post/`.
  */
 beforeEach(function () {
     Carbon::setTestNow('2026-10-12 11:00');
-    Queue::fake();
+    Queue::fake([RefreshProjectJob::class]);
+    fakeClaude();
     $coins = Project::factory()->create(['name' => 'coins', 'indexed_at' => now(), 'refresh_attempted_at' => now(), 'state' => Project::STATE_OK]);
     $tvt = MarketingCampaign::factory()->for($coins)->named('TrueView Tuesday')->on([2], '19:00')->create();
     MarketingPost::factory()->forCampaign($tvt, '2026-10-13 19:00')->approved()->create();
@@ -62,4 +64,18 @@ it('walks the marketing-post journey', function () {
         ->assertMissing('[data-unsaved]')
         ->assertNoJavaScriptErrors();
     expect(MarketingCampaign::where('slug', 'trueview-tuesday')->firstOrFail()->topics['own'])->toBe([['text' => 'Album toning', 'detail' => null]]);
+
+    // Step 4 (MK-8): Fill the first open TrueView Tuesday date; (fake) Claude drafts 3 posts and the date turns to
+    // "Needs your approval · 3 drafts", each needing the photo the owner adds (photo per post).
+    $page->assertAttribute('[data-occurrence="2026-11-03"]', 'data-occurrence-state', 'open')
+        ->click('[data-fill="2026-11-03"]')
+        ->assertAttribute('[data-occurrence="2026-11-03"]', 'data-occurrence-state', 'review');
+    journeyStep('marketing-post', 'fill a date', '/p/coins/marketing/campaigns/trueview-tuesday', $page)
+        ->assertSeeIn('[data-occurrence="2026-11-03"]', '3 drafts')
+        ->assertSeeIn('[data-occurrence="2026-11-03"]', 'Needs a photo')
+        ->assertNoJavaScriptErrors();
+    $drafts = MarketingPost::whereDate('scheduled_for', '2026-11-03')->get();
+    expect($drafts)->toHaveCount(3)
+        ->and($drafts->pluck('source')->unique()->all())->toBe(['ai'])
+        ->and($drafts->every(fn (MarketingPost $p) => $p->generation_meta['model'] === 'claude-sonnet-5-5'))->toBeTrue();
 });

@@ -72,11 +72,26 @@
     <div class="grid min-w-0 grid-cols-1 items-start gap-4 lg:grid-cols-12">
         @if ($campaign)
             <div class="flex min-w-0 flex-col gap-4 lg:col-span-7">
-                <section data-future-posts aria-labelledby="fp-h" class="{{ $card }}">
-                    <div class="flex flex-wrap items-baseline gap-x-2">
+                {{-- MK-8: polls while any date is drafting on the queue, so drafts (or a failure) appear without a reload. --}}
+                <section data-future-posts aria-labelledby="fp-h" class="{{ $card }}" @if ($isDrafting) wire:poll.2s data-polling @endif>
+                    <div class="flex flex-wrap items-center gap-x-2 gap-y-2">
                         <h3 id="fp-h" class="text-base font-semibold">Future posts</h3>
                         <span class="text-xs text-ink-faint">next {{ \App\Actions\Marketing\ListCampaignOccurrences::COUNT }} dates</span>
+                        @if ($campaign->is_enabled && ! $error && ($openSoon > 0 || $isDrafting))
+                            <button type="button" wire:click="fillOpen" wire:loading.attr="disabled" wire:target="fillOpen" data-fill-open
+                                @disabled(! $aiReady || $openSoon === 0) title="{{ $aiReady ? 'Draft 3 posts for each open date in the next 2 weeks' : 'Add ANTHROPIC_API_KEY to .env' }}"
+                                class="{{ $primary }} ml-auto min-h-9 gap-2 px-3">
+                                @if ($openSoon === 0)
+                                    <span class="size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true"></span>Drafting…
+                                @else
+                                    Fill {{ $openSoon }} open {{ Str::plural('date', $openSoon) }}
+                                @endif
+                            </button>
+                        @endif
                     </div>
+                    @if ($campaign->is_enabled && ! $aiReady)
+                        <p data-ai-missing class="text-sm text-ink-muted">Fill is off. Add ANTHROPIC_API_KEY to .env to draft posts with AI.</p>
+                    @endif
                     @unless ($campaign->is_enabled)
                         <p class="text-sm text-ink-muted">Paused: these dates stay empty until you turn it back on.</p>
                     @endunless
@@ -87,7 +102,8 @@
                     @else
                         <ol role="list" class="-mx-2 flex flex-col">
                             @foreach ($timeline as $occurrence)
-                                <x-marketing.occurrence-row :occurrence="$occurrence" :project="$model->name" :photo-mode="$campaign->photo_mode" wire:key="occ-{{ $occurrence['date'] }}" />
+                                <x-marketing.occurrence-row :occurrence="$occurrence" :project="$model->name" :photo-mode="$campaign->photo_mode"
+                                    :fill-state="$fillStates[$occurrence['date']] ?? null" :can-fill="$campaign->is_enabled" :ai-ready="$aiReady" wire:key="occ-{{ $occurrence['date'] }}" />
                             @endforeach
                         </ol>
                     @endif

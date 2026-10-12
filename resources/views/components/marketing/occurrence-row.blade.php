@@ -4,8 +4,10 @@
      the amber edge (red for missed). `occurrence` is one ListCampaignOccurrences row; `project` the project's name,
      for photo URLs. A date the schedule no longer lands on (the campaign moved days) is tagged "Off schedule".
 
-     Not a control yet: opening a date in the post studio is MK-9, and Fill is MK-8. --}}
-@props(['occurrence', 'project', 'photoMode' => null])
+     Fill (MK-8): an open row has a Fill button (wire:click `fillDate(date)` on the campaign page), "Drafting…" while its
+     job runs (`fillState` drafting) and "Drafting failed · Retry" when it failed. `canFill` false (a paused campaign)
+     hides the button; `aiReady` false (no API key) disables it. Opening a date in the post studio is MK-9. --}}
+@props(['occurrence', 'project', 'photoMode' => null, 'fillState' => null, 'canFill' => false, 'aiReady' => false])
 @php
     $o = $occurrence;
     $state = $o['state'];
@@ -74,12 +76,33 @@
             </span>
             <span class="truncate text-sm text-ink-soft">
                 @switch ($state)
-                    @case('open') No drafts yet @break
+                    @case('open') {{ $fillState === 'drafting' ? 'Writing 3 drafts…' : 'No drafts yet' }} @break
                     @case('skipped') Skipped. Nothing posts. @break
                     @case('review') {{ Str::before((string) $drafts->first()?->caption, "\n") }} @break
                     @default {{ Str::before((string) $shown?->caption, "\n") }}
                 @endswitch
             </span>
         </div>
+
+        @if ($state === 'open' && $canFill)
+            <div class="flex shrink-0 items-center gap-2">
+                @if ($fillState === 'failed')
+                    <span data-fill-failed="{{ $o['date'] }}" class="text-xs whitespace-nowrap text-fail">Drafting failed ·</span>
+                @endif
+                <button type="button" wire:click="fillDate('{{ $o['date'] }}')" wire:loading.attr="disabled" wire:target="fillDate('{{ $o['date'] }}')" data-fill="{{ $o['date'] }}"
+                    @disabled(! $aiReady || $fillState === 'drafting')
+                    @if (! $aiReady) title="Add ANTHROPIC_API_KEY to .env" @endif
+                    aria-label="{{ $fillState === 'failed' ? 'Retry drafting' : 'Fill' }} {{ $o['at']->format('D j M') }}"
+                    class="inline-flex min-h-9 items-center justify-center gap-2 rounded-lg border border-rim px-3 text-sm font-medium whitespace-nowrap hover:bg-raised disabled:opacity-60 outline-needs focus-visible:outline-2 focus-visible:outline-offset-2">
+                    @if ($fillState === 'drafting')
+                        <span class="size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true"></span>Drafting…
+                    @elseif ($fillState === 'failed')
+                        Retry
+                    @else
+                        Fill
+                    @endif
+                </button>
+            </div>
+        @endif
     </div>
 </li>

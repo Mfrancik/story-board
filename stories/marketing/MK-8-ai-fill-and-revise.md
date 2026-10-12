@@ -1,5 +1,5 @@
 # MK-8 — AI Fill and Revise: drafts per date, rebuild from feedback
-Status: approved        Journey: marketing-post (step 4 of 7)
+Status: built        Journey: marketing-post (step 4 of 7)
 Source: owner 2026-10-12: "we can have them generated, but anything that gets posted i manually pick", "a box i can
 respond with changes where AI rebuilds or changes things up for me", like/dislike to "learn my style… brand design,
 fonts, etc. all stay the same"

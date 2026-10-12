@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\Support\JourneyShots;
 use Tests\TestCase;
 
@@ -63,4 +64,38 @@ expect()->extend('toBeOne', function () {
 function journeyStep(string $journey, string $step, string $route, ?object $page = null): object
 {
     return JourneyShots::step($journey, $step, $route, $page);
+}
+
+/**
+ * A Messages API reply (MK-8) whose one text block is `$payload` as JSON, the shape MarketingAi reads: what a fake
+ * Claude returns. Usage is fixed so cost tests know the numbers.
+ *
+ * @param  array<string, mixed>  $payload
+ * @return array<string, mixed>
+ */
+function claudeReply(array $payload, string $stopReason = 'end_turn'): array
+{
+    return [
+        'id' => 'msg_test', 'type' => 'message', 'role' => 'assistant', 'model' => 'claude-sonnet-5-5',
+        'content' => [['type' => 'text', 'text' => json_encode($payload)]],
+        'stop_reason' => $stopReason,
+        'usage' => ['input_tokens' => 1000, 'output_tokens' => 200, 'cache_read_input_tokens' => 0, 'cache_creation_input_tokens' => 400],
+    ];
+}
+
+/**
+ * Fake Claude (MK-8): every Messages API call returns `$payload` (default: three drafts with no photo). Sets a test
+ * API key so the client counts as configured.
+ *
+ * @param  array<string, mixed>|null  $payload
+ */
+function fakeClaude(?array $payload = null): void
+{
+    config(['services.anthropic.key' => 'test-key-not-real', 'services.anthropic.model' => 'claude-sonnet-5-5']);
+    $payload ??= ['drafts' => [
+        ['caption' => "Rainbow toning on a Morgan.\nShow us your best toner.", 'asset_id' => null],
+        ['caption' => 'Album toning, straight from the paper.', 'asset_id' => null],
+        ['caption' => 'Rate this rainbow from one to ten.', 'asset_id' => null],
+    ]];
+    Http::fake(['api.anthropic.com/*' => Http::response(claudeReply($payload))]);
 }
