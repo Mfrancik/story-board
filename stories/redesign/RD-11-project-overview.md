@@ -1,5 +1,5 @@
 # RD-11 — Project overview: tiles from existing data
-Status: draft          Journey: none
+Status: approved        Journey: none
 Source: owner 2026-10-11: *"id like a better dashboard when i go into a specific project. it should show me last
 edits, project summary, metrics if appropriate. recent updates. can you give me a few mockups to choose from when i
 go into /p/thisproject"* + F-16 (manual Refresh button, folded in at /story).
