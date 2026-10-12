@@ -273,6 +273,18 @@ ui_inventory_gate() (
       echo "$c  <not in UI-INVENTORY.md>"; rc=1
     fi
   done
+
+  # Reverse direction (L-12): a row whose component was deleted. RD-9 deleted 14
+  # components and every row stayed, marked in use, until a full audit read them —
+  # a removal leaves references behind unless something checks the far end.
+  have=$(find app resources/views -type f \( -name '*.blade.php' -o -name '*.php' \) 2>/dev/null \
+           | sed -E 's#.*/##; s/\.blade\.php$//; s/\.php$//' | sort -u)
+  while IFS= read -r row; do
+    seg="${row##*/}"
+    if ! printf '%s\n' "$have" | grep -qxF -- "$seg"; then
+      echo "UI-INVENTORY.md row \"$row\"  <no such component file — remove the row>"; rc=1
+    fi
+  done < <(awk -F'|' '/^\|/ { gsub(/^ +| +$/, "", $2); gsub(/`/, "", $2); if ($2 != "" && $2 != "Component" && $2 !~ /^:?-+:?$/) print $2 }' docs/UI-INVENTORY.md)
   exit $rc
 )
 

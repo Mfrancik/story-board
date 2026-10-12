@@ -74,3 +74,21 @@ Symptom: the WARN-1 browser test for the shell's appearance stub passed with the
 Root cause: a guard's test was accepted on green alone, never shown to fail without the guard.
 Enforced at: rule → codebase-standards.md §Testing, appended to L-5's bullet ("prove each guard's test by deleting the guard").
 Scope: PROMOTE TO CENTRAL
+
+## L-12 — 2026-10-11 — A removal leaves references to what it removed
+Symptom: four times this phase: a RUNBOOK pin to a deleted test (RD-3), a breadcrumb to the old dashboard (RD-4), 14 UI-INVENTORY rows for deleted components and three error states pointing at a deleted Refresh button (RD-9).
+Root cause: checks ran one direction only (component → inventory), so nothing looked at the far end of a deletion.
+Enforced at: check → preflight.sh `UI inventory current` now also FAILs on a row with no component file (proven red on the pre-RD-9 inventory: 13 rows); RetireOldPagesTest scans views for the dead copy; documenter (~/.claude/agents/documenter.md §Docs index) removes rows for `D` files.
+Scope: PROMOTE TO CENTRAL
+
+## L-13 — 2026-10-11 — A deletion dropped something it was meant to keep
+Symptom: RD-9's build dropped the only session-privacy test (SB-11) despite an owner "port, then delete" ruling, and removed the only manual Refresh button; RD-2's shell had already dropped the sidebar's Production item and badges unnoticed.
+Root cause: deletions were checked for what goes, never for what the deleted files were the last holder of.
+Enforced at: rule → codebase-standards.md §Testing (sort each deleted `it()`, port kept-code tests first with an old → new mapping; list a retired page's user actions and their successors); /story template §Out of scope (~/.claude/skills/story). No audit bullet: retirements are rare, and the audit's cost recurs on every run.
+Scope: PROMOTE TO CENTRAL
+
+## L-14 — 2026-10-11 — A story went stale between writing and building
+Symptom: RD-9, written 2026-10-10, listed for deletion StoryPage, the mockup file route, sparkline and metric-result, which RD-3 and RD-7 had since kept or rewritten in place; a pre-build grep caught it. Same batch: `artisan test --parallel tests/Feature tests/Unit` failed a third time because /build prescribed it, and stacked serial stories were cut before the previous docs landed a third time.
+Root cause: /build trusted a story's facts and its own recipes without re-deriving them (L-6's class, at build time).
+Enforced at: rule → ~/.claude/skills/build/SKILL.md Phase 0 step 4 (re-grep a story written before its deps were built), the non-browser test command (`--testsuite=Feature,Unit`), and loop step 1 (cut a dependent serial story from the previous docs commit).
+Scope: PROMOTE TO CENTRAL

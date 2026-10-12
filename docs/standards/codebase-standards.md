@@ -83,6 +83,15 @@ standards, story files).
   calling the story done; the happy path is not the whole contract.
   Prove each guard's test by deleting the guard: it must go red. A test that
   stays green without its guard pins nothing (RD-4's appearance-stub test did).
+- **Before deleting a test file, sort every `it()` in it** as *covers only deleted
+  code* or *covers kept code*. Port each kept-code test to a test of the kept
+  action, command or route first, and put the old → new mapping in the handoff.
+  A deletion story must not lower coverage of anything it keeps (L-13: RD-9's
+  build dropped the only session-privacy check this way despite a port order).
+- **Before retiring a page, list every action a user can take on it.** Each needs
+  a successor or the owner's explicit OK to drop it, and no surviving copy may
+  point at it (L-13: RD-9 removed the only manual Refresh button and left three
+  error states telling the owner to use it).
 - Factories for all models; states for meaningful variants (`suspended()`).
 - A skipped test needs a comment with a story ID and a reason.
 - **Journey tests** live in `tests/Browser/Journeys/` using Pest's browser
