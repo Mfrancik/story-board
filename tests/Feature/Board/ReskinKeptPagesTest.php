@@ -83,15 +83,15 @@ it('Given the Stories page, then no story modal is on the page, and each row lin
     }
 });
 
-// RD-11 put Overview first; the old Dashboard tab stays gone.
-it('Given the project tabs, then they are Overview, Stories, Preflight, Handbook and Map, with no Dashboard tab', function (string $url, string $current) {
+// RD-11 put Overview first; MK-1 added Marketing last; the old Dashboard tab stays gone.
+it('Given the project tabs, then they are Overview, Stories, Preflight, Handbook, Map and Marketing, with no Dashboard tab', function (string $url, string $current) {
     $html = $this->get($url)->assertOk()->getContent();
 
     preg_match('/<nav\b[^>]*data-project-tabs.*?<\/nav>/s', $html, $nav);
     preg_match_all('/data-project-tab="([^"]+)"[^>]*>([^<]+)</', $nav[0] ?? '', $tabs);
 
-    expect($tabs[1])->toBe(['overview', 'stories', 'preflight', 'handbook', 'map'])
-        ->and(array_map('trim', $tabs[2]))->toBe(['Overview', 'Stories', 'Preflight', 'Handbook', 'Map'])
+    expect($tabs[1])->toBe(['overview', 'stories', 'preflight', 'handbook', 'map', 'marketing'])
+        ->and(array_map('trim', $tabs[2]))->toBe(['Overview', 'Stories', 'Preflight', 'Handbook', 'Map', 'Marketing'])
         ->and($nav[0])->not->toContain('Dashboard')
         ->and($nav[0])->toMatch('/data-project-tab="'.$current.'"[^>]*aria-current="page"/');
 })->with([

@@ -100,6 +100,26 @@ class Project extends Model
     }
 
     /**
+     * Its recurring marketing campaigns (MK-1).
+     *
+     * @return HasMany<MarketingCampaign, $this>
+     */
+    public function marketingCampaigns(): HasMany
+    {
+        return $this->hasMany(MarketingCampaign::class);
+    }
+
+    /**
+     * Its marketing posts, from campaigns and one-offs (MK-1).
+     *
+     * @return HasMany<MarketingPost, $this>
+     */
+    public function marketingPosts(): HasMany
+    {
+        return $this->hasMany(MarketingPost::class);
+    }
+
+    /**
      * Only projects that take part in refreshes and on the board.
      *
      * @param  Builder<Project>  $query

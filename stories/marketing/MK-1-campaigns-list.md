@@ -1,5 +1,5 @@
 # MK-1 — Marketing tab: campaigns list with approval runway and alerts
-Status: approved        Journey: marketing-post (step 1 of 7)
+Status: built           Journey: marketing-post (step 1 of 7)
 Source: owner brain dump 2026-10-12 + prototype rounds 1–3 (stories/marketing/README.md)
 
 ## Story

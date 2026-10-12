@@ -15,6 +15,7 @@ use App\Livewire\Board\ProjectOverview;
 use App\Livewire\Board\ProjectPreflight;
 use App\Livewire\Board\ProjectStories;
 use App\Livewire\Board\StoryPage;
+use App\Livewire\Marketing\CampaignList;
 use App\Models\Story;
 use Illuminate\Support\Facades\Route;
 
@@ -58,6 +59,12 @@ Route::middleware(RefreshStaleProjects::class)->group(function () {
     Route::livewire('/p/{project:name}/map', ProjectAppMap::class)
         ->middleware(EnsureProjectIsShown::class)
         ->name('projects.map');
+
+    // One project's Marketing tab (MK-1): its campaigns with how far out each is approved and what needs the owner.
+    // Calendar, Library, Inspiration and Settings join under `projects.marketing.*` as their stories land.
+    Route::livewire('/p/{project:name}/marketing', CampaignList::class)
+        ->middleware(EnsureProjectIsShown::class)
+        ->name('projects.marketing');
 
     // One story above its mockups (SB-4). Only a well-formed story ID reaches the component.
     Route::livewire('/p/{project:name}/s/{storyId}', StoryPage::class)

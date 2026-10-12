@@ -2,8 +2,9 @@
      name with its state, ref and snapshot SHA, then the project tabs with `current` marked. The slot adds to the ref
      line (" · 946 stories in 57 initiatives"). RD-4: every page that uses it is in the dark shell, so it carries the
      shell tokens only and has no light/dark toggle. RD-11: the breadcrumb's project link opens the project's Overview,
-     as the shell sidebar's does. `actions` is an optional slot on the right of the name (the Overview's Refresh). --}}
-@props(['model', 'page', 'current', 'actions' => null])
+     as the shell sidebar's does. `actions` is an optional slot on the right of the name (the Overview's Refresh).
+     `marketingCount` (MK-1) hands the Marketing tab a count the page already has. --}}
+@props(['model', 'page', 'current', 'actions' => null, 'marketingCount' => null])
 <header class="flex min-w-0 flex-wrap items-start gap-x-4 gap-y-3">
 <div class="mr-auto min-w-0">
     <p class="text-xs text-ink-muted">
@@ -25,4 +26,4 @@
 @endif
 </header>
 
-<x-board.project-tabs :project="$model->name" :current="$current" />
+<x-board.project-tabs :project="$model->name" :current="$current" :marketing-count="$marketingCount" />

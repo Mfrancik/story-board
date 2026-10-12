@@ -1,21 +1,26 @@
 {{-- The page tabs under a project's header (SB-14, design A; RD-4 order, RD-11 puts Overview first): Overview (RD-11) | Stories (SB-15) | Preflight (SB-16) | Handbook |
-     Map (SB-24). Real links, one URL each, so a tab can be opened in a new window and Back works as expected. The row
+     Map (SB-24) | Marketing (MK-1). Real links, one URL each, so a tab can be opened in a new window and Back works as expected. The row
      scrolls sideways if it ever outgrows a phone; pb-px keeps the active tab's -mb-px underline inside the scroll box
-     instead of adding a 1px vertical scroll. RD-4 dropped the Dashboard tab and RD-9 deleted the old dashboard, so every
+     instead of adding a 1px vertical scroll; `relative` keeps the Marketing count's sr-only text inside that box too. RD-4 dropped the Dashboard tab and RD-9 deleted the old dashboard, so every
      page that shows these tabs marks one current. Inside the dark shell the tones come from the shell tokens
-     (`shell:`); the light/dark ones served that old dashboard's light layout. --}}
-@props(['project', 'current'])
+     (`shell:`); the light/dark ones served that old dashboard's light layout. MK-1 adds Marketing last, with a count of
+     the posts that need the owner's approval (CountPostsToApprove); the Marketing page passes the count it already has
+     as `marketingCount`, so it is not worked out twice. --}}
+@use('App\Actions\Marketing\CountPostsToApprove')
+@props(['project', 'current', 'marketingCount' => null])
 @php
     $tabs = ['overview' => ['Overview', route('projects.overview', $project)], 'stories' => ['Stories', route('projects.stories', $project)], 'preflight' => ['Preflight', route('projects.preflight', $project)],
-        'handbook' => ['Handbook', route('projects.handbook', $project)], 'map' => ['Map', route('projects.map', $project)]];
+        'handbook' => ['Handbook', route('projects.handbook', $project)], 'map' => ['Map', route('projects.map', $project)],
+        'marketing' => ['Marketing', route('projects.marketing', $project)]];
+    $marketingCount ??= app(CountPostsToApprove::class)->handle($project, now());
 @endphp
-<nav aria-label="Project pages" data-project-tabs {{ $attributes->class('mt-5 flex gap-4 sm:gap-6 overflow-x-auto pb-px border-b border-zinc-200 text-sm dark:border-zinc-800 shell:border-hairline') }}>
+<nav aria-label="Project pages" data-project-tabs {{ $attributes->class('relative mt-5 flex gap-4 sm:gap-6 overflow-x-auto pb-px border-b border-zinc-200 text-sm dark:border-zinc-800 shell:border-hairline') }}>
     @foreach ($tabs as $key => [$label, $url])
         <a href="{{ $url }}" wire:navigate data-project-tab="{{ $key }}" @if ($key === $current) aria-current="page" @endif
             @class([
                 '-mb-px shrink-0 border-b-2 pb-3',
                 'border-zinc-800 font-medium dark:border-white shell:border-ink shell:text-ink' => $key === $current,
                 'border-transparent text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 shell:text-ink-muted shell:hover:text-ink' => $key !== $current,
-            ])>{{ $label }}</a>
+            ])>{{ $label }}@if ($key === 'marketing' && $marketingCount > 0)<span data-marketing-count title="Posts that need your approval" class="ml-1.5 inline-block rounded-full bg-needs px-1.5 align-middle font-mono text-xs leading-4 font-semibold text-needs-ink">{{ $marketingCount }}</span><span class="sr-only"> {{ $marketingCount === 1 ? 'post needs' : 'posts need' }} your approval</span>@endif</a>
     @endforeach
 </nav>
