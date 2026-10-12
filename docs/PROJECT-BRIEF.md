@@ -1,5 +1,5 @@
 # Project brief — story-board
-Last refreshed: 2026-10-12 (RD-11)
+Last refreshed: 2026-10-12 (MK-1)
 
 ## What it is, and for whom
 A localhost Laravel app for one owner, with no auth (removed in RD-1). It reads the `stories/` folder of
@@ -16,6 +16,8 @@ It also shows:
   Mac) from per-run JSON records beside them, once RD-10 writes them.
 - A clickable map of each project's journeys, from its journey docs, stories and mockups, with screenshots from
   the project's own journey tests (`journeyStep()`).
+- A per-project **Marketing** area (MK initiative, being built): recurring campaigns and their posts, stored in the
+  board's own database. MK-1 lists the campaigns with how far out each is approved and what needs the owner.
 
 ## Domain model
 - **Project**: a registered checkout (`name`, `path`, `ref`, `is_enabled`). Off hides it everywhere and stops its
@@ -35,24 +37,30 @@ It also shows:
 - **Gateways**: `GitReader` runs every git read, including `remotes()` and one fixed `log` form (RD-7). `ProductionReader` opens every production
   connection. `StoryPickWriter` makes every write to a project, and only writes; both pick surfaces reach it
   through `PickMockup` (RD-3).
+- **MarketingCampaign / MarketingPost** (MK-1): a project's weekly campaign (days, wall-clock time, timezone, on/off,
+  photo mode) and its posts (`draft | approved | posted | skipped | discarded`, by `scheduled_for`). "Missed" is
+  derived, never stored. Posts belong to a campaign date by local day.
 - **Shared rules** (pure, RD-1): `StoryStatusOrder` holds the status order, the open statuses and the
   initiative rollup. `MockupGateParser` reads a story's mockup gate.
 
 ## Features
-22 entries: 17 active, 5 retired by RD-9 (old dashboard, old sidebar, story modal, old `/p/{project}`, `/prod`; their docs
+23 entries: 18 active, 5 retired by RD-9 (old dashboard, old sidebar, story modal, old `/p/{project}`, `/prod`; their docs
 stay as history, and [retired-pages.md](features/retired-pages.md) maps what replaced each). Every page is in the dark
 shell. `/` is the home overview (RD-5) with a project filter (RD-6), project tiles and Shipped this week (RD-7); the
 Preflight page and tiles say where each run ran (RD-8). `/p/{project}` is the project overview (RD-11): a tile grid,
-Overview first in the project tabs, the sidebar's landing page, and Refresh this project. Each one's route, summary and doc: [INDEX.md](INDEX.md); the
+Overview first in the project tabs, the sidebar's landing page, and Refresh this project. `/p/{project}/marketing`
+is the Marketing tab's campaigns list (MK-1), last in the tabs with a count of posts to approve. Each one's route, summary and doc: [INDEX.md](INDEX.md); the
 stories behind it: its doc's header line.
 
 ## Journeys
-None yet. Every SB and RD story so far is `Journey: none`.
+- [marketing-post](journeys/marketing-post.md): campaign to approved posts. Step 1 (MK-1) is built, and steps 2–7
+  (MK-2, 7, 8, 9, 10, 18) are approved. Every SB and RD story is `Journey: none`.
 
 ## Stories
 - **built**: SB-2–5, SB-7–12, SB-14–19, SB-21–25 · RD-1 clean foundation · RD-2 dark shell and sidebar ·
   RD-3 short story page · RD-4 re-skin kept pages · RD-5 home overview · RD-6 home project filter · RD-7 project tiles and Shipped · RD-8 preflight "Ran on" · RD-9 retire old pages · RD-11 project overview
-- **approved**: RD-12 project git activity tiles
+- **built (marketing)**: MK-1 campaigns list and marketing schema
+- **approved**: RD-12 project git activity tiles · MK-2, MK-7 (phase 1, next) · MK-8, MK-9, MK-10, MK-18
 - **draft**: SB-20 preflight run errors · RD-10 preflight run record (parked)
 - **draft (parked)**: SB-6 the board on an always-live domain
 - **cut**: SB-13 pick a mockup (SB-21's pick covers it)
@@ -60,29 +68,17 @@ None yet. Every SB and RD story so far is `Journey: none`.
 SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this repo.
 
 ## Key decisions
-- All git goes through `GitReader`, an allow-list with guards; untracked files are read only at refresh → ADR-004, ADR-012
-- Snapshots are replaced wholesale and go stale on fetch failure; refresh runs on the queue → ADR-005, ADR-006
-- Story text is read from git on demand → ADR-007. Mockups are served from git in a CSP sandbox, and an unparsed choice is quoted → ADR-008, ADR-009
-- Off-main work is what a branch changed since its merge-base, parsed by the kit's parser → ADR-010, ADR-011
-- Unknown or disabled projects are refused before route binding, and pages re-check on update → ADR-013
-- Retired with their pages in RD-9 (kept as history): the old project page, dashboard and story modal → ADR-015–020
-- Manage projects re-navigates after writes, and Add re-runs `RegisterProject`'s checks → ADR-021, ADR-022
-- Live sessions read transcripts defensively, and cards link untracked stories only from their own checkout → ADR-023, ADR-034
-- The home overview: Needs me lists each story once (a pick outranks draft/ready) and In flight keeps the owner's definition; Live cards summarise the latest tool call and usage; panels fail alone; the old Home was tested at a test-only route until RD-9 → ADR-047–050. One `ProjectFilter` value, from `?projects=`, is handed to every home panel → [ADR-051](decisions/ADR-051-one-project-filter-value-for-every-home-panel.md). `git log` is admitted in one fixed form; Shipped is build commits cached per snapshot; tiles reuse existing rules and stored data only → ADR-052–054
-- Handbook sections load lazily and stay client-side → ADR-024
-- The Stories page is one query over the shared rollup, and it filters with CSS → ADR-025, ADR-026
-- Preflight history reads the cost CSVs by folder name, renders on the server and recomputes in Alpine → ADR-027, ADR-028. Where a run ran is a per-run JSON record (schema 1) matched to its CSV row by branch within 10 min, nearest first → [ADR-055](decisions/ADR-055-preflight-run-record-format.md)
-- Production is read only through `ProductionReader`, and the read outcome is cached. The snapshot runs in-process → ADR-029–031
-- The board writes narrowly: one pick, one file, one local commit → [ADR-032](decisions/ADR-032-the-board-writes-narrowly-one-pick-one-file-one-commit.md)
-- The app map is generated server-side, and journey shots are a test helper with a pinned manifest → ADR-033, ADR-035
-- "New page" is read statically from route files → ADR-036
-- The auth starter kit and the `laravel/fortify` package are removed, not disabled → [ADR-037](decisions/ADR-037-starter-kit-and-fortify-package-removed.md)
-- Kept logic lives in pure shared classes: `StoryStatusOrder`, `MockupGateParser`, `pick()` returning its branch, and a guard trait with hooks → [ADR-038](decisions/ADR-038-kept-board-logic-moves-into-pure-shared-classes.md)
-- The dark shell: Geist from fontsource, styling scoped by `.shell` and a `shell:` variant → ADR-039, ADR-040. Kept pages moved in, sharing primitives by variant, Flux toasts behind an appearance stub, no links to the old dashboard → ADR-044–046
-- Refresh on load is one middleware on the page-route group, not per-page `mount()` → [ADR-041](decisions/ADR-041-refresh-on-load-is-one-middleware-on-the-page-routes.md)
-- One pick action, `PickMockup`, serves the viewer and the story page; the short story page replaced the long one in place, trimmed to the approved mockup → [ADR-042](decisions/ADR-042-one-pick-action-shared-by-story-page-and-viewer.md), [ADR-043](decisions/ADR-043-short-story-page-replaces-the-long-one-in-place.md)
-- RD-9: the mockup file route stays for `?v` versions; coverage is ported before a test goes; `/?project=` is ignored → ADR-056–058
-- Project overview (RD-11): `ReadPreflightRuns` keeps the verdict and exposes `pairs()`; "Refreshing…" ends when the refresh-attempt stamp moves, not by the clock; tiles reuse home's readers and stored data, never a production connection → ADR-059–061
+- Git: all through `GitReader` (allow-list, untracked read only at refresh); snapshots replaced wholesale, stale on fetch failure, refreshed on the queue; story text read on demand → ADR-004–007, ADR-012
+- Mockups served from git in a CSP sandbox, an unparsed choice quoted; off-main is what a branch changed since its merge-base, parsed by the kit → ADR-008–011
+- Unknown or disabled projects are refused before route binding, and pages re-check on update → ADR-013. Retired with RD-9 (history): ADR-015–020
+- Manage projects re-navigates after writes, Add re-runs `RegisterProject`'s checks; live sessions read transcripts defensively → ADR-021–023, ADR-034
+- Home overview: Needs me lists each story once; Live cards summarise the latest tool call; panels fail alone; one `ProjectFilter` from `?projects=`; one fixed `git log` form; Shipped is build commits cached per snapshot; tiles use stored data → ADR-047–054
+- Handbook loads sections lazily; Stories is one query filtered with CSS; preflight history reads cost CSVs by folder name, server-rendered and recomputed in Alpine; "Ran on" is a per-run JSON record → ADR-024–028, [ADR-055](decisions/ADR-055-preflight-run-record-format.md)
+- Production only through `ProductionReader`, outcome cached, snapshot in-process → ADR-029–031. The board writes narrowly: one pick, one file, one local commit, via one `PickMockup` → [ADR-032](decisions/ADR-032-the-board-writes-narrowly-one-pick-one-file-one-commit.md), ADR-042
+- App map generated server-side; journey shots a pinned-manifest test helper; "New page" read from route files → ADR-033, ADR-035, ADR-036
+- RD foundation: starter kit and Fortify removed; kept logic in pure shared classes; dark shell scoped by `.shell`; refresh-on-load is one middleware; short story page in place → ADR-037–046
+- RD-9: mockup file route kept for `?v`; coverage ported before a test goes; `/?project=` ignored → ADR-056–058. RD-11 overview: `ReadPreflightRuns::pairs()`, refresh completion from the attempt stamp, tiles reuse home's readers → ADR-059–061
+- Marketing (MK-1): posts match campaign dates by local day; approved-through lets skipped dates continue the run; "to approve" counts dates; tab, banner and badges share one count → ADR-062–064
 - Preflight audit scope, audit cost record, build-artifact disposal (kit) → ADR-001 to ADR-003
 
 ## Current phase and what's next
@@ -91,6 +87,9 @@ page in the shell, the home overview with its filter, tiles and Shipped this wee
 "Ran on", the deletion of every page the redesign replaced, and the project overview at `/p/{project}`. Next: RD-12
 (git activity tiles on the project overview). RD-10 (preflight run record writer) is parked. Dead code RD-9 left is
 backlog F-15. Open for the owner: the home overview's project tiles still link to Stories, not the project overview.
+
+Marketing phase 1 has started ([stories/marketing/README.md](../stories/marketing/README.md)). MK-1 is built; next are
+MK-2 (brand kit, Settings) and MK-7 (campaign page, create/edit/switch), then MK-8, 9, 10, 18. Facebook publishing is phase 2.
 
 Still open from phase 2: the owner confirms SB-19's checkbox look; `journeyStep()` is adopted in coins, followed
 by the real-data check of the app map and Current pane; the `--text-thumb` token decision.
@@ -127,4 +126,6 @@ Backlog: [BACKLOG.md](BACKLOG.md).
   awaits owner confirmation. "New page" can be wrong for routes not in `routes/*.php`.
 - The app map's page weight is its cost driver (coins: about 3.1 MB). Shots are read from the working tree,
   not the ref. Journey shots must not run under `--parallel`.
+- Marketing is read-only until MK-7: rows are not links and there is no "Start approving" button. The tab's count
+  is computed on every project page render, so a campaign with a bad timezone logs a warning on each render.
 - The dev server runs on port 8010. By owner ruling, this repo has no git remote.

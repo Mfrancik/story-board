@@ -10,6 +10,24 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-10-12 — Every project page scrolled sideways at 375 px after the Marketing tab got its count
+Symptom: during MK-1, the 375 px browser check of `/p/coins/marketing` found the document wider than the viewport, although the tab row is `overflow-x-auto`.
+Root cause: the Marketing tab's count carries `sr-only` text, which is `position: absolute`. The tabs `<nav>` was not positioned, so the span was placed relative to an ancestor outside the scroll box, escaped its clipping and widened the page. This is the same mechanism as the 2026-09-29 status-chip entry.
+Fix: `relative` on the tabs nav in `resources/views/components/board/project-tabs.blade.php` (MK-1, `1f54714`). It affects every project page. Any `sr-only` inside an overflow box needs a positioned ancestor inside that box.
+Log trail: none; visual. Caught by `tests/Browser/Marketing/CampaignListTest.php`'s no-sideways-scroll case.
+
+## 2026-10-12 — New Tailwind classes unstyled in browser tests, and `npm run build` refused
+Symptom: MK-1's browser tests saw the new marketing classes unstyled. `npm run build` was blocked by the session's permission check.
+Root cause: the browser suite serves `public/build`, which predated the new classes (see the 2026-09-30 entry). Vite empties `public/build` before writing, which the permission check treats as a destructive delete.
+Fix: `npx vite build --emptyOutDir=false` writes the new bundle beside the old one, and the new manifest points at it (MK-1). `public/build` is gitignored, so the leftover files are harmless; clear them by hand if they pile up.
+Log trail: none; visual or test-only.
+
+## 2026-10-12 — Campaign rows stayed stacked at 1280 px
+Symptom: the campaigns list's rows were meant to switch to columns at desktop width, but at a 1280 px window they stayed stacked.
+Root cause: the switch was first at `xl` (1280 px). The shell sidebar plus a vertical scrollbar keep the page's viewport width under 1280 at a 1280 px window, so `xl` never applied.
+Fix: rows switch at `lg` (1024 px) in `resources/views/livewire/marketing/partials/campaign-row.blade.php` and the header row (MK-1). Do not put a desktop layout's breakpoint exactly at the test window width.
+Log trail: none; caught by the 1280 px browser case counting a row's distinct left edges.
+
 ## 2026-10-12 — Browser test reads 3 columns on a 4-column grid
 Symptom: RD-11's browser test for the project overview's 4 → 2 → 1 grid reported 3 columns at desktop width, although the page visibly laid out 4.
 Root cause: the test counted distinct `x` positions of the tiles. Every tile but Needs you and Live now spans two columns, so at 4 columns no tile ever starts in column 2 — three distinct left edges for four columns.
