@@ -1,12 +1,13 @@
 # Marketing: campaigns list
-Status: active   ·   Last updated: 2026-10-12   ·   Stories: MK-1
+Status: active   ·   Last updated: 2026-10-12   ·   Stories: MK-1, MK-7
 
 ## Overview
 `/p/{project}/marketing` is a project's Marketing tab, opening on a list of its recurring campaigns ("TrueView
 Tuesday · Tue 19:00 weekly"). For each campaign it shows how far out posts are approved and what needs the owner.
 The owner thinks in campaigns, so this is the first page of the marketing initiative (`stories/marketing/README.md`).
 MK-1 also lays the generic schema (`marketing_campaigns`, `marketing_posts`) that MK-2, 7, 8, 9, 10 and 18 build on.
-The page only reads. Creating, editing and switching campaigns arrive with MK-7, and approving posts with MK-9.
+The page only reads. A row's name opens the campaign's page and "+ New campaign" opens it in create mode, where
+campaigns are created, edited and switched ([campaign page](marketing-campaign-page.md), MK-7). Approving posts arrives with MK-9.
 
 ## How it works
 **Route.** `routes/web.php` registers `GET /p/{project:name}/marketing` as `projects.marketing` behind
@@ -49,14 +50,17 @@ A bad timezone, a day outside 1–7 or an unreadable time throws `App\Exceptions
 - The **alerts banner** joins the parts that apply with " · ": "N posts need your approval", "<names> has/have
   nothing approved past this week" and "<name> missed Sun 11 Oct". A campaign that missed a post is named for the
   miss only, not also for running thin. When nothing applies, a green "All caught up" status shows instead.
-- **Rows** (`partials/campaign-row.blade.php`): name and `MarketingCampaign::scheduleLabel()`; the next post and
+- **Header**: "Campaigns" with its counts and a "+ New campaign" button (`data-new-campaign`) to
+  `projects.marketing.campaign.create`.
+- **Rows** (`partials/campaign-row.blade.php`): the name, a link (`data-campaign-link`) to
+  `projects.marketing.campaign`, and `MarketingCampaign::scheduleLabel()`; the next post and
   its state; "Approved through Tue 20 Oct" (or "Nothing approved yet") over `marketing/runway-bar`; and
   `marketing/alert-badge` pills: Missed <day>, Needs a photo, N to approve, N open dates, "Nothing approved past
   this week" (only when something is approved). A row with no alerts reads "Nothing". Below `lg` (1024 px) a row
   stacks its fields with small labels; from `lg` it uses the prototype's 12-column grid.
 - **Paused** campaigns sit in a dashed, faded group and read "Paused" in place of their badges.
 - A row whose schedule cannot be read shows the exception's reason across the row, and the rest of the page renders.
-- **Empty:** "No campaigns yet" (`data-campaigns-empty`). The New campaign button arrives with MK-7.
+- **Empty:** "No campaigns yet" (`data-campaigns-empty`) with its own "+ New campaign" button.
 
 **Marketing tab count.** `board/project-tabs` adds Marketing last, after Overview / Stories / Preflight /
 Handbook / Map. When something needs approval it shows a count dot (`data-marketing-count`) plus sr-only text. The
@@ -67,7 +71,7 @@ inside the tabs component. The Marketing page already has the total, so it passe
 ([ADR-064](../decisions/ADR-064-marketing-tab-count-reuses-the-runway.md)).
 
 **Sub-nav.** `resources/views/components/marketing/sub-nav.blade.php` lists Campaigns · Calendar · Library ·
-Inspiration · Settings, but only those whose route exists (`Route::has`). Today that is Campaigns alone. A page
+Inspiration · Settings, but only those whose route exists (`Route::has`). Today that is Campaigns and Settings (MK-2); the campaign page marks Campaigns current. A page
 appears by itself once its story registers the `projects.marketing.<key>` route, so there are no dead links.
 
 ## Data model
@@ -104,7 +108,8 @@ Two migrations, `database/migrations/2026_10_12_000001_create_marketing_campaign
   - `board/project-header` and `board/project-tabs` gain an optional `marketingCount`.
 - Test hooks: `data-campaign-row="<slug>"`, `data-approved-through`, `data-runway-state`, `data-runway-key`,
   `data-alert="<tone>"`, `data-marketing-alerts`, `data-paused-campaigns`, `data-campaigns-empty`,
-  `data-runway-error`, `data-marketing-subnav`, `data-marketing-page`, `data-marketing-count`.
+  `data-runway-error`, `data-marketing-subnav`, `data-marketing-page`, `data-marketing-count`, `data-new-campaign`,
+  `data-campaign-link`.
 
 ## Configuration
 None. Each campaign carries its own `timezone`, and `app.timezone` plays no part in the runway.
@@ -145,8 +150,7 @@ None. Each campaign carries its own `timezone`, and `app.timezone` plays no part
 - Missed is derived, never stored, so it cannot disagree with the clock (story rule).
 - Deliberate deviations from the prototype:
   - No "Start approving" button, because MK-9's studio does not exist yet.
-  - No per-row on/off switch, because writes belong to MK-7, so `board/switch` and `board/state` are not reused yet.
-  - Rows are not links until MK-7.
+  - No per-row on/off switch: the switch lives in the campaign page's header (MK-7).
   - The runway header reads "Runway · next 6 dates", not "6 weeks", because a campaign can post on several days a week.
 
 ## Known limitations & gotchas
@@ -160,7 +164,8 @@ None. Each campaign carries its own `timezone`, and `app.timezone` plays no part
   a test. Only approved and open dates are tested.
 - `EnsureProjectIsShown`'s docblock list of guarded pages does not yet mention Marketing.
 - Paused rows still show their approved-through line and runway bar, faded.
-- A row is not a link, and the badges are labels only (MK-7 and MK-9).
+- Only the row's name is a link; the badges are labels only until MK-9.
 
 ## Change history
 2026-10-12 — Marketing tab: campaigns list with approval runway and alerts; marketing schema (MK-1, `1f54714`)
+2026-10-12 — Row names link to the campaign page; "+ New campaign" in the header and empty state (MK-7, `b5deb57`)

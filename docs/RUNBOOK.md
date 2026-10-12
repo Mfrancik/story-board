@@ -10,6 +10,12 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-10-12 — Saving a campaign logged `topics` as changed when the topics were not touched
+Symptom: after Save on the campaign page, `marketing.campaign.updated` listed `topics` (and sometimes `days`) in `changed` although the owner had only edited the time. Tests asserting topics with `toBe` failed on key order.
+Root cause: MySQL stores JSON objects in its own key order and returns `{"own":…,"ideas":…}`, not the `{"ideas":…,"own":…}` that was written. Eloquent compares JSON casts strictly, so the same value in a different key order counts as dirty.
+Fix: `SaveCampaign::handle()` compares `days` and `topics` through `canonical()` (keys sorted recursively) and leaves them out of `fill()` when they are equal, so `changed` lists only real edits. Tests compare topics with `toEqual` (MK-7). Any JSON column compared on save needs the same treatment.
+Log trail: `marketing.campaign.updated` with `changed` containing `topics` when only another field was edited.
+
 ## 2026-10-12 — A big photo was refused with "12288 kilobytes", and later picks kept failing
 Symptom: in Marketing settings, a photo over 12 MB was refused with Livewire's message naming 12288 kilobytes, not the page's 10 MB rule. After any refused pick, the next good pick failed too.
 Root cause: Livewire validates temporary uploads against its own 12 MB cap before `updatedPhotos()` runs. Separately, Livewire appends each new pick to the existing `photos` array, so a rejected file stayed in it and failed every later validation.
