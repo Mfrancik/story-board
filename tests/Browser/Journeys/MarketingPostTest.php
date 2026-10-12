@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Queue;
 
 /**
  * Journey marketing-post (docs/journeys/marketing-post.md): from a recurring campaign to approved posts, ready to
- * publish. Created by MK-1 with step 1; each later MK story adds its step. Claude is faked once AI steps arrive
+ * publish. Created by MK-1 with step 1; each later MK story adds its step (MK-2: step 2, the brand in Settings). Claude is faked once AI steps arrive
  * (MK-8). `JOURNEY_SHOTS=1` saves each step to `storage/app/journey-shots/marketing-post/`.
  */
 beforeEach(function () {
@@ -31,5 +31,17 @@ it('walks the marketing-post journey', function () {
         ->assertAttribute('[data-project-tab="marketing"]', 'aria-current', 'page')
         ->assertSeeIn('[data-campaign-row="trueview-tuesday"] [data-approved-through]', 'Approved through Tue 20 Oct')
         ->assertSeeIn('[data-marketing-alerts]', '1 post needs your approval')
+        ->assertNoJavaScriptErrors();
+
+    // Step 2 (MK-2): StackerMint is seeded from its kit (here the trimmed fixture kit); Settings shows its brand,
+    // and the seed kept the existing TrueView Tuesday rather than adding a second one.
+    $this->artisan('marketing:seed-kit', ['project' => 'coins', 'kitPath' => base_path('tests/Fixtures/marketing-kit')])->assertSuccessful();
+    expect(MarketingCampaign::where('slug', 'trueview-tuesday')->count())->toBe(1);
+
+    journeyStep('marketing-post', 'brand kit and copy rules', '/p/coins/marketing/settings')
+        ->assertAttribute('[data-marketing-page="settings"]', 'aria-current', 'page')
+        ->assertSeeIn('[data-brand-sample]', 'StackerMint')
+        ->assertSeeIn('[data-swatch="accent"]', '#B79F82')
+        ->assertSeeIn('[data-facebook-card] h3', 'Phase 2')
         ->assertNoJavaScriptErrors();
 });

@@ -120,6 +120,26 @@ class Project extends Model
     }
 
     /**
+     * Its marketing brand, colours, logo and copy rules (MK-2); null until first saved or seeded.
+     *
+     * @return HasOne<MarketingBrand, $this>
+     */
+    public function marketingBrand(): HasOne
+    {
+        return $this->hasOne(MarketingBrand::class);
+    }
+
+    /**
+     * Its marketing files: favourite photos, post photos and inspiration (MK-2).
+     *
+     * @return HasMany<MarketingAsset, $this>
+     */
+    public function marketingAssets(): HasMany
+    {
+        return $this->hasMany(MarketingAsset::class);
+    }
+
+    /**
      * Only projects that take part in refreshes and on the board.
      *
      * @param  Builder<Project>  $query

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\JourneyShotController;
+use App\Http\Controllers\MarketingAssetController;
 use App\Http\Controllers\MockupFileController;
 use App\Http\Controllers\MockupSetFileController;
 use App\Http\Middleware\EnsureProjectIsShown;
@@ -16,6 +17,7 @@ use App\Livewire\Board\ProjectPreflight;
 use App\Livewire\Board\ProjectStories;
 use App\Livewire\Board\StoryPage;
 use App\Livewire\Marketing\CampaignList;
+use App\Livewire\Marketing\Settings as MarketingSettings;
 use App\Models\Story;
 use Illuminate\Support\Facades\Route;
 
@@ -61,10 +63,16 @@ Route::middleware(RefreshStaleProjects::class)->group(function () {
         ->name('projects.map');
 
     // One project's Marketing tab (MK-1): its campaigns with how far out each is approved and what needs the owner.
-    // Calendar, Library, Inspiration and Settings join under `projects.marketing.*` as their stories land.
+    // Calendar, Library and Inspiration join under `projects.marketing.*` as their stories land.
     Route::livewire('/p/{project:name}/marketing', CampaignList::class)
         ->middleware(EnsureProjectIsShown::class)
         ->name('projects.marketing');
+
+    // Marketing settings (MK-2): the project's brand, favourite photos and copy rules. Its name puts Settings in
+    // the marketing sub-nav, which lists only pages whose route exists.
+    Route::livewire('/p/{project:name}/marketing/settings', MarketingSettings::class)
+        ->middleware(EnsureProjectIsShown::class)
+        ->name('projects.marketing.settings');
 
     // One story above its mockups (SB-4). Only a well-formed story ID reaches the component.
     Route::livewire('/p/{project:name}/s/{storyId}', StoryPage::class)
@@ -91,6 +99,13 @@ Route::get('/shots/{project:name}/{journey}/{file}', JourneyShotController::clas
     ->where('file', '.*')
     ->middleware(EnsureProjectIsShown::class)
     ->name('shots.file');
+
+// One marketing file of a project (MK-2): a favourite photo now, post photos and inspiration later. Outside the page
+// group like the other file routes; FindProjectAsset answers only the project's own asset ids.
+Route::get('/p/{project:name}/marketing/assets/{asset}', MarketingAssetController::class)
+    ->whereNumber('asset')
+    ->middleware(EnsureProjectIsShown::class)
+    ->name('marketing.asset');
 
 // Raw mockup bytes from a project's ref (SB-4). `file` may contain slashes (shots/01.png);
 // ReadMockupFile, not this pattern, decides what is allowed.

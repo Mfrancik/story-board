@@ -1,0 +1,39 @@
+STACKERMINT FACEBOOK KIT
+
+== INTRO BIOS (101 max) ==
+- A home for your coins, notes, and bullion. Organize, track, and share your collection.
+
+== POSTS & ADS ==
+
+--- posts/01-post-welcome.png (post) ---
+Hi, we're StackerMint 👋
+
+A home for your coins, notes, and bullion. Organize it, see what it's worth, and show it off.
+
+--- posts/10-post-tv-tuesday.png (post, toned) ---
+TrueView Tuesday 🌈
+
+An 1885 Morgan with a century of album toning. Show us your best toner.
+
+
+== IDEA MENU ==
+
+Sets
+- What are you building?: What set are you working on?
+- Slot filled: Another slot filled. [coin] joins the [set] set. [x] of [y] done.
+- Type set 101: A type set is one of each design, not every date. It's the best way to own a piece of every chapter.
+
+Toned & TrueView
+- TrueView Tuesday: TrueView Tuesday. Show us your best toner.
+- Toning 101: Toning is chemistry, not damage. Natural color can add value. Cleaning takes it away.
+
+Show & tell
+- Coin of the week: Coin of the week: [coin], [grade]. What do you see first, the strike or the color?
+
+Did you know
+- What "BN, RB, RD" means: On copper, BN is brown, RB is red-brown, RD is full red. Red is rarest, and it shows in the price.
+- Mint marks: That tiny letter matters. D is Denver, S is San Francisco, O is New Orleans, CC is Carson City.
+
+Ask the community
+- Rarity or condition?: Same price. Rare and worn, or common and near perfect?
+- Grade it: No peeking at the label. What grade would you give this one?

@@ -1,5 +1,5 @@
 # MK-2 — Marketing settings: brand kit, favourite photos, copy rules, StackerMint seed
-Status: approved        Journey: marketing-post (step 2 of 7)
+Status: built           Journey: marketing-post (step 2 of 7)
 Source: owner brain dump 2026-10-12 (brand kit, copy rules) + prototype round 2 ("photo library probably becomes not
 needed… i could upload pics of some of my favorite coins though")
 

@@ -231,12 +231,12 @@ it('shows the Marketing tab\'s count on every project page when something needs 
     expect($this->get('/p/coins/stories')->getContent())->toMatch('/data-project-tab="marketing".*?data-marketing-count[^>]*>\s*2\s*</s');
 });
 
-it('lists only built Marketing pages in the sub-nav: Campaigns, no dead links', function () {
+it('lists only built Marketing pages in the sub-nav: Campaigns and Settings (MK-2), no dead links', function () {
     $html = $this->get('/p/coins/marketing')->getContent();
 
     preg_match('/<nav\b[^>]*data-marketing-subnav[^>]*>.*?<\/nav>/s', $html, $nav);
     preg_match_all('/data-marketing-page="([^"]+)"/', $nav[0] ?? '', $m);
-    expect($m[1])->toBe(['campaigns'])
+    expect($m[1])->toBe(['campaigns', 'settings'])
         ->and($nav[0])->toMatch('/data-marketing-page="campaigns"[^>]*aria-current="page"/');
 });
 

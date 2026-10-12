@@ -88,6 +88,16 @@ class MarketingPost extends Model
     }
 
     /**
+     * The post's photo, if it has one (MK-2). Deleting the photo leaves the post photo-less.
+     *
+     * @return BelongsTo<MarketingAsset, $this>
+     */
+    public function asset(): BelongsTo
+    {
+        return $this->belongsTo(MarketingAsset::class, 'asset_id');
+    }
+
+    /**
      * The posts a campaign's runway reads (BuildCampaignRunway): every dated, kept
      * post from a day before `$now` on (the day's slack covers a date that starts
      * earlier in the campaign's timezone than in UTC), plus every approved post still
