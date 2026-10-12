@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RD-11 option A — Project overview, briefing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+/* Shell tokens, copied from the RD-7 approved mockup (resources/css/app.css shell values). */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;background:#0E0F11;color:#F2F1EE;font-family:Geist,system-ui,sans-serif;-webkit-text-size-adjust:100%}
+a{color:#F2A33A;text-decoration:none}a:hover{color:#FFC26B;text-decoration:underline;text-underline-offset:3px}
+a:focus-visible,button:focus-visible{outline:2px solid #F2A33A;outline-offset:2px}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.card{background:#16181B;border:1px solid #26292E;border-radius:12px}
+.lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9A9DA3;font-weight:500}
+.muted{color:#9A9DA3}.faint{color:#7E8187}.soft{color:#C9CBCF}
+.navi{display:flex;align-items:center;gap:10px;padding:0 12px;border-radius:8px;color:#C9CBCF;font-size:14px;min-height:44px}
+.navi:hover{background:#1D2024;color:#F2F1EE;text-decoration:none}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid #33373D;color:#C9CBCF;white-space:nowrap}
+.t-built{border-color:#2D5A44;color:#7CD1A4}.t-fix{border-color:#2D5A44;color:#7CD1A4}
+.t-draft{border-color:#5C4219;color:#F2A33A}.t-ready{border-color:#2B4A6E;color:#8EBBF2}
+.t-docs{border-color:#33373D;color:#9A9DA3}.t-fail{border-color:#6B2F2B;color:#F59088}.t-pass{border-color:#2D5A44;color:#7CD1A4}
+.t-pick{border-color:#4A3B6B;color:#C3A8F0}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+.live{background:#6CA6F0;box-shadow:0 0 0 4px rgba(108,166,240,.18)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:8px;font:500 14px Geist,sans-serif;border:1px solid #33373D;background:#1D2024;color:#F2F1EE;cursor:pointer}
+.btn:hover{background:#24282D;color:#F2F1EE;text-decoration:none}
+.bar{height:8px;border-radius:4px;background:#26292E;overflow:hidden;display:flex}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.sample{display:inline-block;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#C3A8F0;border:1px dashed #4A3B6B;border-radius:4px;padding:0 5px;margin-left:6px;vertical-align:1px}
+.legend{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;font-size:13px;color:#C9CBCF;padding:12px 16px;border:1px solid #26292E;border-radius:10px;background:#121417}
+.legend i{display:inline-block;width:22px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:6px}
+/* Shell frame: sidebar on desktop, top bar + drawer below 768px (as layouts/shell does). */
+.shell{display:flex;min-height:100vh}
+.side{width:232px;flex:none;padding:20px 14px;border-right:1px solid #1F2226;display:flex;flex-direction:column;gap:22px}
+.topbar{display:none}
+main{flex:1;min-width:0;padding:28px 32px 56px;display:flex;flex-direction:column;gap:24px}
+.crumb{font-size:12px;color:#9A9DA3}.crumb a{color:#9A9DA3}
+.tabs{display:flex;gap:24px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid #1F2226;font-size:14px;padding-bottom:1px}
+.tabs a{flex:none;color:#9A9DA3;padding-bottom:12px;margin-bottom:-2px;border-bottom:2px solid transparent;min-height:36px}
+.tabs a:hover{color:#F2F1EE;text-decoration:none}
+.tabs a[aria-current]{color:#F2F1EE;border-color:#F2F1EE;font-weight:500}
+.tabs .new{font-size:10px;color:#F2A33A;margin-left:4px;vertical-align:2px}
+@media (max-width:767px){
+  .side{display:none}
+  .shell{flex-direction:column}
+  .topbar{display:flex;position:sticky;top:0;z-index:5;height:56px;align-items:center;gap:8px;padding:0 8px;border-bottom:1px solid #1F2226;background:rgba(14,15,17,.95)}
+  main{padding:20px 16px 48px;gap:20px}
+  .tabs{gap:18px}
+}
+
+/* Option A — briefing */
+.brief{display:flex;flex-direction:column;gap:14px;max-width:820px}
+.brief h2{margin:0;font-size:24px;line-height:1.25;font-weight:600;letter-spacing:-.01em}
+.brief p{margin:0;font-size:15px;line-height:1.6;color:#C9CBCF}
+.figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(180px,100%),1fr));gap:1px;background:#26292E;border:1px solid #26292E;border-radius:12px;overflow:hidden}
+.fig{background:#16181B;padding:16px 18px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.fig .n{font-family:'Geist Mono',monospace;font-size:28px;font-weight:500;letter-spacing:-.02em}
+.fig .s{font-size:13px;color:#9A9DA3}
+.strip{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:baseline;padding:12px 18px;font-size:13px;color:#9A9DA3}
+.strip b{font-family:'Geist Mono',monospace;font-weight:500;color:#F2F1EE;font-size:15px;margin-right:6px}
+.callouts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:14px}
+.co{display:flex;gap:12px;align-items:center;padding:12px 16px;min-height:56px;color:#F2F1EE;border-top:1px solid #1F2226}
+.co:first-of-type{border-top:0}
+.co:hover{background:#1A1D21;text-decoration:none;color:#F2F1EE}
+.day{display:flex;flex-direction:column}
+.day h3{margin:0;padding:18px 0 8px;font-size:13px;font-weight:600;color:#9A9DA3;letter-spacing:.04em;text-transform:uppercase;position:sticky;top:0;background:#0E0F11}
+.ev{display:grid;grid-template-columns:52px 84px minmax(0,1fr);gap:4px 12px;align-items:baseline;padding:10px 0;border-top:1px solid #1F2226;color:#F2F1EE}
+a.ev:hover{background:#14161A;text-decoration:none;color:#F2F1EE}
+.ev .tm{font-family:'Geist Mono',monospace;font-size:12px;color:#7E8187}
+.ev .k{justify-self:start}
+.ev .body{display:flex;flex-direction:column;gap:3px;min-width:0}
+.ev .what{font-size:14px;line-height:1.45;overflow-wrap:anywhere}
+.ev .meta{font-size:12px;color:#7E8187;overflow-wrap:anywhere}
+.ev .id{font-family:'Geist Mono',monospace;font-size:12px;color:#C9CBCF;margin-right:6px}
+.more{display:flex;align-items:center;gap:8px;padding:12px 0;border-top:1px solid #1F2226;font-size:13px;min-height:44px}
+@media (max-width:767px){
+  .brief h2{font-size:20px}
+  .ev{grid-template-columns:44px minmax(0,1fr)}
+  .ev .k{grid-column:2}
+  .ev .body{grid-column:2}
+  .ev .tm{grid-row:1 / span 2}
+}
+</style>
+</head>
+<body>
+<!-- RD-11 option A — "Briefing". The project's landing page reads top to bottom like a status report: a written
+     summary, a row of headline figures, what needs the owner, then ONE merged activity timeline grouped by day.
+     Real data: coins (Project #1, origin/main @ d1b5d1a8), read 2026-10-11 ~21:30 local. Production values are
+     SAMPLE — no ProdConnection exists in this database; the labels are ProdMetric::PRESETS. -->
+<div class="shell">
+  <div class="topbar">
+    <button class="btn" aria-label="Open menu" style="width:44px;padding:0;border:0;background:transparent">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9CBCF" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <span style="font-weight:600">Story Board</span>
+  </div>
+
+  <nav class="side" aria-label="Board">
+    <div style="display:flex;align-items:center;gap:10px;padding:0 6px">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="1" width="24" height="24" rx="7" fill="none" stroke="#F2A33A" stroke-width="2"/><path d="M8 9h10M8 13h6M8 17h8" stroke="#F2A33A" stroke-width="2" stroke-linecap="round"/></svg>
+      <span style="font-weight:600;font-size:16px">Story Board</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <a class="navi" href="#">Home</a>
+      <a class="navi" href="#">Mockups</a>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <span class="lbl" style="padding:0 12px 6px">Projects</span>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>asset-track</a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>client-dashboard</a>
+      <a class="navi" href="#" aria-current="page" style="background:#1D2024;color:#F2F1EE;font-weight:500"><span class="dot" style="background:#5FBF8F"></span>coins<span class="dot live" style="margin-left:auto;width:6px;height:6px"></span></a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>rent-track</a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>story-board</a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="legend" role="note" aria-label="Mockup legend">
+      <strong style="color:#F2F1EE">RD-11 · option A · Briefing</strong>
+      <span><i style="background:#F2A33A"></i>amber text = a link or button</span>
+      <span><span class="sample" style="margin:0 6px 0 0">sample</span>made-up value (no production connection locally)</span>
+      <span class="faint">everything else is coins' real data, 11 Oct 21:30</span>
+    </div>
+
+    <header style="display:flex;flex-direction:column;gap:4px">
+      <p class="crumb" style="margin:0"><a href="#">All projects</a> / <a href="#">coins</a> / Overview</p>
+      <h1 style="margin:0;display:flex;align-items:center;gap:10px;font-size:24px;font-weight:600;letter-spacing:-.01em">coins <span class="dot" style="background:#5FBF8F"></span><span style="font-size:13px;font-weight:400;color:#9A9DA3">ok</span></h1>
+      <p class="muted" style="margin:0;font-size:14px"><span class="mono" style="font-size:12px">origin/main @ d1b5d1a8</span> · 1,558 stories in 69 initiatives</p>
+    </header>
+    <nav class="tabs" aria-label="Project pages">
+      <a href="#" aria-current="page">Overview<span class="new">NEW</span></a>
+      <a href="#">Stories</a><a href="#">Preflight</a><a href="#">Handbook</a><a href="#">Map</a>
+    </nav>
+
+    <!-- 1. The briefing: one written paragraph, generated from counts, then the brief's own "What it is". -->
+    <section class="brief" aria-labelledby="brief-h">
+      <span class="lbl">Sunday 11 October · since midnight</span>
+      <h2 id="brief-h">77 commits and 49 preflight runs today, mostly on the preflight runner. 2 things need you, and a session is building PROF-38 now.</h2>
+      <p>A multi-tenant web app for coin collectors (and, later, dealers) to catalog their holdings: certified and raw coins linked to a shared global catalog, grouped into sets, with rich imagery. <a href="#">Read the brief</a></p>
+      <p class="muted" style="font-size:14px">Today's build commits: <span class="mono soft">PRF</span> 17 · <span class="mono soft">BUL</span> 3 · <span class="mono soft">SET</span> 2 · <span class="mono soft">CID</span> 2 · <span class="mono soft">DENOM</span> 1</p>
+    </section>
+
+    <!-- 2. Headline figures. The production strip renders only with a connection and an enabled metric. -->
+    <section aria-label="Headline figures" class="card" style="padding:0;overflow:hidden">
+      <div class="figs" style="border:0;border-radius:0">
+        <div class="fig"><span class="lbl">Built</span><span class="n">1,110</span><span class="s">of 1,230 stories on main · 90%</span>
+          <div class="bar" aria-hidden="true" style="margin-top:4px"><div style="width:90.2%;background:#5FBF8F"></div><div style="width:4%;background:#6CA6F0"></div><div style="width:2.5%;background:#F2A33A"></div></div></div>
+        <div class="fig"><span class="lbl">In flight</span><span class="n">49</span><span class="s">approved, not built · 31 drafts</span></div>
+        <div class="fig"><span class="lbl">Build commits · 7 days</span><span class="n">254</span><span class="s">feat · fix · test, on origin/main</span></div>
+        <div class="fig"><span class="lbl">Preflight · 7 days</span><span class="n">10</span><span class="s">audited runs · median 39m 08s</span></div>
+      </div>
+      <div class="strip" style="border-top:1px solid #26292E">
+        <span class="lbl" style="margin-right:4px">Production<span class="sample">sample</span></span>
+        <span><b>2,417</b>total users</span><span><b>6</b>new today</span><span><b>143</b>active today</span><span><b>58</b>logged in today</span>
+        <a href="#" style="margin-left:auto">History on /prod</a>
+      </div>
+    </section>
+
+    <!-- 3. What needs you + live now, side by side; stack on a phone. -->
+    <div class="callouts">
+      <section class="card" aria-labelledby="needs-h" style="padding:6px 0">
+        <h2 id="needs-h" style="margin:0;padding:12px 16px 8px;font-size:15px;font-weight:600">Needs you <span class="muted" style="font-weight:400">· 2</span></h2>
+        <a class="co" href="#"><span class="pill t-draft" style="min-width:56px;justify-content:center">Draft</span><span style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1"><span style="font-size:14px">Your phone tells you you were outbid</span><span class="mono faint" style="font-size:12px">MOB-15 · option b chosen · approve it</span></span></a>
+        <a class="co" href="#"><span class="pill t-ready" style="min-width:56px;justify-content:center">Ready</span><span style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1"><span style="font-size:14px">The first submission</span><span class="mono faint" style="font-size:12px">MOB-17 · approved · build it</span></span></a>
+      </section>
+      <section class="card" aria-labelledby="live-h" style="padding:16px;display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:center;gap:8px"><span class="dot live"></span><h2 id="live-h" style="margin:0;font-size:15px;font-weight:600">Live now</h2><span class="muted" style="margin-left:auto;font-size:12px">started 4m ago</span></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="pill mono">main</span><span class="pill t-draft">PROF-38</span></div>
+        <div class="mono soft" style="font-size:13px;overflow-wrap:anywhere">Agent · Build PROF-38 dealer tab</div>
+        <div style="display:flex;align-items:center;gap:10px"><span class="muted" style="font-size:12px">context</span><div class="bar" style="flex:1;height:6px" aria-hidden="true"><div style="width:52%;background:#6CA6F0"></div></div><span class="mono soft" style="font-size:12px">105k / 200k</span></div>
+      </section>
+    </div>
+
+    <!-- 4. One merged timeline, grouped by day: build commits, docs, picks, preflight runs. Merges are folded. -->
+    <section aria-labelledby="tl-h" style="display:flex;flex-direction:column;max-width:920px">
+      <div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:8px">
+        <h2 id="tl-h" style="margin:0;font-size:16px;font-weight:600">What happened</h2>
+        <span class="muted" style="font-size:13px">newest first · 14 merges folded</span>
+      </div>
+
+      <div class="day">
+        <h3>Today · Sun 11 Oct</h3>
+        <a class="ev" href="#"><span class="tm">21:16</span><span class="pill k t-docs">Docs</span><span class="body"><span class="what"><span class="id">PROF-8 +4</span>Dealer page v2 — one Personal collection, any-coin showcase, dealer editor, visitors, reviews page</span><span class="meta">75 files · +2,987 −78</span></span></a>
+        <a class="ev" href="#"><span class="tm">20:48</span><span class="pill k t-fail">Preflight</span><span class="body"><span class="what">1 gate failed: <span class="mono" style="font-size:13px">audit-pack size</span></span><span class="meta mono">integrate/gs-51-53 · brain · 28 gates · 16m 22s</span></span></a>
+        <a class="ev" href="#"><span class="tm">20:29</span><span class="pill k t-pass">Preflight</span><span class="body"><span class="what">All 29 gates passed</span><span class="meta mono">integrate/set-54-55-denom-45 · brain · 20m 50s</span></span></a>
+        <a class="ev" href="#"><span class="tm">19:35</span><span class="pill k t-built">Built</span><span class="body"><span class="what"><span class="id">PRF-29</span>The next run waits until the one ahead merges or fails</span><span class="meta">31 files · +1,924 −34 · docs 19:39</span></span></a>
+        <a class="ev" href="#"><span class="tm">19:17</span><span class="pill k t-built">Built</span><span class="body"><span class="what"><span class="id">PRF-31</span>A remote run never waits on the Mac's browser lock</span><span class="meta">9 files · +390 −39 · docs 19:20</span></span></a>
+        <a class="ev" href="#"><span class="tm">18:57</span><span class="pill k t-ready">Approved</span><span class="body"><span class="what"><span class="id">PRF-29 PRF-31</span>Approved by the owner</span><span class="meta">story status draft → approved</span></span></a>
+        <a class="ev" href="#"><span class="tm">18:36</span><span class="pill k t-fix">Fix</span><span class="body"><span class="what"><span class="id">PRF-30</span>Every section on its own line — passed setup, environment and checks no longer fold into one ✓ line</span><span class="meta">4 files · +30 −29 · owner moved the pick from B to A</span></span></a>
+        <a class="ev" href="#"><span class="tm">17:53</span><span class="pill k t-built">Built</span><span class="body"><span class="what"><span class="id">PRF-30</span>Brain's console groups a run's gates into six sections with a bar and % each</span><span class="meta">14 files · +2,746 −59</span></span></a>
+        <a class="ev" href="#"><span class="tm">17:24</span><span class="pill k t-pick">Pick</span><span class="body"><span class="what"><span class="id">PRF-30</span>Option B plus story-ID label and last m:ss per section</span><span class="meta">mockup pick · story approved</span></span></a>
+        <a class="ev" href="#"><span class="tm">16:40</span><span class="pill k t-built">Built</span><span class="body"><span class="what"><span class="id">PRF-28</span>go_check=on|off switch in ~/.config/preflight/remote</span><span class="meta">7 files · +123 −7</span></span></a>
+        <a class="ev" href="#"><span class="tm">15:41</span><span class="pill k t-built">Built</span><span class="body"><span class="what"><span class="id">SET-55</span>The classic commemorative set has a Norse American hole</span><span class="meta">14 files · +734 −70</span></span></a>
+        <a class="ev" href="#"><span class="tm">14:59</span><span class="pill k t-built">Built</span><span class="body"><span class="what"><span class="id">DENOM-45</span>The Norse American medal is in the catalog, and its cert links</span><span class="meta">25 files · +967 −49</span></span></a>
+        <button class="more btn" style="background:transparent;border:0;border-top:1px solid #1F2226;border-radius:0;justify-content:flex-start;padding:0;color:#F2A33A">Show the other 51 events from today</button>
+      </div>
+
+      <div class="day">
+        <h3>Yesterday · Sat 10 Oct</h3>
+        <a class="ev" href="#"><span class="tm">23:11</span><span class="pill k t-fix">Fix</span><span class="body"><span class="what"><span class="id">PRF-22</span>Guard 3 checks brain against the snapshot's own test list; manifest drift is a WARN</span><span class="meta">preflight runner</span></span></a>
+        <a class="ev" href="#"><span class="tm">22:42</span><span class="pill k t-fix">Fix</span><span class="body"><span class="what"><span class="id">CID-7</span>A cert pull wipes the coin fields and fills only the cert's facts — web and API</span><span class="meta">owner ruling 2026-10-10</span></span></a>
+        <a class="ev" href="#"><span class="tm">22:31</span><span class="pill k t-built">Built</span><span class="body"><span class="what"><span class="id">BUL-69</span>Sell bullion from the shelf — Sell bullion beside Add bullion</span><span class="meta">fix 22:38 · docs 22:37</span></span></a>
+        <button class="more btn" style="background:transparent;border:0;border-top:1px solid #1F2226;border-radius:0;justify-content:flex-start;padding:0;color:#F2A33A">Show the other 82 events from Saturday</button>
+      </div>
+      <a href="#" class="btn" style="align-self:flex-start;margin-top:12px">Load the week before</a>
+    </section>
+
+    <section aria-label="States" style="border-top:1px dashed #33373D;padding-top:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:14px">
+      <div class="card" style="padding:14px 16px"><span class="lbl" style="color:#F2A33A">No production connection</span><p class="soft" style="margin:8px 0 0;font-size:14px">The Production strip is not drawn at all — the figures row closes at four tiles. (Every project today.)</p></div>
+      <div class="card" style="padding:14px 16px"><span class="lbl" style="color:#F2A33A">Quiet project</span><p class="soft" style="margin:8px 0 0;font-size:14px">rent-track: “Nothing happened in the last 14 days. The last commit was on Fri 17 Jul.”</p></div>
+      <div class="card" style="padding:14px 16px"><span class="lbl" style="color:#F2A33A">Error</span><p role="alert" style="margin:8px 0 0;font-size:14px;color:#F59088">Could not read git history for coins. Stories and preflight runs are still listed.</p></div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

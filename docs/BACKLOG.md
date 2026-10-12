@@ -85,7 +85,7 @@ RD-9 handoff (follow-ups the build left undone, not fixed): ListLiveSessions::ha
 
 Retro 2026-10-11 (RD-9, phase end): PROMOTED with F-13 as one cleanup story. The "Refresh the project from its dashboard" copy is already fixed (f6b6376); the rest is still live.
 
-### F-16 — 2026-10-11 — Manual "Refresh this project" button
+### F-16 — 2026-10-11 — Manual "Refresh this project" button · Story: RD-11
 Area: project pages (Stories / handbook / map) · RD-9 retired the old project page
 Scope: PROJECT
 

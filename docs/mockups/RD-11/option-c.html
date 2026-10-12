@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RD-11 option C — Project overview, ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+/* Shell tokens, copied from the RD-7 approved mockup (resources/css/app.css shell values). */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;background:#0E0F11;color:#F2F1EE;font-family:Geist,system-ui,sans-serif;-webkit-text-size-adjust:100%}
+a{color:#F2A33A;text-decoration:none}a:hover{color:#FFC26B;text-decoration:underline;text-underline-offset:3px}
+a:focus-visible,button:focus-visible{outline:2px solid #F2A33A;outline-offset:2px}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.card{background:#16181B;border:1px solid #26292E;border-radius:12px}
+.lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9A9DA3;font-weight:500}
+.muted{color:#9A9DA3}.faint{color:#7E8187}.soft{color:#C9CBCF}
+.navi{display:flex;align-items:center;gap:10px;padding:0 12px;border-radius:8px;color:#C9CBCF;font-size:14px;min-height:44px}
+.navi:hover{background:#1D2024;color:#F2F1EE;text-decoration:none}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid #33373D;color:#C9CBCF;white-space:nowrap}
+.t-built{border-color:#2D5A44;color:#7CD1A4}.t-fix{border-color:#2D5A44;color:#7CD1A4}
+.t-draft{border-color:#5C4219;color:#F2A33A}.t-ready{border-color:#2B4A6E;color:#8EBBF2}
+.t-docs{border-color:#33373D;color:#9A9DA3}.t-fail{border-color:#6B2F2B;color:#F59088}.t-pass{border-color:#2D5A44;color:#7CD1A4}
+.t-pick{border-color:#4A3B6B;color:#C3A8F0}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+.live{background:#6CA6F0;box-shadow:0 0 0 4px rgba(108,166,240,.18)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:8px;font:500 14px Geist,sans-serif;border:1px solid #33373D;background:#1D2024;color:#F2F1EE;cursor:pointer}
+.btn:hover{background:#24282D;color:#F2F1EE;text-decoration:none}
+.bar{height:8px;border-radius:4px;background:#26292E;overflow:hidden;display:flex}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.sample{display:inline-block;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#C3A8F0;border:1px dashed #4A3B6B;border-radius:4px;padding:0 5px;margin-left:6px;vertical-align:1px}
+.legend{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;font-size:13px;color:#C9CBCF;padding:12px 16px;border:1px solid #26292E;border-radius:10px;background:#121417}
+.legend i{display:inline-block;width:22px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:6px}
+/* Shell frame: sidebar on desktop, top bar + drawer below 768px (as layouts/shell does). */
+.shell{display:flex;min-height:100vh}
+.side{width:232px;flex:none;padding:20px 14px;border-right:1px solid #1F2226;display:flex;flex-direction:column;gap:22px}
+.topbar{display:none}
+main{flex:1;min-width:0;padding:28px 32px 56px;display:flex;flex-direction:column;gap:24px}
+.crumb{font-size:12px;color:#9A9DA3}.crumb a{color:#9A9DA3}
+.tabs{display:flex;gap:24px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid #1F2226;font-size:14px;padding-bottom:1px}
+.tabs a{flex:none;color:#9A9DA3;padding-bottom:12px;margin-bottom:-2px;border-bottom:2px solid transparent;min-height:36px}
+.tabs a:hover{color:#F2F1EE;text-decoration:none}
+.tabs a[aria-current]{color:#F2F1EE;border-color:#F2F1EE;font-weight:500}
+.tabs .new{font-size:10px;color:#F2A33A;margin-left:4px;vertical-align:2px}
+@media (max-width:767px){
+  .side{display:none}
+  .shell{flex-direction:column}
+  .topbar{display:flex;position:sticky;top:0;z-index:5;height:56px;align-items:center;gap:8px;padding:0 8px;border-bottom:1px solid #1F2226;background:rgba(14,15,17,.95)}
+  main{padding:20px 16px 48px;gap:20px}
+  .tabs{gap:18px}
+}
+
+
+/* Option C — two-column ledger: a fixed-width left rail of facts, a feed on the right. */
+.ledger{display:grid;grid-template-columns:320px minmax(0,1fr);gap:24px;align-items:start}
+.rail{display:flex;flex-direction:column;gap:14px;position:sticky;top:16px}
+.blk{background:#16181B;border:1px solid #26292E;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.blk h2{margin:0;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9A9DA3;font-weight:500}
+.dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 12px;margin:0;font-size:13px}
+.dl dt{color:#9A9DA3}.dl dd{margin:0;text-align:right;color:#F2F1EE;overflow-wrap:anywhere}
+.dl dd.mono{font-size:12px}
+.feed{background:#16181B;border:1px solid #26292E;border-radius:12px;overflow:hidden}
+.feedhead{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid #1F2226}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{min-height:36px;padding:0 12px;border-radius:999px;border:1px solid #33373D;background:transparent;color:#C9CBCF;font:500 13px Geist,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.chip:hover{border-color:#5C4219;color:#F2F1EE}
+.chip[aria-pressed="true"]{background:#F2A33A;border-color:#F2A33A;color:#1A1205}
+.chip .c{font-family:'Geist Mono',monospace;font-size:11px;opacity:.75}
+.item{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:4px 12px;padding:12px 16px;border-top:1px solid #1F2226;color:#F2F1EE;align-items:start}
+.item:hover{background:#1A1D21;text-decoration:none;color:#F2F1EE}
+.item .ic{width:10px;height:10px;border-radius:50%;margin-top:5px}
+.item .t{font-size:14px;line-height:1.45;overflow-wrap:anywhere}
+.item .s{font-size:12px;color:#7E8187;overflow-wrap:anywhere;margin-top:2px}
+.item .when{font-family:'Geist Mono',monospace;font-size:12px;color:#7E8187;white-space:nowrap}
+.daysep{padding:8px 16px;font-size:12px;color:#9A9DA3;background:#121417;border-top:1px solid #1F2226;letter-spacing:.04em;text-transform:uppercase}
+.edits{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(190px,100%),1fr));gap:10px}
+.ec{border:1px solid #26292E;background:#16181B;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;color:#F2F1EE;min-width:0}
+.ec:hover{border-color:#5C4219;text-decoration:none;color:#F2F1EE}
+.diff{display:flex;height:4px;border-radius:2px;overflow:hidden;background:#26292E}
+[hidden]{display:none!important}
+@media (max-width:1023px){.ledger{grid-template-columns:minmax(0,1fr)}.rail{position:static;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr))}}
+@media (max-width:767px){.rail{display:flex}.item{grid-template-columns:14px minmax(0,1fr)}.item .when{grid-column:2;grid-row:2}.item .s{grid-column:2}}
+</style>
+</head>
+<body>
+<!-- RD-11 option C — "Two-column ledger". Left rail of facts (summary, needs you, health, metrics); right: last edits
+     as cards over a filterable activity feed (All · Commits · Stories · Preflight). Real data: coins, read
+     2026-10-11 ~21:30 local, in its TRUE state: no production connection, so Production is one "not connected" line. -->
+<div class="shell">
+  <div class="topbar">
+    <button class="btn" aria-label="Open menu" style="width:44px;padding:0;border:0;background:transparent">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9CBCF" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <span style="font-weight:600">Story Board</span>
+  </div>
+
+  <nav class="side" aria-label="Board">
+    <div style="display:flex;align-items:center;gap:10px;padding:0 6px">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="1" width="24" height="24" rx="7" fill="none" stroke="#F2A33A" stroke-width="2"/><path d="M8 9h10M8 13h6M8 17h8" stroke="#F2A33A" stroke-width="2" stroke-linecap="round"/></svg>
+      <span style="font-weight:600;font-size:16px">Story Board</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <a class="navi" href="#">Home</a>
+      <a class="navi" href="#">Mockups</a>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <span class="lbl" style="padding:0 12px 6px">Projects</span>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>asset-track</a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>client-dashboard</a>
+      <a class="navi" href="#" aria-current="page" style="background:#1D2024;color:#F2F1EE;font-weight:500"><span class="dot" style="background:#5FBF8F"></span>coins<span class="dot live" style="margin-left:auto;width:6px;height:6px"></span></a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>rent-track</a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>story-board</a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="legend" role="note" aria-label="Mockup legend">
+      <strong style="color:#F2F1EE">RD-11 · option C · Two-column ledger</strong>
+      <span><i style="background:#F2A33A"></i>amber = a link, button or the active filter (the filter chips work)</span>
+      <span class="faint">all values are coins' real data, 11 Oct 21:30 — shown in its true state: no production connection</span>
+    </div>
+
+    <header style="display:flex;flex-direction:column;gap:4px">
+      <p class="crumb" style="margin:0"><a href="#">All projects</a> / <a href="#">coins</a> / Overview</p>
+      <h1 style="margin:0;display:flex;align-items:center;gap:10px;font-size:24px;font-weight:600;letter-spacing:-.01em">coins <span class="dot" style="background:#5FBF8F"></span><span style="font-size:13px;font-weight:400;color:#9A9DA3">ok</span></h1>
+      <p class="muted" style="margin:0;font-size:14px"><span class="mono" style="font-size:12px">origin/main @ d1b5d1a8</span> · 1,558 stories in 69 initiatives</p>
+    </header>
+    <nav class="tabs" aria-label="Project pages">
+      <a href="#" aria-current="page">Overview<span class="new">NEW</span></a>
+      <a href="#">Stories</a><a href="#">Preflight</a><a href="#">Handbook</a><a href="#">Map</a>
+    </nav>
+
+    <div class="ledger">
+      <!-- LEFT RAIL: summary, health, metrics. Stacks above the feed below 1024px. -->
+      <aside class="rail" aria-label="Project facts">
+        <section class="blk" aria-labelledby="sum-h">
+          <h2 id="sum-h">Summary</h2>
+          <p style="margin:0;font-size:14px;line-height:1.55;color:#C9CBCF">A multi-tenant web app for coin collectors (and, later, dealers) to catalog their holdings: certified and raw coins linked to a shared global catalog, grouped into sets, with rich imagery.</p>
+          <p class="muted" style="margin:0;font-size:13px;line-height:1.5"><span class="soft">Now:</span> the preflight runner (PRF-27…31 today) and the dealer page v2 (PROF-38…42, approved).</p>
+          <a href="#" style="font-size:13px;min-height:32px;display:inline-flex;align-items:center">Open the brief in Handbook</a>
+        </section>
+
+        <section class="blk" aria-labelledby="needs-h">
+          <h2 id="needs-h">Needs you · 2</h2>
+          <a href="#" style="display:flex;gap:10px;align-items:center;min-height:44px;color:#F2F1EE"><span class="pill t-draft">Draft</span><span style="font-size:13px;min-width:0">Your phone tells you you were outbid <span class="mono faint">MOB-15</span></span></a>
+          <a href="#" style="display:flex;gap:10px;align-items:center;min-height:44px;color:#F2F1EE"><span class="pill t-ready">Ready</span><span style="font-size:13px;min-width:0">The first submission <span class="mono faint">MOB-17</span></span></a>
+        </section>
+
+        <section class="blk" aria-labelledby="hl-h">
+          <h2 id="hl-h">Health</h2>
+          <dl class="dl">
+            <dt>Snapshot</dt><dd><span class="dot" style="background:#5FBF8F;margin-right:6px"></span>ok · indexed 21:23</dd>
+            <dt>Live</dt><dd><span class="dot live" style="width:6px;height:6px;margin-right:6px"></span>PROF-38 on main · 4m</dd>
+            <dt>Latest preflight</dt><dd style="color:#F59088">1 gate failed · 20:48</dd>
+            <dt>Last all-pass</dt><dd>20:29 · 20m 50s</dd>
+            <dt>Off main</dt><dd>328 story rows · 6 branches</dd>
+            <dt>Working copy</dt><dd>136 uncommitted paths</dd>
+          </dl>
+        </section>
+
+        <section class="blk" aria-labelledby="mx-h">
+          <h2 id="mx-h">Metrics</h2>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="display:flex;justify-content:space-between;font-size:13px"><span class="muted">Stories built</span><span class="mono">1,110 / 1,230</span></div>
+            <div class="bar" style="height:6px" role="img" aria-label="1,110 built, 49 approved, 31 draft, 40 cancelled"><div style="width:90.2%;background:#5FBF8F"></div><div style="width:4%;background:#6CA6F0"></div><div style="width:2.5%;background:#F2A33A"></div><div style="width:3.3%;background:#4A4E55"></div></div>
+            <span class="faint" style="font-size:12px">49 approved · 31 draft · 40 cancelled</span>
+          </div>
+          <dl class="dl" style="border-top:1px solid #1F2226;padding-top:10px">
+            <dt>Build commits · 7d</dt><dd class="mono">254</dd>
+            <dt>Commits · 14d</dt><dd><svg width="84" height="18" viewBox="0 0 274 60" preserveAspectRatio="none" fill="#6CA6F0" aria-hidden="true" style="vertical-align:-3px;margin-right:6px"><rect x="0" y="4" width="14" height="56"/><rect x="20" y="13.8" width="14" height="46.2"/><rect x="40" y="24.3" width="14" height="35.7"/><rect x="60" y="21.1" width="14" height="38.9"/><rect x="80" y="26.6" width="14" height="33.4"/><rect x="100" y="26.3" width="14" height="33.7"/><rect x="120" y="26.9" width="14" height="33.1"/><rect x="140" y="35.1" width="14" height="24.9"/><rect x="160" y="27.4" width="14" height="32.6"/><rect x="180" y="27.9" width="14" height="32.1"/><rect x="200" y="23.3" width="14" height="36.7"/><rect x="220" y="24.8" width="14" height="35.2"/><rect x="240" y="38.7" width="14" height="21.3"/><rect x="260" y="41.2" width="14" height="18.8"/></svg><span class="mono">1,951</span></dd>
+            <dt>Preflight · 7d</dt><dd class="mono">10 · med 39m 08s</dd>
+            <dt>Gate runs today</dt><dd class="mono">49 · <span style="color:#7CD1A4">12 all-pass</span></dd>
+          </dl>
+          <!-- The "metrics if appropriate" rule: with no ProdConnection there is no production block, only this line. -->
+          <div style="border-top:1px solid #1F2226;padding-top:10px;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:13px">
+            <span class="muted">Production</span><span class="faint">not connected</span><a href="#" style="margin-left:auto;min-height:32px;display:inline-flex;align-items:center">Set up</a>
+          </div>
+        </section>
+      </aside>
+
+      <!-- RIGHT: last edits (newest commits as cards) above a filterable activity feed. -->
+      <div style="display:flex;flex-direction:column;gap:18px;min-width:0">
+        <section aria-labelledby="ed-h" style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><h2 id="ed-h" style="margin:0;font-size:16px;font-weight:600">Last edits</h2><span class="muted" style="font-size:13px">newest build commits on origin/main</span></div>
+          <div class="edits">
+            <a class="ec" href="#"><span style="display:flex;gap:8px;align-items:center"><span class="pill t-built">feat</span><span class="mono soft" style="font-size:12px">PRF-29</span><span class="mono faint" style="font-size:12px;margin-left:auto">19:35</span></span><span style="font-size:13px;line-height:1.4">The next run waits until the one ahead merges or fails</span><div class="diff" aria-hidden="true"><div style="width:98%;background:#5FBF8F"></div><div style="width:2%;background:#F59088"></div></div><span class="mono faint" style="font-size:12px">31 files · +1,924 −34</span></a>
+            <a class="ec" href="#"><span style="display:flex;gap:8px;align-items:center"><span class="pill t-built">feat</span><span class="mono soft" style="font-size:12px">PRF-31</span><span class="mono faint" style="font-size:12px;margin-left:auto">19:17</span></span><span style="font-size:13px;line-height:1.4">A remote run never waits on the Mac's browser lock</span><div class="diff" aria-hidden="true"><div style="width:91%;background:#5FBF8F"></div><div style="width:9%;background:#F59088"></div></div><span class="mono faint" style="font-size:12px">9 files · +390 −39</span></a>
+            <a class="ec" href="#"><span style="display:flex;gap:8px;align-items:center"><span class="pill t-fix">fix</span><span class="mono soft" style="font-size:12px">PRF-30</span><span class="mono faint" style="font-size:12px;margin-left:auto">18:36</span></span><span style="font-size:13px;line-height:1.4">Every section on its own line</span><div class="diff" aria-hidden="true"><div style="width:51%;background:#5FBF8F"></div><div style="width:49%;background:#F59088"></div></div><span class="mono faint" style="font-size:12px">4 files · +30 −29</span></a>
+          </div>
+        </section>
+
+        <section class="feed" aria-labelledby="feed-h">
+          <div class="feedhead">
+            <h2 id="feed-h" style="margin:0;font-size:16px;font-weight:600;margin-right:auto">Activity</h2>
+            <div class="chips" role="group" aria-label="Filter activity">
+              <button class="chip" type="button" data-f="all" aria-pressed="true">All <span class="c">17</span></button>
+              <button class="chip" type="button" data-f="commit" aria-pressed="false">Commits <span class="c">11</span></button>
+              <button class="chip" type="button" data-f="story" aria-pressed="false">Stories <span class="c">8</span></button>
+              <button class="chip" type="button" data-f="preflight" aria-pressed="false">Preflight <span class="c">4</span></button>
+            </div>
+          </div>
+          <div id="feed">
+            <div class="daysep" data-sep>Today · Sun 11 Oct</div>
+            <a class="item" href="#" data-k="commit"><span class="ic" style="background:#9A9DA3"></span><div><div class="t"><span class="mono soft" style="font-size:12px">PROF-8 +4</span> docs: dealer page v2 — one Personal collection, any-coin showcase, dealer editor, visitors, reviews page</div><div class="s">75 files · +2,987 −78</div></div><span class="when">21:16</span></a>
+            <a class="item" href="#" data-k="preflight"><span class="ic" style="background:#F59088"></span><div><div class="t">Preflight: 1 gate failed — <span class="mono" style="font-size:13px">audit-pack size</span></div><div class="s mono">integrate/gs-51-53 · brain · 28 gates · 16m 22s</div></div><span class="when">20:48</span></a>
+            <a class="item" href="#" data-k="preflight"><span class="ic" style="background:#F59088"></span><div><div class="t">Preflight: merge onto origin/main failed</div><div class="s mono">integrate/gs-51-53 · brain · stopped at gate 1</div></div><span class="when">20:47</span></a>
+            <a class="item" href="#" data-k="preflight"><span class="ic" style="background:#5FBF8F"></span><div><div class="t">Preflight: all 29 gates passed</div><div class="s mono">integrate/set-54-55-denom-45 · brain · 20m 50s</div></div><span class="when">20:29</span></a>
+            <a class="item" href="#" data-k="preflight"><span class="ic" style="background:#F59088"></span><div><div class="t">Preflight: 1 gate failed — <span class="mono" style="font-size:13px">pest (unit+feature)</span></div><div class="s mono">feat/PRF-29-hold-until-merge · brain · 16m 23s</div></div><span class="when">19:39</span></a>
+            <a class="item" href="#" data-k="commit story"><span class="ic" style="background:#5FBF8F"></span><div><div class="t"><span class="mono soft" style="font-size:12px">PRF-29</span> built — the next run waits until the one ahead merges or fails</div><div class="s">approved → built · 31 files · +1,924 −34</div></div><span class="when">19:35</span></a>
+            <a class="item" href="#" data-k="commit"><span class="ic" style="background:#9A9DA3"></span><div><div class="t"><span class="mono soft" style="font-size:12px">PRF-31</span> chore: untrack runner __pycache__ and ignore it</div><div class="s">1 file</div></div><span class="when">19:20</span></a>
+            <a class="item" href="#" data-k="commit story"><span class="ic" style="background:#5FBF8F"></span><div><div class="t"><span class="mono soft" style="font-size:12px">PRF-31</span> built — a remote run never waits on the Mac's browser lock</div><div class="s">approved → built · 9 files · +390 −39</div></div><span class="when">19:17</span></a>
+            <a class="item" href="#" data-k="story"><span class="ic" style="background:#6CA6F0"></span><div><div class="t"><span class="mono soft" style="font-size:12px">PRF-29 PRF-31</span> approved by the owner</div><div class="s">draft → approved</div></div><span class="when">18:57</span></a>
+            <a class="item" href="#" data-k="commit story"><span class="ic" style="background:#5FBF8F"></span><div><div class="t"><span class="mono soft" style="font-size:12px">PRF-30</span> fixed — every section on its own line</div><div class="s">owner moved the pick from B to A after the first live look · +30 −29</div></div><span class="when">18:36</span></a>
+            <a class="item" href="#" data-k="commit story"><span class="ic" style="background:#5FBF8F"></span><div><div class="t"><span class="mono soft" style="font-size:12px">PRF-30</span> built — brain's console groups a run's gates into six sections</div><div class="s">approved → built · 14 files · +2,746 −59</div></div><span class="when">17:53</span></a>
+            <a class="item" href="#" data-k="story"><span class="ic" style="background:#C3A8F0"></span><div><div class="t"><span class="mono soft" style="font-size:12px">PRF-30</span> mockup picked — option B plus story-ID label and last m:ss</div><div class="s">draft → approved</div></div><span class="when">17:24</span></a>
+            <a class="item" href="#" data-k="commit story"><span class="ic" style="background:#5FBF8F"></span><div><div class="t"><span class="mono soft" style="font-size:12px">SET-55</span> built — the classic commemorative set has a Norse American hole</div><div class="s">14 files · +734 −70</div></div><span class="when">15:41</span></a>
+            <div class="daysep" data-sep>Yesterday · Sat 10 Oct</div>
+            <a class="item" href="#" data-k="commit"><span class="ic" style="background:#5FBF8F"></span><div><div class="t"><span class="mono soft" style="font-size:12px">PRF-22</span> fix: guard 3 checks brain against the snapshot's own test list</div><div class="s">manifest drift is a WARN, as on the Mac</div></div><span class="when">23:11</span></a>
+            <a class="item" href="#" data-k="commit"><span class="ic" style="background:#9A9DA3"></span><div><div class="t"><span class="mono soft" style="font-size:12px">CID-7</span> docs: a cert pull wipes, then fills — ADR, feature docs, index, brief, journey</div><div class="s">ruling 5</div></div><span class="when">22:45</span></a>
+            <a class="item" href="#" data-k="commit"><span class="ic" style="background:#5FBF8F"></span><div><div class="t"><span class="mono soft" style="font-size:12px">CID-7</span> fix: a cert pull wipes the coin fields and fills only the cert's facts</div><div class="s">web and API · owner ruling 2026-10-10</div></div><span class="when">22:42</span></a>
+            <a class="item" href="#" data-k="commit story"><span class="ic" style="background:#5FBF8F"></span><div><div class="t"><span class="mono soft" style="font-size:12px">BUL-69</span> built — sell bullion from the shelf</div><div class="s">Sell bullion beside Add bullion, held-driven dropdowns</div></div><span class="when">22:31</span></a>
+            <p id="empty" hidden style="margin:0;padding:24px 16px;font-size:14px;color:#C9CBCF;border-top:1px solid #1F2226">Nothing of this kind in the last 14 days.</p>
+          </div>
+          <div style="padding:12px 16px;border-top:1px solid #1F2226"><button class="btn" type="button">Show older activity</button></div>
+        </section>
+      </div>
+    </div>
+
+    <section aria-label="States" style="border-top:1px dashed #33373D;padding-top:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:14px">
+      <div class="blk"><h2 style="color:#F2A33A">With production</h2><p class="soft" style="margin:0;font-size:14px">The Metrics block gains a Production list under the line above — one row per enabled metric: label, value, 7-day sparkline, change. “Set up” disappears.</p></div>
+      <div class="blk"><h2 style="color:#F2A33A">Filter with nothing in it</h2><p class="soft" style="margin:0;font-size:14px">Preflight on a project with no runs: “No preflight runs recorded for this project.” — with a link to the Preflight tab.</p></div>
+      <div class="blk"><h2 style="color:#F2A33A">Error</h2><p role="alert" style="margin:0;font-size:14px;color:#F59088">Could not read git history for coins. The feed shows preflight runs only.</p></div>
+    </section>
+  </main>
+</div>
+<script>
+/* Mockup-only filter (Alpine in the build): show feed items whose data-k includes the chosen kind; hide day
+   separators with nothing under them. */
+(function () {
+  var chips = document.querySelectorAll('.chip');
+  var items = document.querySelectorAll('#feed [data-k]');
+  var seps = document.querySelectorAll('#feed [data-sep]');
+  chips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      var f = chip.getAttribute('data-f');
+      chips.forEach(function (c) { c.setAttribute('aria-pressed', c === chip ? 'true' : 'false'); });
+      var shown = 0;
+      items.forEach(function (it) {
+        var on = f === 'all' || it.getAttribute('data-k').split(' ').indexOf(f) !== -1;
+        it.hidden = !on; if (on) shown++;
+      });
+      seps.forEach(function (sep) {
+        var n = sep.nextElementSibling, any = false;
+        while (n && !n.hasAttribute('data-sep') && n.id !== 'empty') { if (!n.hidden) any = true; n = n.nextElementSibling; }
+        sep.hidden = !any;
+      });
+      document.getElementById('empty').hidden = shown > 0;
+    });
+  });
+})();
+</script>
+</body>
+</html>

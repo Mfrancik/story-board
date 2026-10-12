@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RD-11 project overview options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;background:#0E0F11;color:#F2F1EE;font-family:Geist,system-ui,sans-serif}
+a{color:#F2A33A;text-decoration:none}a:hover{color:#FFC26B;text-decoration:underline;text-underline-offset:3px}
+a:focus-visible{outline:2px solid #F2A33A;outline-offset:2px}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.wrap{max-width:1240px;margin:0 auto;padding:32px 32px 64px;display:flex;flex-direction:column;gap:32px}
+.lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9A9DA3;font-weight:500}
+p{line-height:1.6;color:#C9CBCF;margin:0}
+.opt{background:#16181B;border:1px solid #26292E;border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:16px}
+.opt h2{margin:0;font-size:20px;font-weight:600;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.opt h2 .k{font-family:'Geist Mono',monospace;font-size:13px;color:#F2A33A;border:1px solid #5C4219;border-radius:999px;padding:2px 10px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:7px 8px;border-top:1px solid #1F2226;vertical-align:top}
+th{color:#9A9DA3;font-weight:500;width:34%}
+td{color:#C9CBCF}
+td .new{color:#F59088}
+.frame{border:1px solid #26292E;border-radius:10px;overflow:hidden;background:#0E0F11}
+iframe{display:block;width:100%;height:720px;border:0}
+.open{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:8px;background:#F2A33A;color:#1A1205;font-weight:500;font-size:14px;align-self:flex-start}
+.open:hover{color:#1A1205;background:#FFC26B;text-decoration:none}
+.gaps li{margin:0 0 10px;line-height:1.55;color:#C9CBCF;font-size:14px}
+@media (max-width:900px){.cols{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:640px){.wrap{padding:20px 16px 48px;gap:24px}.opt{padding:16px}iframe{height:640px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:8px">
+    <span class="lbl">RD-11 · mockups · pick one</span>
+    <h1 style="margin:0;font-size:30px;font-weight:600;letter-spacing:-.01em">A project's own overview at <span class="mono" style="font-size:26px">/p/coins</span></h1>
+    <p style="max-width:860px">You asked for a better page when you go into a project: last edits, a project summary, metrics where they make sense, and recent updates. Each option makes <span class="mono">/p/{project}</span> the project's landing page, inside the shell, with a new <strong>Overview</strong> tab first (Overview · Stories · Preflight · Handbook · Map). All three use <strong>coins' real data</strong> read on Sun 11 Oct around 21:30. The one exception is production numbers: no project has a production connection in this database, so A and B show <em>sample</em> values (marked) and C shows coins as it is today, with no connection. Each page works at 375px; narrow the window to see how it stacks.</p>
+  </header>
+
+  <section class="opt" aria-labelledby="a-h">
+    <h2 id="a-h"><span class="k">A</span>Briefing <span style="font-size:14px;font-weight:400;color:#9A9DA3">reads like a status report</span></h2>
+    <div class="cols">
+      <p>It reads top to bottom. A dated headline sentence says what happened today ("77 commits and 49 preflight runs today, mostly on the preflight runner…"). Then the brief's own "What it is" paragraph, a row of four headline figures with an optional production strip, Needs you beside Live now, and one merged timeline grouped by day. The timeline mixes builds, fixes, docs, approvals, mockup picks and preflight runs, and folds merges. Best if you want to land on the page and understand the state of the project in ten seconds of reading. It has the fewest boxes and the most words.</p>
+      <table>
+        <tr><th>Headline sentence</th><td>git log counts since midnight · preflight-runs.csv · ListNeedsMe · live sessions · <span class="new">new: a sentence builder</span></td></tr>
+        <tr><th>Summary</th><td>PROJECT-BRIEF.md "What it is" (read from git at the ref, as Handbook does)</td></tr>
+        <tr><th>Headline figures</th><td>Story status counts (DB) · build commits 7d (GitReader, as Shipped this week) · ReadOverviewFigures preflight</td></tr>
+        <tr><th>Production strip</th><td>ProdSnapshot latest per enabled ProdMetric; hidden with no connection</td></tr>
+        <tr><th>Timeline</th><td>GitReader log 14d (subject + shortstat) · preflight-runs.csv · <span class="new">new: approve/pick events parsed from docs commits</span></td></tr>
+      </table>
+    </div>
+    <div class="frame"><iframe src="option-a.html" title="Option A preview" loading="lazy"></iframe></div>
+    <a class="open" href="option-a.html">Open option A full size</a>
+  </section>
+
+  <section class="opt" aria-labelledby="b-h">
+    <h2 id="b-h"><span class="k">B</span>Command center <span style="font-size:14px;font-weight:400;color:#9A9DA3">a dense grid of tiles</span></h2>
+    <div class="cols">
+      <p>This one matches the home page's tiles. A four-column grid, which falls to two columns and then one, holds story progress by status, Needs you, Live now, the latest preflight with a 13-day runs and all-pass chart, commits per day over 14 days, production tiles with sparklines (only with a connection), a short About, the biggest initiatives' progress, a compact Last edits list with +/− line counts, and the most-edited code files today. It shows the most numbers and the least prose. Each tile header links to the full tab. Best if the overview should be a gauge cluster you scan rather than read.</p>
+      <table>
+        <tr><th>Story progress</th><td>Story status counts on the ref + off-main count (as ListProjectTiles)</td></tr>
+        <tr><th>Needs you · Live now</th><td>ListNeedsMe and ListLiveSessions, filtered to this project (reuse)</td></tr>
+        <tr><th>Latest preflight + chart</th><td>preflight-runs.csv grouped by run_id (verdict per gate) · <span class="new">new: per-day aggregation</span></td></tr>
+        <tr><th>Commits per day</th><td>GitReader log 14d, counted by day · <span class="new">new: a wider GitReader window than 7 days</span></td></tr>
+        <tr><th>Production</th><td>ProdSnapshot history per ProdMetric (as /prod sparklines)</td></tr>
+        <tr><th>Initiatives</th><td>Story counts grouped by initiative (DB)</td></tr>
+        <tr><th>Last edits · hot files</th><td>git log --shortstat / --name-only · git status count · <span class="new">new: GitReader methods for both</span></td></tr>
+      </table>
+    </div>
+    <div class="frame"><iframe src="option-b.html" title="Option B preview" loading="lazy"></iframe></div>
+    <a class="open" href="option-b.html">Open option B full size</a>
+  </section>
+
+  <section class="opt" aria-labelledby="c-h">
+    <h2 id="c-h"><span class="k">C</span>Two-column ledger <span style="font-size:14px;font-weight:400;color:#9A9DA3">facts on the left, the feed on the right</span></h2>
+    <div class="cols">
+      <p>A sticky left rail holds the facts that change slowly: a summary with a "Now:" line, Needs you, Health (snapshot, live session, latest preflight, last all-pass, off main, uncommitted files) and Metrics (story progress, build pace, preflight). The right column puts the last three build commits on top as cards with a diff bar, then an activity feed you can filter by All, Commits, Stories or Preflight. The chips work in the mockup. It shows coins in its true state, with no production connection, so production is a single "not connected · Set up" line. That is the "metrics only if appropriate" rule. Best if you come here to dig into what changed.</p>
+      <table>
+        <tr><th>Summary</th><td>PROJECT-BRIEF.md "What it is" · <span class="new">"Now:" line — new: needs a source (brief's "Current phase", or derived from the busiest ID prefixes)</span></td></tr>
+        <tr><th>Health</th><td>Project state/indexed_at · ListLiveSessions · preflight-runs.csv · Story::offMain() · <span class="new">new: git status count</span></td></tr>
+        <tr><th>Metrics</th><td>Status counts · GitReader 7d/14d counts · ReadOverviewFigures · ProdConnection presence</td></tr>
+        <tr><th>Last edits</th><td>Newest build commits + shortstat (GitReader)</td></tr>
+        <tr><th>Activity feed</th><td>GitReader log 14d + preflight-runs.csv, merged · <span class="new">new: "Stories" events (draft→approved→built) derived from commit types</span></td></tr>
+      </table>
+    </div>
+    <div class="frame"><iframe src="option-c.html" title="Option C preview" loading="lazy"></iframe></div>
+    <a class="open" href="option-c.html">Open option C full size</a>
+  </section>
+
+  <section aria-labelledby="gaps-h" style="display:flex;flex-direction:column;gap:12px">
+    <h2 id="gaps-h" style="margin:0;font-size:18px;font-weight:600">Data the page needs that doesn't exist yet</h2>
+    <ul class="gaps" style="margin:0;padding-left:20px">
+      <li><strong>Story status history.</strong> <span class="mono">stories.updated_at</span> is the re-index time, not when a status changed, and nothing records transitions. "Approved" and "built" events have to come from git: build commits (<span class="mono">feat|fix|test(ID)</span>) flip a story to built, and docs commits whose subject says "approved" or names an option record a pick. That works, but it is a heuristic. A <span class="mono">git log -p</span> on the story files' <span class="mono">Status:</span> line would be exact but slower.</li>
+      <li><strong>An edits feed.</strong> GitReader admits one <span class="mono">log</span> form (7 days, subjects only; Shipped this week). Last edits needs <span class="mono">--shortstat</span>, a 14-day window, per-day counts and, for B, <span class="mono">--name-only</span> and the working copy's uncommitted count. These are new read methods; nothing writes.</li>
+      <li><strong>Preflight verdicts per run.</strong> <span class="mono">preflight-cost.csv</span> has no verdict. Verdicts are in coins' <span class="mono">preflight-runs.csv</span> (one row per gate, 322 runs), which RD-8 already reads for "Ran on". Story-board has no runs CSV, so its overview shows cost rows with no verdict.</li>
+      <li><strong>Production values.</strong> No ProdConnection exists in the local database, so every project falls into the "no production" state. The design works either way, but the with-production layout can only be checked with sample numbers until one is connected.</li>
+      <li><strong>The route.</strong> <span class="mono">/p/{project}</span> is still SB-10's old ProjectPage (<span class="mono">projects.show</span>), which RD-9 retires. RD-11 replaces it. The breadcrumb and sidebar project links, which today go to Stories, would point here.</li>
+    </ul>
+  </section>
+</div>
+</body>
+</html>
