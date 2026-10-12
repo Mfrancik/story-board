@@ -10,6 +10,12 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-10-12 — Browser test reads 3 columns on a 4-column grid
+Symptom: RD-11's browser test for the project overview's 4 → 2 → 1 grid reported 3 columns at desktop width, although the page visibly laid out 4.
+Root cause: the test counted distinct `x` positions of the tiles. Every tile but Needs you and Live now spans two columns, so at 4 columns no tile ever starts in column 2 — three distinct left edges for four columns.
+Fix: count the grid's own columns, not the tiles' positions: `getComputedStyle(grid).gridTemplateColumns.split(' ').length` (`OVERVIEW_COLUMNS` in `tests/Browser/ProjectOverviewTest.php`, RD-11). Use this for any grid with spanning items.
+Log trail: none; a test-only bug, seen as a failing `assertScript(…, 4)`.
+
 ## 2026-10-11 — Project tiles show no new production figure
 Symptom: an overview project tile's production row keeps yesterday's (or an older) figure, or drops off after 7 days, although the connection tests fine on `/projects`.
 Root cause: since RD-9 deleted `/prod` and its `ReadProductionMetrics` job, no page load reads production. The only read is `board:prod-snapshot` at 23:55 in `board.timezone`, which needs the scheduler, and `composer run dev` does not start it. The tiles show stored `ProdSnapshot` rows only (ADR-054).

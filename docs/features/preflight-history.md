@@ -1,8 +1,8 @@
 # Preflight history
-Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-16, SB-19, RD-2, RD-8
+Status: active   ·   Last updated: 2026-10-12   ·   Stories: SB-16, SB-19, RD-2, RD-8, RD-11
 
 ## Overview
-`/p/{project}/preflight` is a project's second tab (Stories | Preflight | Handbook | Map since RD-4).
+`/p/{project}/preflight` is a project's third tab (Overview | Stories | Preflight | Handbook | Map since RD-11).
 It lists every recorded preflight run of the project as a ledger, newest first, with its wall time,
 turns, tool calls, tokens, subagent share, pack size and audit tier. Two line charts and three trend
 figures sit above the table. `bin/preflight-meter.py report` appends one row per run to a
@@ -124,7 +124,9 @@ yet, so in practice every row reads "—" today.
    same branch and the record's `finished_at` is within `WINDOW_S` (10 min, inclusive) of the row's `ts`. All
    candidate pairs are sorted nearest first and each row and each record is used once, so two quick runs on
    one branch cannot both claim one record. A row with a null branch never matches. The result is keyed like
-   `$runs`: `brain`, `mac`, or null.
+   `$runs`: `brain`, `mac`, or null. Since RD-11 the pairing itself is public `pairs()` (the matched record's
+   index per row) and `match()` maps it to `ran_on`, unchanged; the project overview reads the matched record's
+   `verdict` through `pairs()` ([ADR-059](../decisions/ADR-059-preflight-runs-expose-pairs-and-verdict.md)).
 4. **The page.** `ProjectPreflight::render()` writes the match into each run as `ran_on`, logs the matched and
    unmatched counts, and passes `recordsSkipped` and `runnerWall` to the view. The view adds:
    - a **Ran on** column (`data-col="ran_on"`, after Where), part of the Columns picker like any other;
@@ -165,8 +167,8 @@ them. The record format (schema 1, every field required) is the contract in
   listed), `folderFor(Project)` and `timestamp(?string)`: public since RD-8 so the run-record reader shares
   the folder and date rules.
 - `ReadPreflightRuns::handle(Project): array{records, skipped}`; each record is `run_id, branch, ran_on,
-  finished_at, wall`. `match(runs, records): array<int, 'brain'|'mac'|null>`. Constants: `DIR`, `SCHEMA`,
-  `FIELDS`, `RAN_ON`, `WINDOW_S`.
+  finished_at, wall, verdict` (`GO`/`NO-GO` or null, RD-11). `match(runs, records): array<int, 'brain'|'mac'|null>`;
+  `pairs(runs, records): array<int, int|null>`. Constants: `DIR`, `SCHEMA`, `FIELDS`, `VERDICTS`, `RAN_ON`, `WINDOW_S`.
 - Formatters: `ReadPreflightHistory::wall()` (`m:ss`), `tokens()` (`2.6M`, `517k`), `pack()` (KB).
   Constants: `MAIN`, `PLANS_WHERE`, `PINNED_TIER`, `WINDOW_DAYS`, `FILE`.
 - JS: `preflightHistory(runs, now, main, project, hideable)`, exported and registered as
@@ -294,3 +296,4 @@ of the project (main checkout, worktrees, plans), trend figures, two SVG charts,
 Reset columns, saved per project in localStorage with a safe fallback (SB-19, `8e0fa41`)
 2026-10-11 — Moved into the dark shell (`layouts/shell`), restyled with its tokens, layout unchanged (RD-2, `43b01ed`)
 2026-10-11 — Where it ran: `ReadPreflightRuns` reads per-run JSON records (ADR-055) from the CSV folders and matches them to rows; Ran on column, Where it ran filter, per-runner medians, skipped-record notice (RD-8, `5811fe3`)
+2026-10-12 — Records keep `verdict`; matching exposed as `pairs()` for the project overview, `match()` unchanged (RD-11, `cbef7bc`)

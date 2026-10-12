@@ -1,5 +1,5 @@
 # Retired pages (RD-9)
-Status: active   ·   Last updated: 2026-10-11   ·   Stories: RD-9
+Status: active   ·   Last updated: 2026-10-12   ·   Stories: RD-9, RD-11
 
 ## Overview
 RD-2 to RD-8 built the redesign's pages beside the old ones, leaving the old code unrouted or unused so each story
@@ -15,7 +15,7 @@ build") override the story body.
 | Gone | Replaced by |
 |---|---|
 | `/` old dashboard: `App\Livewire\Board\Home`, `needs-me-cards`, `project-card`, `section`, `story-row`, `ListWhatNeedsMe` | [Home overview](home-overview.md) (`Overview`, `ListNeedsMe`, `ListProjectTiles`) |
-| `/p/{project}` (`projects.show`): `ProjectPage`, `ReadProjectProgress` (whole class: it only had `handle()`) | The project's tabs: [Stories](stories-by-initiative.md), Preflight, Handbook, Map. The shell sidebar links each project to its Stories |
+| `/p/{project}` (`projects.show`): `ProjectPage`, `ReadProjectProgress` (whole class: it only had `handle()`) | The project's tabs: [Stories](stories-by-initiative.md), Preflight, Handbook, Map. The shell sidebar linked each project to its Stories until RD-11's [project overview](project-overview.md) took the URL |
 | Story modal: `StoryModal`, `ResolveStoryLink`, `.mockup-thumb*` CSS | [Story page](story-page-and-mockups.md) at `/p/{project}/s/{id}` |
 | Live sessions panel and sidebar badge: `LiveSessions`, `ListLiveSessions::counts()`, the cards' `thumb` field, `.live-pulse` CSS | The overview's Live now (`ListLiveSessions::overview()`) |
 | `/prod`: `ProductionDashboard`, `ListProductionDashboard`, `prod-stat`, `prod-change`, `prod-row-status`, the `ReadProductionMetrics` job, `--color-loss` | The overview's project tiles (RD-7), fed by the nightly `board:prod-snapshot` |
@@ -54,7 +54,7 @@ None. No migration, and no table or column dropped. `prod_snapshots`, `prod_conn
 `project_locations` stay: the tiles, `/projects` and off-main indexing use them.
 
 ## Interfaces
-Routes removed: `/prod` (`prod`), bare `/p/{project}` (`projects.show`), `/test/old-home` (tests only). All three 404.
+Routes removed: `/prod` (`prod`), bare `/p/{project}` (`projects.show`), `/test/old-home` (tests only). All three 404'd; since RD-11 the bare `/p/{project}` URL is the [project overview](project-overview.md) under a new name, `projects.overview`.
 Every remaining page route answers 200: `/`, `/projects`, `/mockups`, `/mockups/{project}/{id}`, and each project's
 `stories`, `preflight`, `handbook`, `map`, `s/{id}` and `m/{id}/{file}`.
 
@@ -71,7 +71,7 @@ when the nightly command runs, so a day with no `board.prod_read` line means the
 
 ## Testing & verification
 `tests/Feature/Board/RetireOldPagesTest.php` holds the acceptance criteria, one test per criterion:
-- `/prod`, `/p/fx` and `/p/unknown` 404.
+- `/prod`, `/p/fx` and `/p/unknown` 404. RD-11 superseded the `/p/fx` case (L-12): it now asserts 200, the project overview.
 - `/?project=story-board` (and `fx`) returns 200 with the filter reading "All projects".
 - Every remaining route returns 200.
 - Two guards against a deleted name coming back. An `arch()` test: `expect('App')->not->toUse([...])` over the deleted
@@ -128,3 +128,4 @@ Browser check (story): click every sidebar item and every project tab. No dead l
 
 ## Change history
 2026-10-11 — Old dashboard, `/p/{project}`, story modal, live panel, `/prod`, `layouts/board` and the `/?project=` redirect deleted; kept-code coverage ported; `MetricNumber` extracted (RD-9, `2669db7`)
+2026-10-12 — Bare `/p/{project}` reused by the project overview; its 404 test superseded (RD-11, `cbef7bc`)

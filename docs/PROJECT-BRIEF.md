@@ -1,5 +1,5 @@
 # Project brief — story-board
-Last refreshed: 2026-10-11 (RD-9)
+Last refreshed: 2026-10-12 (RD-11)
 
 ## What it is, and for whom
 A localhost Laravel app for one owner, with no auth (removed in RD-1). It reads the `stories/` folder of
@@ -39,10 +39,11 @@ It also shows:
   initiative rollup. `MockupGateParser` reads a story's mockup gate.
 
 ## Features
-21 entries: 16 active, 5 retired by RD-9 (old dashboard, old sidebar, story modal, `/p/{project}`, `/prod`; their docs
+22 entries: 17 active, 5 retired by RD-9 (old dashboard, old sidebar, story modal, old `/p/{project}`, `/prod`; their docs
 stay as history, and [retired-pages.md](features/retired-pages.md) maps what replaced each). Every page is in the dark
 shell. `/` is the home overview (RD-5) with a project filter (RD-6), project tiles and Shipped this week (RD-7); the
-Preflight page and tiles say where each run ran (RD-8). Each one's route, summary and doc: [INDEX.md](INDEX.md); the
+Preflight page and tiles say where each run ran (RD-8). `/p/{project}` is the project overview (RD-11): a tile grid,
+Overview first in the project tabs, the sidebar's landing page, and Refresh this project. Each one's route, summary and doc: [INDEX.md](INDEX.md); the
 stories behind it: its doc's header line.
 
 ## Journeys
@@ -50,7 +51,8 @@ None yet. Every SB and RD story so far is `Journey: none`.
 
 ## Stories
 - **built**: SB-2–5, SB-7–12, SB-14–19, SB-21–25 · RD-1 clean foundation · RD-2 dark shell and sidebar ·
-  RD-3 short story page · RD-4 re-skin kept pages · RD-5 home overview · RD-6 home project filter · RD-7 project tiles and Shipped · RD-8 preflight "Ran on" · RD-9 retire old pages
+  RD-3 short story page · RD-4 re-skin kept pages · RD-5 home overview · RD-6 home project filter · RD-7 project tiles and Shipped · RD-8 preflight "Ran on" · RD-9 retire old pages · RD-11 project overview
+- **approved**: RD-12 project git activity tiles
 - **draft**: SB-20 preflight run errors · RD-10 preflight run record (parked)
 - **draft (parked)**: SB-6 the board on an always-live domain
 - **cut**: SB-13 pick a mockup (SB-21's pick covers it)
@@ -80,13 +82,15 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
 - Refresh on load is one middleware on the page-route group, not per-page `mount()` → [ADR-041](decisions/ADR-041-refresh-on-load-is-one-middleware-on-the-page-routes.md)
 - One pick action, `PickMockup`, serves the viewer and the story page; the short story page replaced the long one in place, trimmed to the approved mockup → [ADR-042](decisions/ADR-042-one-pick-action-shared-by-story-page-and-viewer.md), [ADR-043](decisions/ADR-043-short-story-page-replaces-the-long-one-in-place.md)
 - RD-9: the mockup file route stays for `?v` versions; coverage is ported before a test goes; `/?project=` is ignored → ADR-056–058
+- Project overview (RD-11): `ReadPreflightRuns` keeps the verdict and exposes `pairs()`; "Refreshing…" ends when the refresh-attempt stamp moves, not by the clock; tiles reuse home's readers and stored data, never a production connection → ADR-059–061
 - Preflight audit scope, audit cost record, build-artifact disposal (kit) → ADR-001 to ADR-003
 
 ## Current phase and what's next
-Phase 3, the redesign (RD). RD-1 to RD-9 are built: foundation, dark shell, short story page, every kept page in
-the shell, the home overview with its filter, tiles and Shipped this week, the reading side of preflight "Ran on",
-and the deletion of every page the redesign replaced. Next: the phase-end full preflight sweep and `/lesson retro`;
-RD-10 (preflight run record writer) is parked. Dead code RD-9 left is backlog F-15.
+Phase 3, the redesign (RD). RD-1 to RD-9 and RD-11 are built: foundation, dark shell, short story page, every kept
+page in the shell, the home overview with its filter, tiles and Shipped this week, the reading side of preflight
+"Ran on", the deletion of every page the redesign replaced, and the project overview at `/p/{project}`. Next: RD-12
+(git activity tiles on the project overview). RD-10 (preflight run record writer) is parked. Dead code RD-9 left is
+backlog F-15. Open for the owner: the home overview's project tiles still link to Stories, not the project overview.
 
 Still open from phase 2: the owner confirms SB-19's checkbox look; `journeyStep()` is adopted in coins, followed
 by the real-data check of the app map and Current pane; the `--text-thumb` token decision.
@@ -115,8 +119,8 @@ Backlog: [BACKLOG.md](BACKLOG.md).
 - The handbook compares against the kit checkout's last-fetched ref. Its real-data check is pending.
 - Production SSL is not certificate-verified, and rotating APP_KEY breaks stored credentials. The coins
   production check awaits the owner's read-only user.
-- Preflight history has no test counts or verdict (F-5). "Ran on" reads "—" everywhere until RD-10 (parked) writes
-  run records; matching is by branch and a 10-minute window, so a mismatched branch or clock stays unknown. Its median and number formats exist in both PHP and
+- Preflight history has no test counts or verdict (F-5). "Ran on" and the project overview's verdict read "—"
+  everywhere until RD-10 (parked) writes run records; matching is by branch and a 10-minute window, so a mismatched branch or clock stays unknown. Its median and number formats exist in both PHP and
   JS. Its hidden columns are saved per browser.
 - Flux reads `localStorage` unguarded, so a browser that blocks site data errors on every page (RUNBOOK).
 - A board pick shows at once in the gallery and on the story page, but elsewhere only after a push and refresh. Its `--no-verify`

@@ -1,8 +1,8 @@
 # Stories by initiative
-Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-15, RD-4, RD-9
+Status: active   ·   Last updated: 2026-10-12   ·   Stories: SB-15, RD-4, RD-9, RD-11
 
 ## Overview
-`/p/{project}/stories` is a project's first tab (Stories | Preflight | Handbook | Map), in the dark shell since RD-4. It lists every
+`/p/{project}/stories` is a project's second tab, after [Overview](project-overview.md) since RD-11 (Overview | Stories | Preflight | Handbook | Map), in the dark shell since RD-4. It lists every
 on-ref story of the project, grouped by initiative, and tags each story with its status. Initiatives
 with their counts sit on the left, and the chosen initiative's stories are on the right. It answers the
 question Progress by initiative leaves open (SB-10's bars show *how much* is done, not *which* stories).
@@ -153,3 +153,4 @@ filter chips, Expand all; `rollup()` extracted; `board/project-header` shared wi
 2026-10-11 — Rollup moved to `StoryStatusOrder`, so this page no longer depends on `ReadProjectProgress`; guard via `GuardsProjectPage` (RD-1, `6ad827b`)
 2026-10-11 — In the dark shell; rows link to the story page and the embedded modal is gone (RD-4, `f722dbc`)
 2026-10-11 — The order-and-counts test pins its expectations directly; it no longer compares against the deleted `ReadProjectProgress` (RD-9, `2669db7`)
+2026-10-12 — Overview tab added before Stories; the header breadcrumb opens the overview (RD-11, `cbef7bc`)

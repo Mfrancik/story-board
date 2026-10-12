@@ -85,12 +85,6 @@ RD-9 handoff (follow-ups the build left undone, not fixed): ListLiveSessions::ha
 
 Retro 2026-10-11 (RD-9, phase end): PROMOTED with F-13 as one cleanup story. The "Refresh the project from its dashboard" copy is already fixed (f6b6376); the rest is still live.
 
-### F-16 — 2026-10-11 — Manual "Refresh this project" button · Story: RD-11
-Area: project pages (Stories / handbook / map) · RD-9 retired the old project page
-Scope: PROJECT
-
-RD-9 deleted the old project page and with it the only manual "↻ Refresh this project" button. Projects now refresh only on a page load once the snapshot is over 5 minutes old, or via `php artisan board:refresh <project>`. Owner, 2026-10-11 retro: log it.
-
 ### F-17 — 2026-10-11 — A list of off-main work
 Area: home overview (RD-5) · old home's "Not on main" section
 Scope: PROJECT

@@ -1,5 +1,5 @@
 # Dark shell and sidebar
-Status: active   ·   Last updated: 2026-10-11   ·   Stories: RD-2, RD-4, RD-9
+Status: active   ·   Last updated: 2026-10-12   ·   Stories: RD-2, RD-4, RD-9, RD-11
 
 ## Overview
 The redesign's command-center layout (Home A, [`docs/mockups/RD-2/option-a.html`](../mockups/RD-2/option-a.html)):
@@ -56,7 +56,7 @@ old light pages still render carry their dark look as `shell:` classes beside th
   variant, because the token re-pointing above handles them.
 
 Primitives that only shell pages render since RD-4 carry the shell tokens directly, with no `dark:` pair:
-`project-header` (whose breadcrumb's project link now opens the project's Stories page, and whose light/dark
+`project-header` (whose breadcrumb's project link opens the project's [Overview](project-overview.md) since RD-11, and whose light/dark
 toggle is gone), `prose`, `kit-badge`, `handbook-empty`, `mockup-state`, `mockup-current`, `confirm-modal`,
 `switch`, `map-screen` and `metric-result`. Mockup iframes keep `bg-white` on purpose: a mockup is a light page.
 Primary buttons (Add project, Pick, Save) are amber `bg-needs`, as on the RD-3 story page.
@@ -72,7 +72,7 @@ build, and no page asks a font CDN at run time.
 
 **Sidebar.** `app/View/Components/Shell/Sidebar.php:render()` builds the data, and
 `resources/views/components/shell/sidebar.blade.php` draws it:
-- **Projects.** `Project::enabled()` ordered by name. Each one links to `projects.stories` and shows
+- **Projects.** `Project::enabled()` ordered by name. Each one links to `projects.overview` (Stories until RD-11) and shows
   `<x-board.state>` as its dot. With none, the list reads "No projects yet." with an "Add a project" link to
   `projects.manage`.
 - **ID prefix.** `prefixes()` runs one grouped query over on-ref stories:
@@ -199,3 +199,4 @@ toasts and an appearance stub in the shell; `.shell.dark`; tabs Stories · Prefl
 2026-10-11 — Browser test pins the appearance stub across a `wire:navigate` round trip (RD-4, `951e540`)
 2026-10-11 — `ProductionSettings` lazy placeholder on `text-ink-muted` (was zinc/`dark:`, low contrast on `/projects`); `app.css` comment pins `dark` above `shell` (RD-4, `205e0b4`)
 2026-10-11 — Every page is in the shell: `layouts/board`, the old sidebar and the pages on them deleted; refresh-on-load request-id and one-job checks moved here (RD-9, `2669db7`)
+2026-10-12 — Sidebar project links and the header breadcrumb open the project overview (RD-11, `cbef7bc`)
