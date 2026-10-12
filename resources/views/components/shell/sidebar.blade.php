@@ -39,7 +39,7 @@
         <p class="px-3 pb-1.5 text-xs font-medium tracking-wider text-ink-muted uppercase">Projects</p>
         @forelse ($projects as $p)
             @php $on = $current === $p->name; @endphp
-            <a href="{{ route('projects.stories', $p->name) }}" wire:navigate data-nav-project="{{ $p->name }}" @if ($on) aria-current="page" @endif class="{{ $item }} {{ $state($on) }}">
+            <a href="{{ route('projects.overview', $p->name) }}" wire:navigate data-nav-project="{{ $p->name }}" @if ($on) aria-current="page" @endif class="{{ $item }} {{ $state($on) }}">
                 <x-board.state :state="$p->state" title="State: {{ $p->state }}" />
                 <span class="min-w-0 truncate">{{ $p->name }}</span>
                 <span class="sr-only">, {{ $p->state }}</span>

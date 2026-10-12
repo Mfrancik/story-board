@@ -49,8 +49,8 @@ it('Given two enabled projects and one disabled, when a board page renders in th
 
     expect($html)->toMatch('/data-nav-project="coins".*?data-state-dot="ok"/s')
         ->and($html)->toMatch('/data-nav-project="client-dashboard".*?data-state-dot="stale"/s')
-        // Each entry opens the project's Stories page.
-        ->and(shellEntry($html, 'coins'))->toContain('href="'.route('projects.stories', 'coins').'"');
+        // Each entry opens the project's Overview (RD-11; its Stories page before that).
+        ->and(shellEntry($html, 'coins'))->toContain('href="'.route('projects.overview', 'coins').'"');
 });
 
 it('Given three mockup sets awaiting a pick, then the Mockups item shows 3; with none, then it shows no count', function () {

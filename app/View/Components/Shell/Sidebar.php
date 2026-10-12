@@ -12,7 +12,7 @@ use Illuminate\View\Component;
 /**
  * The command-center shell's sidebar (RD-2, Home A): the logo, Home, Mockups with
  * the count of sets awaiting a pick, then every enabled project with its snapshot
- * state dot and story ID prefix, each opening the project's Stories page. Below
+ * state dot and story ID prefix, each opening the project's Overview (RD-11). Below
  * 768 px it is a drawer behind a menu button; all toggling is Alpine.
  */
 class Sidebar extends Component

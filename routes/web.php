@@ -11,6 +11,7 @@ use App\Livewire\Board\MockupViewer;
 use App\Livewire\Board\Overview;
 use App\Livewire\Board\ProjectAppMap;
 use App\Livewire\Board\ProjectHandbook;
+use App\Livewire\Board\ProjectOverview;
 use App\Livewire\Board\ProjectPreflight;
 use App\Livewire\Board\ProjectStories;
 use App\Livewire\Board\StoryPage;
@@ -20,12 +21,19 @@ use Illuminate\Support\Facades\Route;
 // The board's pages (RD-2): every page load queues a refresh of each stale enabled project. The file routes
 // below are left out on purpose — a page's frames and images hit them many times per load.
 Route::middleware(RefreshStaleProjects::class)->group(function () {
-    // The home overview (RD-5). RD-9 retired the old dashboard, the bare `/p/{project}` page and the legacy
-    // `/?project=` redirect: a stray `project` query is now ignored and the overview renders unfiltered.
+    // The home overview (RD-5). RD-9 retired the old dashboard and the legacy `/?project=` redirect: a stray
+    // `project` query is now ignored and the overview renders unfiltered.
     Route::livewire('/', Overview::class)->name('home');
 
     // EnsureProjectIsShown, on each project page below, is the one place an unknown or disabled project is
     // refused, before binding (ADR-013).
+
+    // One project's overview (RD-11, option B): a tile grid of its progress, what needs the owner, live sessions,
+    // latest preflight, production, brief and biggest initiatives, plus Refresh this project. The project's landing
+    // page: the sidebar and the project-name breadcrumb open it. A new route name: RD-9 retired the old one.
+    Route::livewire('/p/{project:name}', ProjectOverview::class)
+        ->middleware(EnsureProjectIsShown::class)
+        ->name('projects.overview');
 
     // One project's handbook (SB-14): its rules, lessons, standards, runbook, decisions and skills,
     // with each standards file and kit skill badged against the dev-standards kit.

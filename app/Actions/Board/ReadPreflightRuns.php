@@ -26,6 +26,9 @@ class ReadPreflightRuns
     /** Every field a schema-1 record carries (ADR-055); a record without one is skipped. */
     public const FIELDS = ['schema', 'run_id', 'project', 'branch', 'sha', 'runner', 'host', 'mode', 'started_at', 'finished_at', 'wall_s', 'verdict', 'gates'];
 
+    /** The verdicts ADR-055 allows. */
+    public const VERDICTS = ['GO', 'NO-GO'];
+
     /** How the board names each runner: `local` is the owner's Mac. */
     public const RAN_ON = ['brain' => 'brain', 'local' => 'mac'];
 
@@ -46,7 +49,11 @@ class ReadPreflightRuns
      * value the matching cannot use. A missing root or folder is not an error: no
      * records is the normal state until RD-10 writes them.
      *
-     * @return array{records: list<array{run_id: string, branch: string, ran_on: string, finished_at: CarbonImmutable, wall: int|null}>, skipped: int}
+     * `verdict` is the record's `GO` or `NO-GO` (RD-11), or null for any other value:
+     * an odd verdict is shown as unknown, not guessed at, and never skips the record,
+     * so where a run happened still reads as it did before RD-11.
+     *
+     * @return array{records: list<array{run_id: string, branch: string, ran_on: string, finished_at: CarbonImmutable, wall: int|null, verdict: string|null}>, skipped: int}
      */
     public function handle(Project $project): array
     {
@@ -78,16 +85,30 @@ class ReadPreflightRuns
 
     /**
      * Where each run ran — `brain`, `mac`, or null when no record matches — keyed
-     * like `$runs`. A row and a record match when they are on the same branch and
-     * the record finished within WINDOW_S of the row's `ts`. Pairs are taken
-     * nearest first and each side is used once, so two runs on one branch minutes
-     * apart cannot both claim the same record.
+     * like `$runs`. A row and a record match by the rule pairs() documents.
      *
      * @param  array<int, array{ts: CarbonImmutable, branch: string|null}>  $runs
      * @param  list<array{branch: string, ran_on: string, finished_at: CarbonImmutable}>  $records
      * @return array<int, string|null>
      */
     public function match(array $runs, array $records): array
+    {
+        return array_map(fn (?int $j) => $j === null ? null : $records[$j]['ran_on'], $this->pairs($runs, $records));
+    }
+
+    /**
+     * The index in `$records` of the record each run matched, or null, keyed like
+     * `$runs`. A row and a record match when they are on the same branch and the
+     * record finished within WINDOW_S of the row's `ts`. Pairs are taken nearest
+     * first and each side is used once, so two runs on one branch minutes apart
+     * cannot both claim the same record. Public since RD-11: the project overview
+     * reads the matched record's verdict, not only where it ran.
+     *
+     * @param  array<int, array{ts: CarbonImmutable, branch: string|null}>  $runs
+     * @param  list<array{branch: string, finished_at: CarbonImmutable}>  $records
+     * @return array<int, int|null>
+     */
+    public function pairs(array $runs, array $records): array
     {
         $pairs = [];
         foreach ($runs as $i => $run) {
@@ -101,22 +122,22 @@ class ReadPreflightRuns
         // Nearest first; ties fall to the newer row (lower index), then the earlier-read record.
         sort($pairs);
 
-        $ranOn = array_fill_keys(array_keys($runs), null);
+        $matched = array_fill_keys(array_keys($runs), null);
         $taken = [];
         foreach ($pairs as [, $i, $j]) {
-            if ($ranOn[$i] === null && ! isset($taken[$j])) {
-                $ranOn[$i] = $records[$j]['ran_on'];
+            if ($matched[$i] === null && ! isset($taken[$j])) {
+                $matched[$i] = $j;
                 $taken[$j] = true;
             }
         }
 
-        return $ranOn;
+        return $matched;
     }
 
     /**
      * One record, or null and the reason it cannot be used.
      *
-     * @return array{0: array{run_id: string, branch: string, ran_on: string, finished_at: CarbonImmutable, wall: int|null}|null, 1: string|null}
+     * @return array{0: array{run_id: string, branch: string, ran_on: string, finished_at: CarbonImmutable, wall: int|null, verdict: string|null}|null, 1: string|null}
      */
     private function read(string $file): array
     {
@@ -151,6 +172,7 @@ class ReadPreflightRuns
             'ran_on' => self::RAN_ON[$data['runner']],
             'finished_at' => $finished,
             'wall' => is_numeric($data['wall_s']) ? (int) round((float) $data['wall_s']) : null,
+            'verdict' => in_array($data['verdict'], self::VERDICTS, true) ? $data['verdict'] : null,
         ], null];
     }
 }

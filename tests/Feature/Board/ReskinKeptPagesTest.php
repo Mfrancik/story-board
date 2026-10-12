@@ -83,16 +83,16 @@ it('Given the Stories page, then no story modal is on the page, and each row lin
     }
 });
 
-it('Given the project tabs, then they are Stories, Preflight, Handbook and Map, with no Dashboard tab', function (string $url, string $current) {
+// RD-11 put Overview first; the old Dashboard tab stays gone.
+it('Given the project tabs, then they are Overview, Stories, Preflight, Handbook and Map, with no Dashboard tab', function (string $url, string $current) {
     $html = $this->get($url)->assertOk()->getContent();
 
     preg_match('/<nav\b[^>]*data-project-tabs.*?<\/nav>/s', $html, $nav);
     preg_match_all('/data-project-tab="([^"]+)"[^>]*>([^<]+)</', $nav[0] ?? '', $tabs);
 
-    expect($tabs[1])->toBe(['stories', 'preflight', 'handbook', 'map'])
-        ->and(array_map('trim', $tabs[2]))->toBe(['Stories', 'Preflight', 'Handbook', 'Map'])
+    expect($tabs[1])->toBe(['overview', 'stories', 'preflight', 'handbook', 'map'])
+        ->and(array_map('trim', $tabs[2]))->toBe(['Overview', 'Stories', 'Preflight', 'Handbook', 'Map'])
         ->and($nav[0])->not->toContain('Dashboard')
-        ->and($nav[0])->not->toContain('href="'.url('/p/alpha').'"')
         ->and($nav[0])->toMatch('/data-project-tab="'.$current.'"[^>]*aria-current="page"/');
 })->with([
     ['/p/alpha/stories', 'stories'],
@@ -101,23 +101,26 @@ it('Given the project tabs, then they are Stories, Preflight, Handbook and Map, 
     ['/p/alpha/map', 'map'],
 ]);
 
-it('points the project header\'s breadcrumb at the project\'s Stories page, not the old dashboard', function () {
+// RD-11: the project crumb opens the project's Overview (it opened Stories while there was no project page).
+it('points the project header\'s breadcrumb at the project\'s Overview', function () {
     $html = $this->get('/p/alpha/handbook')->assertOk()->getContent();
 
     preg_match('/<header\b.*?<\/header>/s', $html, $header);
+    preg_match('/<a\b[^>]*data-crumb-project[^>]*>/', $header[0] ?? '', $crumb);
 
-    expect($header[0] ?? '')->toContain('href="'.url('/p/alpha/stories').'"')
-        ->not->toContain('href="'.url('/p/alpha').'"')
-        ->not->toContain('Toggle dark mode');
+    expect($crumb[0] ?? '')->toContain('href="'.url('/p/alpha').'"')
+        ->and($header[0] ?? '')->not->toContain('Toggle dark mode');
 });
 
-it('points the story page\'s breadcrumb at the project\'s Stories page, not the old dashboard', function () {
+// RD-11: the project crumb opens the Overview; the Stories crumb beside it still opens the story's list.
+it('points the story page\'s breadcrumb at the project\'s Overview and its Stories page', function () {
     $html = $this->get('/p/alpha/s/AL-2')->assertOk()->getContent();
 
     preg_match('/<nav aria-label="Breadcrumb".*?<\/nav>/s', $html, $crumb);
+    preg_match('/<a\b[^>]*data-crumb-project[^>]*>/', $crumb[0] ?? '', $project);
 
-    expect($crumb[0] ?? '')->toContain('href="'.url('/p/alpha/stories').'"')
-        ->not->toContain('href="'.url('/p/alpha').'"');
+    expect($project[0] ?? '')->toContain('href="'.url('/p/alpha').'"')
+        ->and($crumb[0] ?? '')->toContain('href="'.url('/p/alpha/stories').'"');
 });
 
 it('keeps Flux toasts on the shell pages that raise them, without the old pages\' light/dark appearance script', function (string $url) {

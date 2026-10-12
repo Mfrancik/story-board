@@ -32,6 +32,12 @@ class ReadHandbook
 
     public const SKILLS = '.claude/skills/';
 
+    /** The project brief (RD-11 reads its "What it is" section for the overview's About tile). */
+    public const BRIEF = 'docs/PROJECT-BRIEF.md';
+
+    /** The brief's section About shows: any `## What it is…` heading ("What it is, and for whom" in the kit). */
+    public const ABOUT_HEADING = 'What it is';
+
     /** Badge: the project's file is byte-for-byte the kit's (the same blob). */
     public const SAME = 'same';
 
@@ -73,6 +79,28 @@ class ReadHandbook
         $markdown = $this->read($project->path, (string) $project->sha, $file);
 
         return $markdown === null ? null : $this->markdown->toHtml($markdown);
+    }
+
+    /**
+     * The "What it is" section of the project's brief as safe HTML, without its
+     * heading: null when the project has no brief, an empty string when the brief has
+     * no such section. Read at the snapshot SHA like every handbook page; throws
+     * GitReaderException when git itself fails.
+     */
+    public function about(Project $project): ?string
+    {
+        $markdown = $this->read($project->path, (string) $project->sha, self::BRIEF);
+        if ($markdown === null) {
+            return null;
+        }
+
+        // The section runs from its `##` heading to the next `##` heading or the end; `###` stays inside it.
+        $pattern = '/^##[ \t]+'.preg_quote(self::ABOUT_HEADING, '/').'\b[^\n]*\n(.*?)(?=^##[ \t]|\z)/msi';
+        if (preg_match($pattern, $markdown, $m) !== 1 || trim($m[1]) === '') {
+            return '';
+        }
+
+        return $this->markdown->toHtml(trim($m[1]));
     }
 
     /**

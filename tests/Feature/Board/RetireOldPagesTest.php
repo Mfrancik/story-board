@@ -6,8 +6,8 @@ use Illuminate\Support\Facades\Queue;
 use Tests\Support\GitFixture;
 
 /**
- * RD-9 acceptance criteria: the pages the redesign replaced are gone with their code. `/prod` and the bare
- * project page 404, the legacy `/?project=` redirect is gone, every kept route still answers, and nothing in
+ * RD-9 acceptance criteria: the pages the redesign replaced are gone with their code. `/prod` 404s (the bare
+ * project page did too until RD-11 made it the project overview), the legacy `/?project=` redirect is gone, every kept route still answers, and nothing in
  * the codebase still names a deleted class, view or helper. One fixture project with one story and a mockup.
  */
 beforeEach(function () {
@@ -56,9 +56,15 @@ function retiredNames(): array
     ];
 }
 
-it('Given /prod and a bare /p/{project}, then each is 404', function (string $url) {
+it('Given /prod or a bare /p/{project} of an unknown project, then each is 404', function (string $url) {
     $this->get($url)->assertNotFound();
-})->with(['/prod', '/p/fx', '/p/unknown']);
+})->with(['/prod', '/p/unknown']);
+
+// Superseded by RD-11 (L-12): RD-9 pinned the bare `/p/fx` as 404; it is now the project overview, under the new
+// name `projects.overview` (the retired `projects.show` stays banned below).
+it('Given a bare /p/{project} of an enabled project, then it is 200: RD-11\'s project overview', function () {
+    $this->get('/p/fx')->assertOk()->assertSeeHtml('data-project-tab="overview"');
+});
 
 it('Given /?project=story-board, then it is not redirected; the overview renders unfiltered', function (string $name) {
     $this->get("/?project={$name}")->assertOk()
