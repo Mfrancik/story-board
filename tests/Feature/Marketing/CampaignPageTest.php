@@ -124,6 +124,8 @@ it('Given a name already used in this project, then validation fails; given no d
 
     campaignPage()->set('name', 'Set Saturday')->call('save')->assertHasErrors(['name' => 'unique']);
     campaignPage()->set('name', 'set saturday')->call('save')->assertHasErrors(['name' => 'unique']);
+    // SaveCampaign stores the trimmed name, so padding must not slip a duplicate past the unique rule.
+    campaignPage()->set('name', ' Set Saturday ')->call('save')->assertHasErrors(['name' => 'unique']);
     campaignPage()->set('days', [])->call('save')->assertHasErrors(['days' => 'required']);
 
     expect($this->tvt->fresh()->name)->toBe('TrueView Tuesday')->and($this->tvt->fresh()->days)->toBe([2]);

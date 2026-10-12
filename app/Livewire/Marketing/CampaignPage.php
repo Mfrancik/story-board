@@ -126,6 +126,9 @@ class CampaignPage extends Component
      */
     public function save(SaveCampaign $save): void
     {
+        // Livewire updates skip TrimStrings and SaveCampaign stores the trimmed name, so trim before the
+        // unique rule sees it — otherwise " TrueView Tuesday" passes and saves a duplicate.
+        $this->name = trim($this->name);
         $this->validate(...$this->rules());
 
         $model = $this->model();
