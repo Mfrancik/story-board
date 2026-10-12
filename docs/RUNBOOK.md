@@ -10,6 +10,24 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-10-12 — A big photo was refused with "12288 kilobytes", and later picks kept failing
+Symptom: in Marketing settings, a photo over 12 MB was refused with Livewire's message naming 12288 kilobytes, not the page's 10 MB rule. After any refused pick, the next good pick failed too.
+Root cause: Livewire validates temporary uploads against its own 12 MB cap before `updatedPhotos()` runs. Separately, Livewire appends each new pick to the existing `photos` array, so a rejected file stayed in it and failed every later validation.
+Fix: `app/Livewire/Marketing/Settings.php` aliases `WithFileUploads::_uploadErrored` and rethrows with "Photos can be 10 MB at most." (or the logo's 512 KB). Both it and `updatedPhotos()` reset `photos` on a refusal (MK-2, `76e2101`).
+Log trail: none for the cap (it fails before our code); a stored photo logs `marketing.asset.stored`.
+
+## 2026-10-12 — Browser-test uploads arrive with no files
+Symptom: in MK-2's Pest browser test, choosing photos in Settings stored nothing; `photos` came back empty.
+Root cause: Pest browser's `LaravelHttpServer` builds the request without files (`[], // @TODO files...` in the vendor source), so Livewire's upload endpoint receives none.
+Fix: the browser test seeds favourites through `StoreMarketingAsset` and checks only display, serving and delete; uploads are covered by `tests/Feature/Marketing/MarketingSettingsTest.php`. `updatedPhotos()` returns early on an empty array and logs `marketing.asset.upload_empty` rather than toasting "Added 0 photos" (MK-2).
+Log trail: `marketing.asset.upload_empty`.
+
+## 2026-10-12 — Guard tests passed with the guard removed
+Symptom: during MK-2, removing the 20 MB photo limit, the logo ref check, or the font-name rule left their tests green.
+Root cause: the tests did not depend on the guard they named; their inputs were refused, or passed, for some other reason.
+Fix: the three tests were tightened and two more added (MK-2, `76e2101`). When writing a guard test, delete the guard once and watch the test fail.
+Log trail: none; test design.
+
 ## 2026-10-12 — Every project page scrolled sideways at 375 px after the Marketing tab got its count
 Symptom: during MK-1, the 375 px browser check of `/p/coins/marketing` found the document wider than the viewport, although the tab row is `overflow-x-auto`.
 Root cause: the Marketing tab's count carries `sr-only` text, which is `position: absolute`. The tabs `<nav>` was not positioned, so the span was placed relative to an ancestor outside the scroll box, escaped its clipping and widened the page. This is the same mechanism as the 2026-09-29 status-chip entry.
