@@ -3,8 +3,9 @@
     RD-2 shell: the project header with Marketing current, the Marketing sub-nav, the page title with its counts, the
     alerts banner, one row per campaign that is on, then the paused ones in a quieter group, and the runway key.
 
-    Below 1024 px a row stacks its fields with small labels; from 1024 px it becomes the prototype's columns. Rows and
-    badges are not links yet: the campaign page is MK-7 and the post studio MK-9. The analytics strip is MK-15 and has
+    Below 1024 px a row stacks its fields with small labels; from 1024 px it becomes the prototype's columns. A row's
+    name opens its campaign page and "+ New campaign" the same page in create mode (MK-7); badges are not links yet,
+    the post studio is MK-9. The analytics strip is MK-15 and has
     no placeholder here. A row whose runway failed (CampaignList logged why) shows that error and nothing else.
 --}}
 @php
@@ -13,6 +14,7 @@
     $stateWords = ['approved' => 'approved', 'posted' => 'posted', 'review' => 'drafts to approve', 'open' => 'open', 'skipped' => 'skipped'];
     $stateTone = ['approved' => 'text-live', 'posted' => 'text-live', 'review' => 'text-needs', 'open' => 'text-ink-muted', 'skipped' => 'text-ink-faint'];
     $names = fn ($rows) => $rows->map(fn ($r) => $r['campaign']->name)->join(', ', ' and ');
+    $newButton = 'inline-flex min-h-9 items-center justify-center rounded-lg bg-needs px-4 py-2 text-sm font-medium text-needs-ink hover:brightness-110 '.$focus;
 @endphp
 <main class="mx-auto flex max-w-7xl min-w-0 flex-col gap-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
     <div class="flex flex-col gap-4">
@@ -25,11 +27,15 @@
             <svg class="mx-auto size-8 text-ink-faint" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
             <p class="mt-3 font-medium">No campaigns yet</p>
             <p class="mt-1 text-sm text-ink-muted">A campaign is a post on a weekly schedule, such as a feature every Tuesday at 19:00. {{ $model->name }}'s campaigns will be listed here.</p>
+            <a href="{{ route('projects.marketing.campaign.create', $model->name) }}" wire:navigate data-new-campaign class="{{ $newButton }} mt-4">+ New campaign</a>
         </div>
     @else
-        <div class="flex flex-col gap-1">
-            <h2 class="text-xl font-semibold tracking-tight">Campaigns</h2>
-            <p class="text-sm text-ink-muted">{{ $on->count() }} on regular posting @if ($paused->isNotEmpty()) · {{ $paused->count() }} paused @endif</p>
+        <div class="flex flex-wrap items-end gap-3">
+            <div class="flex flex-col gap-1">
+                <h2 class="text-xl font-semibold tracking-tight">Campaigns</h2>
+                <p class="text-sm text-ink-muted">{{ $on->count() }} on regular posting @if ($paused->isNotEmpty()) · {{ $paused->count() }} paused @endif</p>
+            </div>
+            <a href="{{ route('projects.marketing.campaign.create', $model->name) }}" wire:navigate data-new-campaign class="{{ $newButton }} ml-auto">+ New campaign</a>
         </div>
 
         @if ($on->isNotEmpty())
@@ -65,7 +71,7 @@
                 </div>
                 <ul role="list" class="divide-y divide-hairline">
                     @foreach ($on as $row)
-                        @include('livewire.marketing.partials.campaign-row', ['row' => $row])
+                        @include('livewire.marketing.partials.campaign-row', ['row' => $row, 'project' => $model->name])
                     @endforeach
                 </ul>
             </section>
@@ -76,7 +82,7 @@
                 <h3 id="paused-h" class="px-4 pb-1.5 text-xs font-medium tracking-wider text-ink-muted uppercase">Paused</h3>
                 <ul role="list" class="divide-y divide-hairline opacity-70">
                     @foreach ($paused as $row)
-                        @include('livewire.marketing.partials.campaign-row', ['row' => $row])
+                        @include('livewire.marketing.partials.campaign-row', ['row' => $row, 'project' => $model->name])
                     @endforeach
                 </ul>
             </section>

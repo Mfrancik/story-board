@@ -45,6 +45,9 @@ class MarketingCampaign extends Model
     /** The AI picks a photo or none (MK-8). */
     public const PHOTO_AI_DECIDES = 'ai_decides';
 
+    /** Every photo choice, in the order the campaign form offers them (MK-7). */
+    public const PHOTO_MODES = [self::PHOTO_PER_POST, self::PHOTO_FAVOURITES, self::PHOTO_TEXT_ONLY, self::PHOTO_AI_DECIDES];
+
     /** @var list<string> */
     protected $fillable = ['project_id', 'name', 'slug', 'days', 'time', 'timezone', 'is_enabled', 'topics', 'brief', 'photo_mode'];
 
@@ -80,6 +83,60 @@ class MarketingCampaign extends Model
         $days = collect($this->days)->sort()->map(fn ($d) => is_int($d) ? ($names[$d] ?? '?') : '?')->implode(', ');
 
         return trim($days.' '.substr((string) $this->time, 0, 5).' weekly');
+    }
+
+    /**
+     * The campaign in one sentence (MK-7), "Every Tuesday at 7pm, post about TrueView Tuesday, with a photo you add".
+     */
+    public function sentence(): string
+    {
+        return self::describe($this->days, (string) $this->time, $this->topics, $this->photo_mode);
+    }
+
+    /**
+     * The one-sentence description of a campaign's criteria, saved or still being typed (the create form shows it
+     * from its inputs). A missing day or topic reads as a gap to fill, never as an error.
+     *
+     * Topics: a category with three or more ticked ideas is named by its category, otherwise by the ideas' titles;
+     * one own topic is quoted, more are counted, as the prototype words it.
+     *
+     * @param  array<int, mixed>  $days  ISO weekdays
+     * @param  array{ideas?: list<string>, own?: list<array{text: string, detail?: string|null}>}  $topics
+     */
+    public static function describe(array $days, string $time, array $topics, string $photoMode): string
+    {
+        $names = [1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday', 7 => 'Sunday'];
+        $picked = collect($days)->map(fn ($d) => (int) $d)->filter(fn (int $d) => isset($names[$d]))->unique()->sort()->map(fn (int $d) => $names[$d]);
+        $when = $picked->isEmpty() ? 'Every … (pick a day)' : 'Every '.$picked->join(', ', ' and ');
+
+        $at = 'at …';
+        if (preg_match('/^(\d{1,2}):(\d{2})/', $time, $m)) {
+            $hour = (int) $m[1];
+            $at = 'at '.(($hour % 12) ?: 12).($m[2] === '00' ? '' : ':'.$m[2]).($hour < 12 ? 'am' : 'pm');
+        }
+
+        $byCategory = [];
+        foreach ($topics['ideas'] ?? [] as $key) {
+            [$category, $title] = array_pad(explode('|', (string) $key, 2), 2, '');
+            $byCategory[$category][] = $title !== '' ? $title : $category;
+        }
+        $bits = array_map(fn (string $category, array $titles) => count($titles) >= 3 ? $category : collect($titles)->join(', ', ' and '), array_keys($byCategory), $byCategory);
+        $own = array_values(array_filter($topics['own'] ?? [], fn ($o) => trim($o['text']) !== ''));
+        if (count($own) === 1) {
+            $bits[] = '“'.trim($own[0]['text']).'”';
+        } elseif (count($own) > 1) {
+            $bits[] = count($own).' topics in your own words';
+        }
+        $about = $bits === [] ? '… (add a topic)' : collect($bits)->join(', ', ' and ');
+
+        $photo = [
+            self::PHOTO_PER_POST => 'with a photo you add',
+            self::PHOTO_FAVOURITES => 'with a photo from your favourites',
+            self::PHOTO_TEXT_ONLY => 'as text only',
+            self::PHOTO_AI_DECIDES => 'with a photo or as text, as the AI decides',
+        ][$photoMode] ?? 'with a photo you add';
+
+        return "{$when} {$at}, post about {$about}, {$photo}";
     }
 
     /**

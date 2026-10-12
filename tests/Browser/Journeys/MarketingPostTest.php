@@ -8,7 +8,8 @@ use Illuminate\Support\Facades\Queue;
 
 /**
  * Journey marketing-post (docs/journeys/marketing-post.md): from a recurring campaign to approved posts, ready to
- * publish. Created by MK-1 with step 1; each later MK story adds its step (MK-2: step 2, the brand in Settings). Claude is faked once AI steps arrive
+ * publish. Created by MK-1 with step 1; each later MK story adds its step (MK-2: step 2, the brand in Settings; MK-7:
+ * step 3, the campaign page). Claude is faked once AI steps arrive
  * (MK-8). `JOURNEY_SHOTS=1` saves each step to `storage/app/journey-shots/marketing-post/`.
  */
 beforeEach(function () {
@@ -44,4 +45,21 @@ it('walks the marketing-post journey', function () {
         ->assertSeeIn('[data-swatch="accent"]', '#B79F82')
         ->assertSeeIn('[data-facebook-card] h3', 'Phase 2')
         ->assertNoJavaScriptErrors();
+
+    // Step 3 (MK-7): open TrueView Tuesday from the list, see its future posts and how far out it is approved, add a
+    // topic in the owner's own words and save it.
+    $page = visit('/p/coins/marketing')->click('[data-campaign-row="trueview-tuesday"] [data-campaign-link]')
+        ->assertPathIs('/p/coins/marketing/campaigns/trueview-tuesday');
+    journeyStep('marketing-post', 'campaign page', '/p/coins/marketing/campaigns/trueview-tuesday', $page)
+        ->assertSeeIn('[data-status-line]', 'Approved through Tue 20 Oct')
+        ->assertScript("document.querySelectorAll('[data-occurrence]').length", 8)
+        ->assertAttribute('[data-occurrence="2026-10-27"]', 'data-occurrence-state', 'review')
+        ->fill('[data-new-topic]', 'Album toning')
+        ->keys('[data-new-topic]', 'Enter')
+        ->assertScript("document.querySelectorAll('[data-own-topic]').length", 1)
+        ->assertVisible('[data-unsaved]')
+        ->click('[data-save]')
+        ->assertMissing('[data-unsaved]')
+        ->assertNoJavaScriptErrors();
+    expect(MarketingCampaign::where('slug', 'trueview-tuesday')->firstOrFail()->topics['own'])->toBe([['text' => 'Album toning', 'detail' => null]]);
 });

@@ -118,10 +118,11 @@ class BuildCampaignRunway
 
     /**
      * A date's state from its posts: posted, approved, skipped, review (drafts only) or open (none).
+     * Public so ListCampaignOccurrences (MK-7) reads a date by this same rule instead of a copy of it.
      *
      * @param  Collection<int, MarketingPost>|null  $posts
      */
-    private function state(?Collection $posts): string
+    public function state(?Collection $posts): string
     {
         if ($posts === null || $posts->isEmpty()) {
             return 'open';
@@ -137,9 +138,9 @@ class BuildCampaignRunway
     }
 
     /**
-     * The post's day (Y-m-d) in the campaign's timezone.
+     * The post's day (Y-m-d) in the campaign's timezone. Public for ListCampaignOccurrences (MK-7), as state().
      */
-    private function day(MarketingPost $post, DateTimeZone $zone): string
+    public function day(MarketingPost $post, DateTimeZone $zone): string
     {
         return CarbonImmutable::instance($post->scheduled_for)->setTimezone($zone)->toDateString();
     }

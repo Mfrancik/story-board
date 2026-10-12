@@ -17,6 +17,7 @@ use App\Livewire\Board\ProjectPreflight;
 use App\Livewire\Board\ProjectStories;
 use App\Livewire\Board\StoryPage;
 use App\Livewire\Marketing\CampaignList;
+use App\Livewire\Marketing\CampaignPage;
 use App\Livewire\Marketing\Settings as MarketingSettings;
 use App\Models\Story;
 use Illuminate\Support\Facades\Route;
@@ -67,6 +68,16 @@ Route::middleware(RefreshStaleProjects::class)->group(function () {
     Route::livewire('/p/{project:name}/marketing', CampaignList::class)
         ->middleware(EnsureProjectIsShown::class)
         ->name('projects.marketing');
+
+    // One campaign's page (MK-7): criteria edited in place, the next 8 dates, past posts. `new` is the same component
+    // in create mode and is registered first, so it is never read as a slug (SaveCampaign never hands out `new`). A
+    // slug is looked up within the project, so another project's campaign is a 404.
+    Route::livewire('/p/{project:name}/marketing/campaigns/new', CampaignPage::class)
+        ->middleware(EnsureProjectIsShown::class)
+        ->name('projects.marketing.campaign.create');
+    Route::livewire('/p/{project:name}/marketing/campaigns/{campaign}', CampaignPage::class)
+        ->middleware(EnsureProjectIsShown::class)
+        ->name('projects.marketing.campaign');
 
     // Marketing settings (MK-2): the project's brand, favourite photos and copy rules. Its name puts Settings in
     // the marketing sub-nav, which lists only pages whose route exists.

@@ -1,5 +1,5 @@
 # MK-7 — Campaign page: criteria, future posts, past posts
-Status: approved        Journey: marketing-post (step 3 of 7)
+Status: built           Journey: marketing-post (step 3 of 7)
 Source: prototype rounds 1–3 + owner: "click and see the criteria of the campaign, future posts, etc… in the topics
 section, i would have a place to add more topics or detail in my own words"
 

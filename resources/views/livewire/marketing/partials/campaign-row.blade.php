@@ -1,13 +1,14 @@
 {{-- One campaign row of the MK-1 Campaigns list: name and schedule, next post and its state, approved-through with the
      runway bar, and the "needs you" badges. A paused campaign shows "Paused" in place of its next post's badges; a
-     campaign whose runway failed shows the reason across the row. Not a link until MK-7 adds the campaign page. --}}
+     campaign whose runway failed shows the reason across the row. The name links to the campaign's page (MK-7). --}}
 @php
     $c = $row['campaign'];
     $r = $row['runway'];
 @endphp
 <li data-campaign-row="{{ $c->slug }}" class="grid min-h-18 grid-cols-1 gap-x-4 gap-y-3 px-4 py-3.5 sm:grid-cols-2 lg:grid-cols-12 lg:items-center">
     <div class="flex min-w-0 flex-col gap-0.5 lg:col-span-3">
-        <span class="truncate text-base font-semibold text-ink">{{ $c->name }}</span>
+        <a href="{{ route('projects.marketing.campaign', [$project, $c->slug]) }}" wire:navigate data-campaign-link
+            class="truncate text-base font-semibold text-ink hover:underline {{ $focus }}">{{ $c->name }}</a>
         <span class="font-mono text-xs text-ink-muted">{{ $c->scheduleLabel() }}</span>
     </div>
 

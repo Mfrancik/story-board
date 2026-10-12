@@ -20,8 +20,9 @@ use Livewire\Livewire;
  * campaign that is on — schedule, next post, approved-through and a 6-date runway,
  * badges — and the paused campaigns in a quieter group below.
  *
- * Reads only: switching a campaign on or off and opening one arrive with MK-7, the
- * studio behind "to approve" with MK-9, so rows and badges are not links yet. A
+ * Reads only. A row's name opens the campaign's page, where it is switched on or off
+ * and edited, and "+ New campaign" opens that page in create mode (MK-7); the studio
+ * behind "to approve" is MK-9, so badges are not links yet. A
  * campaign whose schedule cannot be worked out shows its own error row and the rest
  * of the page still renders. The route's EnsureProjectIsShown has already refused
  * an unknown or disabled project before this mounts; GuardsProjectPage re-checks on
