@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MK-4 post designer options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;background:#0E0F11;color:#F2F1EE;font-family:Geist,system-ui,sans-serif}
+a{color:#F2A33A;text-decoration:none}a:hover{color:#FFC26B;text-decoration:underline;text-underline-offset:3px}
+a:focus-visible{outline:2px solid #F2A33A;outline-offset:2px}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.wrap{max-width:1240px;margin:0 auto;padding:32px 32px 64px;display:flex;flex-direction:column;gap:32px}
+.lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9A9DA3;font-weight:500}
+p{line-height:1.6;color:#C9CBCF;margin:0}
+.opt{background:#16181B;border:1px solid #26292E;border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:16px}
+.opt h2{margin:0;font-size:20px;font-weight:600;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.opt h2 .k{font-family:'Geist Mono',monospace;font-size:13px;color:#F2A33A;border:1px solid #5C4219;border-radius:999px;padding:2px 10px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:7px 8px;border-top:1px solid #1F2226;vertical-align:top}
+th{color:#9A9DA3;font-weight:500;width:34%}
+td{color:#C9CBCF}
+td .new{color:#F59088}
+.frame{border:1px solid #26292E;border-radius:10px;overflow:hidden;background:#0E0F11}
+iframe{display:block;width:100%;height:720px;border:0}
+.open{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:8px;background:#F2A33A;color:#1A1205;font-weight:500;font-size:14px;align-self:flex-start}
+.open:hover{color:#1A1205;background:#FFC26B;text-decoration:none}
+.gaps li{margin:0 0 10px;line-height:1.55;color:#C9CBCF;font-size:14px}
+@media (max-width:900px){.cols{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:640px){.wrap{padding:20px 16px 48px;gap:24px}.opt{padding:16px}iframe{height:640px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:8px">
+    <span class="lbl">MK-4 · mockups · pick one</span>
+    <h1 style="margin:0;font-size:30px;font-weight:600;letter-spacing:-.01em">Post designer with a live preview, in coins' <span class="mono" style="font-size:26px">Marketing</span> tab</h1>
+    <p style="max-width:860px">Each option designs a StackerMint post inside the shell, under a new <strong>Marketing</strong> tab (Overview · Stories · Preflight · Handbook · Map · Marketing). All three have the same seven templates, built from the kit's own posts: Coin of the week, Set grid, One slot left, Set complete, Only one stays, TrueView feature and Both sides. Each also renders a 1702×630 cover. The previews are HTML, not pictures, and they really work. Type in any field and the post changes. The caption check runs as you type: two lines at most, no filler, no cert lookup, and a price source on comparisons. The coin photos are from <span class="mono">MK-kit/coins</span>. The copy is the kit's. The one invented number is the $10,000 price on the comparison, and it is marked <em>sample</em>. Each page works at 375px.</p>
+  </header>
+
+  <section class="opt" aria-labelledby="a-h">
+    <h2 id="a-h"><span class="k">A</span>Three panes <span style="font-size:14px;font-weight:400;color:#9A9DA3">template rail · fields · preview</span></h2>
+    <div class="cols">
+      <p>A list of templates on the left, with the kit's own post as each thumbnail. The fields and caption are in the middle, and the preview sticks on the right with the size toggle and Render under it. Every field is a normal labelled input, so it is the easiest to build and the easiest to use with a keyboard. Each template keeps its own fields, so switching back and forth loses nothing. Best if you make posts often and want everything visible at once. Below 1180px the rail becomes a row of chips. On a phone it stacks: templates, preview, fields, caption.</p>
+      <table>
+        <tr><th>Templates</th><td>7 Blade post views laid out at 540px and rendered at 2× for 1080 · <span class="new">new</span></td></tr>
+        <tr><th>Photo picker</th><td>coins' photo library (MK-1), obverse and reverse thumbnails</td></tr>
+        <tr><th>Set fields</th><td>Set name, years, slot list, key date, mintage · <span class="new">new: needs a source in coins (see gaps)</span></td></tr>
+        <tr><th>Caption check</th><td>Livewire computed property over the brand kit's copy rules (MK-2)</td></tr>
+        <tr><th>Render PNG</th><td>Headless Chrome screenshot of the post route · <span class="new">new</span></td></tr>
+      </table>
+    </div>
+    <div class="frame"><iframe src="option-a.html" title="Option A preview" loading="lazy"></iframe></div>
+    <a class="open" href="option-a.html">Open option A full size</a>
+  </section>
+
+  <section class="opt" aria-labelledby="b-h">
+    <h2 id="b-h"><span class="k">B</span>Canvas first <span style="font-size:14px;font-weight:400;color:#9A9DA3">click the post and type</span></h2>
+    <div class="cols">
+      <p>The post is the editor. It sits big on a dotted canvas, and you click any text on it (title, grade, headline, key date, mintage) and type right there. A floating panel that you can hide holds only what you can't type: photo, badge, set, slot counts and price source. Templates are a dock along the bottom. The caption and the copy rules are docked on the right. This is the closest to editing the real thing, and the fastest for a small fix. The cost: text you edit in place needs care with Livewire (contenteditable inside <span class="mono">wire:ignore</span>, synced by Alpine), and the cover size can't be edited in place. On a phone the dock and panel stop floating and stack.</p>
+      <table>
+        <tr><th>Inline edit</th><td>contenteditable spans synced by Alpine to Livewire · <span class="new">new pattern</span></td></tr>
+        <tr><th>Floating panel</th><td>Alpine show/hide (pure UI, no round-trip)</td></tr>
+        <tr><th>Copy rules card</th><td>The brand kit's rules shown word for word (MK-2)</td></tr>
+        <tr><th>Overflow guard</th><td><span class="new">new: measure text boxes and block Render when one overflows</span></td></tr>
+      </table>
+    </div>
+    <div class="frame"><iframe src="option-b.html" title="Option B preview" loading="lazy"></iframe></div>
+    <a class="open" href="option-b.html">Open option B full size</a>
+  </section>
+
+  <section class="opt" aria-labelledby="c-h">
+    <h2 id="c-h"><span class="k">C</span>Gallery, then steps <span style="font-size:14px;font-weight:400;color:#9A9DA3">choose by picture, compare three versions</span></h2>
+    <div class="cols">
+      <p>Step 1 is a gallery of the seven templates, with the set ones first and tagged "Sets", because sets are the centrepiece. Once you pick, it shrinks to a one-line summary with a Change button. Step 2 has the fields beside <strong>three versions shown side by side</strong>: light 1080, dark 1080 and the 1702×630 cover. You click one to choose it. Step 3 is the caption with its check, then Render, or Render all three. This option is best at choosing <em>how</em> a post should look, and it makes the cover a normal choice rather than a toggle. It is also the most scrolling, and it re-renders three previews on every keystroke.</p>
+      <table>
+        <tr><th>Gallery</th><td>Kit PNGs from the brand kit as thumbnails (MK-2)</td></tr>
+        <tr><th>Variants</th><td>Same fields rendered three ways · light/dark becomes a template prop · <span class="new">new</span></td></tr>
+        <tr><th>Render all three</th><td>One queued render job per variant · <span class="new">new</span></td></tr>
+      </table>
+    </div>
+    <div class="frame"><iframe src="option-c.html" title="Option C preview" loading="lazy"></iframe></div>
+    <a class="open" href="option-c.html">Open option C full size</a>
+  </section>
+
+  <section aria-labelledby="gaps-h" style="display:flex;flex-direction:column;gap:12px">
+    <h2 id="gaps-h" style="margin:0;font-size:18px;font-weight:600">Gaps and questions</h2>
+    <ul class="gaps" style="margin:0;padding-left:20px">
+      <li><strong>Where set data comes from.</strong> Set name, slot list, filled count, key date and mintage live in the coins app's database, not in Story Board. The mockups prefill them from a set picker and let you override them. Should Story Board read an export from coins (for example <span class="mono">marketing/sets.json</span> in the repo), or should every number be typed in?</li>
+      <li><strong>Mintage and price are facts.</strong> "264,000 minted" and "$10,000" go out under the brand. The check makes sure a comparison names a source, but it can't tell whether the number is right. Is a required source field enough, or should comparisons need a second confirm?</li>
+      <li><strong>Rendering.</strong> "Render PNG" needs headless Chrome on the box (Browsershot or Playwright) to screenshot the post at 1080×1080 or 1702×630. Story Board doesn't have this yet. It is the biggest new dependency in this story.</li>
+      <li><strong>Photo library gaps.</strong> The kit has eight coin photos, and some are hard to use. <span class="mono">Morgan-obverse.png</span> is actually a reverse, and the Peace obverse has a green felt background that the circle crop only partly hides. The kit's comparison post uses a Saint-Gaudens $20 that isn't in the library, so the mockup pairs the Flowing Hair dollar with an 1889-CC Morgan instead.</li>
+      <li><strong>The "two lines" rule against the kit.</strong> The kit's own comparison caption (09-post-pick) has three lines, so it would fail the check. Should the limit be two, or two plus an optional question line?</li>
+      <li><strong>Filler list.</strong> The list of flagged phrases ("check out", "amazing", "stay tuned", "link in bio"…) is a starting guess. It should live in the brand kit (MK-2) so you can edit it without a deploy.</li>
+      <li><strong>AI drafting is static here.</strong> The button fills in the idea-menu line for the template, using the fields. The real call needs Claude with the brand kit and copy rules in the prompt, and its draft has to pass the same check before it is shown.</li>
+    </ul>
+  </section>
+</div>
+</body>
+</html>

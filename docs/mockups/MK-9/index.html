@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MK-9 review page options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;background:#0E0F11;color:#F2F1EE;font-family:Geist,system-ui,sans-serif}
+a{color:#F2A33A;text-decoration:none}a:hover{color:#FFC26B;text-decoration:underline;text-underline-offset:3px}
+a:focus-visible{outline:2px solid #F2A33A;outline-offset:2px}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.wrap{max-width:1240px;margin:0 auto;padding:32px 32px 64px;display:flex;flex-direction:column;gap:32px}
+.lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9A9DA3;font-weight:500}
+p{line-height:1.6;color:#C9CBCF;margin:0}
+.opt{background:#16181B;border:1px solid #26292E;border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:16px}
+.opt h2{margin:0;font-size:20px;font-weight:600;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.opt h2 .k{font-family:'Geist Mono',monospace;font-size:13px;color:#F2A33A;border:1px solid #5C4219;border-radius:999px;padding:2px 10px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:7px 8px;border-top:1px solid #1F2226;vertical-align:top}
+th{color:#9A9DA3;font-weight:500;width:34%}
+td{color:#C9CBCF}
+td .new{color:#F59088}
+.frame{border:1px solid #26292E;border-radius:10px;overflow:hidden;background:#0E0F11}
+iframe{display:block;width:100%;height:760px;border:0}
+.open{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:8px;background:#F2A33A;color:#1A1205;font-weight:500;font-size:14px;align-self:flex-start}
+.open:hover{color:#1A1205;background:#FFC26B;text-decoration:none}
+.gaps li{margin:0 0 10px;line-height:1.55;color:#C9CBCF;font-size:14px}
+@media (max-width:900px){.cols{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:640px){.wrap{padding:20px 16px 48px;gap:24px}.opt{padding:16px}iframe{height:640px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:8px">
+    <span class="lbl">MK-9 · mockups · pick one</span>
+    <h1 style="margin:0;font-size:30px;font-weight:600;letter-spacing:-.01em">The Review page at <span class="mono" style="font-size:26px">/p/coins/marketing/review</span></h1>
+    <p style="max-width:880px">You asked for a page where you go through the upcoming posts, choose between generated designs, and see when each one is planned to post. Nothing goes out unless you picked it. Each option sits in the shell under a new <strong>Marketing</strong> tab, with the sub-nav Library · <strong>Review</strong> · Calendar · Designer · Settings. All three use the same mock data. The mock clock is Mon 12 Oct 11:20. The schedule has four recurring slots: Coin of the week Tue 10:00, TrueView Tuesday Tue 19:00, Set spotlight Fri 18:00 and Ask the community Sun 12:00. Yesterday's Sunday post was <strong>missed</strong> because the Mac was asleep. Captions come from the kit's real copy and idea menu. Candidate 4 for Tue 13 Oct (1923 Peace dollar) breaks the copy rules on purpose, and the Sun 18 Oct comparison needs a price source before it can be confirmed. All three options also have <strong>like / dislike</strong> on every candidate and every design, with a "Your taste" hint. Every page is interactive and works at 375px.</p>
+  </header>
+
+  <section class="opt" aria-labelledby="a-h">
+    <h2 id="a-h"><span class="k">A</span>One-slot deck <span style="font-size:14px;font-weight:400;color:#9A9DA3">one slot at a time, big preview</span></h2>
+    <div class="cols">
+      <p>The page shows one slot at a time: its name, date and time, and a live countdown. A large post preview has ← / → flip buttons, design-variant pills under it, and a filmstrip of 3–4 candidate thumbnails. The right column shows the candidate's template fields, the caption in an editable box, and the copy-rules check, which updates as you type. Below that are <strong>Confirm · posts Tue 13 Oct 10:00</strong>, Regenerate, Edit in designer and Skip slot. Confirm stays disabled while a rule fails. After Confirm, the slot turns into a green "Posts … to Facebook" card. J / K move to the previous or next slot. Thumbs sit next to the candidate title and under the preview for the current design; a dislike shows optional reason chips. <strong>Optimises for care</strong>: one decision at a time with the most room for the post itself. It is the closest to how the post will look in the feed.</p>
+      <table>
+        <tr><th>Progress strip</th><td>Slots for the next 14 days + yesterday's miss · confirmed / needs review / empty / missed / skipped</td></tr>
+        <tr><th>Missed</th><td>Red banner on top: Send now · Reschedule (date-time picker). It never sends late on its own.</td></tr>
+        <tr><th>Keys</th><td>← → candidate · V design · J K slot</td></tr>
+        <tr><th>Taste</th><td>Thumbs on candidate + current design; reason chips on dislike; "Your taste" bar under the strip</td></tr>
+        <tr><th>Cost</th><td>Most clicks to clear a week: one slot per screen</td></tr>
+      </table>
+    </div>
+    <div class="frame"><iframe src="option-a.html" title="Option A preview" loading="lazy"></iframe></div>
+    <a class="open" href="option-a.html">Open option A full size</a>
+  </section>
+
+  <section class="opt" aria-labelledby="b-h">
+    <h2 id="b-h"><span class="k">B</span>Keep or pass triage <span style="font-size:14px;font-weight:400;color:#9A9DA3">one deck of every candidate</span></h2>
+    <div class="cols">
+      <p>Every candidate for every slot that needs review goes into one deck, 13 cards across four slots, in time order. Press ← to pass or → to keep, drag the card on touch, and press Z to undo. <strong>Keep and pass are the like and dislike signal</strong>, so after a pass you get optional reason chips. Each design also has its own thumbs. Kept cards collect in a column on the right, grouped by slot. There you pick one per slot and press <strong>Confirm</strong>. Keeping only shortlists a card and never schedules it. If you pass on every candidate for a slot, the slot offers Regenerate. <strong>Optimises for speed</strong>: clearing a week of options in one sitting, with the decision on each card taking a single key.</p>
+      <table>
+        <tr><th>Progress strip</th><td>Same chips; clicking one jumps the deck to that slot's next undecided card</td></tr>
+        <tr><th>Missed</th><td>Same red banner with Send now · Reschedule</td></tr>
+        <tr><th>Keys</th><td>← pass · → keep · V design · Z undo</td></tr>
+        <tr><th>Taste</th><td>Keep = like, Pass = dislike (+ reason); thumbs per design on the card</td></tr>
+        <tr><th>Cost</th><td>Two steps (triage, then confirm per slot). <span class="new">Comparing two candidates side by side happens only in the small kept thumbnails.</span></td></tr>
+      </table>
+    </div>
+    <div class="frame"><iframe src="option-b.html" title="Option B preview" loading="lazy"></iframe></div>
+    <a class="open" href="option-b.html">Open option B full size</a>
+  </section>
+
+  <section class="opt" aria-labelledby="c-h">
+    <h2 id="c-h"><span class="k">C</span>Timeline and compare <span style="font-size:14px;font-weight:400;color:#9A9DA3">schedule on the left, gallery on the right</span></h2>
+    <div class="cols">
+      <p>A sticky timeline on the left lists every slot by day, from yesterday's miss to Sun 25 Oct. Each entry shows its status, a countdown, and a thumbnail once a post is picked. A 14-day mini bar sits on top. On the right, the selected slot's candidates are laid out in a <strong>gallery grid</strong> that follows MK-1 option B's card treatment. Each card shows the post with design pills, the caption, a "copy ok / 2 issues" badge, and thumbs for the post and for the design. Click a card, or highlight one with ← / → and press Enter, to pick it. The editor opens underneath with the caption, the rule check and <strong>Confirm</strong>. Below 1000px the timeline becomes the progress strip. <strong>Optimises for comparison and the schedule</strong>: you see the whole fortnight and every option for a slot at once.</p>
+      <table>
+        <tr><th>Progress strip</th><td>The timeline itself (desktop) + mini bar; chip strip on narrow screens</td></tr>
+        <tr><th>Missed</th><td>First timeline entry, in red; opens Send now · Reschedule on the right</td></tr>
+        <tr><th>Keys</th><td>← → highlight · Enter pick · J K slot</td></tr>
+        <tr><th>Taste</th><td>Thumbs for post + design on every card; reason chips on dislike</td></tr>
+        <tr><th>Cost</th><td>Previews are smaller than A's; the most on screen at once</td></tr>
+      </table>
+    </div>
+    <div class="frame"><iframe src="option-c.html" title="Option C preview" loading="lazy"></iframe></div>
+    <a class="open" href="option-c.html">Open option C full size</a>
+  </section>
+
+  <section aria-labelledby="gaps-h" style="display:flex;flex-direction:column;gap:12px">
+    <h2 id="gaps-h" style="margin:0;font-size:18px;font-weight:600">Gaps and questions</h2>
+    <ul class="gaps" style="margin:0;padding-left:20px">
+      <li><strong>Likes and dislikes need a store and a consumer.</strong> Each thumb is a row: candidate or variant, up or down, an optional reason, and when. The generator reads the totals as a soft preference for <em>content</em> (which coins, sets or topics), <em>template choice</em> and <em>caption style</em> (length, tone). It never varies the brand: the swirl logo with StackerMint and BETA, tan #B79F82 and ink #222, Instrument Sans and 5px corners are fixed inputs to every template. The lean chips in "Your taste" (for example "+ set progress", "− too wordy") need a summariser. Is a simple count by template and reason enough, or should it be a short line the AI writes? A like never confirms; Confirm stays separate in all three options.</li>
+      <li><strong>Is a dislike also a reject?</strong> In A and C, a dislike leaves the candidate where it is. In B, a pass removes it from the deck. Should a disliked candidate be hidden from the slot in A and C as well?</li>
+      <li><strong>Should copy rules block or warn?</strong> These mockups block Confirm until every rule passes. The alternative is "Confirm anyway" with the warnings saved alongside the post. Some rules can be checked by a script (length, filler words, cert claims). "Similar value + price source" needs the price source as a field on comparison templates, which the Sun 18 Oct card shows.</li>
+      <li><strong>Missed means the sender's clock passed while the Mac was asleep.</strong> The queue has to record a post's due time and its attempt time. If the attempt comes more than N minutes after the due time, the post becomes <span class="mono">missed</span> instead of being sent. What should N be: 5 minutes? 15? Reschedule defaults to the next day at the same hour.</li>
+      <li><strong>When should candidates be generated?</strong> The mock generates them about four days ahead ("Generates Thu 15 Oct"), and Generate now forces it. Regenerate replaces the candidates you haven't liked. Should liked candidates be kept when you regenerate?</li>
+      <li><strong>Confirmed posts are locked to one design.</strong> Edit in designer opens Designer (MK-10) with that candidate and design loaded. Saving from there should come back here as a new variant, not overwrite the original.</li>
+      <li><strong>Facebook only for now.</strong> "Posts … to Facebook" assumes one connected page per project. More channels would turn Confirm into a choice of channels.</li>
+    </ul>
+  </section>
+</div>
+</body>
+</html>

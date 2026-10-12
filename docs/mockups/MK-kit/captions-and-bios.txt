@@ -1,0 +1,163 @@
+STACKERMINT FACEBOOK KIT
+
+== INTRO BIOS (101 max) ==
+- A home for your coins, notes, and bullion. Organize, track, and share your collection.
+- Built by collectors, for collectors. Know what your collection is worth today.
+- Track it. Value it. Show it off. The collection app for coin people.
+- Built by collectors, for collectors. Your coins, notes, and bullion, all in one place.
+- Your collection deserves better than a spreadsheet. Organize, track, and share it here.
+
+== ABOUT ==
+- We started StackerMint because spreadsheets are a terrible place to keep a collection. Here, every coin, note, and bar has a real home with photos, grades, and values that stay up to date. Buy, sell, and trade with other collectors when you're ready. Private beta now, full launch soon.
+
+- Most collections still live in a spreadsheet, a binder, or somebody's head. StackerMint gives every coin, note, and bar a real home with photos, grades, and values. Build your sets slot by slot, see what you're missing, and share the whole collection with one link.
+
+- Built by collectors, for collectors. StackerMint is a home for your coins, notes, and bullion. See what your collection is worth today, track every set you're building, and show it off. No spreadsheets required. Private beta now.
+
+== POSTS & ADS ==
+
+--- 01-post-welcome.png (post) ---
+Hi, we're StackerMint 👋
+
+A home for your coins, notes, and bullion. Organize it, see what it's worth, and show it off.
+
+--- 02-post-cotw.png (post) ---
+Coin of the week: an 1800 $5 Capped Bust half eagle.
+
+The Mint was eight years old when this was struck. Most early gold was melted, so few survive.
+
+--- 03-ad-value.png (ad) ---
+What's your collection worth today?
+
+StackerMint keeps a running value and shows how it's grown.
+Headline: Know what your collection is worth
+Button: Sign up
+
+--- 04-post-set-building.png (post, sets) ---
+What set are you building right now?
+
+--- 05-post-set-cc.png (post, sets) ---
+Carson City Morgans. Thirteen coins, 1878 to 1893.
+
+Nine down. The 1889-CC is the hard one.
+
+--- 06-post-set-last.png (post, sets) ---
+76 down. One to go.
+
+The 1916-D Mercury dime. Only 264,000 made.
+
+--- 07-post-set-done.png (post, sets) ---
+Set complete. All 24 Peace dollars, 1921 to 1935.
+
+--- 08-post-typeset.png (post, sets) ---
+A type set is one of each design, not every date.
+
+Four down, two to go.
+
+--- 09-post-pick.png (post) ---
+Same money. Only one stays.
+
+1795 Flowing Hair dollar, PCGS VF25. Or a common-date Saint-Gaudens $20, like a 1924, in PCGS MS67. Both around $10,000.
+
+Rarity or condition?
+
+--- 10-post-tv-tuesday.png (post, toned) ---
+TrueView Tuesday 🌈
+
+A Morgan with a century of album toning. Show us your best toner.
+
+--- 11-post-tv-sides.png (post, toned) ---
+Both sides of the story.
+
+Every coin gets a clean front and back.
+
+--- 12-post-toned.png (post, toned) ---
+Toning is chemistry, not damage.
+
+Natural color can add value. Cleaning almost always takes it away.
+
+--- 13-post-share.png (post) ---
+Your collection deserves better than a camera roll.
+
+Share the whole thing with one link.
+
+--- 14-ad-invite.png (ad) ---
+We're letting collectors in a few at a time.
+
+Request an invite. One email when it's your turn.
+Headline: Request a beta invite
+Button: Sign up
+
+--- 15-ad-stack.png (ad) ---
+Coins, paper money, and bullion. All in one place.
+Headline: One home for the whole stack
+Button: Sign up
+
+
+== IDEA MENU ==
+
+Sets
+- What are you building?: What set are you working on?
+- Slot filled: Another slot filled. [coin] joins the [set] set. [x] of [y] done.
+- One slot left: [x] down, one to go. The [key date] is the last hole. Wish us luck.
+- Set complete: Set complete. All [y] [series]. Congrats to [member] on finishing it.
+- Key date spotlight: Every set has a wall. For [series], it's the [key date]. Only [mintage] were made.
+- Type set 101: A type set is one of each design, not every date. It's the best way to own a piece of every chapter.
+- Binder to app: Still keeping your set in an album and a spreadsheet? Show us the album.
+
+Toned & TrueView
+- TrueView Tuesday: TrueView Tuesday. Show us your best toner.
+- Toning 101: Toning is chemistry, not damage. Natural color can add value. Cleaning takes it away.
+- Album toning: That rainbow came from sitting in an old paper album for decades. The sulfur in the paper did the work.
+- Rate the rainbow: Rate this toning, 1 to 10.
+- Front or back?: Some coins tone better on the back. Which side wins on this one?
+- Both sides: Front and back, side by side. Your collection should show both.
+
+Show & tell
+- Coin of the week: Coin of the week: [coin], [grade]. What do you see first, the strike or the color?
+- Collector spotlight: Meet [name]. They've been collecting [series] for [years] years. Here's the coin they'd grab in a fire.
+- First coin story: What was the first coin you ever kept? Ours was a wheat cent out of a jar at Grandma's.
+- Then and now: Raw on the left, graded on the right. Same coin, new home.
+- Slab shot Saturday: It's Saturday. Show us your favorite slab.
+- Paper money feature: Notes get love here too. This [year] [note] still has its original crispness.
+
+Did you know
+- What "BN, RB, RD" means: On copper, BN is brown, RB is red-brown, RD is full red. Red is rarest, and it shows in the price.
+- Key dates: A key date is the hardest coin to find in a series. For Lincoln cents, think 1909-S VDB.
+- Mint marks: That tiny letter matters. D is Denver, S is San Francisco, O is New Orleans, CC is Carson City.
+- What CAC means: A green CAC sticker means a second set of eyes agreed the coin is solid for its grade.
+- Proof vs. business strike: Proofs were struck twice on polished dies for collectors. That's why they shine like mirrors.
+
+Ask the community
+- Rarity or condition?: Same price. Rare and worn, or common and near perfect?
+- Grade it: No peeking at the label. What grade would you give this one?
+- Dream coin: Money is no object. What one coin are you buying?
+- Silver or gold?: Silver or gold?
+- Storage setup: Albums, slabs, or a safe full of tubes? How do you store yours?
+- The one that got away: What's the one coin you passed on and still think about?
+
+How StackerMint works
+- Spreadsheets are out: Still keeping your collection in a spreadsheet? There's a better way.
+- Collection value: See what your collection is worth today, and how it's grown.
+- Sets: Sets show the empty slots, so you know what to hunt for next.
+- Share link: Share your whole collection with one link.
+- Notes and bullion: Not just coins. Paper money and bullion live here too.
+- Marketplace: Ready to let one go? List it to other collectors in a couple of taps.
+
+Behind the build
+- Why we built it: We were tired of keeping a collection in a spreadsheet. So we built the thing we wanted.
+- Feature you asked for: You asked, we built it: [feature]. Thanks to everyone who sent ideas.
+- Desk shot: Today's view. Coffee, a loupe, and a bug that's been fighting back since 9am.
+- Sneak peek: Here's a first look at something we're working on. Thoughts?
+
+Beta & launch
+- Invite open: Private beta is open. Request an invite and we'll email you when it's your turn.
+- New batch: We just let in a new group of collectors. Check your email.
+- Bring a friend: Know a collector who still uses a spreadsheet? Send them our way.
+- Launch countdown: [days] days until the full launch. Here's what's coming.
+
+Calendar hooks
+- Show weekend: Heading to [show] this weekend? Tell us what's on your want list.
+- New release day: The Mint drops [release] today. Buying one, or passing?
+- Year in review: Your collection in [year]. How many slots did you fill?
+- Spot price check: Silver is at $[price] today. Stacking more, or holding?

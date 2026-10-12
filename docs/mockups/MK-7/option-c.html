@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MK-7 v2 option C — The sentence is the form</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+/* Shell tokens, copied from the RD-11 option B mockups (dark, amber #F2A33A, Geist). */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;background:#0E0F11;color:#F2F1EE;font-family:Geist,system-ui,sans-serif;-webkit-text-size-adjust:100%}
+a{color:#F2A33A;text-decoration:none}a:hover{color:#FFC26B;text-decoration:underline;text-underline-offset:3px}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid #F2A33A;outline-offset:2px}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.card{background:#16181B;border:1px solid #26292E;border-radius:12px}
+.lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9A9DA3;font-weight:500}
+.muted{color:#9A9DA3}.faint{color:#7E8187}.soft{color:#C9CBCF}
+.navi{display:flex;align-items:center;gap:10px;padding:0 12px;border-radius:8px;color:#C9CBCF;font-size:14px;min-height:44px}
+.navi:hover{background:#1D2024;color:#F2F1EE;text-decoration:none}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid #33373D;color:#C9CBCF;white-space:nowrap}
+.t-built{border-color:#2D5A44;color:#7CD1A4}
+.t-draft{border-color:#5C4219;color:#F2A33A}.t-ready{border-color:#2B4A6E;color:#8EBBF2}
+.t-docs{border-color:#33373D;color:#9A9DA3}.t-fail{border-color:#6B2F2B;color:#F59088}
+.t-pick{border-color:#4A3B6B;color:#C3A8F0}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+.live{background:#6CA6F0;box-shadow:0 0 0 4px rgba(108,166,240,.18)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:8px;font:500 14px Geist,sans-serif;border:1px solid #33373D;background:#1D2024;color:#F2F1EE;cursor:pointer;text-decoration:none}
+.btn:hover{background:#24282D;color:#F2F1EE;text-decoration:none}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;font-size:13px;color:#C9CBCF;padding:12px 16px;border:1px solid #26292E;border-radius:10px;background:#121417}
+.legend i{display:inline-block;width:22px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:6px}
+/* Shell frame: sidebar on desktop, top bar + drawer below 768px (as layouts/shell does). */
+.shell{display:flex;min-height:100vh}
+.side{width:232px;flex:none;padding:20px 14px;border-right:1px solid #1F2226;display:flex;flex-direction:column;gap:22px}
+.topbar{display:none}
+main{flex:1;min-width:0;padding:28px 32px 56px;display:flex;flex-direction:column;gap:24px}
+.crumb{font-size:12px;color:#9A9DA3}.crumb a{color:#9A9DA3}
+.tabs{display:flex;gap:24px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid #1F2226;font-size:14px;padding-bottom:1px}
+.tabs a{flex:none;color:#9A9DA3;padding-bottom:12px;margin-bottom:-2px;border-bottom:2px solid transparent;min-height:36px}
+.tabs a:hover{color:#F2F1EE;text-decoration:none}
+.tabs a[aria-current]{color:#F2F1EE;border-color:#F2F1EE;font-weight:500}
+.tabs .new{font-size:10px;color:#F2A33A;margin-left:4px;vertical-align:2px}
+@media (max-width:767px){
+  .side{display:none}
+  .shell{flex-direction:column}
+  .topbar{display:flex;position:sticky;top:0;z-index:5;height:56px;align-items:center;gap:8px;padding:0 8px;border-bottom:1px solid #1F2226;background:rgba(14,15,17,.95)}
+  main{padding:20px 16px 48px;gap:20px}
+  .tabs{gap:18px}
+}
+
+/* Marketing area: shared with MK-1 / MK-9 / MK-10. Sub-nav: Calendar · Review · Library · Settings. */
+.sub{display:flex;gap:6px;flex-wrap:wrap;margin-top:-8px}
+.sub a{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border-radius:8px;color:#9A9DA3;font-size:13px}
+.sub a:hover{background:#1D2024;color:#F2F1EE;text-decoration:none}
+.sub a[aria-current]{background:#1D2024;color:#F2F1EE;font-weight:500}
+.sub .n{font-family:'Geist Mono',monospace;font-size:11px;color:#1A1205;background:#F2A33A;border-radius:999px;padding:0 6px;line-height:16px}
+.sub .new{font-size:10px;color:#F2A33A}
+.btn.sm{min-height:40px;padding:0 12px;font-size:13px}
+.btn.pri{background:#F2A33A;border-color:#F2A33A;color:#1A1205}
+.btn.pri:hover{background:#FFC26B;color:#1A1205}
+.btn.ghost{background:transparent}
+.btn.danger{border-color:#6B2F2B;color:#F59088;background:transparent}
+.iconbtn{width:40px;padding:0}
+.seg{display:inline-flex;border:1px solid #33373D;border-radius:8px;overflow:hidden;flex-wrap:wrap}
+.seg button{min-height:40px;padding:0 14px;border:0;background:#16181B;color:#9A9DA3;font:500 13px Geist,sans-serif;cursor:pointer}
+.seg button[aria-pressed=true]{background:#24282D;color:#F2F1EE}
+.ph{display:flex;align-items:center;justify-content:center;background:#F4F3F0;color:#7A6447}
+.ph img{width:46%;height:46%;opacity:.7;object-fit:contain}
+/* forms */
+.inp{min-height:44px;padding:0 12px;border-radius:8px;border:1px solid #33373D;background:#121417;color:#F2F1EE;font:14px Geist,sans-serif;min-width:0;width:100%}
+select.inp{appearance:none;-webkit-appearance:none;padding-right:32px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239A9DA3' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+textarea.inp{min-height:84px;padding:10px 12px;line-height:1.5;resize:vertical}
+input[type=time].inp,input[type=date].inp{color-scheme:dark}
+.fld{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fld>.fl{font-size:13px;color:#C9CBCF;font-weight:500}
+.hint{font-size:12px;color:#9A9DA3;line-height:1.45;margin:0}
+.row2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr));gap:12px}
+.tgs{display:flex;flex-wrap:wrap;gap:6px}
+.tg{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 12px;border-radius:999px;border:1px solid #33373D;background:#16181B;color:#C9CBCF;font:13px Geist,sans-serif;cursor:pointer}
+.tg:hover{border-color:#4A4E55}
+.tg[aria-pressed=true]{border-color:#B07A2A;background:#2A2013;color:#F7CF8F}
+.days .tg{min-width:44px;border-radius:8px;padding:0 8px}
+.chk{display:flex;align-items:center;gap:10px;min-height:44px;font-size:14px;color:#C9CBCF;cursor:pointer}
+.chk input{width:18px;height:18px;accent-color:#F2A33A;flex:none}
+.tok{display:inline-block;font:500 11px 'Geist Mono',monospace;color:#D9C8F7;background:rgba(195,168,240,.08);border:1px solid #4A3B6B;border-radius:5px;padding:1px 5px;white-space:nowrap}
+
+/* Calendar A (MK-10 option A, chosen): month grid + right tray. */
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.range{font-size:15px;font-weight:600}
+.a-wrap{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+.a-wrap.editing{grid-template-columns:minmax(0,1fr) 430px}
+.a-tray{display:flex;flex-direction:column;gap:14px;position:sticky;top:16px}
+.a-box{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.mgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border:1px solid #26292E;border-radius:12px;overflow:hidden;background:#121417}
+.mgrid .hd{padding:8px 10px;font-size:12px;color:#9A9DA3;border-bottom:1px solid #26292E;background:#16181B}
+.cell{min-height:108px;padding:6px;border-right:1px solid #1F2226;border-bottom:1px solid #1F2226;display:flex;flex-direction:column;gap:4px;min-width:0;background:#16181B}
+.cell:nth-child(7n){border-right:0}
+.cell .dn{font-size:12px;color:#9A9DA3;font-family:'Geist Mono',monospace;padding:2px 2px 4px}
+.cell.past{background:#131518}.cell.past .dn{color:#5E6167}
+.cell.out .dn{color:#4A4D52}
+.cell.today .dn b{background:#F2A33A;color:#1A1205;border-radius:999px;padding:1px 7px;font-weight:600}
+.chip{display:flex;flex-wrap:wrap;align-items:center;gap:1px 6px;min-width:0;font-size:12px;line-height:1.25;border-radius:6px;padding:3px 6px;border:1px solid #33373D;background:#1A1D21;color:#F2F1EE;text-align:left;font-family:Geist,sans-serif;width:100%;cursor:pointer}
+.chip .tm{font-family:'Geist Mono',monospace;font-size:11px;color:#9A9DA3}
+.chip .tt{flex-basis:100%;min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.s-posted{border-left:3px solid #5FBF8F}
+.s-scheduled{border-left:3px solid #6CA6F0}
+.s-review{border-color:#5C4219;border-left:3px solid #F2A33A;background:#1E1A13}
+.s-missed{border-color:#6B2F2B;border-left:3px solid #F59088;background:#1F1514}
+.s-ghost{border:1px dashed #5C4219;background:transparent;color:#C9A36A}.s-ghost .tm{color:#8C7448}
+.s-preview{border:1px dashed #C3A8F0;background:rgba(195,168,240,.08);color:#E3D6FA}
+.hl{box-shadow:0 0 0 2px rgba(242,163,58,.35)}
+.s-preview.hl{box-shadow:0 0 0 2px rgba(195,168,240,.35)}
+.key{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12px;color:#9A9DA3}
+.key span{display:inline-flex;align-items:center;gap:6px}
+.key i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.camp{display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:4px 10px;align-items:center;padding:9px 4px;border-top:1px solid #1F2226;cursor:pointer;border-radius:6px}
+.camp:first-child{border-top:0}
+.camp:hover{background:#1A1D21}
+.camp .sw{width:10px;height:10px;border-radius:3px}
+.camp .nm{font-size:13px;font-weight:500}
+.camp .wh{grid-column:2/-1;font-size:12px;color:#9A9DA3;line-height:1.4}
+.camp.off .nm,.camp.off .wh{color:#6A6D73}
+.switch{flex:none;width:44px;height:26px;border-radius:13px;border:1px solid #33373D;background:#26292E;position:relative;cursor:pointer;padding:0}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#7E8187;transition:left .15s}
+.switch[aria-checked=true]{background:#3A2A12;border-color:#5C4219}
+.switch[aria-checked=true]::after{left:21px;background:#F2A33A}
+
+/* MK-7 v2 shared pieces: sentence, own-words topics, idea menu, next posts. */
+.agenda{display:flex;flex-direction:column;gap:12px}
+.ag-day h3{margin:0 0 6px;font-size:13px;font-weight:600}
+.ag-day .chip{min-height:44px;font-size:13px}
+.view{display:none;flex-direction:column;gap:20px}
+.view.on{display:flex}
+@media (max-width:1180px){.a-wrap{grid-template-columns:minmax(0,1fr)}.a-tray{position:static}}
+.chip .dr{font-family:'Geist Mono',monospace;font-size:10.5px;color:#F2A33A;margin-left:auto}
+.s-ghost.just{border-color:#F2A33A;color:#F7CF8F;animation:pulse 1.4s ease-out 3}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(242,163,58,.55)}100%{box-shadow:0 0 0 8px rgba(242,163,58,0)}}
+@media (prefers-reduced-motion:reduce){.s-ghost.just{animation:none}}
+.camp.just{background:#1E1A13}
+.camp .nmb{background:none;border:0;padding:0;font:500 13px Geist,sans-serif;color:#F2F1EE;text-align:left;cursor:pointer;min-height:28px}
+.camp.off .nmb{color:#6A6D73}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:60;background:#24282D;border:1px solid #33373D;color:#F2F1EE;border-radius:10px;padding:12px 16px;font-size:14px;line-height:1.45;display:none;align-items:center;gap:12px;max-width:calc(100% - 24px);width:max-content;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.toast.on{display:flex}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:30;display:none}
+.scrim.on{display:block}
+/* the self-writing sentence */
+.sent{font-size:15px;line-height:1.6;color:#C9CBCF;margin:0}
+.sent b{color:#F2F1EE;font-weight:600}
+.sent .gap{color:#F2A33A;border-bottom:1px dashed #B07A2A}
+.voice{font-size:13px;line-height:1.55;color:#9A9DA3;margin:0}
+.voice b{color:#C9CBCF;font-weight:500;font-style:italic}
+.voice .gap{color:#F2A33A}
+/* own-words topics */
+.own-add{display:flex;gap:8px}
+.own-add .inp{flex:1}
+.own-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.own-row{border:1px solid #33373D;border-radius:10px;background:#121417;padding:4px 4px 4px 10px;display:flex;flex-direction:column;gap:4px}
+.own-row.fresh{border-color:#B07A2A;background:#1E1A13}
+.own-top{display:flex;align-items:center;gap:4px;min-width:0}
+.own-top .mk{color:#F2A33A;font-size:13px;flex:none}
+.own-t{flex:1;min-width:0;min-height:40px;border:0;background:transparent;color:#F2F1EE;font:500 14px Geist,sans-serif;padding:0 4px;border-radius:6px}
+.own-t:hover{background:#1A1D21}
+.lnk{background:none;border:0;color:#F2A33A;font:13px Geist,sans-serif;cursor:pointer;min-height:40px;padding:0 8px;white-space:nowrap;border-radius:6px}
+.lnk:hover{color:#FFC26B;background:#1A1D21}
+.lnk.x{color:#7E8187;font-size:16px;width:40px;padding:0}
+.lnk.x:hover{color:#F59088}
+.own-d{margin:0 6px 6px 18px;width:auto;min-height:60px;font-size:13px}
+.own-dtxt{margin:0 8px 8px 22px;font-size:12.5px;color:#9A9DA3;line-height:1.45;cursor:text}
+.empty{font-size:13px;color:#7E8187;margin:0;padding:8px 0}
+/* idea menu */
+.cat{border-top:1px solid #1F2226}
+.cat:first-child{border-top:0}
+.cat summary{list-style:none;display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer;font-size:14px;color:#C9CBCF}
+.cat summary::-webkit-details-marker{display:none}
+.cat summary::after{content:"▸";margin-left:auto;color:#7E8187}
+.cat[open] summary::after{content:"▾"}
+.cat .cnt{font:11px 'Geist Mono',monospace;color:#F2A33A}
+.cat .tgs{padding:0 0 12px}
+.tg.idea-c{border-radius:8px;min-height:40px;text-align:left}
+.sw{width:10px;height:10px;border-radius:3px;display:inline-block;flex:none}
+/* next posts */
+.nx{display:flex;flex-direction:column}
+.nx-row{display:grid;grid-template-columns:48px minmax(0,1fr);gap:12px;align-items:center;padding:10px 0;border-top:1px solid #1F2226}
+.nx-row:first-child{border-top:0}
+.th{width:48px;height:48px;border-radius:8px;object-fit:cover;background:#F4F3F0;display:block}
+.th.txt{background:#1D2024;color:#C9CBCF;font-size:12px;display:flex;align-items:center;justify-content:center;border:1px solid #33373D}
+.th.ai{background:linear-gradient(135deg,#F4F3F0 50%,#1D2024 50%);border:1px solid #33373D}
+.nx-row .d{font:500 12px 'Geist Mono',monospace;color:#F2F1EE}
+.nx-row .it{font-size:13px;color:#C9CBCF;line-height:1.35}
+.nx-row .it .src{font-size:11px;color:#7E8187}
+.nx-row .it .src.own{color:#F2A33A}
+.coming{font-size:12px;color:#7E8187;margin:0}
+.lib{display:flex;gap:6px;flex-wrap:wrap}
+.lib img{width:40px;height:40px;border-radius:6px;object-fit:cover;background:#F4F3F0;display:block}
+.lib .more{width:40px;height:40px;border-radius:6px;border:1px solid #33373D;display:flex;align-items:center;justify-content:center;font:11px 'Geist Mono',monospace;color:#9A9DA3}
+.photo-opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));gap:8px}
+.popt{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:56px;padding:8px 12px;border-radius:10px;border:1px solid #33373D;background:#16181B;color:#C9CBCF;font:500 14px Geist,sans-serif;cursor:pointer;text-align:left}
+.popt span{font-weight:400;font-size:12px;color:#9A9DA3;line-height:1.35}
+.popt:hover{border-color:#4A4E55}
+.popt[aria-pressed=true]{border-color:#B07A2A;background:#2A2013;color:#F7CF8F}
+.days .tg{min-width:40px;border-radius:8px;padding:0 8px}
+.tgs.days{gap:4px}
+.req{font-size:12px;color:#F2A33A}
+@media (max-width:767px){.own-top{flex-wrap:wrap}.own-t{flex:1 1 calc(100% - 24px)}.own-top .lnk:not(.x){margin-left:auto}}
+/* Upcoming posts modal: one campaign's next occurrences, opened from the tray, the form and its calendar ghosts. */
+.um-scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:none}
+.um-scrim.on{display:block}
+.um{position:fixed;z-index:51;left:50%;top:50%;transform:translate(-50%,-50%);width:min(620px,calc(100% - 32px));max-height:calc(100vh - 32px);background:#16181B;border:1px solid #26292E;border-radius:14px;display:none;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.55)}
+.um.on{display:flex}
+.um-hd{display:flex;align-items:center;gap:10px;padding:12px 12px 12px 18px;border-bottom:1px solid #1F2226}
+.um-hd h2{margin:0;font-size:17px;font-weight:600;flex:1;min-width:0}
+.um-top{padding:12px 18px;border-bottom:1px solid #1F2226;display:flex;gap:12px;align-items:flex-start}
+.um-top .sent{font-size:14px;flex:1}
+.um-bd{overflow-y:auto;padding:4px 18px 8px}
+.um-ft{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 18px;border-top:1px solid #1F2226}
+.ur{display:grid;grid-template-columns:62px 52px minmax(0,1fr);gap:12px;align-items:center;padding:12px 0;border-top:1px solid #1F2226}
+.ur:first-child{border-top:0}
+.ur .dt{font:500 12px 'Geist Mono',monospace;color:#F2F1EE;line-height:1.4}
+.ur .dt span{display:block;color:#9A9DA3;font-weight:400}
+.ur .th{width:52px;height:52px}
+.ur .slot{width:52px;height:52px;border-radius:8px;border:1.5px dashed #5C4219;display:flex;align-items:center;justify-content:center;color:#8C7448;font-size:18px}
+.ur .slot.rv{border:1px solid #5C4219;background:#1E1A13;color:#F2A33A;font:600 15px 'Geist Mono',monospace}
+.ur .slot.ms{border:1px solid #6B2F2B;background:#1F1514;color:#F59088}
+.ur .bx{display:flex;flex-direction:column;gap:6px;min-width:0}
+.ur .cap{font-size:13px;line-height:1.4;color:#E6E2D9;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ur .acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.ur .acts .btn{min-height:36px;padding:0 10px;font-size:12.5px}
+.ur.past{opacity:.92}
+.t-miss{border-color:#6B2F2B;color:#F59088}
+.camp .ulk{grid-column:2/-1;justify-self:start;background:none;border:0;color:#F2A33A;font:12px Geist,sans-serif;cursor:pointer;min-height:32px;padding:0}
+.camp .ulk:hover{color:#FFC26B;text-decoration:underline}
+@media (max-width:767px){.um{left:0;top:auto;bottom:0;transform:none;width:100%;max-height:88vh;border-radius:14px 14px 0 0}.ur{grid-template-columns:52px minmax(0,1fr);}.ur .dt{grid-column:1/-1}}
+.only-m{display:none}@media (max-width:767px){.only-d{display:none!important}.only-m{display:block}}
+
+/* option C · The sentence is the form */
+
+/* Option C: fill-in-the-blank sentence in a modal over calendar A. */
+.md{position:fixed;z-index:31;left:50%;top:50%;transform:translate(-50%,-50%);width:min(760px,calc(100% - 32px));max-height:calc(100vh - 32px);background:#16181B;border:1px solid #26292E;border-radius:14px;display:none;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.md.on{display:flex}
+.md-hd{display:flex;align-items:center;gap:10px;padding:10px 12px 10px 20px;border-bottom:1px solid #1F2226}
+.md-bd{flex:1;overflow-y:auto;padding:18px 20px 22px;display:flex;flex-direction:column;gap:14px}
+.md-ft{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px 20px;border-top:1px solid #1F2226}
+.md .nm{width:100%;min-height:44px;border:0;border-bottom:1px solid transparent;background:transparent;color:#F2F1EE;font:600 24px Geist,sans-serif;letter-spacing:-.01em;padding:0;border-radius:0}
+.md .nm:hover,.md .nm:focus{border-bottom-color:#33373D}
+.md .nm::placeholder{color:#6A6D73}
+.bigsent{margin:0;font-size:22px;line-height:1.75;color:#C9CBCF;font-weight:400}
+.blank{display:inline;font:inherit;color:#F7CF8F;background:transparent;border:0;border-bottom:2px dashed #B07A2A;padding:0 2px;margin:0;cursor:pointer;border-radius:4px 4px 0 0;text-align:left;line-height:inherit}
+.blank:hover{background:#2A2013}
+.blank.act{background:#2A2013;border-bottom-style:solid;border-bottom-color:#F2A33A;color:#FFE1B0}
+.blank.empty{color:#F2A33A;font-style:italic}
+.voice.big{font-size:16px;line-height:1.6}
+.voice.big .blank{font-style:italic;color:#E6D3B0}
+.pop{border:1px solid #5C4219;background:#1E1A13;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.pop[hidden]{display:none}
+.pop .ph{display:flex;align-items:center;gap:8px}
+.pop .phd b{font-size:13px;font-weight:600;color:#F2D9B0}
+.tp{display:flex;flex-direction:column;gap:10px;padding-top:6px;border-top:1px solid #1F2226;border-radius:4px}
+.tp h3,.nxs h3{margin:0;font-size:15px;font-weight:600;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.tp h3 span,.nxs h3 span{font-size:12px;font-weight:400;color:#7E8187}
+.tp.flash{animation:fl 1.2s ease-out}
+@keyframes fl{0%{box-shadow:0 0 0 3px rgba(242,163,58,.6)}100%{box-shadow:0 0 0 3px rgba(242,163,58,0)}}
+.catpick .tg{min-height:36px;font-size:12.5px}
+.catpick .tg .c{font:10.5px 'Geist Mono',monospace;color:#F2A33A}
+.nxs .nx{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:8px}
+.nxs .nx-row{border:1px solid #26292E;border-radius:10px;padding:10px;border-top:1px solid #26292E}
+.camp .wh .s{color:#C9CBCF}
+@media (max-width:767px){
+  .md{left:0;top:0;transform:none;width:100%;max-height:none;height:100%;border-radius:0;border:0}
+  .md-bd{padding:14px 16px 18px}.md-ft{padding:10px 16px}.md-hd{padding:8px 8px 8px 16px}
+  .bigsent{font-size:19px}.md .nm{font-size:20px}
+}
+
+</style>
+</head>
+<body>
+<!-- MK-7 v2 option C · The sentence is the form. Simplified campaign setup (owner, 12 Oct: "simple and easy to manage and use and intuitive").
+     A campaign is only: name, weekly day(s) + time + on/off, topics (idea menu + your own words), brief, photos.
+     Prepare-ahead is always 2 weeks; drafts come from "Fill next 2 weeks". Data: StackerMint (coins), Mon 12 Oct 2026. -->
+<div class="shell">
+  <div class="topbar">
+    <button class="btn" aria-label="Open menu" style="width:44px;padding:0;border:0;background:transparent">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9CBCF" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <span style="font-weight:600">Story Board</span>
+  </div>
+  <nav class="side" aria-label="Board">
+    <div style="display:flex;align-items:center;gap:10px;padding:0 6px">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="1" width="24" height="24" rx="7" fill="none" stroke="#F2A33A" stroke-width="2"/><path d="M8 9h10M8 13h6M8 17h8" stroke="#F2A33A" stroke-width="2" stroke-linecap="round"/></svg>
+      <span style="font-weight:600;font-size:16px">Story Board</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <a class="navi" href="#">Home</a>
+      <a class="navi" href="#">Mockups</a>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <span class="lbl" style="padding:0 12px 6px">Projects</span>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>asset-track</a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>client-dashboard</a>
+      <a class="navi" href="#" aria-current="page" style="background:#1D2024;color:#F2F1EE;font-weight:500"><span class="dot" style="background:#5FBF8F"></span>coins</a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>rent-track</a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>story-board</a>
+    </div>
+  </nav>
+  <main>
+    <div class="legend" role="note" aria-label="Mockup legend">
+      <strong style="color:#F2F1EE">MK-7 v2 · option C · The sentence is the form</strong>
+      <span class="soft">The campaign is one sentence you edit by clicking its underlined parts: <b>Tuesday</b>, <b>7pm</b>, the topics, the photo choice, the voice. Topics sit right under it: type in <b>Add a topic</b> and press Enter, or pick from the idea menu. It opens as a modal over the Calendar (six fields, so the canonical modal pattern). Create closes it and the ghosts pulse on the month. The tray lists every campaign as its sentence.</span>
+      <span style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" onclick="demo('blank')">Start blank</button><button type="button" class="btn sm" onclick="demo('example')">Fill as TrueView Tuesday</button></span>
+    </div>
+    <header style="display:flex;flex-direction:column;gap:4px">
+      <p class="crumb" style="margin:0"><a href="#">All projects</a> / <a href="#">coins</a> / <a href="#">Marketing</a> / Calendar</p>
+      <h1 style="margin:0;display:flex;align-items:center;gap:10px;font-size:24px;font-weight:600;letter-spacing:-.01em">coins <span class="dot" style="background:#5FBF8F"></span><span style="font-size:13px;font-weight:400;color:#9A9DA3">ok</span></h1>
+      <p class="muted" style="margin:0;font-size:14px">Marketing as <strong class="soft" style="font-weight:500">StackerMint</strong> · phase 1: you copy the caption and post to Facebook by hand</p>
+    </header>
+    <nav class="tabs" aria-label="Project pages">
+      <a href="#">Overview</a><a href="#">Stories</a><a href="#">Preflight</a><a href="#">Handbook</a><a href="#">Map</a>
+      <a href="#" aria-current="page">Marketing<span class="new">NEW</span></a>
+    </nav>
+    <nav class="sub" aria-label="Marketing pages"><a href="#" data-sub="calendar" aria-current="page">Calendar</a><a href="#" data-sub="review">Review <span class="n" id="revN">2</span></a><a href="#" data-sub="library">Library</a><a href="#" data-sub="settings">Settings</a></nav>
+
+    <div class="toolbar">
+      <div class="seg only-d" role="group" aria-label="Month"><button type="button" class="iconbtn" aria-label="Previous month" onclick="nav(-1)">‹</button><button type="button" onclick="nav(0)">Today</button><button type="button" class="iconbtn" aria-label="Next month" onclick="nav(1)">›</button></div>
+      <span class="range" id="range">October 2026</span>
+    </div>
+    <div class="key"><span><i style="background:#6CA6F0"></i>scheduled</span><span><i style="background:#F2A33A"></i>drafts in Review</span><span><i style="border:1px dashed #C9A36A"></i>open date (ghost)</span><span><i style="background:#5FBF8F"></i>posted</span><span><i style="background:#F59088"></i>missed</span></div>
+    <div class="a-wrap" id="wrap">
+      <section aria-label="Calendar" id="cal"></section>
+      <aside class="a-tray" id="tray" aria-label="Campaigns and fill"></aside>
+    </div>
+  </main>
+</div>
+<div class="scrim" id="scrim" onclick="closeEditor()"></div>
+<div class="md" id="md" role="dialog" aria-modal="true" aria-labelledby="mdT">
+  <div class="md-hd"><span class="sw" style="background:#C3A8F0" aria-hidden="true"></span><span class="lbl" id="mdT" data-out="title" style="flex:1">New campaign</span><span class="hint">On</span><span id="cOn"></span><button type="button" class="btn iconbtn ghost" aria-label="Close" onclick="closeEditor()">✕</button></div>
+  <div class="md-bd">
+    <span id="cName"></span>
+    <p class="bigsent" data-out="sentence"></p>
+    <p class="voice big" data-out="voice"></p>
+    <div class="pop" id="pop" hidden></div>
+    <p class="hint">Click any underlined part to change it.</p>
+    <section class="tp" id="tp" aria-labelledby="tp-h">
+      <h3 id="tp-h">Topics <span>the AI takes turns through these</span></h3>
+      <span id="cOwnAdd"></span>
+      <ol class="own-list" id="ownList"></ol>
+      <div class="fld"><span class="fl" style="font-size:12px;color:#9A9DA3;font-weight:400">Or add from the idea menu</span><div class="tgs catpick" id="catPick" role="group" aria-label="Idea menu categories"></div><div class="tgs" id="catIdeas"></div></div>
+    </section>
+    <section class="nxs" aria-labelledby="nx-h"><h3 id="nx-h">Next posts <span>the next 2 weeks</span><button type="button" class="lnk" style="margin-left:auto" onclick="openUpcoming('current')">Upcoming posts ›</button></h3><div data-out="next" data-compact="1"></div></section>
+  </div>
+  <div class="md-ft"><span class="req" data-out="missing"></span><span style="flex:1"></span><button type="button" class="btn sm ghost" onclick="closeEditor()">Cancel</button><button type="button" class="btn sm pri" data-save onclick="doSave()">Create campaign</button></div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+/* MK-7 v2 mockup engine, shared by options A, B and C. C is the campaign in the form; refresh() redraws the
+   sentence, the next posts, the tray and the calendar ghosts. */
+var K='../MK-kit/posts/', CI='../MK-kit/coins/';
+var TODAY='2026-10-12';
+var DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], DOWL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function D(s){var p=s.split('-');return new Date(+p[0],p[1]-1,+p[2]);}
+function F(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function add(s,n){var d=D(s);d.setDate(d.getDate()+n);return F(d);}
+function dow(s){return D(s).getDay();}
+function nice(s){var d=D(s);return DOW[d.getDay()]+' '+d.getDate()+' '+MON[d.getMonth()];}
+function monStart(s){var w=dow(s);return add(s,w===0?-6:1-w);}
+function daysBetween(a,b){return Math.round((D(b)-D(a))/864e5);}
+function esc(x){return String(x).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function hm(t){var p=t.split(':'),h=+p[0],m=p[1],s=h>=12?'pm':'am';h=h%12||12;return h+(m==='00'?'':':'+m)+s;}
+function list(a,last){last=last||'or';if(a.length<2)return a.join('');return a.slice(0,-1).join(', ')+' '+last+' '+a[a.length-1];}
+
+/* The project's idea menu (MK-kit/captions-and-bios.txt), grouped by category. u = last used, in any campaign. */
+var IDEAS={
+ 'Toned & TrueView':[
+  {t:'TrueView Tuesday',q:'TrueView Tuesday. Show us your best toner.',u:'2026-10-06'},
+  {t:'Toning 101',q:'Toning is chemistry, not damage. Natural color can add value.',u:'2026-10-13',us:'scheduled'},
+  {t:'Album toning',q:'That rainbow came from sitting in an old paper album for decades.'},
+  {t:'Rate the rainbow',q:'Rate this toning, 1 to 10.'},
+  {t:'Front or back?',q:'Some coins tone better on the back. Which side wins on this one?'},
+  {t:'Both sides',q:'Front and back, side by side.',u:'2026-10-20',us:'in Review'}],
+ 'Sets':[
+  {t:'What are you building?',q:'What set are you working on?',u:'2026-10-11',us:'missed'},
+  {t:'Slot filled',q:'Another slot filled. [x] of [y] done.',u:'2026-10-09'},
+  {t:'One slot left',q:'[x] down, one to go. The [key date] is the last hole.'},
+  {t:'Set complete',q:'Set complete. All [y] [series].',u:'2026-10-16',us:'scheduled'},
+  {t:'Key date spotlight',q:'Every set has a wall. For [series], it\'s the [key date].'},
+  {t:'Type set 101',q:'A type set is one of each design, not every date.',u:'2026-10-23',us:'in Review'},
+  {t:'Binder to app',q:'Still keeping your set in an album and a spreadsheet?'}],
+ 'Show & tell':[
+  {t:'Coin of the week',q:'Coin of the week. What do you see first, the strike or the color?',u:'2026-10-13',us:'scheduled'},
+  {t:'Collector spotlight',q:'Meet [name]. Here\'s the coin they\'d grab in a fire.'},
+  {t:'First coin story',q:'What was the first coin you ever kept?'},
+  {t:'Then and now',q:'Raw on the left, graded on the right.'},
+  {t:'Slab shot Saturday',q:'It\'s Saturday. Show us your favorite slab.'},
+  {t:'Paper money feature',q:'Notes get love here too.'}],
+ 'Did you know':[
+  {t:'BN, RB, RD',q:'On copper, BN is brown, RB is red-brown, RD is full red.'},
+  {t:'Key dates',q:'A key date is the hardest coin to find in a series.'},
+  {t:'Mint marks',q:'That tiny letter matters. D is Denver, S is San Francisco.'},
+  {t:'What CAC means',q:'A green CAC sticker means a second set of eyes agreed.'},
+  {t:'Proof vs. business strike',q:'Proofs were struck twice on polished dies.'}],
+ 'Ask the community':[
+  {t:'Rarity or condition?',q:'Same price. Rare and worn, or common and near perfect?',u:'2026-10-04'},
+  {t:'Grade it',q:'No peeking at the label. What grade would you give this one?'},
+  {t:'Dream coin',q:'Money is no object. What one coin are you buying?',u:'2026-10-18',us:'in Review'},
+  {t:'Silver or gold?',q:'Silver or gold?'},
+  {t:'Storage setup',q:'Albums, slabs, or a safe full of tubes?'},
+  {t:'The one that got away',q:'What\'s the one coin you passed on and still think about?'}],
+ 'How it works':[
+  {t:'Spreadsheets are out',q:'Still keeping your collection in a spreadsheet?'},
+  {t:'Collection value',q:'See what your collection is worth today.'},
+  {t:'Share link',q:'Share your whole collection with one link.'},
+  {t:'Notes and bullion',q:'Not just coins. Paper money and bullion live here too.'}],
+ 'Behind the build':[
+  {t:'Why we built it',q:'We were tired of keeping a collection in a spreadsheet.'},
+  {t:'Desk shot',q:'Coffee, a loupe, and a bug that\'s been fighting back since 9am.'},
+  {t:'Sneak peek',q:'Here\'s a first look at something we\'re working on.'}],
+ 'Beta & launch':[
+  {t:'Invite open',q:'Private beta is open. Request an invite.'},
+  {t:'New batch',q:'We just let in a new group of collectors.'},
+  {t:'Bring a friend',q:'Know a collector who still uses a spreadsheet?'}]
+};
+var CATS=Object.keys(IDEAS);
+
+var EDITING=false;
+
+/* Short labels used in the sentence when three or more ideas from one category are ticked. */
+var CATL={'Toned & TrueView':'toned coins and TrueView','Sets':'set building','Show & tell':'show & tell','Did you know':'coin facts','Ask the community':'community questions','How it works':'how StackerMint works','Behind the build':'behind the build','Beta & launch':'the beta'};
+
+/* The project's photo library (MK-1 / MK-2): the kit's coin photos. The AI picks from these. */
+var LIB=[
+ {src:CI+'Morgan-obverse.jpg',l:'1889 Morgan · front'},{src:CI+'Morgan-reverse.jpg',l:'1889 Morgan · back'},
+ {src:CI+'Morgan-reverse.png',l:'1885 Morgan · back'},{src:CI+'Flowing-Hair-obverse.jpg',l:'1795 Flowing Hair · front'},
+ {src:CI+'Flowing-Hair-reverse.jpg',l:'1795 Flowing Hair · back'},{src:CI+'Peace-obverse.jpg',l:'1921 Peace · front'},
+ {src:CI+'Peace-reverse.jpg',l:'1921 Peace · back'},{src:CI+'Mercury--Winged-Liberty--obverse.jpg',l:'1916-D Mercury · front'},
+ {src:CI+'Mercury--Winged-Liberty--reverse.jpg',l:'1916-D Mercury · back'}
+];
+
+/* Existing campaigns. "about" stands in for their topics in the list. TrueView Tuesday is the one being created. */
+var CAMPS=[
+ {id:'cotw',name:'Coin of the week',days:[2],time:'10:00',c:'#E8C36A',on:true,about:'show & tell, plus 1 topic in your words',photo:'library'},
+ {id:'set', name:'Set spotlight',   days:[5],time:'18:00',c:'#7CD1A4',on:true,about:'set building',photo:'library'},
+ {id:'ask', name:'Ask the community',days:[0],time:'12:00',c:'#8EBBF2',on:true,about:'community questions',photo:'ai'},
+ {id:'dyk', name:'Did you know',    days:[4],time:'12:00',c:'#F59088',on:false,about:'coin facts',photo:'text'}
+];
+function camp(id){for(var i=0;i<CAMPS.length;i++)if(CAMPS[i].id===id)return CAMPS[i];return null;}
+
+/* Posts already on the calendar (MK-10 option A data, minus TrueView Tuesday's future dates: it does not exist yet). */
+var POSTS=[
+ {d:'2026-10-01',t:'12:00',c:null,  st:'posted',title:"Hi, we're StackerMint 👋"},
+ {d:'2026-10-04',t:'12:00',c:'ask', st:'posted',title:'Same money. Only one stays.'},
+ {d:'2026-10-06',t:'10:00',c:'cotw',st:'posted',title:'Coin of the week: 1800 $5'},
+ {d:'2026-10-06',t:'19:00',c:null,  st:'posted',title:'TrueView Tuesday 🌈 (one-off)'},
+ {d:'2026-10-09',t:'18:00',c:'set', st:'posted',title:'Carson City Morgans'},
+ {d:'2026-10-11',t:'12:00',c:'ask', st:'missed',title:'What set are you building?'},
+ {d:'2026-10-13',t:'10:00',c:'cotw',st:'scheduled',title:'Coin of the week: 1916-D Mercury',img:'06-post-set-last.png',cap:'Coin of the week: a 1916-D Mercury dime. Only 264,000 made, and it\'s the wall in every Mercury set.'},
+ {d:'2026-10-16',t:'18:00',c:'set', st:'scheduled',title:'Set complete. All 24 Peace dollars',img:'07-post-set-done.png',cap:'Set complete. All 24 Peace dollars, 1921 to 1935.'},
+ {d:'2026-10-18',t:'12:00',c:'ask', st:'review',title:'Dream coin',cands:3},
+ {d:'2026-10-23',t:'18:00',c:'set', st:'review',title:'A type set is one of each design',cands:3}
+];
+var REVIEW=2;
+
+/* The campaign in the form. A campaign has only: name, on/off, weekly day(s) + time, topics (ticked ideas + own words), brief, photos. */
+function blank(){return {id:null,name:'',on:true,days:[],time:'19:00',ideas:[],own:[],brief:'',photo:'library'};}
+function example(){return {id:null,name:'TrueView Tuesday',on:true,days:[2],time:'19:00',
+ ideas:['Toned & TrueView|TrueView Tuesday','Toned & TrueView|Toning 101','Toned & TrueView|Album toning','Toned & TrueView|Rate the rainbow'],
+ own:[{t:'My 1885 Morgan with the rainbow reverse',d:'Bought raw at the Baltimore show. All the colour is on the back. Never name a price.'},
+      {t:'Album toning vs. envelope toning',d:'One line on the difference, then ask which people prefer.'}],
+ brief:'Show off the toning. One line, then ask people to share their best toner.',photo:'library'};}
+function clone(o){return JSON.parse(JSON.stringify(o));}
+var C=example(), MODE='new', JUST=null, OPENROW=-1, FRESH=-1;
+
+/* ---------- sentence ---------- */
+function daysPhrase(c){if(!c.days.length)return null;var ds=c.days.slice().sort(function(a,b){return((a+6)%7)-((b+6)%7);}).map(function(i){return DOWL[i];});return 'Every '+list(ds,'and');}
+function ownList(c){return (c.own||[]).filter(function(x){return x.t.trim();});}
+function topicPhrase(c){
+  if(c.about)return c.about;
+  var by={},order=[];c.ideas.forEach(function(k){var p=k.split('|');if(!by[p[0]]){by[p[0]]=[];order.push(p[0]);}by[p[0]].push(p[1]);});
+  var bits=order.map(function(cat){return by[cat].length>=3?CATL[cat]:list(by[cat],'and');});
+  var o=ownList(c),own=o.length===1?'“'+o[0].t+'”':o.length>1?o.length+' topics in your own words':'';
+  if(!bits.length&&!own)return null;
+  if(!bits.length)return own;
+  return list(bits,'and')+(own?', plus '+own:'');
+}
+function photoPhrase(c){return {library:'with a photo from the library',text:'as text only',ai:'with a photo or as text (the AI decides)'}[c.photo];}
+function defSeg(k,h,ph){return h?'<b>'+h+'</b>':'<span class="gap">'+ph+'</span>';}
+function sentenceHTML(c,seg){
+  seg=seg||defSeg;var d=daysPhrase(c),t=topicPhrase(c);
+  return (c.on?'':'<span class="pill t-docs" style="margin-right:6px">paused</span>')+seg('days',d,'Every … (pick a day)')+' '+seg('time','at '+hm(c.time),'at …')+', post about '+seg('topics',t?esc(t):null,'… (add a topic)')+', '+seg('photo',photoPhrase(c))+'.';
+}
+function voiceHTML(c,seg){seg=seg||defSeg;return 'Sounds like: '+seg('brief',c.brief.trim()?'“'+esc(c.brief.trim())+'”':null,'one or two sentences in your voice');}
+
+/* ---------- dates ---------- */
+function occ(c,from,n){var out=[];for(var i=0;i<n;i++){var d=add(from,i);if(c.days.indexOf(dow(d))>=0)out.push(d);}return out;}
+function hasPost(cid,d){return POSTS.some(function(p){return p.c===cid&&p.d===d;});}
+/* Topic rotation the AI would follow: own words and menu ideas take turns. */
+function pool(c){var o=ownList(c).map(function(x){return{t:x.t,own:true};}),i=c.ideas.map(function(k){return{t:k.split('|')[1],own:false};}),out=[];
+  for(var j=0;j<Math.max(o.length,i.length);j++){if(o[j])out.push(o[j]);if(i[j])out.push(i[j]);}return out;}
+function canSave(){return C.name.trim()&&C.days.length&&pool(C).length;}
+function missing(){var m=[];if(!C.name.trim())m.push('a name');if(!C.days.length)m.push('a day');if(!pool(C).length)m.push('a topic');return m;}
+
+/* Next posts: every date of this campaign in the next 2 weeks (prepare-ahead is always 2 weeks). */
+function renderNext(el,compact){
+  if(!el)return;
+  if(!C.days.length){el.innerHTML='<p class="empty">Pick a day to see the dates.</p>';return;}
+  var ds=occ(C,TODAY,14),pl=pool(C),h='<div class="nx">';
+  ds.forEach(function(d,i){
+    var tp=pl.length?pl[i%pl.length]:null,ph=C.photo==='text'||(C.photo==='ai'&&i%2)?null:LIB[(i*2+2)%LIB.length];
+    var th=C.photo==='text'?'<span class="th txt" aria-hidden="true">Aa</span>':ph?'<img class="th" src="'+ph.src+'" alt="">':'<span class="th txt" aria-hidden="true">Aa</span>';
+    h+='<div class="nx-row">'+th+'<div style="display:flex;flex-direction:column;gap:3px;min-width:0"><span class="d">'+nice(d)+' · '+hm(C.time)+'</span><span class="it">'+(tp?esc(tp.t)+' <span class="src'+(tp.own?' own':'')+'">· '+(tp.own?'your words':'idea menu')+'</span>':'<span class="faint">add a topic</span>')+'</span>'+(compact?'':'<span class="it" style="font-size:12px;color:#9A9DA3">'+(C.photo==='text'?'Text only':ph?'Photo: AI picks from the library':'AI chose text only')+'</span>')+'</div></div>';
+  });
+  h+='</div><p class="hint" style="margin-top:6px">Always the next 2 weeks. Drafts appear when you press <b class="soft">Fill next 2 weeks</b> on the Calendar: 3 per date, nothing posts until you confirm.</p>';
+  el.innerHTML=h;
+}
+
+/* ---------- controls ---------- */
+function ctlName(ph){return '<input class="inp" data-k="name" value="'+esc(C.name)+'" placeholder="'+(ph||'e.g. TrueView Tuesday')+'" oninput="C.name=this.value;refreshLight()" aria-label="Campaign name" maxlength="60">';}
+function ctlOn(){return '<button type="button" class="switch" role="switch" data-k="on" aria-checked="'+C.on+'" aria-label="Campaign on" onclick="C.on=!C.on;refresh()"></button>';}
+function ctlDays(){var h='<div class="tgs days" role="group" aria-label="Days of the week">';[1,2,3,4,5,6,0].forEach(function(i){h+='<button type="button" class="tg" data-k="days" data-v="'+i+'" onclick="togDay('+i+')">'+DOW[i]+'</button>';});return h+'</div>';}
+function ctlTime(){return '<input class="inp" type="time" data-k="time" value="'+C.time+'" onchange="C.time=this.value||C.time;refresh()" aria-label="Time" style="max-width:160px">';}
+function ctlBrief(rows){return '<textarea class="inp" data-k="brief" rows="'+(rows||3)+'" maxlength="240" placeholder="e.g. Show off the toning. One line, then ask people to share theirs." oninput="C.brief=this.value;refreshLight()" aria-label="Brief">'+esc(C.brief)+'</textarea>';}
+function ctlPhoto(){
+  var o=[['library','Use a photo from the library','The AI picks one of '+LIB.length+' photos'],['text','Text only','A caption, no image'],['ai','Let AI decide','Photo or text, per post']];
+  return '<div class="photo-opts" role="group" aria-label="Photos">'+o.map(function(x){return '<button type="button" class="popt" data-k="photo" data-v="'+x[0]+'" onclick="C.photo=\''+x[0]+'\';refresh()">'+x[1]+'<span>'+x[2]+'</span></button>';}).join('')+'</div>';
+}
+function libStrip(){return '<div class="lib" aria-label="Photo library">'+LIB.slice(0,5).map(function(p){return '<img src="'+p.src+'" alt="'+esc(p.l)+'" title="'+esc(p.l)+'">';}).join('')+'<span class="more">+'+(LIB.length-5)+'</span></div><p class="coming">Coins photos: coming later.</p>';}
+function togDay(i){var a=C.days,j=a.indexOf(i);if(j>=0)a.splice(j,1);else a.push(i);refresh();}
+
+/* Own-words topics: one input that appends rows; each row is editable in place with optional detail. */
+function ownAdd(ph){return '<div class="own-add"><input class="inp" id="ownIn" placeholder="'+(ph||'Add a topic in your own words')+'" onkeydown="if(event.key===\'Enter\'){event.preventDefault();addOwn()}" aria-label="New topic in your own words" maxlength="120"><button type="button" class="btn sm" onclick="addOwn()">Add</button></div>';}
+function renderOwn(){
+  var el=document.getElementById('ownList');if(!el)return;
+  if(!C.own.length){el.innerHTML='<li class="empty">Nothing yet. Type a topic above and press Enter: a coin you just got, a story, a show you went to.</li>';return;}
+  el.innerHTML=C.own.map(function(o,i){
+    var open=OPENROW===i,hasD=o.d.trim();
+    return '<li class="own-row'+(FRESH===i?' fresh':'')+'"><div class="own-top"><span class="mk" aria-hidden="true">✎</span><input class="own-t" value="'+esc(o.t)+'" aria-label="Topic '+(i+1)+'" oninput="C.own['+i+'].t=this.value;refreshLight()"><button type="button" class="lnk" onclick="togDetail('+i+')" aria-expanded="'+open+'">'+(open?'Done':hasD?'Edit detail':'+ Detail')+'</button><button type="button" class="lnk x" aria-label="Remove topic '+esc(o.t)+'" onclick="delOwn('+i+')">×</button></div>'+
+      (open?'<textarea class="inp own-d" id="ownD'+i+'" rows="2" placeholder="Optional detail in your words: facts, the angle, what to avoid" oninput="C.own['+i+'].d=this.value">'+esc(o.d)+'</textarea>':hasD?'<p class="own-dtxt" onclick="togDetail('+i+')">'+esc(o.d)+'</p>':'')+'</li>';
+  }).join('');
+}
+function addOwn(){var e=document.getElementById('ownIn'),v=e.value.trim();if(!v){e.focus();return;}C.own.push({t:v,d:''});FRESH=C.own.length-1;OPENROW=-1;e.value='';renderOwn();refreshLight();e.focus();toast('Added “'+esc(v)+'”. Add detail if the AI needs facts or an angle.');}
+function delOwn(i){var t=C.own[i].t;C.own.splice(i,1);OPENROW=-1;FRESH=-1;renderOwn();refreshLight();toast('Removed “'+esc(t)+'”.');}
+function togDetail(i){OPENROW=OPENROW===i?-1:i;renderOwn();if(OPENROW===i){var t=document.getElementById('ownD'+i);t&&t.focus();}}
+
+/* Idea menu, grouped by category; ticking toggles in place so open groups stay open. */
+function ideaCount(cat){return C.ideas.filter(function(k){return k.indexOf(cat+'|')===0;}).length;}
+function ideasHTML(openCats){
+  return CATS.map(function(cat,ci){var n=ideaCount(cat),open=openCats==='ticked'?n>0:openCats===cat;
+    return '<details class="cat"'+(open?' open':'')+'><summary>'+esc(cat)+' <span class="cnt" id="cnt'+ci+'">'+(n?n+' ticked':'')+'</span></summary><div class="tgs">'+IDEAS[cat].map(function(i){var k=cat+'|'+i.t;
+      return '<button type="button" class="tg idea-c" aria-pressed="'+(C.ideas.indexOf(k)>=0)+'" title="'+esc(i.q)+'" data-idea="'+esc(k)+'" onclick="togIdea(this)">'+esc(i.t)+'</button>';}).join('')+'</div></details>';}).join('');
+}
+function togIdea(b){var k=b.dataset.idea,j=C.ideas.indexOf(k);if(j>=0)C.ideas.splice(j,1);else C.ideas.push(k);
+  document.querySelectorAll('[data-idea]').forEach(function(e){e.setAttribute('aria-pressed',C.ideas.indexOf(e.dataset.idea)>=0);});
+  CATS.forEach(function(cat,ci){var e=document.getElementById('cnt'+ci),n=ideaCount(cat);if(e)e.textContent=n?n+' ticked':'';});refreshLight();}
+
+function refreshCtl(){
+  document.querySelectorAll('[data-k]').forEach(function(e){
+    var k=e.dataset.k,v=e.dataset.v;
+    if(k==='on'){e.setAttribute('aria-checked',C.on);return;}
+    if(v===undefined)return;
+    e.setAttribute('aria-pressed',Array.isArray(C[k])?C[k].indexOf(+v)>=0:String(C[k])===v);
+  });
+}
+
+/* ---------- calendar A (month grid + tray) ---------- */
+var anchorM='2026-10-01',MQ=window.matchMedia('(max-width:767px)'),PREVIEW=false;
+function nav(n){if(n===0)anchorM='2026-10-01';else{var d=D(anchorM);d.setMonth(d.getMonth()+n);anchorM=F(d);}renderCal();}
+function itemsOn(ds){
+  var out=POSTS.filter(function(p){return p.d===ds;}).map(function(p){return{t:p.t,title:p.title,st:p.st,c:p.c,cands:p.cands};});
+  if(ds>=TODAY){
+    CAMPS.forEach(function(c){if(c.on&&c.days.indexOf(dow(ds))>=0&&!hasPost(c.id,ds)&&!(PREVIEW&&EDITING&&c.id===C.id))out.push({t:c.time,title:c.name,st:'ghost',c:c.id});});
+    if(PREVIEW&&EDITING&&C.on&&C.days.indexOf(dow(ds))>=0&&!hasPost(C.id,ds))out.push({t:C.time,title:C.name||'New campaign',st:'preview',c:C.id||'new'});
+  }
+  return out.sort(function(a,b){return a.t<b.t?-1:1;});
+}
+function chip(p){
+  var isG=p.st==='ghost'||p.st==='preview',just=isG&&p.c===JUST?' just':'';
+  var act=p.st==='preview'?'openEditor(\'current\')':isG?'openUpcoming(\''+p.c+'\')':'toast(\''+esc(p.title).replace(/'/g,"\\'")+': opens the post drawer (MK-10).\')';
+  return '<button type="button" class="chip s-'+p.st+just+'" onclick="'+act+'" title="'+esc(p.t+' · '+p.title)+'"><span class="tm">'+p.t+'</span>'+(isG?'<span class="tm" style="margin-left:auto">'+(p.st==='preview'?'unsaved':'open')+'</span>':p.cands?'<span class="dr">'+p.cands+' drafts</span>':'')+'<span class="tt">'+esc(p.title)+'</span></button>';
+}
+function renderCal(){
+  var el=document.getElementById('cal'),rg=document.getElementById('range');if(!el)return;
+  if(MQ.matches){
+    rg.textContent='Next four weeks';var h='<div class="agenda">';
+    for(var i=0;i<28;i++){var d=add(TODAY,i),it=itemsOn(d);if(!it.length)continue;h+='<div class="ag-day"><h3>'+nice(d)+(d===TODAY?' <span class="pill t-draft" style="font-size:11px">today</span>':'')+'</h3><div style="display:flex;flex-direction:column;gap:6px">'+it.map(chip).join('')+'</div></div>';}
+    el.innerHTML=h+'</div>';return;
+  }
+  var m=D(anchorM),start=monStart(anchorM),h2='<div class="mgrid">';
+  rg.textContent=['January','February','March','April','May','June','July','August','September','October','November','December'][m.getMonth()]+' '+m.getFullYear();
+  ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach(function(x){h2+='<div class="hd">'+x+'</div>';});
+  for(var j=0;j<42;j++){
+    var ds=add(start,j);if(j===35&&D(ds).getMonth()!==m.getMonth())break;
+    var its=itemsOn(ds);
+    h2+='<div class="cell'+(ds<TODAY?' past':'')+(ds===TODAY?' today':'')+(D(ds).getMonth()!==m.getMonth()?' out':'')+'"><div class="dn"><b>'+D(ds).getDate()+'</b></div>'+its.slice(0,3).map(chip).join('')+(its.length>3?'<span class="faint" style="font-size:11px">+'+(its.length-3)+' more</span>':'')+'</div>';
+  }
+  el.innerHTML=h2+'</div>';
+}
+function dayShort(c){return c.days.slice().sort(function(a,b){return((a+6)%7)-((b+6)%7);}).map(function(i){return DOW[i];}).join(' + ');}
+function openDates(){var out=[];CAMPS.forEach(function(c){if(!c.on)return;occ(c,TODAY,14).forEach(function(d){if(!hasPost(c.id,d))out.push({c:c,d:d});});});return out;}
+function renderTray(){
+  var el=document.getElementById('tray');if(!el)return;var od=openDates().length;
+  var h='<section class="card a-box" aria-labelledby="cp-h"><h2 id="cp-h" class="lbl" style="margin:0;display:flex;align-items:center">Campaigns<span class="faint" style="margin-left:auto;text-transform:none;letter-spacing:0;font-weight:400">'+CAMPS.length+'</span></h2><div>';
+  CAMPS.forEach(function(c){
+    h+='<div class="camp'+(c.on?'':' off')+(c.id===JUST?' just':'')+'" onclick="openEditor(\''+c.id+'\')"><span class="sw" style="background:'+c.c+'"></span><button type="button" class="nmb" onclick="event.stopPropagation();openEditor(\''+c.id+'\')">'+esc(c.name)+'</button><button type="button" class="switch" role="switch" aria-checked="'+c.on+'" aria-label="'+esc(c.name)+' on" onclick="event.stopPropagation();flip(\''+c.id+'\')"></button><span class="wh"><span class="mono">'+dayShort(c)+' · '+c.time+'</span> · '+esc(topicPhrase(c)||'')+'</span><button type="button" class="ulk" onclick="event.stopPropagation();openUpcoming(\''+c.id+'\')">Upcoming posts ›</button></div>';
+  });
+  h+='</div><button type="button" class="btn sm ghost" onclick="openEditor(\'new\')">+ New campaign</button></section>';
+  h+='<section class="card a-box" aria-labelledby="fl-h"><h2 id="fl-h" class="lbl" style="margin:0">Next 2 weeks</h2><p class="soft" style="margin:0;font-size:13px;line-height:1.5">'+(od?'<b style="color:#F2F1EE">'+od+'</b> open date'+(od>1?'s':'')+' across your campaigns, to '+nice(add(TODAY,13))+'.':'Every date to '+nice(add(TODAY,13))+' has a post or drafts.')+'</p><button type="button" class="btn pri sm" onclick="fill()"'+(od?'':' disabled')+'>Fill next 2 weeks</button><p class="hint">Makes 3 drafts per open date. You pick one in Review. Nothing posts until you confirm it.</p></section>';
+  el.innerHTML=h;
+}
+function flip(id){var c=camp(id);c.on=!c.on;if(C.id===id)C.on=c.on;refresh();toast(esc(c.name)+(c.on?' is on. Its open dates show as dashed ghosts.':' is off. Its ghosts are gone; posts already scheduled or in Review stay.'));}
+function fill(){
+  var o=openDates();if(!o.length)return;
+  o.forEach(function(x){var pl=x.c.own?pool(x.c):[],i=occ(x.c,TODAY,14).indexOf(x.d);POSTS.push({d:x.d,t:x.c.time,c:x.c.id,st:'review',title:pl.length?pl[i%pl.length].t:x.c.name,cands:3});});
+  REVIEW+=o.length;JUST=null;setReviewCount();refresh();
+  toast('Made 3 drafts for each of '+o.length+' open dates. They are waiting in Review.');
+}
+function setReviewCount(){var n=document.getElementById('revN');if(n)n.textContent=REVIEW;}
+
+/* ---------- save ---------- */
+function saveC(){
+  if(!canSave()){toast('Still needs '+list(missing(),'and')+'.');return false;}
+  var fresh=!C.id;if(fresh){C.id='tvt';C.c='#C3A8F0';}
+  C.own=C.own.filter(function(o){return o.t.trim();});
+  var ex=camp(C.id),copy=clone(C);if(ex)CAMPS[CAMPS.indexOf(ex)]=copy;else CAMPS.unshift(copy);
+  JUST=C.id;MODE='edit';FRESH=-1;OPENROW=-1;
+  var n=occ(C,TODAY,14).length;
+  toast((fresh?'Created ':'Saved ')+esc(C.name)+'. '+(C.on?'Its next '+n+' date'+(n===1?'':'s')+' are on the Calendar as dashed ghosts. Press Fill next 2 weeks to draft them.':'It is paused, so no ghosts.'));
+  return true;
+}
+
+/* ---------- plumbing ---------- */
+var toastT=null;
+function toast(m){var t=document.getElementById('toast');t.innerHTML='<span>'+m+'</span>';t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('on');},5500);}
+function refreshLight(){
+  document.querySelectorAll('[data-out=sentence]').forEach(function(e){e.innerHTML=sentenceHTML(C,window.SEG);});
+  document.querySelectorAll('[data-out=voice]').forEach(function(e){e.innerHTML=voiceHTML(C,window.SEG);});
+  document.querySelectorAll('[data-out=next]').forEach(function(e){renderNext(e,e.dataset.compact==='1');});
+  document.querySelectorAll('[data-out=title]').forEach(function(e){e.textContent=MODE==='new'?'New campaign':(C.name||'Untitled campaign');});
+  document.querySelectorAll('[data-save]').forEach(function(e){e.textContent=MODE==='new'?'Create campaign':'Save';e.setAttribute('aria-disabled',!canSave());e.style.opacity=canSave()?1:.5;});
+  document.querySelectorAll('[data-out=missing]').forEach(function(e){var m=missing();e.textContent=m.length?'Needs '+list(m,'and'):'';});
+  renderCal();renderTray();if(window.after)after();if(UP)renderUpcoming();
+}
+function refresh(){refreshCtl();refreshLight();}
+document.addEventListener('keydown',function(e){if(e.key!=='Escape')return;if(UP){closeUpcoming();return;}if(window.closeEditor&&!window.PAGE)closeEditor();});
+document.querySelectorAll('[data-sub]').forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();var s=a.dataset.sub;if(s==='calendar'){if(window.closeEditor)closeEditor();}else toast('Not part of this mockup. '+s[0].toUpperCase()+s.slice(1)+' is MK-1 / MK-9.');});});
+MQ.addEventListener('change',renderCal);
+function demo(which){C=which==='blank'?blank():example();MODE='new';FRESH=-1;OPENROW=-1;var t=camp('tvt');if(t)CAMPS.splice(CAMPS.indexOf(t),1);JUST=null;openEditor('current');}
+
+function prep(id){
+  if(id==='current')return true;
+  if(id==='new'){C=blank();MODE='new';FRESH=-1;OPENROW=-1;return true;}
+  var c=camp(id);if(!c||!c.ideas){toast('Opens '+esc(c?c.name:'it')+' in this same form.');return false;}
+  C=clone(c);MODE='edit';FRESH=-1;OPENROW=-1;return true;
+}
+
+/* ---------- Upcoming posts modal (owner, 12 Oct): one campaign's next ~6 dates, opened from the tray row, the form and its ghosts. ---------- */
+var UP=null;
+document.body.insertAdjacentHTML('beforeend','<div class="um-scrim" id="umS" onclick="closeUpcoming()"></div><div class="um" id="um" role="dialog" aria-modal="true" aria-labelledby="umT"><div class="um-hd"><span class="sw" id="umSw"></span><h2 id="umT"></h2><button type="button" class="btn iconbtn ghost" aria-label="Close" onclick="closeUpcoming()">✕</button></div><div class="um-top"><p class="sent" id="umSent"></p><span id="umOn"></span></div><div class="um-bd" id="umList"></div><div class="um-ft"><span class="hint" style="flex:1">Copy the caption and download the image to post by hand (phase 1).</span><span id="umEdit"></span><button type="button" class="btn sm" onclick="closeUpcoming()">Close</button></div></div>');
+/* 'current' = the campaign in the open form (it may not be saved yet). */
+function upCamp(){if(UP==='current'||(EDITING&&C.id&&UP===C.id))return C;return camp(UP);}
+function openUpcoming(id){UP=id;if(id!=='current'&&!camp(id)){UP='current';}document.getElementById('um').classList.add('on');document.getElementById('umS').classList.add('on');renderUpcoming();var b=document.querySelector('#um .um-hd .btn');b&&b.focus();}
+function closeUpcoming(){UP=null;document.getElementById('um').classList.remove('on');document.getElementById('umS').classList.remove('on');}
+function upRows(c){
+  var out=[],d=add(TODAY,-6);
+  /* the last past date, only when it was missed */
+  for(;d<TODAY;d=add(d,1)){if(c.days.indexOf(dow(d))>=0){var p=POSTS.filter(function(x){return x.c===c.id&&x.d===d&&x.st==='missed';})[0];if(p)out.push({d:d,p:p});}}
+  var n=0;for(var i=0;n<6&&i<120;i++){var dd=add(TODAY,i);if(c.days.indexOf(dow(dd))>=0){n++;out.push({d:dd,p:c.id?POSTS.filter(function(x){return x.c===c.id&&x.d===dd;})[0]:null});}}
+  return out;
+}
+function renderUpcoming(){
+  var c=upCamp();if(!c){closeUpcoming();return;}
+  document.getElementById('umT').textContent=(c.name||'New campaign')+' · upcoming posts';
+  document.getElementById('umSw').style.background=c.c||'#C3A8F0';
+  document.getElementById('umSent').innerHTML=sentenceHTML(c);
+  document.getElementById('umOn').innerHTML='<button type="button" class="switch" role="switch" aria-checked="'+c.on+'" aria-label="'+esc(c.name||'Campaign')+' on" onclick="upFlip()"></button>';
+  document.getElementById('umEdit').innerHTML=EDITING&&(UP==='current'||UP===C.id)?'':'<button type="button" class="btn sm" onclick="var i=UP;closeUpcoming();openEditor(i)">Edit campaign</button>';
+  if(!c.days.length){document.getElementById('umList').innerHTML='<p class="empty">Pick a day first: no dates yet.</p>';return;}
+  document.getElementById('umList').innerHTML=upRows(c).map(function(r){
+    var p=r.p,t=p?p.t:c.time,dt='<div class="dt">'+nice(r.d)+'<span>'+hm(t)+'</span></div>',th,bx;
+    if(p&&(p.st==='scheduled'||p.st==='posted')){
+      th=p.img?'<img class="th" src="'+K+p.img+'" alt="">':'<span class="th txt">Aa</span>';
+      bx='<span class="cap">'+esc(p.cap||p.title)+'</span><span class="acts"><span class="pill t-ready">confirmed</span><button type="button" class="btn" onclick="copyCap(\''+r.d+'\',\''+p.c+'\')">Copy caption</button>'+(p.img?'<a class="btn" href="'+K+p.img+'" download>Download image</a>':'')+'</span>';
+    }else if(p&&p.st==='review'){
+      th='<span class="slot rv">'+(p.cands||3)+'</span>';
+      bx='<span class="cap" style="color:#9A9DA3">'+esc(p.title)+'</span><span class="acts"><span class="pill t-draft">'+(p.cands||3)+' drafts to review</span><a class="btn" href="#" onclick="toast(\'Opens Review (MK-9) on '+nice(r.d)+'.\');return false">Review ›</a></span>';
+    }else if(p&&p.st==='missed'){
+      th='<span class="slot ms">!</span>';
+      bx='<span class="cap" style="color:#9A9DA3">'+esc(p.title)+'</span><span class="acts"><span class="pill t-miss">missed</span><button type="button" class="btn" onclick="toast(\'Opens the post: Copy caption, then post it by hand or reschedule.\')">Post it now</button></span>';
+    }else{
+      th='<span class="slot" aria-hidden="true">+</span>';
+      bx='<span class="cap" style="color:#7E8187">No drafts yet.</span><span class="acts"><span class="pill t-docs">open</span>'+(c.id?'<button type="button" class="btn" onclick="fillOne(\''+r.d+'\')">Fill</button>':'<span class="hint">Create the campaign to fill it.</span>')+'</span>';
+    }
+    return '<div class="ur'+(r.d<TODAY?' past':'')+'">'+dt+th+'<div class="bx">'+bx+'</div></div>';
+  }).join('');
+}
+function upFlip(){var c=upCamp();if(c===C&&!C.id){C.on=!C.on;refresh();}else flip(c.id);}
+function fillOne(d){var c=upCamp(),pl=c.own?pool(c):[],i=occ(c,TODAY,120).indexOf(d);POSTS.push({d:d,t:c.time,c:c.id,st:'review',title:pl.length?pl[i%pl.length].t:c.name,cands:3});REVIEW++;setReviewCount();refresh();toast('Made 3 drafts for '+nice(d)+'. They are waiting in Review.');}
+function copyCap(d,cid){var p=POSTS.filter(function(x){return x.c===cid&&x.d===d;})[0];try{navigator.clipboard.writeText(p.cap||p.title);}catch(e){}toast('Caption copied. Paste it into Facebook.');}
+
+/* ---------- option C · The sentence is the form ---------- */
+
+var POP=null,CATSEL='Toned & TrueView';
+/* Every part of the sentence is a button that opens a small editor right under it. */
+window.SEG=function(k,h,ph){return '<button type="button" class="blank'+(h?'':' empty')+(POP===k?' act':'')+'" aria-expanded="'+(POP===k)+'" onclick="pop(\''+k+'\')">'+(h||ph)+'</button>';};
+function pop(k){
+  var el=document.getElementById('pop');
+  if(k==='topics'){POP=null;el.hidden=true;refreshLight();var t=document.getElementById('tp');t.scrollIntoView({behavior:'smooth',block:'start'});t.classList.remove('flash');void t.offsetWidth;t.classList.add('flash');document.getElementById('ownIn').focus({preventScroll:true});return;}
+  if(POP===k){POP=null;el.hidden=true;refreshLight();return;}
+  POP=k;el.hidden=false;
+  var head={days:'Which day or days?',time:'What time?',photo:'Photos',brief:'Brief / voice, one or two sentences'}[k],body='';
+  if(k==='days')body=ctlDays();
+  if(k==='time')body='<div class="when" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+ctlTime()+['09:00','12:00','18:00','19:00'].map(function(t){return '<button type="button" class="tg" onclick="C.time=\''+t+'\';document.querySelector(\'#pop input[type=time]\').value=\''+t+'\';refresh()">'+hm(t)+'</button>';}).join('')+'</div>';
+  if(k==='photo')body=ctlPhoto()+libStrip();
+  if(k==='brief')body=ctlBrief(2)+'<p class="hint">The AI writes every caption from this. Copy rules and your likes apply on top.</p>';
+  el.innerHTML='<div class="phd"><b>'+head+'</b><span style="flex:1"></span><button type="button" class="btn sm" onclick="pop(\''+k+'\')">Done</button></div>'+body;
+  refresh();
+  var f=el.querySelector('textarea,input');if(f&&k!=='days')f.focus();
+}
+function renderCats(){
+  document.getElementById('catPick').innerHTML=CATS.map(function(cat){var n=ideaCount(cat);return '<button type="button" class="tg" aria-pressed="'+(CATSEL===cat)+'" onclick="CATSEL=this.dataset.c;renderCats()" data-c="'+esc(cat)+'">'+esc(cat)+(n?' <span class="c">'+n+'</span>':'')+'</button>';}).join('');
+  document.getElementById('catIdeas').innerHTML=IDEAS[CATSEL].map(function(i){var k=CATSEL+'|'+i.t;return '<button type="button" class="tg idea-c" aria-pressed="'+(C.ideas.indexOf(k)>=0)+'" title="'+esc(i.q)+'" data-idea="'+esc(k)+'" onclick="togIdea(this);renderCats()">'+(C.ideas.indexOf(k)>=0?'✓ ':'+ ')+esc(i.t)+'</button>';}).join('');
+}
+function build(){
+  document.getElementById('cName').innerHTML=ctlName('Name this campaign').replace('class="inp"','class="nm"');
+  document.getElementById('cOn').innerHTML=ctlOn();
+  document.getElementById('cOwnAdd').innerHTML=ownAdd('Add a topic in your own words, e.g. my rainbow Morgan');
+  POP=null;var p=document.getElementById('pop');p.hidden=true;p.innerHTML='';
+  CATSEL=C.ideas.length?C.ideas[0].split('|')[0]:'Toned & TrueView';
+  renderOwn();renderCats();
+}
+function openEditor(id){if(!prep(id))return;build();EDITING=true;document.getElementById('md').classList.add('on');document.getElementById('scrim').classList.add('on');refresh();}
+function closeEditor(){if(!EDITING)return;EDITING=false;document.getElementById('md').classList.remove('on');document.getElementById('scrim').classList.remove('on');refresh();}
+function doSave(){if(saveC())closeEditor();}
+/* The tray lists each campaign as its own sentence. */
+function after(){
+  document.querySelectorAll('#tray .camp').forEach(function(row,i){var c=CAMPS[i],w=row.querySelector('.wh');if(c&&w)w.innerHTML='<span class="s">'+sentenceHTML(c).replace(/<\/?b>/g,'')+'</span>';});
+}
+openEditor('current');
+
+</script>
+</body>
+</html>

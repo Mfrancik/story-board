@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MK-4 option B — Post designer, canvas first</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;family=Instrument+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+/* Shell tokens, copied from RD-11 option B (resources/css/app.css shell values). */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;background:#0E0F11;color:#F2F1EE;font-family:Geist,system-ui,sans-serif;-webkit-text-size-adjust:100%}
+a{color:#F2A33A;text-decoration:none}a:hover{color:#FFC26B;text-decoration:underline;text-underline-offset:3px}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[contenteditable]:focus-visible{outline:2px solid #F2A33A;outline-offset:2px}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.card{background:#16181B;border:1px solid #26292E;border-radius:12px}
+.lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9A9DA3;font-weight:500}
+.muted{color:#9A9DA3}.faint{color:#7E8187}.soft{color:#C9CBCF}
+.navi{display:flex;align-items:center;gap:10px;padding:0 12px;border-radius:8px;color:#C9CBCF;font-size:14px;min-height:44px}
+.navi:hover{background:#1D2024;color:#F2F1EE;text-decoration:none}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid #33373D;color:#C9CBCF;white-space:nowrap}
+.t-pass{border-color:#2D5A44;color:#7CD1A4}.t-fail{border-color:#6B2F2B;color:#F59088}.t-draft{border-color:#5C4219;color:#F2A33A}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+.live{background:#6CA6F0;box-shadow:0 0 0 4px rgba(108,166,240,.18)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:8px;font:500 14px Geist,sans-serif;border:1px solid #33373D;background:#1D2024;color:#F2F1EE;cursor:pointer}
+.btn:hover{background:#24282D;color:#F2F1EE;text-decoration:none}
+.btn.pri{background:#F2A33A;border-color:#F2A33A;color:#1A1205}.btn.pri:hover{background:#FFC26B}
+.sample{display:inline-block;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#C3A8F0;border:1px dashed #4A3B6B;border-radius:4px;padding:0 5px;margin-left:6px;vertical-align:1px}
+.legend{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;font-size:13px;color:#C9CBCF;padding:12px 16px;border:1px solid #26292E;border-radius:10px;background:#121417}
+.legend i{display:inline-block;width:22px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:6px}
+.shell{display:flex;min-height:100vh}
+.side{width:232px;flex:none;padding:20px 14px;border-right:1px solid #1F2226;display:flex;flex-direction:column;gap:22px}
+.topbar{display:none}
+main{flex:1;min-width:0;padding:28px 32px 56px;display:flex;flex-direction:column;gap:24px}
+.crumb{font-size:12px;color:#9A9DA3}.crumb a{color:#9A9DA3}
+.tabs{display:flex;gap:24px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid #1F2226;font-size:14px;padding-bottom:1px}
+.tabs a{flex:none;color:#9A9DA3;padding-bottom:12px;margin-bottom:-2px;border-bottom:2px solid transparent;min-height:36px}
+.tabs a:hover{color:#F2F1EE;text-decoration:none}
+.tabs a[aria-current]{color:#F2F1EE;border-color:#F2F1EE;font-weight:500}
+.tabs .new{font-size:10px;color:#F2A33A;margin-left:4px;vertical-align:2px}
+@media (max-width:767px){
+  .side{display:none}
+  .shell{flex-direction:column}
+  .topbar{display:flex;position:sticky;top:0;z-index:5;height:56px;align-items:center;gap:8px;padding:0 8px;border-bottom:1px solid #1F2226;background:rgba(14,15,17,.95)}
+  main{padding:20px 16px 48px;gap:20px}
+  .tabs{gap:18px}
+}
+
+/* Form controls on the dark shell. */
+.fld{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fld>span{font-size:12px;color:#9A9DA3;font-weight:500}
+.inp{width:100%;min-height:44px;padding:10px 12px;border-radius:8px;border:1px solid #33373D;background:#0E0F11;color:#F2F1EE;font:400 14px Geist,sans-serif}
+.inp:hover{border-color:#4A4E55}
+textarea.inp{min-height:96px;resize:vertical;line-height:1.5}
+select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50%,#9A9DA3 50%),linear-gradient(135deg,#9A9DA3 50%,transparent 50%);background-position:calc(100% - 18px) 19px,calc(100% - 13px) 19px;background-size:5px 5px;background-repeat:no-repeat;padding-right:32px}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.seg{display:inline-flex;border:1px solid #33373D;border-radius:8px;overflow:hidden;background:#0E0F11}
+.seg button{min-height:40px;padding:0 12px;border:0;background:transparent;color:#9A9DA3;font:500 13px Geist,sans-serif;cursor:pointer;white-space:nowrap}
+.seg button[aria-pressed=true]{background:#26292E;color:#F2F1EE}
+.lib{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:8px}
+.lib button{aspect-ratio:1;border-radius:8px;border:1px solid #33373D;background:#0E0F11;padding:4px;cursor:pointer;min-width:44px;min-height:44px}
+.lib button img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+.lib button[aria-pressed=true]{border-color:#F2A33A;box-shadow:0 0 0 1px #F2A33A}
+.checks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:13px}
+.checks li{display:flex;gap:8px;align-items:flex-start;line-height:1.45;color:#C9CBCF}
+.checks .ic{flex:none;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font:600 11px 'Geist Mono',monospace;margin-top:1px}
+.checks .pass .ic{background:#163626;color:#7CD1A4}.checks .warn .ic{background:#3A2C12;color:#F2A33A}.checks .fail .ic{background:#3D1B19;color:#F59088}
+.status{font-size:12px;color:#9A9DA3;min-height:18px}
+.status b{color:#7CD1A4;font-weight:500}
+
+/* Post stage: the post is laid out at the kit's 540px (or 851px cover) size and scaled to fit. */
+.stage{position:relative;width:100%;overflow:hidden;border-radius:6px;background:#fafafa}
+.stage.sq{aspect-ratio:1/1}.stage.cv{aspect-ratio:1702/630}
+
+/* StackerMint brand, light kit: tan #B79F82, ink #222, surface #fafafa, 5px radius, soft halo. */
+.pv{position:absolute;top:0;left:0;transform-origin:0 0;font-family:'Instrument Sans',system-ui,sans-serif;color:#222;background:#fafafa;overflow:hidden}
+.pv.sq{width:540px;height:540px}.pv.cv{width:851px;height:315px}
+.pv *{box-sizing:border-box}
+.pv [contenteditable]{outline:1px dashed transparent;border-radius:3px;cursor:text}
+.pv [contenteditable]:hover{outline-color:#B79F82}
+.pv [contenteditable]:focus{outline:2px solid #F2A33A;outline-offset:2px}
+.pv .pad{position:absolute;inset:0;padding:34px 38px;display:flex;flex-direction:column}
+.pv .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.pv .eb{font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;font-weight:500}
+.pv .eb.tan{color:#8A6F50}.pv.dark .eb{color:#B79F82}
+.pv .logo{display:flex;align-items:center;gap:7px;font-size:15px;font-weight:500;color:#222;white-space:nowrap}
+.pv .logo svg{width:17px;height:17px;color:#B79F82}
+.pv .beta{font-size:7.5px;letter-spacing:.1em;font-weight:600;background:#F8EADB;color:#5b4a36;border-radius:3px;padding:3px 5px}
+.pv.dark{background:#232323;color:#fff}.pv.dark .logo{color:#fff}
+.pv .pc{background:#fff;border-radius:5px;box-shadow:0 0 44px rgba(0,0,0,.07);text-align:center;position:relative;color:#222}
+.pv .grade{display:inline-block;background:#222;color:#fff;font-size:15px;letter-spacing:.14em;font-weight:600;padding:8px 18px;border-radius:5px;text-transform:uppercase;white-space:nowrap}
+.pv.dark .grade{background:#fff;color:#222}
+.pv .coin{display:block;border-radius:50%;object-fit:cover;box-shadow:0 8px 20px rgba(0,0,0,.18);background:#ddd}
+.pv .slot{border-radius:50%;border:2px dashed #cfcfcf;display:grid;place-items:center;color:#bdbdbd;font-weight:300}
+.pv .slot.key{background:#F8EADB;border-color:#B79F82;color:#8A6F50}
+.pv.dark .slot{border-color:#555;color:#777}
+.pv .big{font-weight:700;letter-spacing:-.04em;line-height:1}
+.pv .bar{height:8px;border-radius:4px;background:#e4e4e4;overflow:hidden}.pv .bar i{display:block;height:100%;background:#222;border-radius:4px}
+.pv.dark .bar{background:#444}.pv.dark .bar i{background:#fff}
+.pv .badge{position:absolute;top:0;left:50%;transform:translateX(-50%);color:#fff;font-size:15px;font-weight:600;letter-spacing:.04em;padding:6px 10px;border-radius:0 0 3px 3px}
+.pv .sub{color:#6b6b6b}.pv.dark .sub{color:#bdbdbd}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+[hidden]{display:none!important}
+.pv .tvgrad{background:linear-gradient(180deg,rgba(250,250,250,.88) 0%,rgba(250,250,250,0) 40%,rgba(250,250,250,0) 66%,rgba(250,250,250,.92) 100%)}
+.pv.dark .tvgrad{background:linear-gradient(180deg,rgba(20,20,20,.55) 0%,rgba(20,20,20,0) 38%,rgba(20,20,20,0) 70%,rgba(20,20,20,.75) 100%)}
+.pv .ink{color:#222}.pv.dark .ink{color:#fff}
+
+
+/* Option B — big canvas, inline text editing, floating field panel, template dock. */
+.ws{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start}
+.canvas{position:relative;border:1px solid #26292E;border-radius:14px;background:#121417 radial-gradient(#26292E 1px,transparent 1px) 0 0/18px 18px;min-height:760px;padding:76px 24px 96px 306px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;transition:padding .2s}
+.canvas.closed{padding-left:24px}
+.top{position:absolute;top:14px;left:14px;right:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.float{position:absolute;top:70px;left:16px;width:272px;max-height:calc(100% - 160px);overflow:auto;background:#16181B;border:1px solid #33373D;border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.5);padding:14px;display:flex;flex-direction:column;gap:14px;z-index:2}
+.canvas.closed .float .body{display:none}
+.canvas.closed .float{width:auto}
+.dock{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:4px;padding:5px;border-radius:12px;background:#16181B;border:1px solid #33373D;box-shadow:0 12px 30px rgba(0,0,0,.45);max-width:calc(100% - 32px);overflow-x:auto;scrollbar-width:none}
+.dock button{flex:none;display:flex;align-items:center;gap:8px;min-height:44px;padding:0 12px 0 6px;border-radius:8px;border:0;background:transparent;color:#C9CBCF;font:500 13px Geist,sans-serif;cursor:pointer;white-space:nowrap}
+.dock button img{width:32px;height:32px;border-radius:4px}
+.dock button:hover{background:#1D2024;color:#F2F1EE}
+.dock button[aria-pressed=true]{background:#26292E;color:#F2F1EE;box-shadow:inset 0 -2px 0 #F2A33A}
+.cv-wrap{width:100%;max-width:560px}
+.cv-wrap.wide{max-width:900px}
+.hint{font-size:12px;color:#9A9DA3;display:flex;gap:8px;align-items:center}
+.capcol{display:flex;flex-direction:column;gap:14px;position:sticky;top:20px}
+.capcol .card{padding:16px;display:flex;flex-direction:column;gap:14px}
+@media (max-width:1180px){.ws{grid-template-columns:minmax(0,1fr)}.capcol{position:static}}
+@media (max-width:860px){
+  .canvas{padding:16px;min-height:0;justify-content:flex-start;background-size:14px 14px}
+  .canvas.closed{padding-left:16px}
+  .top,.float,.dock{position:static;transform:none;width:100%;max-height:none;box-shadow:none}
+  .canvas.closed .float{width:100%}
+  .dock{max-width:100%;order:-1}
+  .top{order:-2}
+  .float{order:2}
+  #hint{order:1}
+  [data-render-status]{order:1}
+}
+
+</style>
+</head>
+<body>
+<!-- MK-4 option B — "Canvas first". The post itself is the editor: click any text on it and type. A floating panel holds only what can't be typed (photo, badge, set, slot counts, key date, price source). Caption docks on the right with the live copy-rules check. -->
+<div class="shell">
+  <div class="topbar">
+    <button class="btn" aria-label="Open menu" style="width:44px;padding:0;border:0;background:transparent">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9CBCF" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <span style="font-weight:600">Story Board</span>
+  </div>
+
+  <nav class="side" aria-label="Board">
+    <div style="display:flex;align-items:center;gap:10px;padding:0 6px">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="1" width="24" height="24" rx="7" fill="none" stroke="#F2A33A" stroke-width="2"/><path d="M8 9h10M8 13h6M8 17h8" stroke="#F2A33A" stroke-width="2" stroke-linecap="round"/></svg>
+      <span style="font-weight:600;font-size:16px">Story Board</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <a class="navi" href="#">Home</a>
+      <a class="navi" href="#">Mockups</a>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <span class="lbl" style="padding:0 12px 6px">Projects</span>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>asset-track</a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>client-dashboard</a>
+      <a class="navi" href="#" aria-current="page" style="background:#1D2024;color:#F2F1EE;font-weight:500"><span class="dot" style="background:#5FBF8F"></span>coins<span class="dot live" style="margin-left:auto;width:6px;height:6px"></span></a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>rent-track</a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>story-board</a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="legend" role="note" aria-label="Mockup legend">
+      <strong style="color:#F2F1EE">MK-4 · option B · Canvas first</strong>
+<span><span style="outline:1px dashed #B79F82;border-radius:3px;padding:0 4px;color:#F2F1EE">dashed on hover</span> = click and type right on the post</span>
+<span><span class="sample" style="margin:0 6px 0 0">sample</span>the $10,000 comparison price</span>
+<span class="faint">copy, grades and photos are the StackerMint kit's own</span>
+    </div>
+
+    <header style="display:flex;flex-direction:column;gap:4px">
+      <p class="crumb" style="margin:0"><a href="#">All projects</a> / <a href="#">coins</a> / <a href="#">Marketing</a> / New post</p>
+      <h1 style="margin:0;display:flex;align-items:center;gap:10px;font-size:24px;font-weight:600;letter-spacing:-.01em">coins <span class="dot" style="background:#5FBF8F"></span><span style="font-size:13px;font-weight:400;color:#9A9DA3">ok</span></h1>
+      <p class="muted" style="margin:0;font-size:14px">Posts as <strong style="color:#F2F1EE;font-weight:500">StackerMint</strong> · brand kit from <span class="mono" style="font-size:12px">marketing/brand-kit.json</span> on origin/main</p>
+    </header>
+    <nav class="tabs" aria-label="Project pages">
+      <a href="#">Overview</a><a href="#">Stories</a><a href="#">Preflight</a><a href="#">Handbook</a><a href="#">Map</a>
+      <a href="#" aria-current="page">Marketing<span class="new">NEW</span></a>
+    </nav>
+
+    <div class="ws">
+      <section class="canvas" id="cv" aria-label="Post canvas">
+        <div class="top">
+          <span class="lbl" data-tpl-name style="color:#F2F1EE"></span>
+          <div class="seg" role="group" aria-label="Size" style="margin-left:auto"><button type="button" data-size-pick="sq">1080×1080</button><button type="button" data-size-pick="cv">Cover 1702×630</button></div>
+          <button type="button" class="btn pri" data-render>Render PNG <span class="mono" data-size-label style="font-size:13px">1080×1080</span></button>
+        </div>
+
+        <aside class="float" aria-labelledby="fl-h">
+          <div style="display:flex;align-items:center;gap:8px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9A9DA3" stroke-width="2" aria-hidden="true"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg>
+            <h2 id="fl-h" class="lbl" style="margin:0">Fields</h2>
+            <button type="button" class="btn" id="fold" aria-expanded="true" aria-controls="flbody" style="margin-left:auto;min-height:36px;padding:0 10px;font-size:12px">Hide</button>
+          </div>
+          <div class="body" id="flbody" style="display:flex;flex-direction:column;gap:14px">
+            <p class="faint" style="margin:0;font-size:12px;line-height:1.5">Text lives on the post. This panel holds what you can't type there.</p>
+            <div class="fld" data-for="cotw pick tv sides"><span id="l1">Coin photo</span><div class="lib" data-lib="photo" role="group" aria-labelledby="l1"></div></div>
+            <label class="fld" data-for="cotw"><span>Badge</span><select class="inp" data-f="badge"><option value="CAC">CAC</option><option value="CACG">CACG</option><option value="TONED">Toned</option><option value="">None</option></select></label>
+            <label class="fld" data-for="grid last done"><span>Set <span class="faint">· from coins' sets</span></span><select class="inp" data-f="setName"><option>Carson City Morgans</option><option>Mercury dimes</option><option>Peace dollars</option></select></label>
+            <div class="two" data-for="grid last done"><label class="fld"><span>Slots filled</span><input class="inp" type="number" min="0" data-f="filled"></label><label class="fld"><span>of</span><input class="inp" type="number" min="1" data-f="total"></label></div>
+            <label class="fld" data-for="grid"><span>Key date</span><input class="inp" data-f="keyDate"></label>
+            <div data-for="pick" style="display:flex;flex-direction:column;gap:14px">
+              <div class="fld"><span id="l2">Second coin photo</span><div class="lib" data-lib="photo2" role="group" aria-labelledby="l2"></div></div>
+              <label class="fld"><span>Price source <span style="color:#F59088">*</span></span><input class="inp" data-f="priceSource" placeholder="e.g. PCGS Price Guide, Oct 2026"></label>
+            </div>
+            <p class="faint" data-for="last" style="margin:0;font-size:12px">Key date and mintage: click them on the post.</p>
+          </div>
+        </aside>
+
+        <div class="cv-wrap" id="wrap"><div data-stage data-editable></div></div>
+        <p class="hint" id="hint"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F2A33A" stroke-width="2" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg><span>Click any text on the post to edit it. Enter to finish.</span></p>
+        <p class="status" data-render-status style="margin:0"></p>
+
+        <nav class="dock" aria-label="Templates">
+          <button type="button" data-tpl-pick="cotw"><img alt="" src="../MK-kit/posts/02-post-cotw.png">Coin of the week</button>
+          <button type="button" data-tpl-pick="grid"><img alt="" src="../MK-kit/posts/05-post-set-cc.png">Set grid</button>
+          <button type="button" data-tpl-pick="last"><img alt="" src="../MK-kit/posts/06-post-set-last.png">One slot left</button>
+          <button type="button" data-tpl-pick="done"><img alt="" src="../MK-kit/posts/07-post-set-done.png">Set complete</button>
+          <button type="button" data-tpl-pick="pick"><img alt="" src="../MK-kit/posts/09-post-pick.png">Only one stays</button>
+          <button type="button" data-tpl-pick="tv"><img alt="" src="../MK-kit/posts/10-post-tv-tuesday.png">TrueView</button>
+          <button type="button" data-tpl-pick="sides"><img alt="" src="../MK-kit/posts/11-post-tv-sides.png">Both sides</button>
+        </nav>
+      </section>
+
+      <div class="capcol">
+        <section class="card" aria-label="Caption">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><label for="capb" class="lbl">Caption</label><span class="pill t-pass" data-verdict style="margin-left:auto">Copy rules pass</span></div>
+<textarea id="capb" class="inp" data-f="caption" rows="4" style="font-size:15px"></textarea>
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><button type="button" class="btn" data-ai><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F2A33A" stroke-width="2" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg>Draft caption with AI</button><span class="mono faint" style="font-size:12px;margin-left:auto" data-count></span></div>
+<p class="status" data-ai-note style="margin:0"></p>
+<ul class="checks" data-checks aria-live="polite"></ul>
+
+        </section>
+        <section class="card" aria-labelledby="ch-h">
+          <h2 id="ch-h" class="lbl" style="margin:0">Copy rules</h2>
+          <ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.55;color:#C9CBCF">
+            <li>One or two short human lines.</li>
+            <li>No filler. Say the thing.</li>
+            <li>Never mention cert lookup.</li>
+            <li>Sets are the centrepiece.</li>
+            <li>Comparisons: similar value, and say where the price came from.</li>
+          </ul>
+          <span class="faint" style="font-size:12px">From coins' brand kit (MK-2).</span>
+        </section>
+      </div>
+    </div>
+
+    <section aria-label="States" style="border-top:1px dashed #33373D;padding-top:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:14px">
+      <div class="card" style="padding:16px"><h3 class="lbl" style="margin:0 0 8px;color:#F2A33A">Cover size</h3><p class="soft" style="margin:0;font-size:14px;line-height:1.5">The cover is built from the same fields, so its text isn't editable on the canvas. The hint reads “Edit on the 1080 post; the cover follows.”</p></div>
+      <div class="card" style="padding:16px"><h3 class="lbl" style="margin:0 0 8px;color:#F2A33A">Text too long</h3><p class="soft" style="margin:0;font-size:14px;line-height:1.5">If typed text overflows its box, the box outlines red and the Render button says “Text overflows the title”.</p></div>
+      <div class="card" style="padding:16px"><h3 class="lbl" style="margin:0 0 8px;color:#F2A33A">Phone</h3><p class="soft" style="margin:0;font-size:14px;line-height:1.5">The dock and panel stop floating and stack: templates, post, fields, caption.</p></div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+/* MK-4 mockup engine (shared by options A, B and C; inlined into each file).
+   One state object per template so switching templates never loses what was typed.
+   Every [data-stage] re-renders on every change; [data-f] inputs are two-way bound. */
+const SWIRL = `<svg aria-hidden="true" focusable="false" data-brand-mark viewBox="0 0 23 23" width="23" height="23" fill="currentColor"><path d="M8.24443 16.0935C8.575 16.0855 8.89899 16.0595 9.20728 16.016L9.22499 16.0132C9.90412 15.912 10.5598 15.7306 11.1741 15.4746C12.1264 15.0801 13.0198 14.4815 13.7569 13.7461C14.6252 12.9407 15.6289 13.1835 16.1943 13.7495C16.7595 14.3161 17.0023 15.3189 16.2012 16.18C15.6295 16.7586 14.6869 16.8475 14.0081 16.384C13.4738 16.0198 12.7407 16.2232 12.3681 16.6209C12.1507 16.8532 12.029 17.152 12.0344 17.4409C12.0404 17.7529 12.1832 18.04 12.4264 18.2289C13.1472 18.7894 14.0569 19.098 14.9878 19.098C16.0995 19.098 17.1663 18.658 17.9137 17.8926C19.0712 16.7523 19.4314 15.0775 18.8543 13.5226C18.2777 11.9698 16.916 10.9381 15.3015 10.8298C14.0889 10.7384 12.9047 11.1738 12.051 12.0278C11.2687 12.8118 10.279 13.3426 9.18899 13.5618C6.69531 14.0464 4.31076 12.9201 3.11364 10.6913C1.91965 8.46842 2.2985 5.86188 4.07934 4.05019C5.22561 2.86306 6.86845 2.27793 8.585 2.44421C10.3304 2.61278 11.8515 3.51106 12.7578 4.90875C13.0164 5.3076 13.4692 5.52303 13.9392 5.47017C14.3584 5.42446 14.7175 5.16903 14.8995 4.78733C15.0792 4.41019 15.0523 3.97705 14.8278 3.6282C13.5389 1.62765 11.2907 0.286809 8.81328 0.0410981C6.36388 -0.20147 4.01334 0.637948 2.36307 2.34136C-0.00175392 4.71618 -0.647174 8.11357 0.678809 11.2075C1.97622 14.2346 4.7999 16.0952 8.07557 16.0952C8.13157 16.0952 8.18814 16.0946 8.24443 16.0935Z"/><path d="M20.3738 8.9676C19.1347 7.85504 17.5338 7.13962 15.8661 6.95306C13.4496 6.67563 10.9873 7.53733 9.28221 9.26103C8.96021 9.58559 8.52765 9.76445 8.06423 9.76445C7.59909 9.76445 7.16738 9.58731 6.8511 9.26817C6.05539 8.39561 6.29653 7.47162 6.74453 6.94563C7.22452 6.3822 8.12708 6.02821 8.9745 6.58249C9.38507 6.85134 9.8782 6.87106 10.2936 6.6362C10.6613 6.42878 10.8905 6.05192 10.9068 5.62821C10.9225 5.21508 10.7288 4.83222 10.3888 4.60451C8.74593 3.50481 6.48567 3.72138 5.13283 5.10679C4.24942 5.96992 3.81714 7.19219 3.94628 8.46018C4.07542 9.72645 4.74341 10.8339 5.77883 11.4979C7.41652 12.5761 9.60992 12.3553 10.9948 10.973C12.2596 9.71416 14.0024 9.1356 15.7756 9.38617C16.9818 9.55874 18.1161 10.1222 18.9698 10.9727C20.0332 12.0361 20.6186 13.4521 20.6184 14.9601C20.6184 16.4684 20.0318 17.8849 18.9669 18.95C17.823 20.1346 16.1796 20.72 14.461 20.5563C12.7156 20.3875 11.1945 19.4889 10.2882 18.0912C10.0262 17.6869 9.58335 17.4746 9.10707 17.5301C8.68765 17.5755 8.32879 17.8309 8.1468 18.2129C7.96708 18.5898 7.99394 19.0232 8.21851 19.372C9.50735 21.3732 11.7576 22.7143 14.2373 22.9597C14.5119 22.9869 14.7899 23.0006 15.0633 23.0006C17.2258 23.0006 19.2215 22.1689 20.6821 20.6609C22.2349 19.1175 23.092 16.9629 23.0338 14.7495C22.9755 12.5356 22.0061 10.4282 20.3738 8.96846V8.9676Z"/></svg>`;
+const LIB = [
+  {id:'Morgan-obverse', label:'1889 Morgan, obverse'},
+  {id:'Morgan-reverse', label:'1889 Morgan, reverse'},
+  {id:'Flowing-Hair-obverse', label:'1795 Flowing Hair, obverse'},
+  {id:'Flowing-Hair-reverse', label:'1795 Flowing Hair, reverse'},
+  {id:'Mercury--Winged-Liberty--obverse', label:'Mercury dime, obverse'},
+  {id:'Mercury--Winged-Liberty--reverse', label:'Mercury dime, reverse'},
+  {id:'Peace-obverse', label:'Peace dollar, obverse'},
+  {id:'Peace-reverse', label:'Peace dollar, reverse'},
+];
+const src = id => '../MK-kit/coins/' + id + '.jpg';
+const flip = id => id.includes('obverse') ? id.replace('obverse','reverse') : id.replace('reverse','obverse');
+
+// The 77 Mercury dime slots, 1916 to 1945, as the kit counts them.
+const MERC = (() => { const out = []; const spec = '1916:PDS 1917:PDS 1918:PDS 1919:PDS 1920:PDS 1921:PD 1923:PS 1924:PDS 1925:PDS 1926:PDS 1927:PDS 1928:PDS 1929:PDS 1930:PS 1931:PDS 1934:PD 1935:PDS 1936:PDS 1937:PDS 1938:PDS 1939:PDS 1940:PDS 1941:PDS 1942:PDS 1943:PDS 1944:PDS 1945:PDS';
+  spec.split(' ').forEach(p => { const [y, m] = p.split(':'); [...m].forEach(c => out.push(c === 'P' ? y : y + '-' + c)); }); return out; })();
+const SETS = {
+  'Carson City Morgans': {years:'1878–1893', photo:'Morgan-obverse', slots:['1878-CC','1879-CC','1880-CC','1881-CC','1882-CC','1883-CC','1884-CC','1885-CC','1889-CC','1890-CC','1891-CC','1892-CC','1893-CC'], missing:['1879-CC','1892-CC','1893-CC']},
+  'Mercury dimes': {years:'1916–1945', photo:'Mercury--Winged-Liberty--obverse', slots:MERC, missing:[]},
+  'Peace dollars': {years:'1921–1935', photo:'Peace-obverse', slots:['1921','1922','1922-D','1922-S','1923','1923-D','1923-S','1924','1924-S','1925','1925-S','1926','1926-D','1926-S','1927','1927-D','1927-S','1928','1928-S','1934','1934-D','1934-S','1935','1935-S'], missing:[]},
+};
+
+const TPL = {
+  cotw:  {name:'Coin of the week', short:'Coin of the week', kit:'02-post-cotw.png'},
+  grid:  {name:'Set grid', short:'Set grid', kit:'05-post-set-cc.png'},
+  last:  {name:'One slot left', short:'One slot left', kit:'06-post-set-last.png'},
+  done:  {name:'Set complete', short:'Set complete', kit:'07-post-set-done.png'},
+  pick:  {name:'Only one stays', short:'Comparison', kit:'09-post-pick.png'},
+  tv:    {name:'TrueView feature', short:'TrueView', kit:'10-post-tv-tuesday.png'},
+  sides: {name:'Both sides', short:'Both sides', kit:'11-post-tv-sides.png'},
+};
+
+const S = {
+  tpl: 'cotw', size: 'sq',
+  d: {
+    cotw: {eyebrow:'Coin of the week', photo:'Morgan-obverse', badge:'CAC', title:'1889 Morgan Dollar', sub:'Silver dollar, original toning', grade:'PCGS MS64', added:'10-12-2026',
+      caption:'Coin of the week: an 1889 Morgan dollar, PCGS MS64.\nWhat do you see first, the strike or the color?'},
+    grid: {setName:'Carson City Morgans', years:'1878–1893', filled:9, total:13, keyDate:'1889-CC', mintage:'350,000',
+      caption:'Carson City Morgans. Thirteen coins, 1878 to 1893.\nNine down. The 1889-CC is the hard one.'},
+    last: {headline:'One slot left.', setName:'Mercury dimes', years:'1916–1945', filled:76, total:77, keyDate:'1916-D', mintage:'264,000',
+      caption:'76 down. One to go.\nThe 1916-D Mercury dime. Only 264,000 made.'},
+    done: {headline:'Set complete.', setName:'Peace dollars', years:'1921–1935', filled:24, total:24, keyDate:'1928', mintage:'360,649',
+      caption:'Set complete. All 24 Peace dollars, 1921 to 1935.'},
+    pick: {headline:'Only one stays.', price:'$10,000', priceSource:'PCGS Price Guide, Oct 2026',
+      photo:'Flowing-Hair-obverse', title:'1795 Flowing Hair Dollar', grade:'PCGS VF25', sub:'Rare · first U.S. silver dollar',
+      photo2:'Morgan-obverse', title2:'1889-CC Morgan Dollar', grade2:'PCGS AU50', sub2:'Key date · Carson City',
+      caption:'Same money. Only one stays.\n1795 Flowing Hair dollar in VF25, or an 1889-CC Morgan in AU50. Both around $10,000 on the PCGS Price Guide.'},
+    tv: {eyebrow:'Weekly series', headline:'TrueView Tuesday', photo:'Morgan-obverse', title:'Morgan Dollar', sub:'Album toned · obverse', grade:'PCGS MS64',
+      caption:'TrueView Tuesday 🌈\nA Morgan with a century of album toning. Show us your best toner.'},
+    sides: {headline:'Both sides of the story.', photo:'Flowing-Hair-obverse', title:'1795 Flowing Hair Dollar', grade:'PCGS XF45',
+      caption:'Both sides of the story.\nEvery coin gets a clean front and back.'},
+  },
+};
+const cur = () => S.d[S.tpl];
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const E = (f, d, tag='span', attrs='') => `<${tag} data-e="${f}" ${attrs}>${esc(d[f])}</${tag}>`;
+const LOGO = `<div class="logo">${SWIRL}<span>StackerMint</span><span class="beta">BETA</span></div>`;
+const BADGE = {CAC:'#6DBB7F', CACG:'#6A9BC3', TONED:'#A9A9A9'};
+const pct = d => { const p = Math.round(100 * d.filled / Math.max(1, d.total)); return d.filled < d.total ? Math.min(p, 99) : 100; };
+
+// Which slots are empty: the key date first, then the set's own gaps, then from the end.
+function slotsFor(d) {
+  const set = SETS[d.setName] || {slots:[], missing:[]};
+  let labels = set.slots.slice(0, d.total);
+  while (labels.length < d.total) labels.push('Slot ' + (labels.length + 1));
+  const want = Math.max(0, d.total - d.filled), miss = [];
+  [d.keyDate, ...set.missing, ...[...labels].reverse()].forEach(l => { if (miss.length < want && labels.includes(l) && !miss.includes(l)) miss.push(l); });
+  return labels.map(l => ({l, empty: miss.includes(l), key: l === d.keyDate}));
+}
+const photoOf = d => (SETS[d.setName] || {}).photo || 'Morgan-obverse';
+
+function coinOrSlot(s, size, photo, lab) {
+  const lbl = `<div style="font-size:${lab}px;font-weight:600;margin-top:8px;${s.empty ? 'color:' + (s.key ? '#8A6F50' : '#aaa') : ''}">${esc(s.l)}</div>`;
+  const key = s.key && s.empty ? `<div style="font-size:${lab - 2}px;letter-spacing:.14em;color:#8A6F50;font-weight:600;margin-top:5px">KEY DATE</div>` : '';
+  const body = s.empty ? `<div class="slot ${s.key ? 'key' : ''}" style="width:${size}px;height:${size}px;font-size:${size * .32}px">+</div>`
+    : `<img class="coin" alt="" src="${src(photo)}" style="width:${size}px;height:${size}px">`;
+  return `<div style="display:flex;flex-direction:column;align-items:center">${body}${lbl}${key}</div>`;
+}
+
+/* ---------- Square templates (540 x 540, the kit PNG size; renders at 2x for 1080) ---------- */
+const SQ = {
+  cotw: d => `<div class="pad">
+      <div class="row"><span class="eb" data-e="eyebrow">${esc(d.eyebrow)}</span>${LOGO}</div>
+      <div style="flex:1;display:grid;place-items:center;padding-top:12px">
+        <div class="pc" style="width:302px;padding:34px 20px 24px">
+          ${d.badge ? `<span class="badge" style="background:${BADGE[d.badge]}">${d.badge}</span>` : ''}
+          <img class="coin" alt="" src="${src(d.photo)}" style="width:184px;height:184px;margin:0 auto">
+          ${E('title', d, 'div', 'style="font-size:22px;font-weight:600;margin-top:16px;letter-spacing:-.01em"')}
+          ${E('sub', d, 'div', 'class="sub" style="font-size:15px;margin-top:4px"')}
+          <div style="margin-top:12px">${E('grade', d, 'span', 'class="grade"')}</div>
+          <div style="font-size:13px;color:#999;margin-top:12px">Added ${esc(d.added)}</div>
+        </div>
+      </div></div>`,
+  grid: d => { const sl = slotsFor(d), many = sl.length > 15, cols = many ? 6 : 5, sz = many ? 52 : 70, show = sl.length > 24 ? sl.slice(0, 23) : sl;
+    return `<div class="pad" style="padding-top:36px">
+      ${E('setName', d, 'div', 'class="big" style="font-size:36px"')}
+      <div class="row" style="margin-top:10px"><span class="sub" style="font-size:18px"><b class="ink">${d.filled}</b> of <b class="ink">${d.total}</b> slots filled</span>${LOGO}</div>
+      <div class="bar" style="margin-top:20px;height:7px"><i style="width:${pct(d)}%"></i></div>
+      <div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:${many ? 10 : 14}px 6px;margin-top:22px">
+        ${show.map(s => coinOrSlot(s, sz, photoOf(d), many ? 11 : 13)).join('')}
+        ${sl.length > 24 ? `<div style="display:grid;place-items:center;font-size:13px;color:#8A6F50;font-weight:600">+${sl.length - 23} more</div>` : ''}
+      </div></div>`; },
+  last: d => `<div class="pad" style="align-items:center;text-align:center">
+      <div class="row" style="width:100%"><span class="eb">${E('setName', d)} · ${esc(d.years)}</span>${LOGO}</div>
+      ${E('headline', d, 'div', 'class="big" style="font-size:54px;margin-top:26px"')}
+      <div class="slot key" style="width:188px;height:188px;font-size:64px;margin-top:30px">+</div>
+      ${E('keyDate', d, 'div', 'style="font-size:23px;font-weight:600;margin-top:16px"')}
+      <div class="eb tan" style="font-size:13px;margin-top:14px">Key date · <span data-e="mintage">${esc(d.mintage)}</span> minted</div>
+      <div class="bar" style="width:100%;margin-top:20px"><i style="width:${pct(d)}%"></i></div>
+      <div class="row" style="width:100%;margin-top:12px;font-size:15px" class="sub"><span><b class="ink">${d.filled}</b> of <b class="ink">${d.total}</b> slots filled</span><span>${pct(d)}%</span></div>
+    </div>`,
+  done: d => { const sl = slotsFor(d), show = sl.length > 24 ? sl.slice(0, 23) : sl;
+    return `<div class="pad">
+      <span class="eb">${E('setName', d)} · ${esc(d.years)}</span>
+      ${E('headline', d, 'div', 'class="big" style="font-size:52px;margin-top:14px"')}
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px 6px;margin-top:20px;flex:1;align-content:start">
+        ${show.map(s => `<div style="display:flex;flex-direction:column;align-items:center">${s.empty ? `<div class="slot" style="width:46px;height:46px;font-size:16px">+</div>` : `<img class="coin" alt="" src="${src(photoOf(d))}" style="width:46px;height:46px;box-shadow:0 4px 10px rgba(0,0,0,.4)">`}<div class="${s.empty ? '' : 'sub'}" style="font-size:11px;${s.empty ? 'color:#888;' : ''}margin-top:6px">${esc(s.l)}</div></div>`).join('')}
+      </div>
+      <div class="row"><span style="font-size:18px"><b>${d.filled}</b> of <b>${d.total}</b> · ${pct(d)}%</span>${LOGO.replace('class="beta"', 'class="beta" style="background:#F8EADB"')}</div>
+    </div>`; },
+  pick: d => `<div class="pad" style="align-items:center;text-align:center;padding-top:30px;padding-bottom:22px">
+      <div class="eb">Both about <span data-e="price">${esc(d.price)}</span></div>
+      ${E('headline', d, 'div', 'class="big" style="font-size:44px;margin-top:10px"')}
+      <div style="display:grid;grid-template-columns:1fr 30px 1fr;gap:6px;width:100%;margin-top:18px;align-items:start">
+        ${[1, 2].map(n => { const k = n === 1 ? '' : '2'; return `<div style="display:flex;flex-direction:column;align-items:center">
+          <img class="coin" alt="" src="${src(d['photo' + k])}" style="width:176px;height:176px">
+          ${E('title' + k, d, 'div', 'style="font-size:18px;font-weight:600;margin-top:14px;line-height:1.2;min-height:44px;max-width:200px"')}
+          <div style="margin-top:8px">${E('grade' + k, d, 'span', 'class="grade" style="font-size:12px;padding:6px 14px"')}</div>
+          ${E('sub' + k, d, 'div', 'class="sub" style="font-size:13px;margin-top:10px"')}</div>`; }).join('<div style="font-size:20px;color:#aaa;font-weight:600;padding-top:76px">or</div>')}
+      </div>
+      <div style="flex:1"></div>
+      <div style="font-size:11px;color:#999;margin-bottom:8px">Prices: <span data-e="priceSource">${esc(d.priceSource) || '<span style="color:#c0392b">no source</span>'}</span></div>
+      ${LOGO}
+    </div>`,
+  tv: d => `<img alt="" src="${src(d.photo)}" style="position:absolute;left:-30px;top:20px;width:610px;height:610px;border-radius:50%;object-fit:cover">
+      <div class="tvgrad" style="position:absolute;inset:0"></div>
+      <div class="pad">
+        <div class="row" style="align-items:flex-start"><span class="eb">${E('eyebrow', d)}</span>${LOGO}</div>
+        ${E('headline', d, 'div', 'class="big" style="font-size:46px;margin-top:10px;max-width:250px;line-height:1.02"')}
+        <div style="flex:1"></div>
+        <div class="row" style="align-items:flex-end">
+          <div>${E('title', d, 'div', 'style="font-size:20px;font-weight:600"')}${E('sub', d, 'div', 'class="sub" style="font-size:14px;margin-top:4px"')}</div>
+          ${E('grade', d, 'span', 'class="grade" style="font-size:13px"')}
+        </div>
+      </div>`,
+  sides: d => `<div class="pad">
+      <div class="row" style="align-items:flex-start">${E('headline', d, 'div', 'class="big" style="font-size:44px;max-width:250px;line-height:1.02"')}${LOGO}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:34px">
+        ${[d.photo, flip(d.photo)].map((p, i) => `<div style="display:flex;flex-direction:column;align-items:center"><img class="coin" alt="" src="${src(p)}" style="width:200px;height:200px"><span class="eb" style="margin-top:20px">${i ? 'Back' : 'Front'}</span></div>`).join('')}
+      </div>
+      <div style="text-align:center;margin-top:22px">${E('title', d, 'div', 'style="font-size:20px;font-weight:600"')}<div style="margin-top:12px">${E('grade', d, 'span', 'class="grade" style="font-size:13px"')}</div></div>
+    </div>`,
+};
+
+/* ---------- Cover size (1702 x 630, laid out at 851 x 315): headline left, the coins right ---------- */
+function cover(t, d) {
+  const card = (p, ti, su, gr, bd) => `<div class="pc" style="width:150px;padding:20px 10px 14px;flex:none">
+      ${bd ? `<span class="badge" style="background:${BADGE[bd]};font-size:10px;padding:3px 7px">${bd}</span>` : ''}
+      <img class="coin" alt="" src="${src(p)}" style="width:96px;height:96px;margin:0 auto">
+      <div style="font-size:13px;font-weight:600;margin-top:10px;line-height:1.2">${esc(ti)}</div>
+      ${su ? `<div class="sub" style="font-size:10.5px;margin-top:3px">${esc(su)}</div>` : ''}
+      <div style="margin-top:8px"><span class="grade" style="font-size:9.5px;padding:4px 9px">${esc(gr)}</span></div></div>`;
+  const slots = () => { const sl = slotsFor(d), show = sl.filter(s => s.empty).slice(0, 2).concat(sl.filter(s => !s.empty)).slice(0, 7);
+    show.sort((a, b) => sl.indexOf(a) - sl.indexOf(b));
+    return `<div style="display:flex;flex-direction:column;gap:14px;width:100%"><div style="display:flex;gap:10px;justify-content:flex-end">${show.map(s => coinOrSlot(s, 52, photoOf(d), 10)).join('')}</div>
+      <div class="bar" style="height:6px"><i style="width:${pct(d)}%"></i></div><div style="font-size:12px;color:#888;text-align:right"><b style="color:inherit">${d.filled}</b> of ${d.total} slots filled · ${pct(d)}%</div></div>`; };
+  const map = {
+    cotw: [d.eyebrow, d.title, d.sub, () => card(d.photo, d.title, d.sub, d.grade, d.badge)],
+    grid: ['Set in progress', d.setName, `${d.filled} of ${d.total} · ${d.years}`, slots],
+    last: [`${d.setName} · ${d.years}`, d.headline, `${d.keyDate} · key date · ${d.mintage} minted`, slots],
+    done: [`${d.setName} · ${d.years}`, d.headline, `${d.filled} of ${d.total} · ${pct(d)}%`, slots],
+    pick: [`Both about ${d.price}`, d.headline, `Prices: ${d.priceSource || 'no source'}`, () => card(d.photo, d.title, d.sub, d.grade) + '<span style="font-size:15px;color:#aaa;font-weight:600">or</span>' + card(d.photo2, d.title2, d.sub2, d.grade2)],
+    tv: [d.eyebrow, d.headline, `${d.title} · ${d.sub}`, () => card(d.photo, d.title, d.sub, d.grade, 'TONED')],
+    sides: ['Front and back', d.headline, d.title, () => card(d.photo, 'Front', '', d.grade) + card(flip(d.photo), 'Back', '', d.grade)],
+  }[t];
+  return `<div class="pad" style="padding:32px 40px;flex-direction:row;gap:28px;align-items:center">
+      <div style="width:270px;flex:none;display:flex;flex-direction:column;align-self:stretch">
+        <span class="eb" style="font-size:12px">${esc(map[0])}</span>
+        <div class="big" style="font-size:34px;margin-top:10px;line-height:1.04">${esc(map[1])}</div>
+        <div class="sub" style="font-size:13px;margin-top:10px">${esc(map[2])}</div>
+        <div style="flex:1"></div>${LOGO}
+      </div>
+      <div style="flex:1;display:flex;gap:16px;align-items:center;justify-content:flex-end;min-width:0">${map[3]()}</div></div>`;
+}
+
+/* ---------- Render, fit, bind ---------- */
+function renderStage(st) {
+  const t = st.dataset.tpl || S.tpl, size = st.dataset.size || S.size, d = S.d[t];
+  const dark = st.dataset.theme ? st.dataset.theme === 'dark' : (t === 'done' || t === 'tv');
+  st.className = 'stage ' + size;
+  st.style.background = dark ? '#232323' : '#fafafa';
+  st.innerHTML = `<div class="pv ${size}${dark ? ' dark' : ''}">${size === 'cv' ? cover(t, d) : SQ[t](d)}</div>`;
+  fit(st);
+  if (st.hasAttribute('data-editable') && size === 'sq') st.querySelectorAll('[data-e]').forEach(el => {
+    el.contentEditable = 'plaintext-only'; el.spellcheck = false;
+    el.setAttribute('aria-label', 'Edit ' + el.dataset.e);
+    el.addEventListener('input', () => { const f = el.dataset.e; d[f] = /filled|total/.test(f) ? +el.textContent || 0 : el.textContent; update(st); });
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } });
+  });
+}
+function fit(st) { const pv = st.firstElementChild; if (!pv) return; pv.style.transform = `scale(${st.clientWidth / pv.offsetWidth})`; }
+const ro = new ResizeObserver(es => es.forEach(e => fit(e.target)));
+
+// skip = a stage whose own text is being typed into; re-rendering it would drop the caret.
+function update(skip) {
+  document.querySelectorAll('[data-stage]').forEach(st => { if (st !== skip) renderStage(st); });
+  const d = cur();
+  document.querySelectorAll('[data-f]').forEach(i => { if (document.activeElement !== i && i.dataset.f in d) i.value = d[i.dataset.f]; });
+  document.querySelectorAll('[data-for]').forEach(el => { el.hidden = !el.dataset.for.split(' ').includes(S.tpl); });
+  document.querySelectorAll('[data-tpl-pick]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tplPick === S.tpl));
+  document.querySelectorAll('[data-size-pick]').forEach(b => b.setAttribute('aria-pressed', b.dataset.sizePick === S.size));
+  document.querySelectorAll('[data-size-label]').forEach(el => el.textContent = S.size === 'sq' ? '1080×1080' : '1702×630');
+  document.querySelectorAll('[data-tpl-name]').forEach(el => el.textContent = TPL[S.tpl].name);
+  document.querySelectorAll('[data-lib]').forEach(g => g.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', d[g.dataset.lib] === b.dataset.id)));
+  runChecks();
+}
+
+const FILLER = ["don't miss", 'check out', 'excited to', "we're thrilled", 'stay tuned', 'game changer', 'game-changer', 'amazing', 'incredible', 'must-see', "you won't believe", 'link in bio', 'level up', 'unlock', 'elevate', 'without further ado', 'dive in', 'journey', 'seamless', 'next level', 'like and share', 'tag a friend', 'click the link'];
+function checks() {
+  const d = cur(), t = S.tpl, out = [], cap = d.caption || '';
+  const lines = cap.split('\n').map(s => s.trim()).filter(Boolean);
+  if (!lines.length) out.push(['fail', 'Caption is empty.']);
+  else if (lines.length <= 2) out.push(['pass', `${lines.length} line${lines.length > 1 ? 's' : ''}. Two at most.`]);
+  else out.push(['fail', `${lines.length} lines. Cut it to one or two.`]);
+  const long = lines.find(l => l.length > 140); if (long) out.push(['warn', `A line runs ${long.length} characters. Keep each one short.`]);
+  const hit = FILLER.filter(f => cap.toLowerCase().includes(f));
+  out.push(hit.length ? ['fail', `Filler: “${hit.join('”, “')}”. Say the thing instead.`] : ['pass', 'No filler phrases.']);
+  out.push(/cert(ificate)?\s*(look\s?-?up|verif|number|#|check)|(look\s?-?up|verify|check)\s+(the\s+|your\s+)?cert/i.test(cap) ? ['fail', 'Mentions a cert lookup. Never in posts.'] : ['pass', 'No cert lookup.']);
+  if (t === 'pick') {
+    const ps = (d.priceSource || '').trim(), word = ps.split(/[\s,]+/)[0] || '#';
+    if (!ps) out.push(['fail', 'Comparison with no price source. Say where $' + (d.price || '').replace('$', '') + ' came from.']);
+    else if (!cap.toLowerCase().includes(word.toLowerCase())) out.push(['warn', `Source is on the image, not in the caption (“${ps}”).`]);
+    else out.push(['pass', `Price source cited: ${ps}.`]);
+  }
+  if (t === 'done' && d.filled < d.total) out.push(['fail', `“Set complete” with ${d.total - d.filled} slot${d.total - d.filled > 1 ? 's' : ''} still empty.`]);
+  if (t === 'last' && d.total - d.filled !== 1) out.push(['warn', `“One slot left”, but ${d.total - d.filled} slots are empty.`]);
+  return out;
+}
+function runChecks() {
+  const c = checks(), bad = c.filter(x => x[0] === 'fail').length, warn = c.filter(x => x[0] === 'warn').length;
+  document.querySelectorAll('[data-checks]').forEach(ul => ul.innerHTML = c.map(([k, m]) => `<li class="${k}"><span class="ic" aria-hidden="true">${k === 'pass' ? '✓' : k === 'warn' ? '!' : '×'}</span><span><span class="sr">${k}: </span>${esc(m)}</span></li>`).join(''));
+  document.querySelectorAll('[data-verdict]').forEach(el => { el.className = 'pill ' + (bad ? 't-fail' : warn ? 't-draft' : 't-pass'); el.textContent = bad ? `${bad} to fix` : warn ? `${warn} to check` : 'Copy rules pass'; });
+  const cap = cur().caption || ''; document.querySelectorAll('[data-count]').forEach(el => el.textContent = `${cap.split('\n').filter(s => s.trim()).length} / 2 lines · ${cap.length} chars`);
+}
+
+// "Draft caption with AI" is static in the mockup: it fills the idea-menu line for this template.
+const an = s => /^(8|11|18)/.test(s) ? 'an' : 'a';
+const DRAFT = {
+  cotw: d => `Coin of the week: ${an(d.title)} ${d.title.replace(/ Dollar$/, ' dollar')}, ${d.grade}.\nWhat do you see first, the strike or the color?`,
+  grid: d => `Another slot filled. ${d.filled} of ${d.total} ${d.setName} done.\nThe ${d.keyDate} is still the hard one.`,
+  last: d => `${d.filled} down, one to go.\nThe ${d.keyDate} is the last hole. Only ${d.mintage} were made.`,
+  done: d => `Set complete. All ${d.total} ${d.setName}, ${d.years.replace('–', ' to ')}.`,
+  pick: d => `Same money. Only one stays.\n${d.title} in ${d.grade.replace(/^\w+ /, '')}, or ${an(d.title2)} ${d.title2} in ${d.grade2.replace(/^\w+ /, '')}. Both around ${d.price} on the ${d.priceSource.replace(/,.*$/, '') || '[price source]'}.`,
+  tv: d => `TrueView Tuesday 🌈\nRate this toning, 1 to 10.`,
+  sides: d => `Front and back, side by side.\nYour collection should show both.`,
+};
+
+function setTpl(t) { S.tpl = t; update(); }
+function init() {
+  document.querySelectorAll('[data-lib]').forEach(g => {
+    g.innerHTML = LIB.map(p => `<button type="button" data-id="${p.id}" title="${p.label}" aria-label="${p.label}"><img alt="" src="${src(p.id)}"></button>`).join('');
+    g.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; cur()[g.dataset.lib] = b.dataset.id; update(); });
+  });
+  document.addEventListener('input', e => { const i = e.target.closest('[data-f]'); if (!i) return; const f = i.dataset.f;
+    cur()[f] = i.type === 'number' ? Math.max(0, +i.value || 0) : i.value;
+    if (f === 'setName' && SETS[i.value]) { const s = SETS[i.value], d = cur(); d.years = s.years; d.total = s.slots.length; if (S.tpl !== 'grid') d.filled = S.tpl === 'done' ? d.total : d.total - 1; d.filled = Math.min(d.filled, d.total); }
+    update(); });
+  document.addEventListener('click', e => {
+    const tp = e.target.closest('[data-tpl-pick]'); if (tp) setTpl(tp.dataset.tplPick);
+    const sz = e.target.closest('[data-size-pick]'); if (sz) { S.size = sz.dataset.sizePick; update(); }
+    if (e.target.closest('[data-ai]')) { cur().caption = DRAFT[S.tpl](cur()); update();
+      document.querySelectorAll('[data-ai-note]').forEach(n => n.innerHTML = 'Drafted from the idea menu · <span class="sample" style="margin:0">mock</span> the real call goes to Claude with the brand kit and copy rules.'); }
+    if (e.target.closest('[data-render]')) { const name = `${S.tpl}-${S.size === 'sq' ? '1080x1080' : '1702x630'}.png`;
+      document.querySelectorAll('[data-render-status]').forEach(n => { n.textContent = 'Rendering ' + name + '…';
+        setTimeout(() => n.innerHTML = `<b>Saved</b> · marketing/coins/2026-10-12-${name} · <a href="#">Open</a>`, 900); }); }
+  });
+  document.querySelectorAll('[data-stage]').forEach(st => ro.observe(st));
+  update();
+}
+document.fonts && document.fonts.ready.then(() => document.querySelectorAll('[data-stage]').forEach(fit));
+window.addEventListener('DOMContentLoaded', init);
+
+
+// Option B only: fold the floating panel (pure UI), and swap the hint on the cover size.
+document.getElementById('fold').addEventListener('click', e => { const c = document.getElementById('cv'), closed = c.classList.toggle('closed');
+  e.currentTarget.textContent = closed ? 'Show' : 'Hide'; e.currentTarget.setAttribute('aria-expanded', !closed); });
+const _upd = update; update = function (skip) { _upd(skip);
+  document.getElementById('wrap').classList.toggle('wide', S.size === 'cv');
+  document.querySelector('#hint span').textContent = S.size === 'cv' ? 'Edit on the 1080 post; the cover follows.' : 'Click any text on the post to edit it. Enter to finish.'; };
+
+</script>
+</body>
+</html>

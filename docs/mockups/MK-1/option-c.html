@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MK-1 option C — Marketing, pipeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;family=Instrument+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+/* Shell tokens, copied from RD-11 option B (resources/css/app.css shell values). */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;background:#0E0F11;color:#F2F1EE;font-family:Geist,system-ui,sans-serif;-webkit-text-size-adjust:100%}
+a{color:#F2A33A;text-decoration:none}a:hover{color:#FFC26B;text-decoration:underline;text-underline-offset:3px}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #F2A33A;outline-offset:2px}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.card{background:#16181B;border:1px solid #26292E;border-radius:12px}
+.lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9A9DA3;font-weight:500}
+.muted{color:#9A9DA3}.faint{color:#7E8187}.soft{color:#C9CBCF}
+.navi{display:flex;align-items:center;gap:10px;padding:0 12px;border-radius:8px;color:#C9CBCF;font-size:14px;min-height:44px}
+.navi:hover{background:#1D2024;color:#F2F1EE;text-decoration:none}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid #33373D;color:#C9CBCF;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+.live{background:#6CA6F0;box-shadow:0 0 0 4px rgba(108,166,240,.18)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:8px;font:500 14px Geist,sans-serif;border:1px solid #33373D;background:#1D2024;color:#F2F1EE;cursor:pointer;text-decoration:none}
+.btn:hover{background:#24282D;color:#F2F1EE;text-decoration:none}
+.btn.pri{background:#F2A33A;border-color:#F2A33A;color:#1A1205}.btn.pri:hover{background:#FFC26B}
+.btn.danger{border-color:#6B2F2B;color:#F59088;background:transparent}
+.btn.sm{min-height:36px;padding:0 12px;font-size:13px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.sample{display:inline-block;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#C3A8F0;border:1px dashed #4A3B6B;border-radius:4px;padding:0 5px;margin-left:6px;vertical-align:1px}
+.legend{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;font-size:13px;color:#C9CBCF;padding:12px 16px;border:1px solid #26292E;border-radius:10px;background:#121417}
+.legend i{display:inline-block;width:22px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:6px}
+.shell{display:flex;min-height:100vh}
+.side{width:232px;flex:none;padding:20px 14px;border-right:1px solid #1F2226;display:flex;flex-direction:column;gap:22px}
+.topbar{display:none}
+main{flex:1;min-width:0;padding:28px 32px 56px;display:flex;flex-direction:column;gap:24px}
+.crumb{font-size:12px;color:#9A9DA3}.crumb a{color:#9A9DA3}
+.tabs{display:flex;gap:24px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid #1F2226;font-size:14px;padding-bottom:1px}
+.tabs a{flex:none;color:#9A9DA3;padding-bottom:12px;margin-bottom:-2px;border-bottom:2px solid transparent;min-height:36px}
+.tabs a:hover{color:#F2F1EE;text-decoration:none}
+.tabs a[aria-current]{color:#F2F1EE;border-color:#F2F1EE;font-weight:500}
+.tabs .new{font-size:10px;color:#F2A33A;margin-left:4px;vertical-align:2px}
+@media (max-width:767px){
+  .side{display:none}
+  .shell{flex-direction:column}
+  .topbar{display:flex;position:sticky;top:0;z-index:5;height:56px;align-items:center;gap:8px;padding:0 8px;border-bottom:1px solid #1F2226;background:rgba(14,15,17,.95)}
+  main{padding:20px 16px 48px;gap:20px}
+  .tabs{gap:18px}
+}
+
+/* Marketing: status pills (one colour per lifecycle step), AI mark, kind badge. */
+.s-idea{border-color:#33373D;color:#9A9DA3}
+.s-draft{border-color:#5C4219;color:#F2A33A}
+.s-approved{border-color:#2B4A6E;color:#8EBBF2}
+.s-scheduled{border-color:#4A3B6B;color:#C3A8F0}
+.s-posted{border-color:#2D5A44;color:#7CD1A4}
+.s-missed,.s-failed{border-color:#6B2F2B;color:#F59088}
+.ai{display:inline-flex;align-items:center;gap:3px;font:600 10px/1 'Geist Mono',monospace;letter-spacing:.04em;color:#0E0F11;background:#C3A8F0;border-radius:4px;padding:3px 5px;white-space:nowrap}
+.kind{display:inline-flex;font:500 10px/1 'Geist Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:#C9CBCF;border:1px solid #33373D;border-radius:4px;padding:3px 5px}
+.tag{font-size:12px;color:#9A9DA3;white-space:nowrap}
+.tag+.tag::before{content:"· ";color:#4A4E55}
+.eng{display:inline-flex;gap:12px;font:500 12px 'Geist Mono',monospace;color:#C9CBCF;white-space:nowrap}
+.eng span{display:inline-flex;align-items:center;gap:4px}
+.eng svg{color:#7E8187}
+
+/* Filter controls shared by all three options. */
+.search{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;border:1px solid #33373D;border-radius:8px;background:#121417;flex:1 1 220px;min-width:0}
+.search input{flex:1;min-width:0;background:transparent;border:0;color:#F2F1EE;font:400 14px Geist,sans-serif;outline:none}
+.search input::placeholder{color:#7E8187}
+.sel{min-height:44px;padding:0 34px 0 12px;border:1px solid #33373D;border-radius:8px;background:#121417 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239A9DA3' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center;color:#F2F1EE;font:400 14px Geist,sans-serif;appearance:none;-webkit-appearance:none;max-width:100%}
+.chip{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border-radius:999px;border:1px solid #33373D;background:transparent;color:#C9CBCF;font:500 13px Geist,sans-serif;cursor:pointer;white-space:nowrap}
+.chip:hover{background:#1D2024;color:#F2F1EE}
+.chip[aria-pressed="true"]{background:#F2F1EE;border-color:#F2F1EE;color:#0E0F11}
+.chip .n{font-family:'Geist Mono',monospace;font-size:11px;color:#7E8187}
+.chip[aria-pressed="true"] .n{color:#4A4E55}
+.empty{border:1px dashed #33373D;border-radius:12px;padding:28px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;color:#C9CBCF;font-size:14px}
+
+/* Post previews: StackerMint's LIGHT brand style inside the dark shell. */
+.bp{background:#fff;color:#222;font-family:'Instrument Sans',sans-serif;border-radius:5px;box-shadow:0 0 0 1px rgba(34,34,34,.05),0 10px 32px -6px rgba(183,159,130,.45);overflow:hidden}
+.bp-h{display:flex;align-items:center;gap:10px;padding:12px 14px 8px}
+.bp-h img{width:36px;height:36px;border-radius:50%}
+.bp-h b{display:block;font-size:14px;font-weight:600}
+.bp-h span{font-size:12px;color:#8A8178}
+.bp-cap{margin:0;padding:2px 14px 12px;font-size:14px;line-height:1.45;white-space:pre-line}
+.bp-img{display:block;width:100%;aspect-ratio:1;object-fit:cover;background:#F4F2EF}
+.bp-img.raw{object-fit:contain;padding:14%;background:#fff}
+.bp-ad{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#F4F2EF}
+.bp-ad b{flex:1;font-size:14px;font-weight:600}
+.bp-ad span{font-size:13px;font-weight:600;background:#E4DED6;border-radius:5px;padding:7px 12px}
+.bp-none{aspect-ratio:1.6;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#F6F1EA;color:#8A7458;font-size:13px;border-top:1px dashed #D9CBB8;border-bottom:1px dashed #D9CBB8}
+.bp-foot{display:flex;gap:16px;padding:9px 14px;font-size:12px;color:#8A8178;border-top:1px solid #EEEAE5}
+
+/* Slide-over (quick peek; also hosts settings in option B). */
+.scrim{position:fixed;inset:0;background:rgba(5,6,7,.62);z-index:20;opacity:0;pointer-events:none;transition:opacity .18s}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(520px,100%);background:#121417;border-left:1px solid #26292E;z-index:21;transform:translateX(102%);transition:transform .2s ease;display:flex;flex-direction:column}
+.drawer.wide{width:min(760px,100%)}
+body.peek .scrim{opacity:1;pointer-events:auto}
+body.peek .drawer{transform:none}
+.dr-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:14px 16px 14px 20px;border-bottom:1px solid #1F2226}
+.dr-b{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:20px}
+.dr-b>*{flex:none}
+.dr-f{display:flex;gap:8px;flex-wrap:wrap;padding:14px 20px;border-top:1px solid #1F2226}
+.x{margin-left:auto;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:0;background:transparent;color:#C9CBCF;cursor:pointer}
+.x:hover{background:#1D2024}
+.meta{display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px 14px;font-size:13px;margin:0}
+.meta dt{color:#9A9DA3}.meta dd{margin:0;color:#F2F1EE}
+.net{border:1px solid #26292E;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;background:#16181B}
+.net-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:14px}
+.fb{width:22px;height:22px;border-radius:50%;background:#1877F2;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stat{border:1px solid #1F2226;border-radius:8px;padding:8px 10px;background:#121417}
+.stat .v{display:block;font:500 18px 'Geist Mono',monospace}
+.stat .k{font-size:11px;color:#9A9DA3}
+.note{font-size:14px;line-height:1.55;color:#C9CBCF;background:#16181B;border:1px solid #26292E;border-radius:10px;padding:12px 14px;margin:0;white-space:pre-line}
+.err{color:#F59088;font-size:13px;line-height:1.5}
+.confirm{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.5;color:#C9CBCF;border:1px solid #4A3B6B;background:rgba(195,168,240,.06);border-radius:10px;padding:10px 12px}
+
+/* Marketing settings (MK-2 brand kit + MK-12 Facebook Page). */
+.set-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px}
+.set{background:#16181B;border:1px solid #26292E;border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.set h3{margin:0;font-size:16px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.src{font:400 12px 'Geist Mono',monospace;color:#9A9DA3;overflow-wrap:anywhere}
+.logos{display:flex;gap:10px;flex-wrap:wrap}
+.logos figure{margin:0;display:flex;flex-direction:column;gap:6px;font-size:11px;color:#9A9DA3}
+.logos img{width:64px;height:64px;border-radius:50%;display:block}
+.logo-raw{width:64px;height:64px;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;color:#B79F82}
+.sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}
+.sw div{border:1px solid #26292E;border-radius:8px;overflow:hidden;font-size:12px}
+.sw i{display:block;height:44px}
+.sw span{display:block;padding:6px 8px;color:#C9CBCF}
+.sw code{display:block;padding:0 8px 7px;font:400 11px 'Geist Mono',monospace;color:#9A9DA3}
+.font{background:#fff;color:#222;border-radius:5px;padding:14px 16px;font-family:'Instrument Sans',sans-serif}
+.lib{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px}
+.lib img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:5px;background:#fff;display:block}
+.lib img.c{object-fit:contain;padding:6px}
+.lib img.cv{grid-column:span 3;aspect-ratio:851/315}
+.tok{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;padding:10px 0;border-top:1px solid #1F2226}
+.tok:first-child{border-top:0}
+.ok{color:#7CD1A4}.warn{color:#F2A33A}.bad{color:#F59088}
+@media (max-width:900px){.set-grid{grid-template-columns:minmax(0,1fr)}}
+.states{border-top:1px dashed #33373D;padding-top:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:14px}
+.states .tile{background:#16181B;border:1px solid #26292E;border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.states h2{margin:0;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#F2A33A;font-weight:500}
+.states p{margin:0;font-size:14px;line-height:1.5;color:#C9CBCF}
+
+/* Option C — pipeline: a kanban by status; settings sit below the board. */
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.att{border:1px solid #6B2F2B;background:rgba(245,144,136,.05);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.att .row{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr));gap:10px}
+.board{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;align-items:start}
+.col{background:#121417;border:1px solid #1F2226;border-radius:12px;min-width:0}
+.col summary{list-style:none;display:flex;align-items:center;gap:8px;padding:12px 14px;cursor:pointer;min-height:44px;font-size:14px;font-weight:500}
+.col summary::-webkit-details-marker{display:none}
+.col summary .c{font:500 12px 'Geist Mono',monospace;color:#7E8187;margin-left:auto}
+.col .cards{display:flex;flex-direction:column;gap:8px;padding:0 10px 10px}
+.kc{background:#16181B;border:1px solid #26292E;border-radius:10px;padding:10px;display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px;cursor:pointer;text-align:left}
+.kc:hover{border-color:#4A4E55}
+.kc:focus-visible{outline:2px solid #F2A33A;outline-offset:2px}
+.kc.bad{border-color:#6B2F2B}
+.kc .im{width:52px;height:52px;border-radius:5px;object-fit:cover;background:#fff;display:block}
+.kc .im.raw{object-fit:contain;padding:4px}
+.kc .im.none{display:flex;align-items:center;justify-content:center;background:#2A2620;color:#B79F82}
+.kc .tx{display:flex;flex-direction:column;gap:5px;min-width:0}
+.kc .t{font-size:13px;line-height:1.35;color:#F2F1EE;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.kc .f{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font:400 11px 'Geist Mono',monospace;color:#9A9DA3}
+.kc .eng{font-size:11px;gap:8px}
+.none-c{font-size:12px;color:#7E8187;border:1px dashed #26292E;border-radius:8px;padding:14px;text-align:center}
+.dot-st{width:8px;height:8px;border-radius:50%}
+@media (max-width:1240px){.board{grid-template-columns:repeat(5,minmax(240px,1fr));overflow-x:auto;padding-bottom:8px}}
+@media (max-width:767px){.board{grid-template-columns:minmax(0,1fr);overflow:visible}}
+
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <button class="btn" aria-label="Open menu" style="width:44px;padding:0;border:0;background:transparent">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9CBCF" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <span style="font-weight:600">Story Board</span>
+  </div>
+  <nav class="side" aria-label="Board">
+    <div style="display:flex;align-items:center;gap:10px;padding:0 6px">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="1" width="24" height="24" rx="7" fill="none" stroke="#F2A33A" stroke-width="2"/><path d="M8 9h10M8 13h6M8 17h8" stroke="#F2A33A" stroke-width="2" stroke-linecap="round"/></svg>
+      <span style="font-weight:600;font-size:16px">Story Board</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <a class="navi" href="#">Home</a>
+      <a class="navi" href="#">Mockups</a>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <span class="lbl" style="padding:0 12px 6px">Projects</span>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>asset-track</a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>client-dashboard</a>
+      <a class="navi" href="#" aria-current="page" style="background:#1D2024;color:#F2F1EE;font-weight:500"><span class="dot" style="background:#5FBF8F"></span>coins<span class="dot live" style="margin-left:auto;width:6px;height:6px"></span></a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>rent-track</a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>story-board</a>
+    </div>
+  </nav>
+  <main>
+    <div class="legend" role="note" aria-label="Mockup legend">
+      <strong style="color:#F2F1EE">MK-1 · option C · Pipeline</strong>
+      <span><i style="background:#F2A33A"></i>amber = link or button</span>
+      <span><span class="ai" style="margin-right:6px">AI</span>AI candidate, waits for your confirm</span>
+      <span><span class="sample" style="margin:0 6px 0 0">sample</span>engagement numbers are made up</span>
+      <span class="faint">settings sit below the board; click any card for the quick peek</span>
+    </div>
+    <header style="display:flex;flex-direction:column;gap:4px">
+      <p class="crumb" style="margin:0"><a href="#">All projects</a> / <a href="#">coins</a> / Marketing</p>
+      <h1 style="margin:0;display:flex;align-items:center;gap:10px;font-size:24px;font-weight:600;letter-spacing:-.01em">coins <span class="dot" style="background:#5FBF8F"></span><span style="font-size:13px;font-weight:400;color:#9A9DA3">ok</span></h1>
+      <p class="muted" style="margin:0;font-size:14px"><span class="mono" style="font-size:12px">origin/main @ d1b5d1a8</span> · 1,558 stories in 69 initiatives</p>
+    </header>
+    <nav class="tabs" aria-label="Project pages">
+      <a href="#">Overview</a><a href="#">Stories</a><a href="#">Preflight</a><a href="#">Handbook</a><a href="#">Map</a>
+      <a href="#" aria-current="page">Marketing<span class="new">NEW</span></a>
+    </nav>
+    <section class="bar" aria-label="Filters"><label class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7E8187" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span class="sr">Search posts</span><input type="search" data-f="q" placeholder="Search captions, notes, ideas"></label><label><span class="sr">Tag</span><select class="sel" data-f="tag"><option value="all">All tags</option><option value="Sets">Sets</option><option value="Toned & TrueView">Toned &amp; TrueView</option><option value="Coin of the week">Coin of the week</option><option value="Show & tell">Show &amp; tell</option><option value="Did you know">Did you know</option><option value="Ask the community">Ask the community</option><option value="How it works">How it works</option><option value="Beta & launch">Beta &amp; launch</option></select></label><label><span class="sr">Kind</span><select class="sel" data-f="kind"><option value="all">Posts and ads</option><option value="post">Posts only</option><option value="ad">Ads only</option></select></label><button class="chip" data-f="ai" aria-pressed="false"><span class="ai">AI</span>candidates only</button>
+      <span style="flex:1"></span><a class="btn" href="#settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Settings</a><button class="btn pri">New idea</button><button class="btn"><span class="ai">AI</span>Draft candidates</button></section>
+    <div id="att"></div>
+    <div id="out"></div>
+    <section id="settings" aria-labelledby="set-h" style="display:flex;flex-direction:column;gap:14px;border-top:1px solid #1F2226;padding-top:24px;scroll-margin-top:72px">
+      <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap"><h2 id="set-h" style="margin:0;font-size:18px;font-weight:600">Marketing settings</h2><span class="muted" style="font-size:13px">brand kit for the design step · the Page that scheduling posts to</span></div>
+<div class="set-grid">
+  <section class="set" aria-labelledby="bk-h">
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <h3 id="bk-h">Brand kit <span class="pill" style="font-size:11px">MK-2</span></h3>
+      <span class="src">read from coins @ origin/main · d1b5d1a8 · 21:30 today</span>
+      <span class="muted" style="font-size:13px">Read-only. Change the brand in coins and it shows up here on the next read.</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <span class="lbl">Logo</span>
+      <div class="logos">
+        <figure><div class="logo-raw"><svg viewBox="0 0 23 23" width="40" height="40" fill="#B79F82" aria-hidden="true" ><path d="M8.24443 16.0935C8.575 16.0855 8.89899 16.0595 9.20728 16.016L9.22499 16.0132C9.90412 15.912 10.5598 15.7306 11.1741 15.4746C12.1264 15.0801 13.0198 14.4815 13.7569 13.7461C14.6252 12.9407 15.6289 13.1835 16.1943 13.7495C16.7595 14.3161 17.0023 15.3189 16.2012 16.18C15.6295 16.7586 14.6869 16.8475 14.0081 16.384C13.4738 16.0198 12.7407 16.2232 12.3681 16.6209C12.1507 16.8532 12.029 17.152 12.0344 17.4409C12.0404 17.7529 12.1832 18.04 12.4264 18.2289C13.1472 18.7894 14.0569 19.098 14.9878 19.098C16.0995 19.098 17.1663 18.658 17.9137 17.8926C19.0712 16.7523 19.4314 15.0775 18.8543 13.5226C18.2777 11.9698 16.916 10.9381 15.3015 10.8298C14.0889 10.7384 12.9047 11.1738 12.051 12.0278C11.2687 12.8118 10.279 13.3426 9.18899 13.5618C6.69531 14.0464 4.31076 12.9201 3.11364 10.6913C1.91965 8.46842 2.2985 5.86188 4.07934 4.05019C5.22561 2.86306 6.86845 2.27793 8.585 2.44421C10.3304 2.61278 11.8515 3.51106 12.7578 4.90875C13.0164 5.3076 13.4692 5.52303 13.9392 5.47017C14.3584 5.42446 14.7175 5.16903 14.8995 4.78733C15.0792 4.41019 15.0523 3.97705 14.8278 3.6282C13.5389 1.62765 11.2907 0.286809 8.81328 0.0410981C6.36388 -0.20147 4.01334 0.637948 2.36307 2.34136C-0.00175392 4.71618 -0.647174 8.11357 0.678809 11.2075C1.97622 14.2346 4.7999 16.0952 8.07557 16.0952C8.13157 16.0952 8.18814 16.0946 8.24443 16.0935Z"/><path d="M20.3738 8.9676C19.1347 7.85504 17.5338 7.13962 15.8661 6.95306C13.4496 6.67563 10.9873 7.53733 9.28221 9.26103C8.96021 9.58559 8.52765 9.76445 8.06423 9.76445C7.59909 9.76445 7.16738 9.58731 6.8511 9.26817C6.05539 8.39561 6.29653 7.47162 6.74453 6.94563C7.22452 6.3822 8.12708 6.02821 8.9745 6.58249C9.38507 6.85134 9.8782 6.87106 10.2936 6.6362C10.6613 6.42878 10.8905 6.05192 10.9068 5.62821C10.9225 5.21508 10.7288 4.83222 10.3888 4.60451C8.74593 3.50481 6.48567 3.72138 5.13283 5.10679C4.24942 5.96992 3.81714 7.19219 3.94628 8.46018C4.07542 9.72645 4.74341 10.8339 5.77883 11.4979C7.41652 12.5761 9.60992 12.3553 10.9948 10.973C12.2596 9.71416 14.0024 9.1356 15.7756 9.38617C16.9818 9.55874 18.1161 10.1222 18.9698 10.9727C20.0332 12.0361 20.6186 13.4521 20.6184 14.9601C20.6184 16.4684 20.0318 17.8849 18.9669 18.95C17.823 20.1346 16.1796 20.72 14.461 20.5563C12.7156 20.3875 11.1945 19.4889 10.2882 18.0912C10.0262 17.6869 9.58335 17.4746 9.10707 17.5301C8.68765 17.5755 8.32879 17.8309 8.1468 18.2129C7.96708 18.5898 7.99394 19.0232 8.21851 19.372C9.50735 21.3732 11.7576 22.7143 14.2373 22.9597C14.5119 22.9869 14.7899 23.0006 15.0633 23.0006C17.2258 23.0006 19.2215 22.1689 20.6821 20.6609C22.2349 19.1175 23.092 16.9629 23.0338 14.7495C22.9755 12.5356 22.0061 10.4282 20.3738 8.96846V8.9676Z"/></svg></div><figcaption>swirl.svg</figcaption></figure>
+        <figure><img src="../MK-kit/profile/profile-tan-white-swirl.png" alt="Tan circle, white swirl"><figcaption>tan / white</figcaption></figure>
+        <figure><img src="../MK-kit/profile/profile-white-tan-swirl.png" alt="White circle, tan swirl"><figcaption>white / tan</figcaption></figure>
+        <figure><img src="../MK-kit/profile/profile-tan-black-swirl.png" alt="Tan circle, black swirl"><figcaption>tan / black</figcaption></figure>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <span class="lbl">Colours</span>
+      <div class="sw">
+        <div><i style="background:#B79F82"></i><span>Tan</span><code>#B79F82</code></div>
+        <div><i style="background:#222222"></i><span>Ink</span><code>#222222</code></div>
+        <div><i style="background:#FFFFFF"></i><span>Card</span><code>#FFFFFF</code></div>
+        <div><i style="background:#F4F2EF"></i><span>Canvas</span><code>#F4F2EF</code></div>
+        <div><i style="background:#F8ECE0"></i><span>Key-date wash</span><code>#F8ECE0</code></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <span class="lbl">Type · 5px radius · soft halo</span>
+      <div class="font bp" style="box-shadow:0 10px 32px -6px rgba(183,159,130,.45)">
+        <div style="font-size:26px;font-weight:600;letter-spacing:-.01em">Carson City Morgans</div>
+        <div style="font-size:15px;color:#555">9 of 13 slots filled</div>
+        <div style="font:400 11px 'Geist Mono',monospace;color:#8A8178;margin-top:8px">Instrument Sans · 400 500 600 700</div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <span class="lbl">Photo library · 11 images</span>
+      <div class="lib">
+        <img class="c" src="../MK-kit/coins/Morgan-obverse.jpg" alt="Morgan dollar, obverse">
+        <img class="c" src="../MK-kit/coins/Morgan-reverse.jpg" alt="Morgan dollar, reverse">
+        <img class="c" src="../MK-kit/coins/Peace-obverse.jpg" alt="Peace dollar, obverse">
+        <img class="c" src="../MK-kit/coins/Peace-reverse.jpg" alt="Peace dollar, reverse">
+        <img class="c" src="../MK-kit/coins/Mercury--Winged-Liberty--obverse.jpg" alt="Mercury dime, obverse">
+        <img class="c" src="../MK-kit/coins/Mercury--Winged-Liberty--reverse.jpg" alt="Mercury dime, reverse">
+        <img class="c" src="../MK-kit/coins/Flowing-Hair-obverse.jpg" alt="Flowing Hair dollar, obverse">
+        <img class="c" src="../MK-kit/coins/Flowing-Hair-reverse.jpg" alt="Flowing Hair dollar, reverse">
+        <img class="cv" src="../MK-kit/covers/cover-1-welcome-home.png" alt="Cover: welcome home">
+        <img class="cv" src="../MK-kit/covers/cover-2-the-collection.png" alt="Cover: the collection">
+        <img class="cv" src="../MK-kit/covers/cover-3-organize-track-share.png" alt="Cover: organize, track, share">
+      </div>
+    </div>
+  </section>
+
+  <section class="set" aria-labelledby="fbc-h">
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <h3 id="fbc-h"><span class="fb"><svg width="12" height="12" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M14 8h3V4h-3c-2.8 0-4.5 1.8-4.5 4.6V11H7v4h2.5v9h4v-9H17l.6-4h-4.1V8.9c0-.6.3-.9.5-.9z"/></svg></span>Facebook Page <span class="pill" style="font-size:11px">MK-12</span></h3>
+      <span class="muted" style="font-size:13px">Where approved posts go. Only Facebook for now.</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <img src="../MK-kit/profile/profile-tan-white-swirl.png" alt="" width="48" height="48" style="border-radius:50%">
+      <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+        <strong style="font-size:15px">StackerMint</strong>
+        <span class="muted" style="font-size:12px">Page · connected Fri 18 Sep by Mike</span>
+      </div>
+    </div>
+    <div>
+      <div class="tok"><span class="pill s-posted">Verified</span><span class="soft">Token checked 21:30 today</span><span class="muted" style="margin-left:auto">expires in 41 days</span></div>
+    </div>
+    <p class="muted" style="margin:0;font-size:12px;line-height:1.5">The token itself is never shown, logged or sent to the browser. Only its status is.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm">Check now</button><button class="btn sm danger">Disconnect</button></div>
+    <div style="display:flex;flex-direction:column;gap:0;border-top:1px dashed #33373D;padding-top:10px">
+      <span class="lbl" style="margin-bottom:4px">Other token states</span>
+      <div class="tok"><span class="pill s-draft">Expires soon</span><span class="soft">expires in 6 days</span><button class="btn sm" style="margin-left:auto">Renew</button></div>
+      <div class="tok"><span class="pill s-failed">Expired</span><span class="soft">since Sun 11 Oct 18:52 · scheduled posts are on hold</span><button class="btn sm pri" style="margin-left:auto">Reconnect</button></div>
+      <div class="tok"><span class="pill s-idea">Not connected</span><span class="soft">drafts and approvals still work; scheduling is off</span><button class="btn sm pri" style="margin-left:auto">Connect a Page</button></div>
+    </div>
+  </section>
+</div>
+    </section>
+    <section class="states" aria-label="States">
+      <div class="tile"><h2>Empty · first visit</h2>
+        <p>No posts yet. Start with an idea, or let AI draft a few from the idea menu. Nothing posts until you confirm it.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm pri">Add an idea</button><button class="btn sm"><span class="ai">AI</span>Draft 3 candidates</button></div></div>
+      <div class="tile"><h2>Empty · filters match nothing</h2>
+        <p>No posts match <span class="mono">“1916-D”</span> in Posted. <a href="#">Clear filters</a></p>
+        <span class="muted" style="font-size:12px">Try it above: type 1916-D and pick Posted.</span></div>
+      <div class="tile"><h2>No Facebook Page yet</h2>
+        <p>Ideas, drafts and approvals all work. Schedule is greyed out with “Connect a Page in Marketing settings first.”</p></div>
+      <div class="tile"><h2>Loading</h2><div aria-busy="true" style="display:flex;flex-direction:column;gap:10px"><span style="display:block;height:10px;border-radius:5px;background:#26292E;width:80%"></span><span style="display:block;height:10px;border-radius:5px;background:#26292E;width:55%"></span></div><span class="muted" style="font-size:12px">Engagement arrives after the list; the list never waits on Facebook.</span></div>
+    </section>
+  </main>
+</div>
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dr-title" aria-hidden="true"></aside>
+<script>
+const K='../MK-kit/';
+// Real kit captions; engagement figures are sample values.
+const P=[
+ {id:1,img:'posts/01-post-welcome.png',kind:'post',tags:['How it works','Beta & launch'],st:'posted',when:'Fri 18 Sep · 09:00',cap:"Hi, we're StackerMint 👋\n\nA home for your coins, notes, and bullion. Organize it, see what it's worth, and show it off.",notes:'Pinned to the top of the Page.',fb:{r:142,c:23,reach:3410}},
+ {id:2,img:'posts/02-post-cotw.png',kind:'post',tags:['Coin of the week','Show & tell'],st:'posted',when:'Mon 21 Sep · 12:00',cap:"Coin of the week: an 1800 $5 Capped Bust half eagle.\n\nThe Mint was eight years old when this was struck. Most early gold was melted, so few survive.",notes:'',fb:{r:88,c:14,reach:1960}},
+ {id:3,img:'posts/03-ad-value.png',kind:'ad',tags:['How it works'],st:'posted',when:'Wed 23 Sep · 08:00',cap:"What's your collection worth today?\n\nStackerMint keeps a running value and shows how it's grown.",head:'Know what your collection is worth',btn:'Sign up',notes:'Ran 7 days. Spend and targeting are set in Ads Manager, not here.',fb:{r:61,c:5,reach:8240}},
+ {id:4,img:'posts/04-post-set-building.png',kind:'post',tags:['Sets','Ask the community'],st:'posted',when:'Fri 25 Sep · 18:00',cap:'What set are you building right now?',notes:'Most comments so far. Lots of Barber dimes in the replies, worth a follow-up post.',fb:{r:117,c:64,reach:2880}},
+ {id:5,img:'posts/05-post-set-cc.png',kind:'post',tags:['Sets'],st:'posted',when:'Tue 29 Sep · 18:00',cap:'Carson City Morgans. Thirteen coins, 1878 to 1893.\n\nNine down. The 1889-CC is the hard one.',notes:'',fb:{r:203,c:31,reach:4120}},
+ {id:6,img:'posts/13-post-share.png',kind:'post',tags:['How it works'],st:'posted',when:'Fri 2 Oct · 12:00',cap:'Your collection deserves better than a camera roll.\n\nShare the whole thing with one link.',notes:'',fb:{r:54,c:6,reach:1310}},
+ {id:7,img:'posts/10-post-tv-tuesday.png',kind:'post',tags:['Toned & TrueView','Ask the community'],st:'posted',when:'Tue 6 Oct · 18:00',cap:'TrueView Tuesday 🌈\n\nA Morgan with a century of album toning. Show us your best toner.',notes:'',fb:{r:176,c:48,reach:3970}},
+ {id:8,img:'posts/11-post-tv-sides.png',kind:'post',tags:['Toned & TrueView','How it works'],st:'missed',when:'was Sat 10 Oct · 10:00',cap:'Both sides of the story.\n\nEvery coin gets a clean front and back.',notes:'',err:'Missed. The scheduler was not running on Saturday morning, so nothing went out. Reschedule it or drop it.'},
+ {id:9,img:'posts/14-ad-invite.png',kind:'ad',tags:['Beta & launch'],st:'failed',when:'Sun 11 Oct · 19:00',cap:"We're letting collectors in a few at a time.\n\nRequest an invite. One email when it's your turn.",head:'Request a beta invite',btn:'Sign up',notes:'',err:'Facebook refused it: the Page token had expired at 18:52. The token is renewed now, so Retry should work.'},
+ {id:10,img:'posts/06-post-set-last.png',kind:'post',tags:['Sets'],st:'scheduled',when:'Tue 13 Oct · 18:00',cap:'76 down. One to go.\n\nThe 1916-D Mercury dime. Only 264,000 made.',notes:''},
+ {id:11,img:'posts/12-post-toned.png',kind:'post',tags:['Toned & TrueView','Did you know'],st:'scheduled',when:'Thu 15 Oct · 12:00',cap:'Toning is chemistry, not damage.\n\nNatural color can add value. Cleaning almost always takes it away.',notes:''},
+ {id:12,img:'posts/07-post-set-done.png',kind:'post',tags:['Sets'],st:'approved',when:'',cap:'Set complete. All 24 Peace dollars, 1921 to 1935.',notes:'Hold until the Mercury one has been up a few days.'},
+ {id:13,img:'posts/08-post-typeset.png',kind:'post',tags:['Sets','Did you know'],st:'approved',when:'',cap:'A type set is one of each design, not every date.\n\nFour down, two to go.',notes:''},
+ {id:14,img:'posts/09-post-pick.png',kind:'post',tags:['Ask the community'],st:'draft',ai:true,from:'Rarity or condition?',when:'',cap:'Same money. Only one stays.\n\n1795 Flowing Hair dollar, PCGS VF25. Or a common-date Saint-Gaudens $20, like a 1924, in PCGS MS67. Both around $10,000.\n\nRarity or condition?',notes:'Check both prices against this week before it goes out.'},
+ {id:15,img:'posts/15-ad-stack.png',kind:'ad',tags:['How it works'],st:'draft',when:'',cap:'Coins, paper money, and bullion. All in one place.',head:'One home for the whole stack',btn:'Sign up',notes:''},
+ {id:16,img:'coins/Morgan-reverse.jpg',raw:true,kind:'post',tags:['Toned & TrueView','Ask the community'],st:'draft',ai:true,from:'Rate the rainbow',when:'',cap:'Rate this toning, 1 to 10.',notes:'Raw library photo. Needs the TrueView frame before approval.'},
+ {id:17,img:'coins/Mercury--Winged-Liberty--reverse.jpg',raw:true,kind:'post',tags:['Did you know'],st:'draft',ai:true,from:'Mint marks',when:'',cap:'That tiny letter matters. D is Denver, S is San Francisco, O is New Orleans, CC is Carson City.',notes:''},
+ {id:18,img:'coins/Mercury--Winged-Liberty--obverse.jpg',raw:true,kind:'post',tags:['Sets','Did you know'],st:'draft',ai:true,from:'Key date spotlight',when:'',cap:"Every set has a wall. For Mercury dimes, it's the 1916-D. Only 264,000 were made.",notes:'Overlaps the scheduled 76-down post. Run it a week later or drop it.'},
+ {id:19,kind:'post',tags:['Toned & TrueView'],st:'idea',idea:'Album toning',cap:'That rainbow came from sitting in an old paper album for decades. The sulfur in the paper did the work.',notes:''},
+ {id:20,kind:'post',tags:['Show & tell','Ask the community'],st:'idea',idea:'First coin story',cap:"What was the first coin you ever kept? Ours was a wheat cent out of a jar at Grandma's.",notes:''},
+ {id:21,kind:'post',tags:['Ask the community'],st:'idea',idea:'Dream coin',cap:'Money is no object. What one coin are you buying?',notes:''},
+ {id:22,kind:'post',tags:['Did you know'],st:'idea',idea:'Proof vs. business strike',cap:"Proofs were struck twice on polished dies for collectors. That's why they shine like mirrors.",notes:''},
+ {id:23,kind:'post',tags:['Show & tell'],st:'idea',idea:'Slab shot Saturday',cap:"It's Saturday. Show us your favorite slab.",notes:''},
+ {id:24,kind:'ad',tags:['How it works'],st:'idea',idea:'Spreadsheets are out',cap:"Still keeping your collection in a spreadsheet? There's a better way.",notes:'Could be the next ad.'},
+ {id:25,kind:'post',tags:['Beta & launch'],st:'idea',idea:'Bring a friend',cap:'Know a collector who still uses a spreadsheet? Send them our way.',notes:''},
+];
+P.forEach(p=>{p.when=p.when||'';p.notes=p.notes||'';});
+const SL={idea:'Idea',draft:'Draft',approved:'Approved',scheduled:'Scheduled',posted:'Posted',missed:'Missed',failed:'Failed'};
+const F={q:'',status:'all',tag:'all',kind:'all',ai:false};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const n=v=>v.toLocaleString('en-US');
+const first=p=>p.idea||p.cap.split('\n')[0];
+const pill=p=>`<span class="pill s-${p.st}">${SL[p.st]}</span>`;
+const aiMark=p=>p.ai?'<span class="ai" title="AI candidate, not confirmed">AI</span>':'';
+const kindMark=p=>p.kind==='ad'?'<span class="kind">Ad</span>':'';
+const tagList=p=>p.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join(' ');
+const I={heart:'<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.5-9.1C1 8.4 3.3 5 6.8 5c2 0 3.4 1.1 4.2 2.3h2C13.8 6.1 15.2 5 17.2 5 20.7 5 23 8.4 21.5 11.9 19.5 16.4 12 21 12 21z"/></svg>',
+ chat:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>',
+ eye:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>'};
+const eng=p=>p.fb?`<span class="eng" aria-label="${p.fb.r} reactions, ${p.fb.c} comments, reach ${p.fb.reach}"><span>${I.heart}${p.fb.r}</span><span>${I.chat}${p.fb.c}</span><span>${I.eye}${n(p.fb.reach)}</span></span>`:'';
+function match(p){
+  if(F.status!=='all'){ if(F.status==='attention'){ if(!['missed','failed'].includes(p.st)) return false; } else if(p.st!==F.status) return false; }
+  if(F.tag!=='all'&&!p.tags.includes(F.tag)) return false;
+  if(F.kind!=='all'&&p.kind!==F.kind) return false;
+  if(F.ai&&!p.ai) return false;
+  if(F.q){const h=(p.cap+' '+(p.idea||'')+' '+p.notes+' '+(p.from||'')+' '+p.tags.join(' ')).toLowerCase(); if(!h.includes(F.q.toLowerCase())) return false;}
+  return true;
+}
+const list=()=>P.filter(match);
+const anyFilter=()=>F.q||F.status!=='all'||F.tag!=='all'||F.kind!=='all'||F.ai;
+function emptyHint(){
+  const bits=[]; if(F.q) bits.push(`“${esc(F.q)}”`); if(F.status!=='all') bits.push(F.status==='attention'?'missed or failed':SL[F.status]); if(F.tag!=='all') bits.push(esc(F.tag)); if(F.kind!=='all') bits.push(F.kind==='ad'?'ads':'posts'); if(F.ai) bits.push('AI candidates');
+  return `<div class="empty"><strong style="color:#F2F1EE">Nothing matches ${bits.join(' · ')}.</strong><span class="muted">Search looks at captions, notes, idea titles and tags.</span><button class="btn sm" onclick="clearF()">Clear filters</button></div>`;
+}
+function clearF(){F.q='';F.status='all';F.tag='all';F.kind='all';F.ai=false;
+  document.querySelectorAll('[data-f]').forEach(el=>{ if(el.tagName==='INPUT'&&el.type!=='checkbox') el.value=''; else if(el.tagName==='SELECT') el.value='all'; else if(el.type==='checkbox') el.checked=false; else el.setAttribute('aria-pressed', el.dataset.v==='all'?'true':'false'); });
+  render();}
+document.addEventListener('input',e=>{const el=e.target; if(!el.dataset||!el.dataset.f) return; F[el.dataset.f]=el.type==='checkbox'?el.checked:el.value; render();});
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button[data-f]'); if(b){ const f=b.dataset.f; if(f==='ai'){F.ai=!F.ai;b.setAttribute('aria-pressed',F.ai);} else { F[f]=b.dataset.v; document.querySelectorAll(`button[data-f="${f}"]`).forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false')); } render(); return; }
+  const o=e.target.closest('[data-open]'); if(o){ e.preventDefault(); peek(+o.dataset.open); }
+});
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closePeek(); const o=e.target.closest&&e.target.closest('[data-open]'); if(o&&(e.key==='Enter'||e.key===' ')&&o.tagName!=='A'&&o.tagName!=='BUTTON'){e.preventDefault();peek(+o.dataset.open);} });
+const dr=document.getElementById('drawer');
+document.getElementById('scrim').onclick=closePeek;
+function openDrawer(html,wide){ dr.innerHTML=html; dr.classList.toggle('wide',!!wide); document.body.classList.add('peek'); dr.setAttribute('aria-hidden','false'); setTimeout(()=>{const x=dr.querySelector('.x'); x&&x.focus();},60); }
+function closePeek(){ document.body.classList.remove('peek'); dr.setAttribute('aria-hidden','true'); }
+const XBTN='<button class="x" onclick="closePeek()" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
+function preview(p){
+  const sub=p.kind==='ad'?'Sponsored':(p.st==='posted'?p.when.replace(' · ',' at '):(p.when?'Scheduled '+p.when:'Not scheduled'));
+  const img=p.img?`<img class="bp-img${p.raw?' raw':''}" src="${K+p.img}" alt="Post image for: ${esc(first(p))}">`:`<div class="bp-none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>No image yet. The design step makes one.</div>`;
+  const ad=p.kind==='ad'&&p.head?`<div class="bp-ad"><b>${esc(p.head)}</b><span>${esc(p.btn)}</span></div>`:'';
+  const foot=p.fb?`<div class="bp-foot"><span>${p.fb.r} reactions</span><span>${p.fb.c} comments</span></div>`:'';
+  return `<div class="bp"><div class="bp-h"><img src="${K}profile/profile-tan-white-swirl.png" alt=""><div><b>StackerMint</b><span>${esc(sub)}</span></div></div><p class="bp-cap">${esc(p.cap)}</p>${img}${ad}${foot}</div>`;
+}
+function fbRow(p){
+  let body='';
+  if(p.st==='posted') body=`<div class="stats"><div class="stat"><span class="v">${p.fb.r}</span><span class="k">reactions</span></div><div class="stat"><span class="v">${p.fb.c}</span><span class="k">comments</span></div><div class="stat"><span class="v">${n(p.fb.reach)}</span><span class="k">reach</span></div></div><span class="muted" style="font-size:12px">Synced 21:30 today <span class="sample">sample</span></span>`;
+  else if(p.st==='scheduled') body=`<span class="soft" style="font-size:13px">Goes to the StackerMint Page ${esc(p.when)}. Engagement shows here after it posts.</span>`;
+  else if(p.err) body=`<span class="err">${esc(p.err)}</span>`;
+  else body=`<span class="muted" style="font-size:13px">Not on Facebook yet.</span>`;
+  const link=p.st==='posted'?'<a href="#" style="margin-left:auto;font-size:13px">Open on Facebook ↗</a>':`<span class="muted" style="margin-left:auto;font-size:12px">${SL[p.st].toLowerCase()}</span>`;
+  return `<section class="net" aria-label="Facebook"><div class="net-h"><span class="fb"><svg width="12" height="12" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M14 8h3V4h-3c-2.8 0-4.5 1.8-4.5 4.6V11H7v4h2.5v9h4v-9H17l.6-4h-4.1V8.9c0-.6.3-.9.5-.9z"/></svg></span><strong>Facebook</strong><span class="muted" style="font-size:12px">StackerMint Page</span>${link}</div>${body}</section>`;
+}
+function actions(p){
+  return {idea:'<button class="btn pri">Draft it</button><button class="btn"><span class="ai">AI</span>Draft with AI</button><button class="btn">Edit</button>',
+   draft:'<button class="btn pri">Approve</button><button class="btn">Edit</button><button class="btn danger">Discard</button>',
+   approved:'<button class="btn pri">Schedule</button><button class="btn">Back to draft</button>',
+   scheduled:'<button class="btn">Change time</button><button class="btn">Unschedule</button>',
+   posted:'<button class="btn">Refresh engagement</button><button class="btn">Duplicate as idea</button>',
+   missed:'<button class="btn pri">Reschedule</button><button class="btn danger">Drop</button>',
+   failed:'<button class="btn pri">Retry now</button><button class="btn">Reschedule</button>'}[p.st];
+}
+function peek(id){
+  const p=P.find(x=>x.id===id);
+  const conf=p.ai?`<div class="confirm"><span class="ai">AI</span><span>AI candidate from the idea <strong>“${esc(p.from)}”</strong>. It stays a draft until you approve it, and nothing posts until you confirm a time.</span></div>`:'';
+  const when=p.when?`<dt>${p.st==='posted'?'Posted':p.st==='scheduled'?'Scheduled':'When'}</dt><dd>${esc(p.when)}</dd>`:'';
+  openDrawer(`<div class="dr-h">${pill(p)}${kindMark(p)}${aiMark(p)}<h2 id="dr-title" class="sr">${esc(first(p))}</h2><span class="mono faint" style="font-size:12px">MK post #${p.id}</span>${XBTN}</div>
+  <div class="dr-b">${conf}${p.idea?`<div style="display:flex;flex-direction:column;gap:4px"><span class="lbl">Idea</span><strong style="font-size:18px">${esc(p.idea)}</strong></div>`:''}${preview(p)}
+  <dl class="meta"><dt>Kind</dt><dd>${p.kind==='ad'?'Ad':'Post'}</dd><dt>Tags</dt><dd>${p.tags.map(esc).join(', ')}</dd>${when}<dt>Source</dt><dd>${p.ai?'AI candidate':(p.idea?'Idea menu':'StackerMint kit')}</dd></dl>
+  <div style="display:flex;flex-direction:column;gap:8px"><span class="lbl">Notes</span>${p.notes?`<p class="note">${esc(p.notes)}</p>`:'<p class="note muted" style="color:#7E8187">No notes. Add one so future-you knows why.</p>'}</div>
+  ${fbRow(p)}</div><div class="dr-f">${actions(p)}</div>`);
+}
+function openSettings(){ openDrawer(`<div class="dr-h"><h2 id="dr-title" style="margin:0;font-size:16px;font-weight:600">Marketing settings</h2><span class="muted" style="font-size:12px">coins</span>${XBTN}</div><div class="dr-b">${document.getElementById('settings-tpl').innerHTML}</div>`,true); }
+
+const COLS=[['idea','Idea','#7E8187'],['draft','Draft','#F2A33A'],['approved','Approved','#8EBBF2'],['scheduled','Scheduled','#C3A8F0'],['posted','Posted','#7CD1A4']];
+const IDEA_ICON='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>';
+function card(p){
+  const im=p.img?`<img class="im${p.raw?' raw':''}" src="${K+p.img}" alt="" loading="lazy">`:`<span class="im none">${IDEA_ICON}</span>`;
+  const foot=p.fb?eng(p):`<span>${esc(p.when)}</span>`;
+  return `<div class="kc ${p.err?'bad':''}" data-open="${p.id}" tabindex="0" role="button" aria-label="Open ${esc(first(p))}">${im}<div class="tx"><span class="t">${esc(p.idea?p.idea+' — '+p.cap:p.cap.replace(/\n+/g,' '))}</span><div>${tagList(p)}</div><div class="f">${aiMark(p)}${kindMark(p)}${foot}</div>${p.err?`<span class="err" style="font-size:12px">${p.st==='missed'?'Missed its slot · '+esc(p.when.replace('was ','')):'Facebook refused it · token expired'}</span>`:''}</div></div>`;
+}
+function render(){
+  const L=list(); const bad=L.filter(p=>p.err);
+  document.getElementById('att').innerHTML=bad.length?`<section class="att" aria-label="Needs attention"><div style="display:flex;gap:8px;align-items:center"><strong style="color:#F59088;font-size:14px">Needs attention</strong><span class="mono faint" style="font-size:12px">${bad.length}</span><span class="muted" style="font-size:12px">missed or failed. They leave this strip once rescheduled or dropped.</span></div><div class="row">${bad.map(card).join('')}</div></section>`:'';
+  if(!L.length){ document.getElementById('out').innerHTML=emptyHint(); return; }
+  document.getElementById('out').innerHTML='<div class="board">'+COLS.map(([k,l,c])=>{ const cs=L.filter(p=>p.st===k);
+    return `<details class="col" open><summary><span class="dot-st" style="background:${c}"></span>${l}<span class="c">${cs.length}</span></summary><div class="cards">${cs.length?cs.map(card).join(''):'<div class="none-c">Nothing here with these filters.</div>'}</div></details>`; }).join('')+'</div>';
+}
+
+render();
+</script>
+</body>
+</html>

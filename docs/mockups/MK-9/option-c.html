@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MK-9 option C — Marketing review, timeline and compare</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;family=Instrument+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+/* Shell tokens, copied from the RD-7 approved mockup (resources/css/app.css shell values). */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;background:#0E0F11;color:#F2F1EE;font-family:Geist,system-ui,sans-serif;-webkit-text-size-adjust:100%}
+a{color:#F2A33A;text-decoration:none}a:hover{color:#FFC26B;text-decoration:underline;text-underline-offset:3px}
+a:focus-visible,button:focus-visible{outline:2px solid #F2A33A;outline-offset:2px}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.card{background:#16181B;border:1px solid #26292E;border-radius:12px}
+.lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9A9DA3;font-weight:500}
+.muted{color:#9A9DA3}.faint{color:#7E8187}.soft{color:#C9CBCF}
+.navi{display:flex;align-items:center;gap:10px;padding:0 12px;border-radius:8px;color:#C9CBCF;font-size:14px;min-height:44px}
+.navi:hover{background:#1D2024;color:#F2F1EE;text-decoration:none}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid #33373D;color:#C9CBCF;white-space:nowrap}
+.t-built{border-color:#2D5A44;color:#7CD1A4}.t-fix{border-color:#2D5A44;color:#7CD1A4}
+.t-draft{border-color:#5C4219;color:#F2A33A}.t-ready{border-color:#2B4A6E;color:#8EBBF2}
+.t-docs{border-color:#33373D;color:#9A9DA3}.t-fail{border-color:#6B2F2B;color:#F59088}.t-pass{border-color:#2D5A44;color:#7CD1A4}
+.t-pick{border-color:#4A3B6B;color:#C3A8F0}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+.live{background:#6CA6F0;box-shadow:0 0 0 4px rgba(108,166,240,.18)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:8px;font:500 14px Geist,sans-serif;border:1px solid #33373D;background:#1D2024;color:#F2F1EE;cursor:pointer}
+.btn:hover{background:#24282D;color:#F2F1EE;text-decoration:none}
+.bar{height:8px;border-radius:4px;background:#26292E;overflow:hidden;display:flex}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.sample{display:inline-block;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#C3A8F0;border:1px dashed #4A3B6B;border-radius:4px;padding:0 5px;margin-left:6px;vertical-align:1px}
+.legend{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;font-size:13px;color:#C9CBCF;padding:12px 16px;border:1px solid #26292E;border-radius:10px;background:#121417}
+.legend i{display:inline-block;width:22px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:6px}
+/* Shell frame: sidebar on desktop, top bar + drawer below 768px (as layouts/shell does). */
+.shell{display:flex;min-height:100vh}
+.side{width:232px;flex:none;padding:20px 14px;border-right:1px solid #1F2226;display:flex;flex-direction:column;gap:22px}
+.topbar{display:none}
+main{flex:1;min-width:0;padding:28px 32px 56px;display:flex;flex-direction:column;gap:24px}
+.crumb{font-size:12px;color:#9A9DA3}.crumb a{color:#9A9DA3}
+.tabs{display:flex;gap:24px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid #1F2226;font-size:14px;padding-bottom:1px}
+.tabs a{flex:none;color:#9A9DA3;padding-bottom:12px;margin-bottom:-2px;border-bottom:2px solid transparent;min-height:36px}
+.tabs a:hover{color:#F2F1EE;text-decoration:none}
+.tabs a[aria-current]{color:#F2F1EE;border-color:#F2F1EE;font-weight:500}
+.tabs .new{font-size:10px;color:#F2A33A;margin-left:4px;vertical-align:2px}
+@media (max-width:767px){
+  .side{display:none}
+  .shell{flex-direction:column}
+  .topbar{display:flex;position:sticky;top:0;z-index:5;height:56px;align-items:center;gap:8px;padding:0 8px;border-bottom:1px solid #1F2226;background:rgba(14,15,17,.95)}
+  main{padding:20px 16px 48px;gap:20px}
+  .tabs{gap:18px}
+}
+
+/* Marketing sub-nav (second row under the project tabs). */
+.subnav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;margin-top:-8px}
+.subnav a{flex:none;display:inline-flex;align-items:center;min-height:36px;padding:0 12px;border-radius:999px;color:#9A9DA3;font-size:13px}
+.subnav a:hover{background:#1D2024;color:#F2F1EE;text-decoration:none}
+.subnav a[aria-current]{background:#1D2024;color:#F2F1EE;font-weight:500;box-shadow:inset 0 0 0 1px #33373D}
+.subnav .n{font-family:'Geist Mono',monospace;font-size:11px;color:#1A1205;background:#F2A33A;border-radius:999px;padding:0 6px;margin-left:6px}
+.btn-p{background:#F2A33A;border-color:#F2A33A;color:#1A1205}
+.btn-p:hover{background:#FFC26B;color:#1A1205}
+.btn-g{background:transparent}
+.btn-d{border-color:#6B2F2B;color:#F59088;background:transparent}
+.btn-s{min-height:36px;padding:0 12px;font-size:13px}
+kbd{font-family:'Geist Mono',monospace;font-size:11px;border:1px solid #33373D;border-bottom-width:2px;border-radius:4px;padding:0 5px;color:#C9CBCF;background:#121417}
+textarea,input[type=text],input[type=datetime-local]{width:100%;background:#0E0F11;border:1px solid #33373D;border-radius:8px;color:#F2F1EE;font:14px/1.5 Geist,sans-serif;padding:10px 12px}
+textarea:focus,input:focus{outline:2px solid #F2A33A;outline-offset:1px;border-color:#5C4219}
+.t-miss{border-color:#6B2F2B;color:#F59088}.t-skip{border-color:#33373D;color:#7E8187;text-decoration:line-through}
+.t-empty{border-style:dashed;color:#7E8187}.t-sent{border-color:#2D5A44;color:#7CD1A4}
+/* Progress strip: the next two weeks' slots as chips, one per slot. */
+.strip{display:flex;gap:8px;overflow-x:auto;scrollbar-width:thin;padding-bottom:4px}
+.chip{flex:1 0 124px;display:flex;flex-direction:column;gap:3px;text-align:left;padding:9px 11px;border-radius:10px;border:1px solid #26292E;background:#16181B;color:#C9CBCF;font:12px Geist,sans-serif;cursor:pointer;min-height:44px;position:relative}
+.chip:hover{background:#1A1D21}
+.chip b{font-weight:500;color:#F2F1EE;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip .w{font-family:'Geist Mono',monospace;font-size:11px;color:#9A9DA3}
+.chip .s{display:flex;align-items:center;gap:6px;font-size:11px}
+.chip[aria-current]{border-color:#F2A33A;box-shadow:0 0 0 1px #F2A33A inset}
+.chip.c-confirmed .s{color:#7CD1A4}.chip.c-review .s{color:#F2A33A}.chip.c-empty{border-style:dashed}.chip.c-empty .s{color:#7E8187}
+.chip.c-missed{border-color:#6B2F2B;background:#1E1514}.chip.c-missed .s{color:#F59088}.chip.c-skipped .s{color:#7E8187}.chip.c-sent .s{color:#7CD1A4}
+.sd{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+.c-empty .sd{background:transparent;border:1px dashed currentColor}
+.daysep{flex:none;align-self:stretch;width:1px;background:#33373D;margin:0 2px}
+/* Copy-rules check list. */
+.checks{display:flex;flex-direction:column;gap:6px;font-size:13px;margin:0;padding:0;list-style:none}
+.checks li{display:flex;gap:8px;align-items:flex-start;line-height:1.4}
+.checks .i{flex:none;width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin-top:1px}
+.checks .ok .i{background:#173326;color:#7CD1A4}.checks .bad .i{background:#3A1C1A;color:#F59088}
+.checks .ok{color:#C9CBCF}.checks .bad{color:#F2F1EE}
+.checks small{color:#9A9DA3;display:block}
+.fields{display:grid;grid-template-columns:minmax(0,110px) minmax(0,1fr);gap:6px 12px;font-size:13px;margin:0}
+.fields dt{color:#9A9DA3}.fields dd{margin:0;color:#F2F1EE;overflow-wrap:anywhere}
+.missed{display:flex;gap:14px;align-items:center;flex-wrap:wrap;border:1px solid #6B2F2B;background:#1E1514;border-radius:12px;padding:12px 14px}
+.missed .mt{flex:1;min-width:220px;font-size:14px;line-height:1.5;color:#F2F1EE}
+.missed .mt span{color:#C9CBCF}
+.missed img{width:56px;height:56px;border-radius:5px;flex:none}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#16181B;border:1px solid #2D5A44;color:#F2F1EE;border-radius:10px;padding:12px 16px;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.5);display:none;z-index:20;max-width:calc(100vw - 32px)}
+.toast.on{display:flex;gap:12px;align-items:center}
+
+/* ---- StackerMint post preview (LIGHT brand style, rendered at 1:1, scales with its box) ---- */
+.sm{container-type:inline-size;position:relative;aspect-ratio:1/1;width:100%;overflow:hidden;border-radius:5px;background:#F4F4F3;color:#222;font-family:'Instrument Sans',system-ui,sans-serif}
+.sm img.full{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.sm .lab{position:absolute;left:7cqw;top:6.6cqw;font-size:3cqw;letter-spacing:.14em;text-transform:uppercase;color:#6B6B6B;font-weight:500}
+.sm .brand{position:absolute;right:7cqw;top:5.8cqw;display:flex;align-items:center;gap:1.4cqw;font-size:2.9cqw;font-weight:500;color:#222}
+.sm .brand svg{width:3.2cqw;height:3.2cqw;fill:#B79F82}
+.sm .beta{font-size:1.6cqw;font-weight:600;letter-spacing:.06em;background:#F6E8DA;color:#222;border-radius:.8cqw;padding:.4cqw 1cqw}
+.sm .card{position:absolute;left:22cqw;right:22cqw;top:22cqw;bottom:8.5cqw;background:#fff;border-radius:5px;box-shadow:0 0 0 1px rgba(0,0,0,.03),0 1.5cqw 5cqw rgba(0,0,0,.08);display:flex;flex-direction:column;align-items:center;padding:6cqw 3cqw 3cqw;gap:1.3cqw;text-align:center}
+.sm .coin{border-radius:50%;object-fit:cover;box-shadow:0 1cqw 3cqw rgba(0,0,0,.18)}
+.sm .card .coin{width:34cqw;height:34cqw}
+.sm .tt{font-weight:600;font-size:3.9cqw;letter-spacing:-.01em;line-height:1.15}
+.sm .st{font-size:2.8cqw;color:#6B6B6B}
+.sm .gp{display:inline-block;background:#222;color:#fff;font-weight:600;font-size:2.7cqw;letter-spacing:.12em;border-radius:.8cqw;padding:1.2cqw 3.4cqw;margin-top:.6cqw}
+.sm .cac{position:absolute;top:0;left:50%;transform:translate(-50%,-100%) translateY(5.4cqw);background:#6DB07A;color:#fff;font-weight:600;font-size:2.6cqw;padding:1cqw 2.2cqw;border-radius:0 0 .6cqw .6cqw}
+.sm.dark{background:#1B1B1B;color:#fff}
+.sm.dark .lab{color:#B79F82}.sm.dark .brand{color:#fff}
+.sm.dark .big{position:absolute;left:7cqw;top:12cqw;font-weight:600;font-size:9.6cqw;line-height:.98;letter-spacing:-.03em;z-index:2;text-shadow:0 .4cqw 2cqw rgba(0,0,0,.4)}
+.sm.dark .coin.hero{position:absolute;width:92cqw;height:92cqw;right:-26cqw;bottom:-22cqw;box-shadow:none;filter:saturate(1.1)}
+.sm.dark .foot{position:absolute;left:7cqw;bottom:6.5cqw;z-index:2}
+.sm.dark .foot .tt{font-size:3.4cqw}.sm.dark .foot .st{color:#CFCFCF;font-size:2.5cqw}
+.sm.dark .gp.w{position:absolute;right:7cqw;bottom:6.5cqw;background:#fff;color:#222;z-index:2}
+.sm .sides{position:absolute;left:7cqw;right:7cqw;top:30cqw;display:grid;grid-template-columns:1fr 1fr;gap:5cqw;text-align:center}
+.sm .sides .coin{width:100%;aspect-ratio:1;height:auto}
+.sm .sides .st{margin-top:2cqw}
+.sm .h1{position:absolute;left:7cqw;right:7cqw;top:13cqw;font-weight:600;font-size:7.4cqw;letter-spacing:-.03em;line-height:1.02}
+.sm.text .h1{top:26cqw;font-size:10.4cqw}
+.sm.text .sub{position:absolute;left:7cqw;right:16cqw;bottom:20cqw;font-size:3.6cqw;line-height:1.35;color:#444}
+.sm.text .rule{position:absolute;left:7cqw;right:7cqw;bottom:14cqw;height:1.2cqw;border-radius:1cqw;background:#E3E3E1;overflow:hidden}
+.sm.text .rule i{display:block;height:100%;width:38%;background:#B79F82}
+.sm.text .bb{position:absolute;left:7cqw;bottom:6cqw;display:flex;align-items:center;gap:1.4cqw;font-size:2.9cqw;font-weight:500}
+.sm.text .bb svg{width:3.2cqw;height:3.2cqw;fill:#B79F82}
+[hidden]{display:none!important}
+
+/* Like / dislike: taste signals on candidates and design variants. Never confirms anything. */
+.rate{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap}
+.rate>button{width:36px;height:36px;border-radius:8px;border:1px solid #33373D;background:#121417;color:#9A9DA3;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
+.rate>button:hover{color:#F2F1EE;background:#1D2024}
+.rate>button svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round}
+.rate>button.up[aria-pressed=true]{background:#173326;border-color:#2D5A44;color:#7CD1A4}
+.rate>button.up[aria-pressed=true] svg,.rate>button.dn[aria-pressed=true] svg{fill:currentColor;fill-opacity:.25}
+.rate>button.dn[aria-pressed=true]{background:#3A1C1A;border-color:#6B2F2B;color:#F59088}
+.rate .why{display:flex;gap:4px;flex-wrap:wrap;width:100%;margin-top:4px}
+.rate .why span{font-size:11px;color:#7E8187;align-self:center;margin-right:2px}
+.rate .why button{min-height:28px;padding:0 9px;border-radius:999px;border:1px dashed #6B2F2B;background:transparent;color:#C9CBCF;font:12px Geist,sans-serif;cursor:pointer}
+.rate .why button[aria-pressed=true]{border-style:solid;background:#3A1C1A;color:#F59088}
+.rate.sm-r>button{width:30px;height:30px}.rate.sm-r>button svg{width:14px;height:14px}
+.taste{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;border:1px solid #26292E;background:#121417;border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.5}
+.taste .tq{flex:1;min-width:220px;color:#C9CBCF}
+.taste .tq b{color:#F2F1EE;font-weight:500}
+.taste .lock{display:flex;gap:6px;align-items:flex-start;color:#9A9DA3;font-size:12px;flex:1;min-width:220px}
+.taste .lock svg{flex:none;margin-top:2px}
+.lean{display:inline-flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.lean span{font-size:11px;border:1px solid #2D5A44;color:#7CD1A4;border-radius:999px;padding:1px 8px}
+.lean span.n{border-color:#6B2F2B;color:#F59088}
+/* Legibility scrim behind the dark template's bottom-left caption (brand colours unchanged). */
+.sm.dark::after{content:"";position:absolute;inset:0;background:linear-gradient(20deg,rgba(27,27,27,.85) 0%,rgba(27,27,27,0) 45%);z-index:1;pointer-events:none}
+.sm.dark .foot{text-shadow:0 .3cqw 1.5cqw rgba(0,0,0,.6)}
+
+/* ---- Option C ---- */
+
+.split{display:grid;grid-template-columns:300px minmax(0,1fr);gap:24px;align-items:start}
+.tl{position:sticky;top:16px;display:flex;flex-direction:column;gap:4px;background:#16181B;border:1px solid #26292E;border-radius:12px;padding:14px 10px;max-height:calc(100vh - 32px);overflow:auto}
+.tl .day{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#7E8187;padding:12px 8px 4px;display:flex;justify-content:space-between}
+.tl .day:first-of-type{padding-top:2px}
+.ti{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:2px 10px;align-items:center;padding:8px;border-radius:8px;border:1px solid transparent;background:none;color:#C9CBCF;font:13px Geist,sans-serif;text-align:left;cursor:pointer;min-height:52px;width:100%}
+.ti:hover{background:#1D2024}
+.ti[aria-current]{background:#1D2024;border-color:#F2A33A}
+.ti .tm{font-family:'Geist Mono',monospace;font-size:12px;color:#9A9DA3;grid-row:span 2}
+.ti b{font-weight:500;color:#F2F1EE;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ti .sub{font-size:11px;grid-column:2}
+.ti .th{grid-row:span 2;width:36px}
+.ti .th .sm{border-radius:3px}
+.mini{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:3px;padding:0 8px 6px}
+.mini span{height:20px;border-radius:3px;background:#1D2024;position:relative}
+.mini span i{position:absolute;left:3px;right:3px;height:5px;border-radius:2px}
+.mini .lb{display:flex;justify-content:space-between;grid-column:1/-1;font-size:10px;color:#7E8187;background:none;height:auto}
+.grid{display:grid;grid-template-columns:repeat(var(--cols,2),minmax(0,1fr));gap:14px}
+.cc{background:#16181B;border:1px solid #26292E;border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;cursor:pointer;position:relative}
+.cc:hover{border-color:#33373D}
+.cc.hl{outline:2px solid #6CA6F0;outline-offset:2px}
+.cc.pk{border-color:#F2A33A;box-shadow:0 0 0 1px #F2A33A inset}
+.cc .cap{font-size:13px;color:#C9CBCF;line-height:1.45;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;min-height:56px}
+.vs{display:flex;gap:4px;flex-wrap:wrap}
+.vs button{min-height:28px;padding:0 8px;border-radius:999px;border:1px solid #33373D;background:transparent;color:#9A9DA3;font:11px Geist,sans-serif;cursor:pointer}
+.vs button[aria-pressed=true]{color:#16181B;background:#F2F1EE;border-color:#F2F1EE}
+.badge{white-space:nowrap;flex:none;font-size:11px;border-radius:999px;padding:2px 8px;border:1px solid}
+.badge.ok{color:#7CD1A4;border-color:#2D5A44}.badge.bad{color:#F59088;border-color:#6B2F2B}
+.ed{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:18px;background:#16181B;border:1px solid #5C4219;border-radius:12px;padding:16px}
+.mstrip{display:none}
+@media (max-width:1000px){.split{grid-template-columns:minmax(0,1fr)}.tl{display:none}.mstrip{display:flex;flex-direction:column;gap:8px}}
+@media (max-width:640px){.ed{grid-template-columns:minmax(0,1fr)}.ed .pv{max-width:260px}.grid{--cols:2!important;gap:10px}.cc .cap{-webkit-line-clamp:2;min-height:38px}}
+
+</style>
+</head>
+<body>
+<!-- MK-9 option C: Timeline and compare. Split view: a two-week timeline on the left, the selected slot's candidates side by side on the right, and an editor for the one you pick. -->
+<div class="shell">
+  <div class="topbar">
+    <button class="btn" aria-label="Open menu" style="width:44px;padding:0;border:0;background:transparent">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9CBCF" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <span style="font-weight:600">Story Board</span>
+  </div>
+
+  <nav class="side" aria-label="Board">
+    <div style="display:flex;align-items:center;gap:10px;padding:0 6px">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="1" width="24" height="24" rx="7" fill="none" stroke="#F2A33A" stroke-width="2"/><path d="M8 9h10M8 13h6M8 17h8" stroke="#F2A33A" stroke-width="2" stroke-linecap="round"/></svg>
+      <span style="font-weight:600;font-size:16px">Story Board</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <a class="navi" href="#">Home</a>
+      <a class="navi" href="#">Mockups</a>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <span class="lbl" style="padding:0 12px 6px">Projects</span>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>asset-track</a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>client-dashboard</a>
+      <a class="navi" href="#" aria-current="page" style="background:#1D2024;color:#F2F1EE;font-weight:500"><span class="dot" style="background:#5FBF8F"></span>coins</a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>rent-track</a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>story-board</a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="legend" role="note" aria-label="Mockup legend">
+      <strong style="color:#F2F1EE">MK-9 · option C · Timeline and compare</strong>
+      <span><i style="background:#F2A33A"></i>amber = a link, a button or the slot in focus</span>
+      <span><kbd>←</kbd> <kbd>→</kbd> move between candidates · <kbd>Enter</kbd> pick the highlighted one · <kbd>J</kbd> <kbd>K</kbd> previous / next slot</span>
+      <span class="faint">mock clock: Mon 12 Oct 2026, 11:20 · posts are StackerMint kit images and coin photos</span>
+    </div>
+
+    <header style="display:flex;flex-direction:column;gap:4px">
+      <p class="crumb" style="margin:0"><a href="#">All projects</a> / <a href="#">coins</a> / <a href="#">Marketing</a> / Review</p>
+      <h1 style="margin:0;display:flex;align-items:center;gap:10px;font-size:24px;font-weight:600;letter-spacing:-.01em">coins <span class="dot" style="background:#5FBF8F"></span><span style="font-size:13px;font-weight:400;color:#9A9DA3">ok</span></h1>
+      <p class="muted" style="margin:0;font-size:14px">Marketing for <strong style="color:#F2F1EE;font-weight:500">StackerMint</strong> · Facebook page · 4 recurring slots a week</p>
+    </header>
+    <nav class="tabs" aria-label="Project pages">
+      <a href="#">Overview</a><a href="#">Stories</a><a href="#">Preflight</a><a href="#">Handbook</a><a href="#">Map</a>
+      <a href="#" aria-current="page">Marketing<span class="new">NEW</span></a>
+    </nav>
+    <nav class="subnav" aria-label="Marketing pages">
+      <a href="#">Library</a><a href="#" aria-current="page">Review<span class="n">5</span></a><a href="#">Calendar</a><a href="#">Designer</a><a href="#">Settings</a>
+    </nav>
+
+
+    <div class="mstrip"><span class="lbl">Next two weeks</span><div class="strip" id="strip"></div></div>
+
+    <div class="split">
+      <nav class="tl" aria-label="Two-week timeline" id="tl"></nav>
+      <section id="right" style="display:flex;flex-direction:column;gap:16px;min-width:0" aria-live="polite"></section>
+    </div>
+
+  </main>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+/* ---- Shared mock data + renderers (same in every MK-9 option) ---- */
+const K = '../MK-kit/';
+const SWIRL = '<svg viewBox="0 0 23 23" aria-hidden="true"><path d="M8.24443 16.0935C8.575 16.0855 8.89899 16.0595 9.20728 16.016L9.22499 16.0132C9.90412 15.912 10.5598 15.7306 11.1741 15.4746C12.1264 15.0801 13.0198 14.4815 13.7569 13.7461C14.6252 12.9407 15.6289 13.1835 16.1943 13.7495C16.7595 14.3161 17.0023 15.3189 16.2012 16.18C15.6295 16.7586 14.6869 16.8475 14.0081 16.384C13.4738 16.0198 12.7407 16.2232 12.3681 16.6209C12.1507 16.8532 12.029 17.152 12.0344 17.4409C12.0404 17.7529 12.1832 18.04 12.4264 18.2289C13.1472 18.7894 14.0569 19.098 14.9878 19.098C16.0995 19.098 17.1663 18.658 17.9137 17.8926C19.0712 16.7523 19.4314 15.0775 18.8543 13.5226C18.2777 11.9698 16.916 10.9381 15.3015 10.8298C14.0889 10.7384 12.9047 11.1738 12.051 12.0278C11.2687 12.8118 10.279 13.3426 9.18899 13.5618C6.69531 14.0464 4.31076 12.9201 3.11364 10.6913C1.91965 8.46842 2.2985 5.86188 4.07934 4.05019C5.22561 2.86306 6.86845 2.27793 8.585 2.44421C10.3304 2.61278 11.8515 3.51106 12.7578 4.90875C13.0164 5.3076 13.4692 5.52303 13.9392 5.47017C14.3584 5.42446 14.7175 5.16903 14.8995 4.78733C15.0792 4.41019 15.0523 3.97705 14.8278 3.6282C13.5389 1.62765 11.2907 0.286809 8.81328 0.0410981C6.36388 -0.20147 4.01334 0.637948 2.36307 2.34136C-0.00175392 4.71618 -0.647174 8.11357 0.678809 11.2075C1.97622 14.2346 4.7999 16.0952 8.07557 16.0952C8.13157 16.0952 8.18814 16.0946 8.24443 16.0935Z"/><path d="M20.3738 8.9676C19.1347 7.85504 17.5338 7.13962 15.8661 6.95306C13.4496 6.67563 10.9873 7.53733 9.28221 9.26103C8.96021 9.58559 8.52765 9.76445 8.06423 9.76445C7.59909 9.76445 7.16738 9.58731 6.8511 9.26817C6.05539 8.39561 6.29653 7.47162 6.74453 6.94563C7.22452 6.3822 8.12708 6.02821 8.9745 6.58249C9.38507 6.85134 9.8782 6.87106 10.2936 6.6362C10.6613 6.42878 10.8905 6.05192 10.9068 5.62821C10.9225 5.21508 10.7288 4.83222 10.3888 4.60451C8.74593 3.50481 6.48567 3.72138 5.13283 5.10679C4.24942 5.96992 3.81714 7.19219 3.94628 8.46018C4.07542 9.72645 4.74341 10.8339 5.77883 11.4979C7.41652 12.5761 9.60992 12.3553 10.9948 10.973C12.2596 9.71416 14.0024 9.1356 15.7756 9.38617C16.9818 9.55874 18.1161 10.1222 18.9698 10.9727C20.0332 12.0361 20.6186 13.4521 20.6184 14.9601C20.6184 16.4684 20.0318 17.8849 18.9669 18.95C17.823 20.1346 16.1796 20.72 14.461 20.5563C12.7156 20.3875 11.1945 19.4889 10.2882 18.0912C10.0262 17.6869 9.58335 17.4746 9.10707 17.5301C8.68765 17.5755 8.32879 17.8309 8.1468 18.2129C7.96708 18.5898 7.99394 19.0232 8.21851 19.372C9.50735 21.3732 11.7576 22.7143 14.2373 22.9597C14.5119 22.9869 14.7899 23.0006 15.0633 23.0006C17.2258 23.0006 19.2215 22.1689 20.6821 20.6609C22.2349 19.1175 23.092 16.9629 23.0338 14.7495C22.9755 12.5356 22.0061 10.4282 20.3738 8.96846V8.9676Z"/></svg>';
+
+/* The mock clock. Countdowns tick from here. */
+const T0 = Date.now();
+const NOW0 = new Date(2026, 9, 12, 11, 20, 0).getTime();
+const now = () => NOW0 + (Date.now() - T0);
+
+/* Design variants are either a kit PNG or an HTML template filled with fields. */
+const V = {
+  png: (name, file) => ({ name, tpl: 'png', src: K + 'posts/' + file }),
+  card: (name, f) => ({ name, tpl: 'card', ...f }),
+  dark: (name, f) => ({ name, tpl: 'dark', ...f }),
+  sides: (name, f) => ({ name, tpl: 'sides', ...f }),
+  text: (name, f) => ({ name, tpl: 'text', ...f }),
+};
+const FH = K + 'coins/Flowing-Hair-obverse.jpg', FHr = K + 'coins/Flowing-Hair-reverse.jpg';
+const MD = K + 'coins/Mercury--Winged-Liberty--obverse.jpg', MDr = K + 'coins/Mercury--Winged-Liberty--reverse.jpg';
+const MO = K + 'coins/Morgan-obverse.png', MOr = K + 'coins/Morgan-reverse.png';
+const PE = K + 'coins/Peace-obverse.jpg', PEr = K + 'coins/Peace-reverse.jpg';
+
+/* Slots: the recurring schedule, materialised for the next two weeks (+ yesterday's missed one). */
+const SLOTS = [
+  { id: 's0', name: 'Ask the community', at: [2026, 9, 11, 12, 0], status: 'missed', kind: 'ask',
+    picked: { title: 'What set are you building?', src: K + 'posts/04-post-set-building.png', caption: 'What set are you building right now?' },
+    cands: [] },
+  { id: 's1', name: 'Coin of the week', at: [2026, 9, 13, 10, 0], status: 'review', kind: 'coin', cands: [
+    { title: '1800 $5 Capped Bust', template: 'Coin card', gen: 'Generated Sat 10 Oct 22:14',
+      fields: { Coin: '1800 $5 Capped Bust half eagle', Grade: 'PCGS AU58 · CAC', Photo: 'Owner upload, 9 Oct' },
+      caption: 'Coin of the week: an 1800 $5 Capped Bust half eagle.\n\nThe Mint was eight years old when this was struck. Most early gold was melted, so few survive.',
+      variants: [ V.png('Card · kit', '02-post-cotw.png'),
+        V.text('Headline', { lab: 'Coin of the week', h1: 'Eight years in.', sub: 'An 1800 $5 Capped Bust, PCGS AU58. Most early gold was melted.' }) ] },
+    { title: '1794 Flowing Hair dollar', template: 'Coin card', gen: 'Generated Sat 10 Oct 22:14',
+      fields: { Coin: '1794 Flowing Hair dollar', Grade: 'Raw', Photo: 'Obverse + reverse' },
+      caption: 'Coin of the week: a 1794 Flowing Hair dollar.\n\nThe first silver dollar the Mint struck. 1,758 were delivered.',
+      variants: [ V.card('Card', { lab: 'Coin of the week', img: FH, t: '1794 Flowing Hair', s: 'First U.S. silver dollar', g: 'RAW' }),
+        V.dark('Full bleed', { lab: 'Coin of the week', big: 'The first<br>dollar.', img: FH, t: '1794 Flowing Hair', s: 'Obverse', g: 'RAW' }),
+        V.sides('Both sides', { lab: 'Coin of the week', h1: '1794 Flowing Hair', a: FH, b: FHr }) ] },
+    { title: '1943 Mercury dime', template: 'Coin card', gen: 'Generated Sat 10 Oct 22:14',
+      fields: { Coin: '1943 Mercury dime', Grade: 'PCGS MS66 FB', Photo: 'Obverse + reverse' },
+      caption: 'Coin of the week: a 1943 Mercury dime, PCGS MS66 FB.\n\nFB means full bands. The lines on the fasces are fully split.',
+      variants: [ V.card('Card', { lab: 'Coin of the week', img: MD, t: '1943 Mercury dime', s: 'Winged Liberty, full bands', g: 'PCGS MS66 FB' }),
+        V.sides('Both sides', { lab: 'Coin of the week', h1: 'Full bands, both sides.', a: MD, b: MDr }),
+        V.dark('Full bleed', { lab: 'Coin of the week', big: 'Full<br>bands.', img: MD, t: '1943 Mercury dime', s: 'Winged Liberty', g: 'PCGS MS66 FB' }) ] },
+    { title: '1923 Peace dollar', template: 'Coin card', gen: 'Generated Sat 10 Oct 22:14',
+      fields: { Coin: '1923 Peace dollar', Grade: 'Raw', Photo: 'Phone photo, felt background' },
+      caption: 'Amazing coin of the week!!! A 1923 Peace dollar. We looked up the cert and it checks out, so don\'t miss it 🔥',
+      variants: [ V.card('Card', { lab: 'Coin of the week', img: PE, t: '1923 Peace dollar', s: 'Straight from an album', g: 'RAW' }),
+        V.dark('Full bleed', { lab: 'Coin of the week', big: 'Peace,<br>1923.', img: PE, t: 'Peace dollar', s: 'Obverse · raw', g: 'RAW' }) ] },
+  ]},
+  { id: 's2', name: 'TrueView Tuesday', at: [2026, 9, 13, 19, 0], status: 'confirmed', kind: 'toned',
+    picked: { title: 'Album-toned Morgan', src: K + 'posts/10-post-tv-tuesday.png', caption: 'TrueView Tuesday 🌈\n\nA Morgan with a century of album toning. Show us your best toner.' },
+    cands: [] },
+  { id: 's3', name: 'Set spotlight', at: [2026, 9, 16, 18, 0], status: 'review', kind: 'set', cands: [
+    { title: 'Carson City Morgans', template: 'Set progress', gen: 'Generated Sun 11 Oct 08:02',
+      fields: { Set: 'Carson City Morgans', Progress: '9 of 13', 'Key date': '1889-CC (empty)' },
+      caption: 'Carson City Morgans. Thirteen coins, 1878 to 1893.\n\nNine down. The 1889-CC is the hard one.',
+      variants: [ V.png('Grid · kit', '05-post-set-cc.png') ] },
+    { title: 'One slot left', template: 'Last slot', gen: 'Generated Sun 11 Oct 08:02',
+      fields: { Set: 'Mercury dimes 1916–1945', Progress: '76 of 77', 'Key date': '1916-D · 264,000 minted' },
+      caption: '76 down. One to go.\n\nThe 1916-D Mercury dime. Only 264,000 made.',
+      variants: [ V.png('Big slot · kit', '06-post-set-last.png'),
+        V.text('Headline', { lab: 'Mercury dimes · 1916–1945', h1: '76 down.<br>One to go.', sub: 'The last hole is the 1916-D. Only 264,000 made.', bar: 99 }) ] },
+    { title: 'Peace set complete', template: 'Set complete', gen: 'Generated Sun 11 Oct 08:02',
+      fields: { Set: 'Peace dollars 1921–1935', Progress: '24 of 24', Member: '—' },
+      caption: 'Set complete. All 24 Peace dollars, 1921 to 1935.',
+      variants: [ V.png('Grid · kit', '07-post-set-done.png'),
+        V.dark('Full bleed', { lab: 'Set complete', big: 'All 24.', img: PE, t: 'Peace dollars', s: '1921 to 1935', g: '24 / 24' }) ] },
+    { title: 'Type set 101', template: 'Type set', gen: 'Generated Sun 11 Oct 08:02',
+      fields: { Set: '20th-century type set', Progress: '4 of 6' },
+      caption: 'A type set is one of each design, not every date.\n\nFour down, two to go.',
+      variants: [ V.png('Row · kit', '08-post-typeset.png') ] },
+  ]},
+  { id: 's4', name: 'Ask the community', at: [2026, 9, 18, 12, 0], status: 'review', kind: 'ask', cands: [
+    { title: 'Rarity or condition?', template: 'Pick one', compare: true, gen: 'Generated Sun 11 Oct 08:02',
+      fields: { Left: '1795 Flowing Hair $1 · PCGS VF25', Right: '1924 Saint-Gaudens $20 · PCGS MS67', Value: 'about $10,000 each' },
+      priceSource: '',
+      caption: 'Same money. Only one stays.\n\nRarity or condition?',
+      variants: [ V.png('Side by side · kit', '09-post-pick.png') ] },
+    { title: 'Grade it', template: 'Big question', gen: 'Generated Sun 11 Oct 08:02',
+      fields: { Coin: 'Morgan dollar, label hidden', Answer: 'Revealed in the first comment' },
+      caption: 'No peeking at the label. What grade would you give this one?',
+      variants: [ V.dark('Full bleed', { lab: 'Grade it', big: 'What<br>grade?', img: MO, t: 'Morgan dollar', s: 'Label hidden', g: '?? ??' }),
+        V.card('Card', { lab: 'Grade it', img: MO, t: 'Morgan dollar', s: 'No peeking at the label', g: 'PCGS ????' }) ] },
+    { title: 'Storage setup', template: 'Big question', gen: 'Generated Sun 11 Oct 08:02',
+      fields: { Question: 'How do you store yours?' },
+      caption: 'Albums, slabs, or a safe full of tubes? How do you store yours?',
+      variants: [ V.text('Headline', { lab: 'Ask the community', h1: 'Albums, slabs, or tubes?', sub: 'How do you store yours? Tell us below.' }) ] },
+  ]},
+  { id: 's5', name: 'Coin of the week', at: [2026, 9, 20, 10, 0], status: 'empty', kind: 'coin', note: 'Generates Thu 15 Oct', cands: [] },
+  { id: 's6', name: 'TrueView Tuesday', at: [2026, 9, 20, 19, 0], status: 'review', kind: 'toned', cands: [
+    { title: 'Rate the rainbow', template: 'Weekly series', gen: 'Generated Sun 11 Oct 08:02',
+      fields: { Coin: 'Morgan dollar, album toned', Grade: 'PCGS MS64' },
+      caption: 'TrueView Tuesday 🌈\n\nThat rainbow came from decades in an old paper album. Rate it, 1 to 10.',
+      variants: [ V.dark('Full bleed', { lab: 'Weekly series', big: 'TrueView<br>Tuesday', img: MO, t: 'Morgan dollar', s: 'Album toned · obverse', g: 'PCGS MS64' }),
+        V.sides('Both sides', { lab: 'TrueView Tuesday', h1: 'Front or back?', a: MO, b: MOr }) ] },
+    { title: 'Both sides', template: 'Weekly series', gen: 'Generated Sun 11 Oct 08:02',
+      fields: { Coin: 'Morgan dollar', Photo: 'TrueView obverse + reverse' },
+      caption: 'Both sides of the story.\n\nEvery coin gets a clean front and back.',
+      variants: [ V.png('Pair · kit', '11-post-tv-sides.png') ] },
+  ]},
+  { id: 's7', name: 'Set spotlight', at: [2026, 9, 23, 18, 0], status: 'empty', kind: 'set', note: 'Generates Mon 19 Oct', cands: [] },
+  { id: 's8', name: 'Ask the community', at: [2026, 9, 25, 12, 0], status: 'skipped', kind: 'ask', note: 'Skipped by you, 11 Oct', cands: [] },
+];
+SLOTS.forEach(s => { s.date = new Date(...s.at); s.cands.forEach(c => { c.v = 0; c.orig = c.caption; }); s.cur = 0; });
+
+const DAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const pad = n => String(n).padStart(2, '0');
+function when(d) { return `${DAY[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+function whenShort(d) { return `${DAY[d.getDay()]} ${d.getDate()} · ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+/* Countdown string, e.g. "in 22h 39m 41s" or "21h ago". */
+function countdown(d, secs = true) {
+  let ms = d.getTime() - now(); const past = ms < 0; ms = Math.abs(ms);
+  const dd = Math.floor(ms / 864e5), h = Math.floor(ms / 36e5) % 24, m = Math.floor(ms / 6e4) % 60, s = Math.floor(ms / 1e3) % 60;
+  const t = (dd ? dd + 'd ' : '') + h + 'h ' + pad(m) + 'm' + (secs && !dd ? ' ' + pad(s) + 's' : '');
+  return past ? t + ' ago' : 'in ' + t;
+}
+const STATUS = { confirmed: 'Confirmed', review: 'Needs review', empty: 'Empty', missed: 'Missed', skipped: 'Skipped', sent: 'Sent' };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* Render one post preview in StackerMint's light style. */
+function post(v) {
+  const brand = `<div class="brand">${SWIRL}StackerMint<span class="beta">BETA</span></div>`;
+  if (v.tpl === 'png') return `<div class="sm"><img class="full" src="${v.src}" alt=""></div>`;
+  if (v.tpl === 'card') return `<div class="sm"><div class="lab">${v.lab}</div>${brand}<div class="card">${v.cac ? '<span class="cac">CAC</span>' : ''}<img class="coin" src="${v.img}" alt=""><div class="tt">${v.t}</div><div class="st">${v.s}</div><span class="gp">${v.g}</span></div></div>`;
+  if (v.tpl === 'dark') return `<div class="sm dark"><img class="coin hero" src="${v.img}" alt=""><div class="lab">${v.lab}</div>${brand}<div class="big">${v.big}</div><div class="foot"><div class="tt">${v.t}</div><div class="st">${v.s}</div></div><span class="gp w">${v.g}</span></div>`;
+  if (v.tpl === 'sides') return `<div class="sm"><div class="lab">${v.lab}</div>${brand}<div class="h1">${v.h1}</div><div class="sides"><div><img class="coin" src="${v.a}" alt=""><div class="st">Obverse</div></div><div><img class="coin" src="${v.b}" alt=""><div class="st">Reverse</div></div></div></div>`;
+  if (v.tpl === 'text') return `<div class="sm text"><div class="lab">${v.lab}</div>${brand}<div class="h1">${v.h1}</div><div class="sub">${v.sub}</div>${v.bar ? `<div class="rule"><i style="width:${v.bar}%;background:#222"></i></div>` : '<div class="rule"><i></i></div>'}<div class="bb">${SWIRL}StackerMint<span class="beta">BETA</span></div></div>`;
+}
+
+/* Copy rules (from the kit): one or two short human lines, no filler, no cert lookup claims,
+   sets central on set slots, comparisons need similar value + a price source. */
+function checks(c, slot) {
+  const t = c.caption.trim(); const paras = t.split(/\n\s*\n/).filter(Boolean);
+  const out = [];
+  out.push({ ok: paras.length <= 2 && t.length <= 200, label: 'One or two short lines', note: `${paras.length} line${paras.length === 1 ? '' : 's'} · ${t.length}/200 chars` });
+  const filler = t.match(/amazing|incredible|don't miss|dont miss|check (it|this) out|must[- ]see|!!|🔥|link in bio|you won't believe/ig);
+  out.push({ ok: !filler, label: 'No filler', note: filler ? 'Found: “' + [...new Set(filler.map(f => f.toLowerCase()))].join('”, “') + '”' : '' });
+  const cert = t.match(/cert|looked (it )?up|verified|checks out|authentic/ig);
+  out.push({ ok: !cert, label: 'No cert lookup claims', note: cert ? 'Found: “' + [...new Set(cert.map(f => f.toLowerCase()))].join('”, “') + '”' : '' });
+  if (slot.kind === 'set') { const ok = /set|slot|down|to go|complete/i.test(t); out.push({ ok, label: 'The set is the story', note: ok ? '' : 'Name the set or the slot count' }); }
+  if (c.compare) out.push({ ok: !!(c.priceSource || '').trim(), label: 'Comparison: similar value + price source', note: (c.priceSource || '').trim() ? 'Source: ' + c.priceSource : 'Both about $10,000 — add where the prices come from' });
+  return out;
+}
+function checksHtml(list) {
+  return '<ul class="checks">' + list.map(r => `<li class="${r.ok ? 'ok' : 'bad'}"><span class="i" aria-hidden="true">${r.ok ? '✓' : '!'}</span><span>${r.label}${r.note ? `<small>${esc(r.note)}</small>` : ''}</span></li>`).join('') + '</ul>';
+}
+const passes = (c, s) => checks(c, s).every(r => r.ok);
+
+/* Progress strip of the next two weeks (plus yesterday's miss). */
+function stripHtml(curId) {
+  let html = '', lastWeek = null;
+  SLOTS.forEach(s => {
+    const wk = s.date < new Date(2026, 9, 19) ? 1 : 2;
+    if (lastWeek && wk !== lastWeek) html += '<span class="daysep" aria-hidden="true"></span>';
+    lastWeek = wk;
+    const sub = s.status === 'review' ? `${s.cands.length} candidates` : s.status === 'confirmed' ? 'Scheduled' : s.status === 'missed' ? 'Not sent' : s.status === 'sent' ? 'Sent' : (s.note || '');
+    html += `<button class="chip c-${s.status}" data-slot="${s.id}" ${s.id === curId ? 'aria-current="true"' : ''}><span class="w">${whenShort(s.date)}</span><b>${s.name}</b><span class="s"><span class="sd"></span>${STATUS[s.status]}${sub && s.status !== 'review' ? '' : ''}</span><span class="w" style="font-size:10px">${esc(sub)}</span></button>`;
+  });
+  return html;
+}
+function toast(msg, undo) {
+  let el = document.getElementById('toast');
+  el.innerHTML = `<span>${msg}</span>` + (undo ? '<button class="btn btn-s btn-g" id="undo">Undo</button>' : '');
+  el.classList.add('on'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('on'), 4200);
+  if (undo) document.getElementById('undo').onclick = () => { undo(); el.classList.remove('on'); };
+}
+const typing = e => /INPUT|TEXTAREA|SELECT/.test(e.target.tagName);
+
+/* Missed post: never sent late on its own. The owner chooses Send now or Reschedule. */
+function missedHtml(s) {
+  if (s.status === 'sent') return `<div class="missed" style="border-color:#2D5A44;background:#121A16"><img src="${s.picked.src}" alt=""><div class="mt"><strong>Sent</strong> <span>· ${s.name} from ${when(s.date)} went out at ${s.sentAt} today, to Facebook.</span></div></div>`;
+  if (s.status === 'confirmed') return `<div class="missed" style="border-color:#2D5A44;background:#121A16"><img src="${s.picked.src}" alt=""><div class="mt"><strong>Rescheduled</strong> <span>· “${esc(s.picked.title)}” now posts ${when(s.date)} to Facebook.</span></div></div>`;
+  return `<div class="missed" role="alert"><img src="${s.picked.src}" alt="${esc(s.picked.title)} post"><div class="mt"><strong style="color:#F59088">Missed</strong> · <strong>${s.name}</strong>, ${when(s.date)} <span>· the Mac was asleep, so “${esc(s.picked.title)}” did not post. It will not go out late on its own.</span></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap" data-missed-actions><button class="btn btn-p btn-s" data-act="send">Send now</button><button class="btn btn-s" data-act="resched">Reschedule</button></div>
+  <div data-resched hidden style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;width:100%"><label class="muted" style="font-size:13px" for="rs-${s.id}">Post at</label><input id="rs-${s.id}" type="datetime-local" value="2026-10-14T12:00" style="width:auto;min-height:40px"><button class="btn btn-p btn-s" data-act="save">Save</button><button class="btn btn-s btn-g" data-act="cancel">Cancel</button></div></div>`;
+}
+function wireMissed(root, s, redraw) {
+  root.querySelectorAll('[data-act]').forEach(b => b.onclick = () => {
+    const a = b.dataset.act;
+    if (a === 'send') { s.status = 'sent'; s.sentAt = new Date(now()).toTimeString().slice(0, 5); toast('Sent to Facebook just now.'); redraw(); }
+    if (a === 'resched') { root.querySelector('[data-resched]').hidden = false; root.querySelector('[data-missed-actions]').hidden = true; }
+    if (a === 'cancel') { root.querySelector('[data-resched]').hidden = true; root.querySelector('[data-missed-actions]').hidden = false; }
+    if (a === 'save') { const v = root.querySelector('input').value; s.date = new Date(v); s.status = 'confirmed'; toast('Rescheduled · posts ' + when(s.date) + ' to Facebook'); redraw(); }
+  });
+}
+
+/* ---- Like / dislike (taste). Shapes content, template choice and caption style only.
+   The brand (swirl + StackerMint + BETA, tan #B79F82, ink, Instrument Sans, 5px radius) is fixed and never varied.
+   A like never confirms anything: Confirm stays its own action. ---- */
+const TASTE = { up: 23, down: 9, reasons: { 'too wordy': 4, 'boring layout': 3, 'wrong tone': 2 } };
+const REASONS = { cand: ['too wordy', 'wrong tone', 'off-brand coin choice', 'seen it before'], var: ['boring layout', 'too busy', 'text too small', 'weak photo'] };
+const THUMB = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11v9H4v-9h3zm0 0 4-8c1.7 0 2.6 1.2 2.3 2.8L12.8 9H19a2 2 0 0 1 2 2.3l-1.2 7A2 2 0 0 1 17.8 20H7"/></svg>';
+const THUMBD = '<svg viewBox="0 0 24 24" aria-hidden="true" style="transform:rotate(180deg)"><path d="M7 11v9H4v-9h3zm0 0 4-8c1.7 0 2.6 1.2 2.3 2.8L12.8 9H19a2 2 0 0 1 2 2.3l-1.2 7A2 2 0 0 1 17.8 20H7"/></svg>';
+function rateTarget(k) { const [kind, sid, ci, vi] = k.split('|'); const c = SLOTS.find(s => s.id === sid).cands[+ci]; return kind === 'cand' ? c : c.variants[+vi]; }
+/* kind: 'cand' or 'var'. small: compact buttons. why: show reason chips when disliked. */
+function rateHtml(kind, s, ci, vi = '', { small = false, why = true } = {}) {
+  const k = `${kind}|${s.id}|${ci}|${vi}`, o = rateTarget(k), what = kind === 'cand' ? 'candidate' : 'design';
+  return `<span class="rate ${small ? 'sm-r' : ''}" data-rk="${k}"><button class="up" data-rate="${k}|up" aria-pressed="${o.like === 'up'}" aria-label="Like this ${what}" title="Like this ${what}">${THUMB}</button><button class="dn" data-rate="${k}|down" aria-pressed="${o.like === 'down'}" aria-label="Dislike this ${what}" title="Dislike this ${what}">${THUMBD}</button>${why && o.like === 'down' ? `<span class="why"><span>Why? (optional)</span>${REASONS[kind].map(r => `<button data-reason="${k}|${r}" aria-pressed="${o.reason === r}">${r}</button>`).join('')}</span>` : ''}</span>`;
+}
+function setRate(k, val) {
+  const o = rateTarget(k), was = o.like;
+  if (was) TASTE[was]--;
+  o.like = was === val ? null : val; o.reason = null;
+  if (o.like) TASTE[o.like]++;
+  if (o.like === 'up') toast('Liked. Future candidates lean this way. Not confirmed: that is still your call.');
+}
+function tasteHtml() {
+  const top = Object.entries(TASTE.reasons).sort((a, b) => b[1] - a[1]).slice(0, 2).map(r => r[0]);
+  return `<div class="taste" role="note" aria-label="Your taste">
+    <div class="tq"><span class="lbl" style="margin-right:6px">Your taste</span>Learning from <b data-t="up">${TASTE.up} likes</b> · <b data-t="down">${TASTE.down} dislikes</b>. New candidates lean toward <b>set posts</b> and <b>short captions</b>.
+      <div class="lean"><span>+ set progress</span><span>+ one-line captions</span><span>+ full-bleed toners</span><span class="n">− ${top[0]}</span><span class="n">− ${top[1]}</span></div></div>
+    <div class="lock"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9A9DA3" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>Likes shape <b style="color:#C9CBCF;font-weight:500">content, template choice and caption style</b> only. The brand stays fixed: swirl logo, tan and ink colours, Instrument Sans, 5px corners. Liking never confirms a post.</span></div>
+  </div>`;
+}
+/* One delegated handler for every thumb and reason chip; each option sets window.afterRate to redraw. */
+document.addEventListener('click', e => {
+  const r = e.target.closest('[data-rate]'), w = e.target.closest('[data-reason]');
+  if (!r && !w) return; e.stopPropagation();
+  if (r) { const p = r.dataset.rate.split('|'); setRate(p.slice(0, 4).join('|'), p[4]); }
+  if (w) { const p = w.dataset.reason.split('|'), o = rateTarget(p.slice(0, 4).join('|')); const rs = p[4];
+    if (o.reason) TASTE.reasons[o.reason] = Math.max(0, (TASTE.reasons[o.reason] || 1) - 1);
+    o.reason = o.reason === rs ? null : rs; if (o.reason) TASTE.reasons[rs] = (TASTE.reasons[rs] || 0) + 1; }
+  document.querySelectorAll('[data-taste]').forEach(el => el.innerHTML = tasteHtml());
+  if (window.afterRate) window.afterRate();
+}, true);
+
+/* ---- Option C behaviour ---- */
+
+const $ = id => document.getElementById(id);
+let cur = SLOTS.findIndex(s => s.status === 'review'), hl = 0;
+SLOTS.forEach(s => s.pick = null);
+
+/* Left: a 14-day mini bar, then every slot grouped by day. */
+function drawTimeline() {
+  const col = { confirmed: '#5FBF8F', review: '#F2A33A', empty: '#4A4E55', missed: '#F59088', skipped: '#33373D', sent: '#5FBF8F' };
+  let mini = '';
+  for (let d = 0; d < 14; d++) {
+    const day = new Date(2026, 9, 12 + d);
+    const ss = SLOTS.filter(s => s.date.toDateString() === day.toDateString());
+    mini += `<span title="${DAY[day.getDay()]} ${day.getDate()} Oct">${ss.map((s, k) => `<i style="background:${col[s.status]};top:${3 + k * 7}px"></i>`).join('')}</span>`;
+  }
+  let html = `<div class="mini" aria-hidden="true">${mini}<span class="lb"><span>Mon 12</span><span>Sun 25</span></span></div>`;
+  let lastDay = '';
+  SLOTS.forEach((s, i) => {
+    const dk = s.date.toDateString();
+    if (dk !== lastDay) {
+      const lbl = s.date.getDate() === 11 ? 'Yesterday · Sun 11 Oct' : s.date.getDate() === 13 ? 'Tomorrow · Tue 13 Oct' : `${DAY[s.date.getDay()]} ${s.date.getDate()} Oct`;
+      html += `<div class="day"><span>${lbl}</span></div>`; lastDay = dk;
+    }
+    const sub = s.status === 'review' ? `${s.cands.length} candidates · ${countdown(s.date, false)}` : s.status === 'confirmed' ? 'Scheduled · ' + countdown(s.date, false) : s.status === 'missed' ? 'Missed · not sent' : s.status === 'sent' ? 'Sent today' : s.note;
+    const color = { review: '#F2A33A', confirmed: '#7CD1A4', missed: '#F59088', sent: '#7CD1A4' }[s.status] || '#7E8187';
+    const thumb = s.picked && (s.status === 'confirmed' || s.status === 'missed' || s.status === 'sent') ? `<span class="th">${s.picked.v ? post(s.picked.v) : `<div class="sm"><img class="full" src="${s.picked.src}" alt=""></div>`}</span>` : `<span class="dot" style="background:${color};${s.status === 'empty' ? 'background:none;border:1px dashed #7E8187' : ''}"></span>`;
+    html += `<button class="ti" data-i="${i}" ${i === cur ? 'aria-current="true"' : ''}><span class="tm">${pad(s.date.getHours())}:${pad(s.date.getMinutes())}</span><b>${s.name}</b>${thumb}<span class="sub" style="color:${color}">${esc(sub)}</span></button>`;
+  });
+  $('tl').innerHTML = html;
+  $('tl').querySelectorAll('[data-i]').forEach(b => b.onclick = () => { cur = +b.dataset.i; hl = 0; draw(); });
+  $('strip').innerHTML = stripHtml(SLOTS[cur].id);
+  $('strip').querySelectorAll('.chip').forEach(b => b.onclick = () => { cur = SLOTS.findIndex(s => s.id === b.dataset.slot); hl = 0; draw(); });
+}
+
+function head(s, extra = '') {
+  return `<header style="display:flex;gap:12px 20px;flex-wrap:wrap;align-items:flex-end">
+    <div style="display:flex;flex-direction:column;gap:4px"><span class="lbl">${STATUS[s.status]}</span><h2 style="margin:0;font-size:22px;font-weight:600">${s.name}</h2>
+    <span class="soft" style="font-size:14px">${when(s.date)} · Facebook · <span class="mono" style="color:#F2A33A;font-size:13px" data-cd>${countdown(s.date)}</span></span></div>
+    <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">${extra}</div></header>`;
+}
+
+function draw() {
+  drawTimeline();
+  const s = SLOTS[cur], R = $('right');
+  if (s.status === 'missed' || (s.id === 's0')) { R.innerHTML = head(s) + missedHtml(s); wireMissed(R, s, draw); return; }
+  if (s.status === 'confirmed') {
+    const p = s.picked;
+    R.innerHTML = head(s, s.cands.length ? '<button class="btn btn-s" id="chg">Change pick</button>' : '') + `<div class="ed" style="border-color:#2D5A44"><div class="pv">${p.v ? post(p.v) : `<div class="sm"><img class="full" src="${p.src}" alt=""></div>`}</div>
+      <div style="display:flex;flex-direction:column;gap:10px"><span class="pill t-built" style="align-self:flex-start">Scheduled</span><strong style="font-size:17px">Posts ${when(s.date)} to Facebook</strong><p style="white-space:pre-line;color:#F2F1EE">${esc(p.caption)}</p><span class="faint" style="font-size:13px">If the Mac is asleep at ${pad(s.date.getHours())}:00 it is marked missed and waits for you. It never goes out late on its own.</span></div></div>`;
+    if ($('chg')) $('chg').onclick = () => { s.status = 'review'; draw(); };
+    return;
+  }
+  if (s.status === 'empty' || s.status === 'skipped') {
+    R.innerHTML = head(s) + `<div class="card" style="border-style:dashed;padding:24px;display:flex;flex-direction:column;gap:10px;align-items:flex-start">${s.status === 'empty' ? `<strong>No candidates yet</strong><span class="soft">${s.note}.</span><button class="btn btn-p" id="gen">Generate now</button>` : `<strong>Skipped</strong><span class="soft">${s.note}. Nothing posts.</span><button class="btn" id="rst">Restore slot</button>`}</div>`;
+    if ($('gen')) $('gen').onclick = () => toast('Generating candidates for ' + s.name + '…');
+    if ($('rst')) $('rst').onclick = () => { s.status = 'empty'; s.note = 'Generates Thu 22 Oct'; draw(); };
+    return;
+  }
+  /* Needs review: comparison grid + editor for the picked one. */
+  hl = Math.min(hl, s.cands.length - 1);
+  const p = s.pick;
+  R.innerHTML = head(s, '<button class="btn btn-s" id="regen">Regenerate all</button><button class="btn btn-s btn-g" id="skip">Skip slot</button>') +
+    `<div data-taste>${tasteHtml()}</div><p class="muted" style="font-size:13px">${s.cands.length} candidates. Thumbs teach your taste; they never pick or confirm. Click one, or highlight with <kbd>←</kbd> <kbd>→</kbd> and press <kbd>Enter</kbd>, to pick it and edit below.</p>
+    <div class="grid" role="list" style="--cols:${s.cands.length === 4 ? 2 : s.cands.length}">${s.cands.map((c, i) => { const bad = checks(c, s).filter(r => !r.ok).length; return `
+      <article class="cc ${i === hl ? 'hl' : ''} ${p === c ? 'pk' : ''}" role="listitem" data-c="${i}" aria-label="Candidate ${i + 1}: ${esc(c.title)}">
+        ${post(c.variants[c.v])}
+        ${c.variants.length > 1 ? `<div class="vs" role="group" aria-label="Designs">${c.variants.map((v, k) => `<button aria-pressed="${k === c.v}" data-v="${i}|${k}">${v.like === 'up' ? '▲ ' : v.like === 'down' ? '▼ ' : ''}${esc(v.name)}</button>`).join('')}</div>` : `<span class="faint" style="font-size:11px">${esc(c.variants[0].name)} · one design</span>`}
+        <div style="display:flex;justify-content:space-between;gap:6px;align-items:center"><strong style="font-size:14px">${i + 1}. ${esc(c.title)}</strong><span class="badge ${bad ? 'bad' : 'ok'}">${bad ? bad + ' issue' + (bad > 1 ? 's' : '') : 'copy ok'}</span></div>
+        <div class="cap">${esc(c.caption)}</div>
+        <div style="display:flex;justify-content:space-between;gap:6px;align-items:center;border-top:1px solid #1F2226;padding-top:8px;flex-wrap:wrap">
+          <span style="display:flex;gap:4px;align-items:center"><span class="faint" style="font-size:11px">post</span>${rateHtml('cand', s, i, '', { small: true, why: false })}</span>
+          <span style="display:flex;gap:4px;align-items:center"><span class="faint" style="font-size:11px">design</span>${rateHtml('var', s, i, c.v, { small: true, why: false })}</span>
+        </div>
+        ${c.like === 'down' ? rateHtml('cand', s, i).replace(/^<span class="rate[^"]*"[^>]*>.*?(<span class="why">)/, '<span class="rate">$1') : ''}
+        ${c.variants[c.v].like === 'down' ? rateHtml('var', s, i, c.v).replace(/^<span class="rate[^"]*"[^>]*>.*?(<span class="why">)/, '<span class="rate">$1') : ''}
+        <span class="faint" style="font-size:11px">${c.template} · ${c.gen.replace('Generated ', '')}</span>
+      </article>`; }).join('')}</div>` +
+    (p ? editor(s, p) : `<div class="card" style="padding:16px;border-style:dashed;color:#9A9DA3;font-size:14px">Pick a candidate to edit its caption and confirm it.</div>`);
+  R.querySelectorAll('[data-c]').forEach(a => a.onclick = e => { if (e.target.closest('button')) return; hl = +a.dataset.c; s.pick = s.cands[hl]; draw(); });
+  R.querySelectorAll('[data-v]').forEach(b => b.onclick = () => { const [i, k] = b.dataset.v.split('|'); s.cands[+i].v = +k; draw(); });
+  $('regen').onclick = () => toast('Regenerating ' + s.cands.length + ' candidates for ' + s.name + '… the current ones stay until the new ones land.');
+  $('skip').onclick = () => { s.status = 'skipped'; s.note = 'Skipped by you, just now'; draw(); toast('Skipped ' + s.name, () => { s.status = 'review'; draw(); }); };
+  if (p) wireEditor(s, p);
+}
+function editor(s, c) {
+  const ck = checks(c, s), bad = ck.filter(r => !r.ok).length, v = c.variants[c.v];
+  return `<section class="ed" aria-label="Picked candidate">
+    <div class="pv">${post(v)}</div>
+    <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+      <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline"><strong style="font-size:16px">Picked: ${esc(c.title)} · ${esc(v.name)}</strong><span class="faint" style="font-size:12px">${Object.entries(c.fields).map(([k, x]) => k + ': ' + esc(x)).join(' · ')}</span></div>
+      <label class="lbl" for="cap">Caption</label>
+      <textarea id="cap" rows="4">${esc(c.caption)}</textarea>
+      ${c.compare ? `<input type="text" id="psrc" placeholder="Price source, e.g. PCGS Price Guide, 9 Oct 2026" value="${esc(c.priceSource)}" aria-label="Price source">` : ''}
+      <div id="ck">${checksHtml(ck)}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-p" id="confirm" ${bad ? 'disabled style="opacity:.45;cursor:not-allowed"' : ''}>${bad ? 'Fix copy to confirm' : 'Confirm · posts ' + when(s.date)}</button>
+        <button class="btn" id="design">Edit in designer</button>
+        <button class="btn btn-g" id="unpick">Unpick</button>
+      </div>
+    </div></section>`;
+}
+function wireEditor(s, c) {
+  const upd = () => { const ck = checks(c, s), bad = ck.filter(r => !r.ok).length; $('ck').innerHTML = checksHtml(ck); const b = $('confirm'); b.disabled = !!bad; b.style.opacity = bad ? .45 : 1; b.style.cursor = bad ? 'not-allowed' : 'pointer'; b.textContent = bad ? 'Fix copy to confirm' : 'Confirm · posts ' + when(s.date); const card = document.querySelector(`[data-c="${s.cands.indexOf(c)}"]`); card.querySelector('.cap').textContent = c.caption; const bd = card.querySelector('.badge'); bd.className = 'badge ' + (bad ? 'bad' : 'ok'); bd.textContent = bad ? bad + ' issue' + (bad > 1 ? 's' : '') : 'copy ok'; };
+  $('cap').oninput = e => { c.caption = e.target.value; upd(); };
+  if ($('psrc')) $('psrc').oninput = e => { c.priceSource = e.target.value; upd(); };
+  $('confirm').onclick = () => { if (!passes(c, s)) return; s.status = 'confirmed'; s.picked = { title: c.title, v: c.variants[c.v], caption: c.caption }; draw(); toast('Scheduled · posts ' + when(s.date) + ' to Facebook', () => { s.status = 'review'; draw(); }); };
+  $('design').onclick = () => toast('Opens Designer with “' + c.title + '” loaded.');
+  $('unpick').onclick = () => { s.pick = null; draw(); };
+}
+document.addEventListener('keydown', e => {
+  if (typing(e)) return; const s = SLOTS[cur];
+  if (s.status === 'review' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) { hl = (hl + (e.key === 'ArrowRight' ? 1 : -1) + s.cands.length) % s.cands.length; draw(); }
+  else if (s.status === 'review' && e.key === 'Enter') { s.pick = s.cands[hl]; draw(); }
+  else if (e.key === 'j') { cur = Math.max(0, cur - 1); hl = 0; draw(); } else if (e.key === 'k') { cur = Math.min(SLOTS.length - 1, cur + 1); hl = 0; draw(); }
+});
+setInterval(() => { document.querySelectorAll('[data-cd]').forEach(el => el.textContent = countdown(SLOTS[cur].date)); }, 1000);
+setInterval(drawTimeline, 30000);
+window.afterRate = draw;
+draw();
+
+</script>
+</body>
+</html>

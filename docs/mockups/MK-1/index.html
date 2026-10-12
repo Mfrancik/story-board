@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MK-1 marketing options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;background:#0E0F11;color:#F2F1EE;font-family:Geist,system-ui,sans-serif}
+a{color:#F2A33A;text-decoration:none}a:hover{color:#FFC26B;text-decoration:underline;text-underline-offset:3px}
+a:focus-visible{outline:2px solid #F2A33A;outline-offset:2px}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.wrap{max-width:1240px;margin:0 auto;padding:32px 32px 64px;display:flex;flex-direction:column;gap:32px}
+.lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9A9DA3;font-weight:500}
+p{line-height:1.6;color:#C9CBCF;margin:0}
+.opt{background:#16181B;border:1px solid #26292E;border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:16px}
+.opt h2{margin:0;font-size:20px;font-weight:600;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.opt h2 .k{font-family:'Geist Mono',monospace;font-size:13px;color:#F2A33A;border:1px solid #5C4219;border-radius:999px;padding:2px 10px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:7px 8px;border-top:1px solid #1F2226;vertical-align:top}
+th{color:#9A9DA3;font-weight:500;width:34%}
+td{color:#C9CBCF}
+td .new{color:#F59088}
+.frame{border:1px solid #26292E;border-radius:10px;overflow:hidden;background:#0E0F11}
+iframe{display:block;width:100%;height:720px;border:0}
+.open{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:8px;background:#F2A33A;color:#1A1205;font-weight:500;font-size:14px;align-self:flex-start}
+.open:hover{color:#1A1205;background:#FFC26B;text-decoration:none}
+.gaps li{margin:0 0 10px;line-height:1.55;color:#C9CBCF;font-size:14px}
+@media (max-width:900px){.cols{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:640px){.wrap{padding:20px 16px 48px;gap:24px}.opt{padding:16px}iframe{height:640px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:8px">
+    <span class="lbl">MK-1 · mockups · pick one</span>
+    <h1 style="margin:0;font-size:30px;font-weight:600;letter-spacing:-.01em">A <span class="mono" style="font-size:26px">Marketing</span> tab for every project</h1>
+    <p style="max-width:860px">Each option adds <strong>Marketing</strong> after Map (Overview · Stories · Preflight · Handbook · Map · Marketing) and fills it with coins' content library for StackerMint. That means the 15 real kit posts with their real captions, three AI candidates, and seven ideas from the idea menu. All three share the same data, the same quick-peek slide-over (caption, image, notes, Facebook row), the same filters (status, tag, kind, AI only, search) and the same <strong>Marketing settings</strong>: the MK-2 brand kit and the MK-12 Facebook Page connection. What differs is how the library is laid out and where settings live. Post previews use StackerMint's light brand style inside the dark shell. Engagement numbers are <em>sample</em> values (marked). The filters and peeks work in the mockups. Narrow the window to see each page at 375px.</p>
+  </header>
+
+  <section class="opt" aria-labelledby="a-h">
+    <h2 id="a-h"><span class="k">A</span>Ledger <span style="font-size:14px;font-weight:400;color:#9A9DA3">a dense table, grouped by what is next</span></h2>
+    <div class="cols">
+      <p>One row per post: thumbnail, first line and tags, kind, status, when, then reactions, comments and reach in their own columns. Rows are grouped Needs attention → Up next → Ready to schedule → Drafts → Ideas → Posted, so the top of the table is always the next thing to do. A totals line sits above it. Library and Settings are two sub-tabs inside Marketing. Below 900px each row becomes a two-line card. It fits the most posts on one screen and makes engagement easy to compare. The images are small, so you judge a design in the peek.</p>
+      <table><tr><th>Optimises</th><td>scanning and comparing; engagement side by side</td></tr><tr><th>Filters</th><td>search · status · tag · kind dropdowns · AI only</td></tr><tr><th>Settings</th><td>sub-tab next to Library</td></tr><tr><th>Attention</th><td>red edge on missed and failed rows, grouped first</td></tr></table>
+    </div>
+    <div class="frame"><iframe src="option-a.html" title="Option A preview" loading="lazy"></iframe></div>
+    <a class="open" href="option-a.html">Open option A full size</a>
+  </section>
+  <section class="opt" aria-labelledby="b-h">
+    <h2 id="b-h"><span class="k">B</span>Gallery <span style="font-size:14px;font-weight:400;color:#9A9DA3">the posts themselves, as cards</span></h2>
+    <div class="cols">
+      <p>A grid of the actual post images, in brand style, each with status, date, first line, tags and engagement under it. Ideas with no image yet show as dashed white cards with the idea title. Status chips carry live counts, and every tag is its own chip, so filtering is one tap. Settings opens in a wide slide-over from the toolbar. This is the closest to how the posts look on the Page, and the easiest way to spot a weak design or two similar posts in a row. It needs the most scrolling once there are hundreds of posts.</p>
+      <table><tr><th>Optimises</th><td>judging the visuals; one-tap filtering</td></tr><tr><th>Filters</th><td>search · kind chips · status chips with counts · tag chips · AI only</td></tr><tr><th>Settings</th><td>wide slide-over (gear button)</td></tr><tr><th>Attention</th><td>red card border plus a one-line reason</td></tr></table>
+    </div>
+    <div class="frame"><iframe src="option-b.html" title="Option B preview" loading="lazy"></iframe></div>
+    <a class="open" href="option-b.html">Open option B full size</a>
+  </section>
+  <section class="opt" aria-labelledby="c-h">
+    <h2 id="c-h"><span class="k">C</span>Pipeline <span style="font-size:14px;font-weight:400;color:#9A9DA3">a kanban from idea to posted</span></h2>
+    <div class="cols">
+      <p>Five columns: Idea, Draft, Approved, Scheduled, Posted. Missed and failed posts lift out into a red Needs attention strip above the board until they are rescheduled or dropped. Cards are compact: thumbnail, caption, tags, AI or Ad mark, and the date or engagement. Search, tag, kind and AI filters narrow every column at once. Marketing settings sit as a section below the board, reached by the Settings button, which scrolls to it. Below 768px the columns stack. It shows the journey (idea → posted) at a glance and how much is waiting at each step.</p>
+      <table><tr><th>Optimises</th><td>flow; what is stuck where</td></tr><tr><th>Filters</th><td>search · tag · kind · AI only (status is the columns)</td></tr><tr><th>Settings</th><td>section below the board</td></tr><tr><th>Attention</th><td>its own strip above the board</td></tr></table>
+    </div>
+    <div class="frame"><iframe src="option-c.html" title="Option C preview" loading="lazy"></iframe></div>
+    <a class="open" href="option-c.html">Open option C full size</a>
+  </section>
+  <section aria-labelledby="gaps-h" style="display:flex;flex-direction:column;gap:12px">
+    <h2 id="gaps-h" style="margin:0;font-size:18px;font-weight:600">Gaps and questions</h2>
+    <ul class="gaps" style="margin:0;padding-left:20px">
+      <li><strong>Where the brand kit lives in coins.</strong> The mockup says "read from coins @ origin/main". MK-2 needs the real paths for the logo, colours, font and photos. Only tan <span class="mono">#B79F82</span>, ink <span class="mono">#222</span> and white are confirmed. The canvas and key-date wash colours were read off the post images by eye.</li>
+      <li><strong>Ideas as posts or as their own list?</strong> All three treat an idea-menu row as a post with status <em>idea</em> and no image. If the idea menu should stay a reusable template list (one idea, many posts), it needs its own table and the Idea column becomes "menu".</li>
+      <li><strong>Missed vs failed.</strong> Missed = the scheduler didn't run in its slot. Failed = Facebook refused it. Should a missed post retry by itself when the scheduler wakes, or always wait for you? The mockups make it wait.</li>
+      <li><strong>Ads.</strong> An ad's spend, audience and dates live in Ads Manager. Here an ad is a caption, headline, button and image, plus engagement once it is on the Page. Is that enough, or should the record hold budget too?</li>
+      <li><strong>Engagement refresh.</strong> How often should reactions, comments and reach sync, and for how long after posting? The mockups show "synced 21:30 today" and a manual Refresh.</li>
+      <li><strong>AI candidates.</strong> Should "Draft candidates" draw from a chosen idea, a tag, or the whole menu? And should the AI mark stay after you edit a candidate, or drop once you approve it? The mockups keep it until approval.</li>
+      <li><strong>Token renewal.</strong> Page tokens can expire. The settings show verified / expires in N days / expired / not connected. Should an expiring token raise a Needs you item on Home?</li>
+    </ul>
+  </section>
+</div>
+</body>
+</html>

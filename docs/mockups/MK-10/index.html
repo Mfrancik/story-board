@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MK-10 calendar options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;background:#0E0F11;color:#F2F1EE;font-family:Geist,system-ui,sans-serif}
+a{color:#F2A33A;text-decoration:none}a:hover{color:#FFC26B;text-decoration:underline;text-underline-offset:3px}
+a:focus-visible{outline:2px solid #F2A33A;outline-offset:2px}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.wrap{max-width:1240px;margin:0 auto;padding:32px 32px 64px;display:flex;flex-direction:column;gap:32px}
+.lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9A9DA3;font-weight:500}
+p{line-height:1.6;color:#C9CBCF;margin:0}
+.opt{background:#16181B;border:1px solid #26292E;border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:16px}
+.opt h2{margin:0;font-size:20px;font-weight:600;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.opt h2 .k{font-family:'Geist Mono',monospace;font-size:13px;color:#F2A33A;border:1px solid #5C4219;border-radius:999px;padding:2px 10px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:7px 8px;border-top:1px solid #1F2226;vertical-align:top}
+th{color:#9A9DA3;font-weight:500;width:34%}
+td{color:#C9CBCF}
+td .new{color:#F59088}
+.frame{border:1px solid #26292E;border-radius:10px;overflow:hidden;background:#0E0F11}
+iframe{display:block;width:100%;height:720px;border:0}
+.open{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:8px;background:#F2A33A;color:#1A1205;font-weight:500;font-size:14px;align-self:flex-start}
+.open:hover{color:#1A1205;background:#FFC26B;text-decoration:none}
+.gaps li{margin:0 0 10px;line-height:1.55;color:#C9CBCF;font-size:14px}
+@media (max-width:900px){.cols{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:640px){.wrap{padding:20px 16px 48px;gap:24px}.opt{padding:16px}iframe{height:640px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:8px">
+    <span class="lbl">MK-10 · mockups · pick one · also covers MK-7 and MK-11</span>
+    <h1 style="margin:0;font-size:30px;font-weight:600;letter-spacing:-.01em">The Marketing calendar at <span class="mono" style="font-size:26px">/p/coins/marketing/calendar</span></h1>
+    <p style="max-width:860px">A calendar for StackerMint’s Facebook plan with a week and month view, where you drag a post to reschedule it. Each option also shows the <strong>MK-7</strong> slots panel (recurring slots with on/off switches and an add-slot form; open slots appear as dashed “needs review” ghosts) and <strong>MK-11</strong> (a one-click <em>Apply first-two-weeks sequence</em> with a preview, plus a gap warning when 4 or more days in a row have nothing confirmed). The data is the same in all three: today is Mon 12 Oct 2026, with five posts out since 1 Oct (reaction counts shown), one missed on Sun 11 Oct because the Mac was asleep, three confirmed for this week, three drafts in Review, and the rest of the slots empty. Thumbnails and captions come from the real kit. All three work the same way: drag a blue, amber or red chip to move it (the gap banner updates), click a chip for its actions (Confirm, Send now / Reschedule on the missed post), flip a slot’s switch, add a slot, and preview or apply the sequence. Every action can be undone. Below 768px each one becomes a two-week agenda list.</p>
+  </header>
+
+  <section class="opt" aria-labelledby="a-h">
+    <h2 id="a-h"><span class="k">A</span>Month grid + tray <span style="font-size:14px;font-weight:400;color:#9A9DA3">a familiar month, with a Library to drag from</span></h2>
+    <div class="cols">
+      <p>The default is a seven-column month with short chips (time, title, ♥ count or status). A right-hand tray holds the slots panel and a <strong>Library</strong> of ready posts you drag onto a day; a post you drop is scheduled, because you picked it. Week view shows seven tall columns with full thumbnails. The gap banner sits above the grid, and gap days are hatched, with a “gap starts” tag. Best if you think in months and want the calendar to be where you plan from the library, not only where you rearrange.</p>
+      <table>
+        <tr><th>Month / week grid</th><td>Post rows by date (scheduled_at) · slots expanded into ghosts for open days</td></tr>
+        <tr><th>Slots tray</th><td><span class="new">new: marketing_slots</span> (name, weekday, time, enabled)</td></tr>
+        <tr><th>Library tray</th><td>Library posts with no date · drag = schedule (confirmed)</td></tr>
+        <tr><th>Gap banner</th><td>Derived: a run of 4+ days with no scheduled or posted row</td></tr>
+        <tr><th>Sequence</th><td><span class="new">new: sequence template</span> (day offset, time, slot or one-off, post)</td></tr>
+      </table>
+    </div>
+    <div class="frame"><iframe src="option-a.html" title="Option A preview" loading="lazy"></iframe></div>
+    <a class="open" href="option-a.html">Open option A full size</a>
+  </section>
+
+  <section class="opt" aria-labelledby="b-h">
+    <h2 id="b-h"><span class="k">B</span>Week time-grid <span style="font-size:14px;font-weight:400;color:#9A9DA3">hours down, days across, slots as lanes</span></h2>
+    <div class="cols">
+      <p>The default is one week with hour rows from 08:00 to 21:00, like a desktop calendar. Each slot is a <strong>lane</strong>: its hour is labelled in the gutter and its cell has a coloured edge, so you can see the weekly rhythm. Dropping a chip on a different hour changes its time; moving it off its slot’s hour makes it a one-off and reopens the slot. A left rail has a mini-month with status dots for jumping between weeks, the slots panel, and a sequence card with the 13 thumbnails it would place. Month view shows thumbnail tiles. Best if posting <em>time</em> matters as much as the day.</p>
+      <table>
+        <tr><th>Time grid</th><td>scheduled_at (date + hour) · lanes from slot weekday/time</td></tr>
+        <tr><th>Mini-month</th><td>Per-day worst status (missed &gt; review &gt; scheduled)</td></tr>
+        <tr><th>Slots rail</th><td><span class="new">new: marketing_slots</span></td></tr>
+        <tr><th>Gap marker</th><td>Red line under the day header plus hatched columns</td></tr>
+        <tr><th>Sequence card</th><td>Template preview · shows on the grid as purple dashed chips</td></tr>
+      </table>
+    </div>
+    <div class="frame"><iframe src="option-b.html" title="Option B preview" loading="lazy"></iframe></div>
+    <a class="open" href="option-b.html">Open option B full size</a>
+  </section>
+
+  <section class="opt" aria-labelledby="c-h">
+    <h2 id="c-h"><span class="k">C</span>Slot runway <span style="font-size:14px;font-weight:400;color:#9A9DA3">one swimlane per slot across five weeks</span></h2>
+    <div class="cols">
+      <p>A horizontal timeline from last week through the next four, with <strong>one row per slot</strong> and a One-offs row. The slot rows double as the slots panel: name, time and switch at the row head, and “+ Add a slot” at the bottom. You can see straight away which slot is running dry (the dashed ghosts in a row). A red <strong>gap ribbon</strong> runs above the lanes, and a stats row shows confirmed, in review, open and ♥ total. Drop a chip into a slot’s row on that slot’s day and it fills the slot. The Week zoom widens each day to full chips. Best if you manage this as a cadence (“is every slot fed?”) rather than as dates.</p>
+      <table>
+        <tr><th>Lanes</th><td>Posts grouped by slot_id (null = one-off) · ghosts per enabled slot</td></tr>
+        <tr><th>Row heads</th><td><span class="new">new: marketing_slots</span> · switch = enabled</td></tr>
+        <tr><th>Gap ribbon</th><td>Same 4+ day rule, drawn as a band</td></tr>
+        <tr><th>Stats</th><td>Counts by status over the 4-week horizon · ♥ sum of posted reactions</td></tr>
+        <tr><th>Drop into a lane</th><td>Sets slot_id when the weekday matches, else one-off</td></tr>
+      </table>
+    </div>
+    <div class="frame"><iframe src="option-c.html" title="Option C preview" loading="lazy"></iframe></div>
+    <a class="open" href="option-c.html">Open option C full size</a>
+  </section>
+
+  <section aria-labelledby="gaps-h" style="display:flex;flex-direction:column;gap:12px">
+    <h2 id="gaps-h" style="margin:0;font-size:18px;font-weight:600">Gaps and questions</h2>
+    <ul class="gaps" style="margin:0;padding-left:20px">
+      <li><strong>Does a drag confirm?</strong> In all three, dragging a <em>scheduled</em> post keeps it scheduled, and dragging the <em>missed</em> post reschedules it (that is the “Reschedule” action). In A, dropping a Library post schedules it outright, on the reasoning that you chose it. If only Review should ever confirm, a dropped post would land as “needs review” instead.</li>
+      <li><strong>Moving a post off its slot.</strong> The mockups turn it into a one-off and reopen the slot, so a ghost reappears and the AI drafts for it again. The alternative is to move the slot for that one week only. That needs a per-date slot override, which doesn’t exist yet.</li>
+      <li><strong>The gap rule.</strong> This is 4+ consecutive days from today with no <em>scheduled or posted</em> post, looking 4 weeks ahead. Drafts in Review don’t count, so the warning stays up after “Apply” until you confirm. Should a horizon with nothing planned at all count as an open-ended gap (“23+ days”)?</li>
+      <li><strong>Sequence on a page that already posts.</strong> The kit’s arc is for a new page. Here it skips posts already published (Welcome, the Capped Bust coin of the week) and the missed one, keeps any candidate already in a slot, and drops everything else in as needs-review drafts from a start date you pick (default: the Monday after the gap begins). Should it refuse to run once a page has a post history?</li>
+      <li><strong>Placeholder images.</strong> Sequence and AI drafts with no rendered image use a light card with the swirl. The real card would come from the Designer in StackerMint LIGHT style. The kit’s <span class="mono">swirl.svg</span> has no <span class="mono">xmlns</span> and has a bare <span class="mono">data-brand-mark</span> attribute, so it can’t load as an <span class="mono">&lt;img&gt;</span>. The mockups inline a fixed copy, and the app will need the same fix.</li>
+      <li><strong>Touch.</strong> HTML5 drag doesn’t work on phones, so mobile is a read-mostly agenda where you reschedule from the post’s drawer. Livewire’s <span class="mono">wire:sort</span> or a pointer-events drag would be needed to drag on an iPad.</li>
+      <li><strong>Reactions.</strong> The ♥ counts need a periodic read from the Facebook Graph API after posting (not in MK-10’s scope). The drawer shows “read 09:00 today” as the freshness stamp.</li>
+    </ul>
+  </section>
+</div>
+</body>
+</html>

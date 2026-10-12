@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MK-7 campaign setup options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;background:#0E0F11;color:#F2F1EE;font-family:Geist,system-ui,sans-serif}
+a{color:#F2A33A;text-decoration:none}a:hover{color:#FFC26B;text-decoration:underline;text-underline-offset:3px}
+a:focus-visible{outline:2px solid #F2A33A;outline-offset:2px}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.wrap{max-width:1240px;margin:0 auto;padding:32px 32px 64px;display:flex;flex-direction:column;gap:32px}
+.lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9A9DA3;font-weight:500}
+p{line-height:1.6;color:#C9CBCF;margin:0}
+.opt{background:#16181B;border:1px solid #26292E;border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:16px}
+.opt h2{margin:0;font-size:20px;font-weight:600;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.opt h2 .k{font-family:'Geist Mono',monospace;font-size:13px;color:#F2A33A;border:1px solid #5C4219;border-radius:999px;padding:2px 10px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:7px 8px;border-top:1px solid #1F2226;vertical-align:top}
+th{color:#9A9DA3;font-weight:500;width:34%}
+td{color:#C9CBCF}
+td .new{color:#F59088}
+.frame{border:1px solid #26292E;border-radius:10px;overflow:hidden;background:#0E0F11}
+iframe{display:block;width:100%;height:720px;border:0}
+.open{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:8px;background:#F2A33A;color:#1A1205;font-weight:500;font-size:14px;align-self:flex-start}
+.open:hover{color:#1A1205;background:#FFC26B;text-decoration:none}
+.gaps li{margin:0 0 10px;line-height:1.55;color:#C9CBCF;font-size:14px}
+.note{border:1px solid #5C4219;background:#1E1A13;border-radius:12px;padding:14px 16px}
+.note p{color:#F2D9B0}
+@media (max-width:900px){.cols{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:640px){.wrap{padding:20px 16px 48px;gap:24px}.opt{padding:16px}iframe{height:640px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:8px">
+    <span class="lbl">MK-7 · mockups · pick one</span>
+    <h1 style="margin:0;font-size:30px;font-weight:600;letter-spacing:-.01em">Setting up a campaign: TrueView Tuesday</h1>
+    <p style="max-width:880px">Campaigns replace the bare slots. A campaign has a name, a schedule (weekly Tue 19:00, start, optional end), topics from your idea menu, an image rule (photos from the project's photo library, or text only), a one-line brief for the AI, and how far ahead to prepare. Copy rules and your taste (likes and dislikes) apply to every campaign and show here read-only. All three options use the same rules and the same real data: the StackerMint idea menu, the kit's coin photos, and the calendar from MK-10 option A as of Mon 12 Oct. Each one shows the <strong>Next 3 posts</strong> preview (date, idea, photo, when the AI drafts), the low-photo warning, the ghosts on the calendar, and the <strong>First two weeks</strong> starter pack. Every page works at 375px.</p>
+  </header>
+
+  <div class="note" role="note"><p><strong>Scope change, 12 Oct:</strong> content items and the post designer are deferred, so there is no Items screen and no template field-filling. The AI writes the caption and picks a photo from the library, or proposes a text-only post. A disabled “Connect a data source” box marks where coins' real collection plugs in later. For now the Marketing sub-nav is Library · Review · Calendar · Campaigns · Settings.</p></div>
+
+  <section class="opt" aria-labelledby="a-h">
+    <h2 id="a-h"><span class="k">A</span>List + one-page form <span style="font-size:14px;font-weight:400;color:#9A9DA3">everything on one page, preview pinned</span></h2>
+    <div class="cols">
+      <p>A Campaigns page lists every campaign in one row each, with a starter-pack card underneath. Editing opens a dedicated page with five numbered sections (Name, When, Topics, Image, Voice) on the left. On the right, pinned, are the campaign in one line, the Next 3 posts and a five-week mini calendar. Every change updates all three at once: the ghosts turn purple until you save. This option is <strong>fastest for editing an existing campaign</strong>, because you see and change everything without stepping through. It follows the canonical “complex create/edit = dedicated page” pattern.</p>
+      <table>
+        <tr><th>Optimises</th><td>Speed and overview for the owner who already knows what they want</td></tr>
+        <tr><th>Try</th><td>Click Wed: the dates move. Untick <span class="mono">toned</span>: the photo count changes. Tick “Allow a photo again”: the warning clears. Upload any image: it lands in the pool tagged <span class="mono">toned</span>.</td></tr>
+        <tr><th>Risk</th><td>A long page on mobile; the preview drops below the form</td></tr>
+      </table>
+    </div>
+    <div class="frame"><iframe src="option-a.html" title="Option A preview" loading="lazy"></iframe></div>
+    <a class="open" href="option-a.html">Open option A full size</a>
+  </section>
+
+  <section class="opt" aria-labelledby="b-h">
+    <h2 id="b-h"><span class="k">B</span>Guided wizard <span style="font-size:14px;font-weight:400;color:#9A9DA3">When → What → Images → Voice → Check</span></h2>
+    <div class="cols">
+      <p>The page opens on a sentence that writes itself: “<em>Every Tuesday at 7pm, post a Toned &amp; TrueView idea with an unused photo tagged toned. The AI writes the caption from your brief and prepares 3 weeks ahead.</em>” Each underlined part jumps to its step. The steps are When, What (topics and their ideas), Images (photo rule and pool), Voice (brief, copy rules, taste) and Check and save. Next 3 posts stays visible on the side. A helper panel changes with each step: the calendar on When, the idea count on What, a post you liked on Voice. The campaign list shows each campaign as its sentence. This option is <strong>best for creating a new campaign</strong> and for reading what a campaign does at a glance.</p>
+      <table>
+        <tr><th>Optimises</th><td>Understanding: the sentence is the summary, the list and the review</td></tr>
+        <tr><th>Try</th><td>Click “3 weeks ahead” or “unused photo tagged toned” in the sentence. On step 3, untick <span class="mono">toned</span> and watch Next 3 posts.</td></tr>
+        <tr><th>Risk</th><td>More clicks to change one thing (the sentence links soften this)</td></tr>
+      </table>
+    </div>
+    <div class="frame"><iframe src="option-b.html" title="Option B preview" loading="lazy"></iframe></div>
+    <a class="open" href="option-b.html">Open option B full size</a>
+  </section>
+
+  <section class="opt" aria-labelledby="c-h">
+    <h2 id="c-h"><span class="k">C</span>On the calendar <span style="font-size:14px;font-weight:400;color:#9A9DA3">campaigns are cards in the calendar-A tray</span></h2>
+    <div class="cols">
+      <p>This builds directly on your calendar pick (MK-10 A). The tray's “Recurring slots” becomes <strong>Campaigns</strong>: each card shows its schedule, source and on/off switch, with the starter pack below. Clicking a card, or any of its ghosts, swaps the tray for an editor with collapsible sections. The month stays in view, and the campaign's ghosts move as you change the day or time. They show purple while unsaved, then turn amber dashed. Below 1180px the editor becomes a full-height slide-over, and phones get the agenda list. This option is <strong>best for seeing the effect on your week</strong>, with no separate Campaigns page to visit.</p>
+      <table>
+        <tr><th>Optimises</th><td>Seeing the effect on the calendar while editing</td></tr>
+        <tr><th>Try</th><td>Click Thu in When: the 27 Oct ghost jumps to Thursdays. Save: purple turns amber. Close the editor, then flip a campaign's switch.</td></tr>
+        <tr><th>Risk</th><td>Breaks the canonical pattern: a complex form (more than 6 fields) in a slide-over, not a page. It needs a recorded exception, or the Campaigns sub-nav still opens a page with the same form.</td></tr>
+      </table>
+    </div>
+    <div class="frame"><iframe src="option-c.html" title="Option C preview" loading="lazy"></iframe></div>
+    <a class="open" href="option-c.html">Open option C full size</a>
+  </section>
+
+  <section aria-labelledby="gaps-h" style="display:flex;flex-direction:column;gap:12px">
+    <h2 id="gaps-h" style="margin:0;font-size:18px;font-weight:600">Gaps and questions</h2>
+    <ul class="gaps" style="margin:0;padding-left:20px">
+      <li><strong>Photo tags.</strong> The image rule filters the photo library by tag (<span class="mono">toned</span>, <span class="mono">morgan</span>, <span class="mono">key date</span>…). MK-2's photo library has no tags yet, so this needs a <span class="mono">tags</span> column and a way to tag on upload. Uploads made from a campaign get that campaign's tags.</li>
+      <li><strong>“Used” for photos and ideas.</strong> “Not used in 90 days” counts posted, scheduled and in-Review posts. That needs a link from each post to its library photo and to the idea it came from. Should a <em>skipped</em> candidate free its photo again? The mockups assume yes.</li>
+      <li><strong>The idea menu as data.</strong> Topics are the kit's idea menu (8 categories here; Calendar hooks left out because it needs dates). MK-3's import would load them into an <span class="mono">ideas</span> table per project. Ideas with placeholders like <span class="mono">[set]</span> or <span class="mono">[key date]</span> can't be filled until a data source exists. Should the AI skip them for now, or write around them?</li>
+      <li><strong>Low-photo warning.</strong> It fires when fewer than 3 unused photos match, worded as you asked: “Only 2 unused photos tagged toned, so upload more or allow repeats.” With “AI decides: photo or text” it adds that the AI goes text-only until then. Is 3 the right threshold, or should it equal the prepare-ahead weeks?</li>
+      <li><strong>Changing a campaign's day.</strong> Posts already scheduled or in Review keep their own day and time. Only the open dates (ghosts) move. Confirm this.</li>
+      <li><strong>When the AI drafts.</strong> Dates inside the prepare-ahead window get candidates on save; later dates get them when they enter the window (“AI proposes candidates on Tue 13 Oct”). That needs a daily scheduled job, which MK-8 owns.</li>
+      <li><strong>Text-only posts.</strong> They need a brand text card to render (MK-5). The designer is deferred, so the kit's existing card styles stand in for now.</li>
+      <li><strong>Templates.</strong> “Allowed templates” is gone with the designer. When it returns, it fits back in as an extra section under Image without changing the layout of any option.</li>
+    </ul>
+  </section>
+</div>
+</body>
+</html>

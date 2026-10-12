@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MK-7 option B — Guided campaign wizard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+/* Shell tokens, copied from the RD-11 mockups (resources/css/app.css shell values). */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;background:#0E0F11;color:#F2F1EE;font-family:Geist,system-ui,sans-serif;-webkit-text-size-adjust:100%}
+a{color:#F2A33A;text-decoration:none}a:hover{color:#FFC26B;text-decoration:underline;text-underline-offset:3px}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid #F2A33A;outline-offset:2px}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.card{background:#16181B;border:1px solid #26292E;border-radius:12px}
+.lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9A9DA3;font-weight:500}
+.muted{color:#9A9DA3}.faint{color:#7E8187}.soft{color:#C9CBCF}
+.navi{display:flex;align-items:center;gap:10px;padding:0 12px;border-radius:8px;color:#C9CBCF;font-size:14px;min-height:44px}
+.navi:hover{background:#1D2024;color:#F2F1EE;text-decoration:none}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid #33373D;color:#C9CBCF;white-space:nowrap}
+.t-built{border-color:#2D5A44;color:#7CD1A4}
+.t-draft{border-color:#5C4219;color:#F2A33A}.t-ready{border-color:#2B4A6E;color:#8EBBF2}
+.t-docs{border-color:#33373D;color:#9A9DA3}.t-fail{border-color:#6B2F2B;color:#F59088}
+.t-pick{border-color:#4A3B6B;color:#C3A8F0}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+.live{background:#6CA6F0;box-shadow:0 0 0 4px rgba(108,166,240,.18)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:8px;font:500 14px Geist,sans-serif;border:1px solid #33373D;background:#1D2024;color:#F2F1EE;cursor:pointer;text-decoration:none}
+.btn:hover{background:#24282D;color:#F2F1EE;text-decoration:none}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;font-size:13px;color:#C9CBCF;padding:12px 16px;border:1px solid #26292E;border-radius:10px;background:#121417}
+.legend i{display:inline-block;width:22px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:6px}
+/* Shell frame: sidebar on desktop, top bar + drawer below 768px (as layouts/shell does). */
+.shell{display:flex;min-height:100vh}
+.side{width:232px;flex:none;padding:20px 14px;border-right:1px solid #1F2226;display:flex;flex-direction:column;gap:22px}
+.topbar{display:none}
+main{flex:1;min-width:0;padding:28px 32px 56px;display:flex;flex-direction:column;gap:24px}
+.crumb{font-size:12px;color:#9A9DA3}.crumb a{color:#9A9DA3}
+.tabs{display:flex;gap:24px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid #1F2226;font-size:14px;padding-bottom:1px}
+.tabs a{flex:none;color:#9A9DA3;padding-bottom:12px;margin-bottom:-2px;border-bottom:2px solid transparent;min-height:36px}
+.tabs a:hover{color:#F2F1EE;text-decoration:none}
+.tabs a[aria-current]{color:#F2F1EE;border-color:#F2F1EE;font-weight:500}
+.tabs .new{font-size:10px;color:#F2A33A;margin-left:4px;vertical-align:2px}
+@media (max-width:767px){
+  .side{display:none}
+  .shell{flex-direction:column}
+  .topbar{display:flex;position:sticky;top:0;z-index:5;height:56px;align-items:center;gap:8px;padding:0 8px;border-bottom:1px solid #1F2226;background:rgba(14,15,17,.95)}
+  main{padding:20px 16px 48px;gap:20px}
+  .tabs{gap:18px}
+}
+
+/* Marketing area — shared with MK-1 / MK-10. Sub-nav gains Campaigns and Items (MK-7, MK-17). */
+.sub{display:flex;gap:6px;flex-wrap:wrap;margin-top:-8px}
+.sub a{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border-radius:8px;color:#9A9DA3;font-size:13px}
+.sub a:hover{background:#1D2024;color:#F2F1EE;text-decoration:none}
+.sub a[aria-current]{background:#1D2024;color:#F2F1EE;font-weight:500}
+.sub .n{font-family:'Geist Mono',monospace;font-size:11px;color:#1A1205;background:#F2A33A;border-radius:999px;padding:0 6px;line-height:16px}
+.sub .new{font-size:10px;color:#F2A33A}
+.btn.sm{min-height:40px;padding:0 12px;font-size:13px}
+.btn.pri{background:#F2A33A;border-color:#F2A33A;color:#1A1205}
+.btn.pri:hover{background:#FFC26B;color:#1A1205}
+.btn.ghost{background:transparent}
+.btn.danger{border-color:#6B2F2B;color:#F59088;background:transparent}
+.iconbtn{width:40px;padding:0}
+.seg{display:inline-flex;border:1px solid #33373D;border-radius:8px;overflow:hidden;flex-wrap:wrap}
+.seg button{min-height:40px;padding:0 14px;border:0;background:#16181B;color:#9A9DA3;font:500 13px Geist,sans-serif;cursor:pointer}
+.seg button[aria-pressed=true]{background:#24282D;color:#F2F1EE}
+.ph{display:flex;align-items:center;justify-content:center;background:#F4F3F0;color:#7A6447}
+.ph img{width:46%;height:46%;opacity:.7;object-fit:contain}
+/* forms */
+.inp{min-height:44px;padding:0 12px;border-radius:8px;border:1px solid #33373D;background:#121417;color:#F2F1EE;font:14px Geist,sans-serif;min-width:0;width:100%}
+select.inp{appearance:none;-webkit-appearance:none;padding-right:32px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239A9DA3' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+textarea.inp{min-height:84px;padding:10px 12px;line-height:1.5;resize:vertical}
+input[type=time].inp,input[type=date].inp{color-scheme:dark}
+.fld{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fld>.fl{font-size:13px;color:#C9CBCF;font-weight:500}
+.hint{font-size:12px;color:#9A9DA3;line-height:1.45;margin:0}
+.row2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr));gap:12px}
+.tgs{display:flex;flex-wrap:wrap;gap:6px}
+.tg{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 12px;border-radius:999px;border:1px solid #33373D;background:#16181B;color:#C9CBCF;font:13px Geist,sans-serif;cursor:pointer}
+.tg:hover{border-color:#4A4E55}
+.tg[aria-pressed=true]{border-color:#B07A2A;background:#2A2013;color:#F7CF8F}
+.days .tg{min-width:44px;border-radius:8px;padding:0 8px}
+.chk{display:flex;align-items:center;gap:10px;min-height:44px;font-size:14px;color:#C9CBCF;cursor:pointer}
+.chk input{width:18px;height:18px;accent-color:#F2A33A;flex:none}
+.tok{display:inline-block;font:500 11px 'Geist Mono',monospace;color:#D9C8F7;background:rgba(195,168,240,.08);border:1px solid #4A3B6B;border-radius:5px;padding:1px 5px;white-space:nowrap}
+.warn{display:flex;gap:10px;align-items:flex-start;border:1px solid #5C4219;background:#1E1A13;color:#F2D9B0;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.5}
+.warn b{color:#F2A33A;font-weight:600}
+.okline{font-size:13px;color:#7CD1A4}
+.ro{border:1px dashed #33373D;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;background:#121417}
+.ro ul{margin:0;padding-left:18px;font-size:13px;line-height:1.55;color:#C9CBCF}
+.ro h4{margin:0;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9A9DA3;font-weight:500;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ro h4 a{margin-left:auto;text-transform:none;letter-spacing:0;font-weight:400}
+.like{color:#7CD1A4}.dislike{color:#F59088}
+/* next posts panel */
+.nx{display:flex;flex-direction:column;gap:2px}
+.nx-row{display:grid;grid-template-columns:48px minmax(0,1fr);gap:12px;align-items:center;padding:10px 0;border-top:1px solid #1F2226}
+.nx-row:first-child{border-top:0}
+.nx-row .th{width:48px;height:48px;border-radius:8px;object-fit:cover;background:#F4F3F0;display:block}
+.nx-row .th.none{background:transparent;border:1.5px dashed #6B2F2B;display:flex;align-items:center;justify-content:center;color:#F59088;font-size:18px}
+.nx-row .d{font:500 12px 'Geist Mono',monospace;color:#F2F1EE}
+.nx-row .it{font-size:13px;color:#C9CBCF;line-height:1.35}
+.nx-row .ai{font-size:12px;color:#9A9DA3;line-height:1.35}
+.nx-row .ai b{color:#C3A8F0;font-weight:500}
+.done{font-size:12px;color:#9A9DA3;line-height:1.6}
+.done .pill{font-size:11px;padding:1px 7px}
+/* mini calendar with ghosts */
+.mini{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.mini .h{font-size:10px;color:#7E8187;text-align:center;padding-bottom:2px}
+.mini .c{min-height:48px;border-radius:6px;background:#16181B;border:1px solid #1F2226;padding:3px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.mini .c.past{background:#121417;opacity:.6}
+.mini .c.today{border-color:#5C4219}
+.mini .c .n{font:10px 'Geist Mono',monospace;color:#7E8187}
+.mini .c.today .n{color:#F2A33A}
+.mini .mk{display:block;font:500 9.5px 'Geist Mono',monospace;border-radius:3px;padding:0 2px;white-space:nowrap;overflow:hidden;text-overflow:clip;line-height:14px}
+.mini .mk.g{border:1px dashed #B07A2A;color:#F2C27A}
+.mini .mk.gx{border:1px dashed #C3A8F0;color:#D9C8F7;background:rgba(195,168,240,.08)}
+.mini .mk.p{background:#2A2440;color:#D9C8F7}
+.mini .ds{display:flex;gap:2px;flex-wrap:wrap}
+.mini .ds i{width:5px;height:5px;border-radius:50%;display:block;opacity:.75}
+/* views + photo pool */
+.view{display:none;flex-direction:column;gap:20px}
+.view.on{display:flex}
+.pool{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(84px,100%),1fr));gap:8px}
+.ph-c{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;background:#F4F3F0;border:1px solid #26292E}
+.ph-c img{width:100%;height:100%;object-fit:cover;display:block}
+.ph-c span{position:absolute;left:4px;bottom:4px;right:4px;font-size:10px;line-height:1.3;padding:1px 5px;border-radius:999px;background:#0E0F11;color:#C9CBCF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.ph-c.used img{opacity:.35;filter:grayscale(.6)}
+.ph-c.used span{color:#F59088}
+.ph-c.new span{color:#7CD1A4}
+.up{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;aspect-ratio:1;border:1.5px dashed #4A4E55;border-radius:8px;background:#121417;color:#9A9DA3;font-size:12px;text-align:center;padding:6px;cursor:pointer}
+.up:hover,.up:focus-within{border-color:#F2A33A;color:#F2F1EE}
+.up input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.ideas{display:flex;flex-direction:column;gap:0}
+.idea{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:start;padding:8px 0;border-top:1px solid #1F2226;font-size:13px;line-height:1.45}
+.idea:first-child{border-top:0}
+.idea input{width:18px;height:18px;accent-color:#F2A33A;margin-top:1px}
+.idea b{font-weight:500;color:#F2F1EE}
+.idea .q{color:#9A9DA3}
+.idea .u{font:11px 'Geist Mono',monospace;color:#7E8187;white-space:nowrap}
+.idea.used b,.idea.used .q{color:#6A6D73}
+.later{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:10px 12px;border:1px dashed #33373D;border-radius:10px;font-size:13px;color:#9A9DA3}
+.later .btn{opacity:.5;cursor:not-allowed}
+/* drawer + scrim + toast */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:30;display:none}
+.scrim.on{display:block}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);background:#16181B;border-left:1px solid #26292E;z-index:31;transform:translateX(100%);transition:transform .2s;display:flex;flex-direction:column;overflow-y:auto}
+.drawer.on{transform:none}
+.drawer .hd{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid #1F2226;position:sticky;top:0;background:#16181B;z-index:1}
+.drawer .bd{padding:16px;display:flex;flex-direction:column;gap:14px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:40;background:#24282D;border:1px solid #33373D;color:#F2F1EE;border-radius:10px;padding:12px 16px;font-size:14px;line-height:1.45;display:none;align-items:center;gap:12px;max-width:calc(100% - 24px);width:max-content;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.toast.on{display:flex}
+.sect{padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.sect>h2,.sect>header h2{margin:0;font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
+.sect .num{font:500 11px 'Geist Mono',monospace;color:#9A9DA3;border:1px solid #33373D;border-radius:999px;padding:1px 7px}
+.states{border-top:1px dashed #33373D;padding-top:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(250px,100%),1fr));gap:14px}
+.states .tile{background:#16181B;border:1px solid #26292E;border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.states h3{margin:0;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#F2A33A;font-weight:500}
+.states p{margin:0;font-size:14px;color:#C9CBCF;line-height:1.5}
+@media (max-width:767px){.sect{padding:14px}}
+
+/* Option B — guided wizard. A sentence at the top builds itself; each underlined part jumps to its step. */
+.bsent{font-size:20px;line-height:1.55;color:#C9CBCF;margin:0;letter-spacing:-.005em}
+.sx{font:inherit;color:#F2F1EE;font-weight:600;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline dotted #F2A33A;text-decoration-thickness:2px;text-underline-offset:5px;text-align:left}
+.sx:hover{color:#FFC26B}
+.sx.cur{background:rgba(242,163,58,.12);border-radius:4px}
+.steps{display:flex;gap:4px;flex-wrap:wrap;counter-reset:s}
+.steps button{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px 0 8px;border-radius:999px;border:1px solid #26292E;background:#16181B;color:#9A9DA3;font:500 13px Geist,sans-serif;cursor:pointer}
+.steps button b{width:26px;height:26px;border-radius:50%;border:1px solid #33373D;display:inline-flex;align-items:center;justify-content:center;font:500 12px 'Geist Mono',monospace}
+.steps button[aria-current=step]{color:#F2F1EE;border-color:#5C4219;background:#1E1A13}
+.steps button[aria-current=step] b{background:#F2A33A;border-color:#F2A33A;color:#1A1205}
+.steps button.ok b{border-color:#2D5A44;color:#7CD1A4}
+.b-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;align-items:start}
+.step{display:none;flex-direction:column;gap:16px}
+.step.on{display:flex}
+.b-foot{display:flex;gap:10px;flex-wrap:wrap;align-items:center;border-top:1px solid #1F2226;padding-top:14px}
+.scard{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+@media (max-width:1100px){.b-grid{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:767px){.bsent{font-size:17px}.steps button{padding:0 10px 0 6px}.steps button span{display:none}.steps button[aria-current=step] span{display:inline}}
+
+</style>
+</head>
+<body>
+<!-- MK-7 option B — "Guided wizard". Campaign setup for TrueView Tuesday. Content source = topics from the idea menu
+     + photos from the project's photo library (or text only). Items and the post designer are deferred (owner, 12 Oct).
+     Data: StackerMint (project coins), Mon 12 Oct 2026, real kit photos and ideas. -->
+<div class="shell">
+  <div class="topbar">
+    <button class="btn" aria-label="Open menu" style="width:44px;padding:0;border:0;background:transparent">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9CBCF" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <span style="font-weight:600">Story Board</span>
+  </div>
+  <nav class="side" aria-label="Board">
+    <div style="display:flex;align-items:center;gap:10px;padding:0 6px">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="1" width="24" height="24" rx="7" fill="none" stroke="#F2A33A" stroke-width="2"/><path d="M8 9h10M8 13h6M8 17h8" stroke="#F2A33A" stroke-width="2" stroke-linecap="round"/></svg>
+      <span style="font-weight:600;font-size:16px">Story Board</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <a class="navi" href="#">Home</a>
+      <a class="navi" href="#">Mockups</a>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <span class="lbl" style="padding:0 12px 6px">Projects</span>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>asset-track</a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>client-dashboard</a>
+      <a class="navi" href="#" aria-current="page" style="background:#1D2024;color:#F2F1EE;font-weight:500"><span class="dot" style="background:#5FBF8F"></span>coins</a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>rent-track</a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>story-board</a>
+    </div>
+  </nav>
+  <main>
+    <div class="legend" role="note" aria-label="Mockup legend">
+      <strong style="color:#F2F1EE">MK-7 · option B · Guided wizard</strong>
+      <span><i style="background:#F2A33A"></i>amber = a link or button</span>
+      <span class="soft">Four steps (When, What, Images, Voice), then check and save. The sentence on top writes itself; click any underlined part to jump to its step.</span>
+    </div>
+    <header style="display:flex;flex-direction:column;gap:4px">
+      <p class="crumb" style="margin:0" id="crumb"><a href="#">All projects</a> / <a href="#">coins</a> / <a href="#">Marketing</a> / <a href="#">Campaigns</a> / TrueView Tuesday</p>
+      <h1 style="margin:0;display:flex;align-items:center;gap:10px;font-size:24px;font-weight:600;letter-spacing:-.01em">coins <span class="dot" style="background:#5FBF8F"></span><span style="font-size:13px;font-weight:400;color:#9A9DA3">ok</span></h1>
+      <p class="muted" style="margin:0;font-size:14px">Marketing as <strong class="soft" style="font-weight:500">StackerMint</strong> · Facebook page connected · posts go out from this Mac's queue</p>
+    </header>
+    <nav class="tabs" aria-label="Project pages">
+      <a href="#">Overview</a><a href="#">Stories</a><a href="#">Preflight</a><a href="#">Handbook</a><a href="#">Map</a>
+      <a href="#" aria-current="page">Marketing<span class="new">NEW</span></a>
+    </nav>
+    <nav class="sub" aria-label="Marketing pages"><a href="#" data-sub="library">Library</a><a href="#" data-sub="review">Review <span class="n">3</span></a><a href="#" data-sub="calendar">Calendar</a><a href="#" data-sub="campaigns" aria-current="page">Campaigns <span class="new">NEW</span></a><a href="#" data-sub="settings">Settings</a></nav>
+    <section class="view on" id="v-wiz" aria-label="Campaign wizard">
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+        <div style="flex:1 1 260px;min-width:0;display:flex;flex-direction:column;gap:2px">
+          <a href="#" onclick="go('list');return false" style="font-size:13px">← All campaigns</a>
+          <input class="inp" id="nm" aria-label="Campaign name" style="font-size:20px;font-weight:600;border-color:transparent;background:transparent;padding:0;min-height:36px" oninput="C.name=this.value;refreshLight()">
+        </div>
+        <span id="dirty" class="pill t-draft" style="display:none">Unsaved changes</span>
+      </div>
+      <section class="card" style="padding:20px 22px;display:flex;flex-direction:column;gap:10px" aria-labelledby="bs-h">
+        <h2 id="bs-h" class="lbl" style="margin:0">The campaign, in one sentence · click any underlined part to change it</h2>
+        <p class="bsent" id="sent"></p>
+      </section>
+      <nav class="steps" aria-label="Steps" id="steps"></nav>
+      <div class="b-grid">
+        <div class="card" style="padding:20px;display:flex;flex-direction:column;gap:16px;min-width:0">
+          <div class="step" data-s="1"><h2 style="margin:0;font-size:17px">When does it post?</h2>
+            <div class="fld"><span class="fl">Day</span><div id="c-days"></div></div>
+            <div class="row2"><div class="fld"><span class="fl">Time</span><div id="c-time"></div></div><div class="fld"><span class="fl">Repeat</span><div id="c-every"></div></div><div class="fld"><span class="fl">Starts</span><div id="c-start"></div></div><div class="fld"><span class="fl">Ends <span class="faint" style="font-weight:400">optional</span></span><div id="c-end"></div></div></div>
+            <div class="fld"><span class="fl">Prepare ahead</span><div id="c-ahead"></div><p class="hint">How far ahead the AI drafts candidates. You confirm each one on Review.</p></div></div>
+          <div class="step" data-s="2"><h2 style="margin:0;font-size:17px">What is it about?</h2><p class="hint" style="font-size:13px">Pick topics from your idea menu. Each week the AI starts from a fresh idea and skips recent ones. Untick an idea to keep it out.</p><div id="c-cats"></div><div id="ideas"></div></div>
+          <div class="step" data-s="3"><h2 style="margin:0;font-size:17px">Which images can it use?</h2><div id="c-img"></div><div class="fld"><span class="fl">Photos tagged <span class="faint" style="font-weight:400">any of</span></span><div id="c-tags"></div></div><div id="c-rep"></div><div id="pool"></div><div id="c-later"></div></div>
+          <div class="step" data-s="4"><h2 style="margin:0;font-size:17px">How should it sound?</h2><div class="fld"><span class="fl">Brief for the AI</span><div id="c-brief"></div></div><div id="c-ro"></div></div>
+          <div class="step" data-s="5"><h2 style="margin:0;font-size:17px">Check and save</h2><p class="soft" style="margin:0;font-size:14px;line-height:1.55">Saving puts the open dates on the Calendar as dashed ghosts. The AI drafts candidates for dates inside the prepare-ahead window and leaves them on Review. Nothing posts until you confirm one.</p>
+            <div class="mini" id="mini" role="img"></div>
+            <p class="hint">Dashed amber = an open date the AI fills · filled purple = already planned · dots = other campaigns.</p></div>
+          <div class="b-foot"><button type="button" class="btn sm ghost" id="back" onclick="jump(W-1)">← Back</button><span style="flex:1"></span><button type="button" class="btn sm ghost" onclick="discard()">Discard</button><button type="button" class="btn sm" id="nextb" onclick="jump(W+1)">Next →</button><button type="button" class="btn sm pri" onclick="save()">Save campaign</button></div>
+        </div>
+        <aside style="display:flex;flex-direction:column;gap:14px;min-width:0">
+          <section class="card scard" id="help"></section>
+          <section class="card scard" aria-labelledby="n-h"><h2 id="n-h" style="margin:0;font-size:15px">Next 3 posts</h2><div id="next"></div></section>
+        </aside>
+      </div>
+    </section>
+    <section class="view" id="v-list" aria-label="Campaigns">
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center"><h2 style="margin:0;font-size:20px;font-weight:600;flex:1">Campaigns</h2><button type="button" class="btn sm pri" onclick="toast('Starts the wizard at step 1, empty.')">+ New campaign</button></div>
+      <div id="clist" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));gap:14px"></div>
+      <div id="pack"></div>
+    </section>
+    <section class="states" aria-label="States">
+      <div class="tile"><h3>New campaign</h3><p>Same form, empty: name, then every section starts blank. The sentence reads “Every … at …, post a …” with the gaps in amber until filled. Save is off until a day, a time and a topic are set.</p></div>
+      <div class="tile"><h3>Not enough photos</h3><p>The warning in Next 3 posts. Try it: untick <span class="mono">toned</span>, or press Allow repeats, or upload a photo. The dated row that has no photo turns red.</p></div>
+      <div class="tile"><h3>Campaign off</h3><p>The ghosts disappear from the Calendar. Posts already scheduled or in Review stay where they are.</p></div>
+      <div class="tile"><h3>Loading</h3><div aria-busy="true" style="display:flex;flex-direction:column;gap:10px"><span style="display:block;height:10px;border-radius:5px;background:#26292E;width:80%"></span><span style="display:block;height:10px;border-radius:5px;background:#26292E;width:55%"></span></div></div>
+    </section>
+  </main>
+</div>
+<div class="scrim" id="scrim" onclick="window.closeAll&&closeAll()"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+/* MK-7 mockup engine, shared by options A, B and C.
+   One campaign (C) is being edited. Controls write into C through upd(); each option's refresh() redraws
+   the outputs: the sentence, the next 3 posts, the ghosts and the photo pool. Data: StackerMint (coins), Mon 12 Oct 2026. */
+var K='../MK-kit/posts/', CI='../MK-kit/coins/';
+var SWIRL = "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 aria-hidden=%27true%27 focusable=%27false%27 viewBox=%270 0 23 23%27 width=%2723%27 height=%2723%27 fill=%27%23A8834F%27%3E%3Cpath d=%27M8.24443 16.0935C8.575 16.0855 8.89899 16.0595 9.20728 16.016L9.22499 16.0132C9.90412 15.912 10.5598 15.7306 11.1741 15.4746C12.1264 15.0801 13.0198 14.4815 13.7569 13.7461C14.6252 12.9407 15.6289 13.1835 16.1943 13.7495C16.7595 14.3161 17.0023 15.3189 16.2012 16.18C15.6295 16.7586 14.6869 16.8475 14.0081 16.384C13.4738 16.0198 12.7407 16.2232 12.3681 16.6209C12.1507 16.8532 12.029 17.152 12.0344 17.4409C12.0404 17.7529 12.1832 18.04 12.4264 18.2289C13.1472 18.7894 14.0569 19.098 14.9878 19.098C16.0995 19.098 17.1663 18.658 17.9137 17.8926C19.0712 16.7523 19.4314 15.0775 18.8543 13.5226C18.2777 11.9698 16.916 10.9381 15.3015 10.8298C14.0889 10.7384 12.9047 11.1738 12.051 12.0278C11.2687 12.8118 10.279 13.3426 9.18899 13.5618C6.69531 14.0464 4.31076 12.9201 3.11364 10.6913C1.91965 8.46842 2.2985 5.86188 4.07934 4.05019C5.22561 2.86306 6.86845 2.27793 8.585 2.44421C10.3304 2.61278 11.8515 3.51106 12.7578 4.90875C13.0164 5.3076 13.4692 5.52303 13.9392 5.47017C14.3584 5.42446 14.7175 5.16903 14.8995 4.78733C15.0792 4.41019 15.0523 3.97705 14.8278 3.6282C13.5389 1.62765 11.2907 0.286809 8.81328 0.0410981C6.36388 -0.20147 4.01334 0.637948 2.36307 2.34136C-0.00175392 4.71618 -0.647174 8.11357 0.678809 11.2075C1.97622 14.2346 4.7999 16.0952 8.07557 16.0952C8.13157 16.0952 8.18814 16.0946 8.24443 16.0935Z%27/%3E%3Cpath d=%27M20.3738 8.9676C19.1347 7.85504 17.5338 7.13962 15.8661 6.95306C13.4496 6.67563 10.9873 7.53733 9.28221 9.26103C8.96021 9.58559 8.52765 9.76445 8.06423 9.76445C7.59909 9.76445 7.16738 9.58731 6.8511 9.26817C6.05539 8.39561 6.29653 7.47162 6.74453 6.94563C7.22452 6.3822 8.12708 6.02821 8.9745 6.58249C9.38507 6.85134 9.8782 6.87106 10.2936 6.6362C10.6613 6.42878 10.8905 6.05192 10.9068 5.62821C10.9225 5.21508 10.7288 4.83222 10.3888 4.60451C8.74593 3.50481 6.48567 3.72138 5.13283 5.10679C4.24942 5.96992 3.81714 7.19219 3.94628 8.46018C4.07542 9.72645 4.74341 10.8339 5.77883 11.4979C7.41652 12.5761 9.60992 12.3553 10.9948 10.973C12.2596 9.71416 14.0024 9.1356 15.7756 9.38617C16.9818 9.55874 18.1161 10.1222 18.9698 10.9727C20.0332 12.0361 20.6186 13.4521 20.6184 14.9601C20.6184 16.4684 20.0318 17.8849 18.9669 18.95C17.823 20.1346 16.1796 20.72 14.461 20.5563C12.7156 20.3875 11.1945 19.4889 10.2882 18.0912C10.0262 17.6869 9.58335 17.4746 9.10707 17.5301C8.68765 17.5755 8.32879 17.8309 8.1468 18.2129C7.96708 18.5898 7.99394 19.0232 8.21851 19.372C9.50735 21.3732 11.7576 22.7143 14.2373 22.9597C14.5119 22.9869 14.7899 23.0006 15.0633 23.0006C17.2258 23.0006 19.2215 22.1689 20.6821 20.6609C22.2349 19.1175 23.092 16.9629 23.0338 14.7495C22.9755 12.5356 22.0061 10.4282 20.3738 8.96846V8.9676Z%27/%3E%3C/svg%3E";
+var TODAY='2026-10-12';
+var DOW=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], DOWL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function D(s){var p=s.split('-');return new Date(+p[0],p[1]-1,+p[2]);}
+function F(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function add(s,n){var d=D(s);d.setDate(d.getDate()+n);return F(d);}
+function dow(s){return D(s).getDay();}
+function nice(s){var d=D(s);return DOW[d.getDay()]+' '+d.getDate()+' '+MON[d.getMonth()];}
+function monStart(s){var w=dow(s);return add(s,w===0?-6:1-w);}
+function daysBetween(a,b){return Math.round((D(b)-D(a))/864e5);}
+function esc(x){return String(x).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function hm(t){var p=t.split(':'),h=+p[0],m=p[1],s=h>=12?'pm':'am';h=h%12||12;return h+(m==='00'?'':':'+m)+s;}
+function list(a,last){last=last||'or';if(a.length<2)return a.join('');return a.slice(0,-1).join(', ')+' '+last+' '+a[a.length-1];}
+
+/* The project's idea menu (MK-kit/captions-and-bios.txt), grouped by category. u = last used, in any campaign. */
+var IDEAS={
+ 'Toned & TrueView':[
+  {t:'TrueView Tuesday',q:'TrueView Tuesday. Show us your best toner.',u:'2026-10-06'},
+  {t:'Toning 101',q:'Toning is chemistry, not damage. Natural color can add value.',u:'2026-10-13',us:'scheduled'},
+  {t:'Album toning',q:'That rainbow came from sitting in an old paper album for decades.'},
+  {t:'Rate the rainbow',q:'Rate this toning, 1 to 10.'},
+  {t:'Front or back?',q:'Some coins tone better on the back. Which side wins on this one?'},
+  {t:'Both sides',q:'Front and back, side by side.',u:'2026-10-20',us:'in Review'}],
+ 'Sets':[
+  {t:'What are you building?',q:'What set are you working on?',u:'2026-10-11',us:'missed'},
+  {t:'Slot filled',q:'Another slot filled. [x] of [y] done.',u:'2026-10-09'},
+  {t:'One slot left',q:'[x] down, one to go. The [key date] is the last hole.'},
+  {t:'Set complete',q:'Set complete. All [y] [series].',u:'2026-10-16',us:'scheduled'},
+  {t:'Key date spotlight',q:'Every set has a wall. For [series], it\'s the [key date].'},
+  {t:'Type set 101',q:'A type set is one of each design, not every date.',u:'2026-10-23',us:'in Review'},
+  {t:'Binder to app',q:'Still keeping your set in an album and a spreadsheet?'}],
+ 'Show & tell':[
+  {t:'Coin of the week',q:'Coin of the week. What do you see first, the strike or the color?',u:'2026-10-13',us:'scheduled'},
+  {t:'Collector spotlight',q:'Meet [name]. Here\'s the coin they\'d grab in a fire.'},
+  {t:'First coin story',q:'What was the first coin you ever kept?'},
+  {t:'Then and now',q:'Raw on the left, graded on the right.'},
+  {t:'Slab shot Saturday',q:'It\'s Saturday. Show us your favorite slab.'},
+  {t:'Paper money feature',q:'Notes get love here too.'}],
+ 'Did you know':[
+  {t:'BN, RB, RD',q:'On copper, BN is brown, RB is red-brown, RD is full red.'},
+  {t:'Key dates',q:'A key date is the hardest coin to find in a series.'},
+  {t:'Mint marks',q:'That tiny letter matters. D is Denver, S is San Francisco.'},
+  {t:'What CAC means',q:'A green CAC sticker means a second set of eyes agreed.'},
+  {t:'Proof vs. business strike',q:'Proofs were struck twice on polished dies.'}],
+ 'Ask the community':[
+  {t:'Rarity or condition?',q:'Same price. Rare and worn, or common and near perfect?',u:'2026-10-04'},
+  {t:'Grade it',q:'No peeking at the label. What grade would you give this one?'},
+  {t:'Dream coin',q:'Money is no object. What one coin are you buying?',u:'2026-10-18',us:'in Review'},
+  {t:'Silver or gold?',q:'Silver or gold?'},
+  {t:'Storage setup',q:'Albums, slabs, or a safe full of tubes?'},
+  {t:'The one that got away',q:'What\'s the one coin you passed on and still think about?'}],
+ 'How it works':[
+  {t:'Spreadsheets are out',q:'Still keeping your collection in a spreadsheet?'},
+  {t:'Collection value',q:'See what your collection is worth today.'},
+  {t:'Share link',q:'Share your whole collection with one link.'},
+  {t:'Notes and bullion',q:'Not just coins. Paper money and bullion live here too.'}],
+ 'Behind the build':[
+  {t:'Why we built it',q:'We were tired of keeping a collection in a spreadsheet.'},
+  {t:'Desk shot',q:'Coffee, a loupe, and a bug that\'s been fighting back since 9am.'},
+  {t:'Sneak peek',q:'Here\'s a first look at something we\'re working on.'}],
+ 'Beta & launch':[
+  {t:'Invite open',q:'Private beta is open. Request an invite.'},
+  {t:'New batch',q:'We just let in a new group of collectors.'},
+  {t:'Bring a friend',q:'Know a collector who still uses a spreadsheet?'}]
+};
+var CATS=Object.keys(IDEAS);
+
+/* The project's photo library (MK-2): kit coin photos plus uploads. u = last used in a post (or booked for one). */
+var PHOTOS=[
+ {id:'m1',src:CI+'Morgan-obverse.jpg',l:'1889 Morgan · front',tags:['toned','morgan']},
+ {id:'m2',src:CI+'Morgan-reverse.jpg',l:'1889 Morgan · back',tags:['toned','morgan']},
+ {id:'m3',src:CI+'Morgan-reverse.png',l:'1885 Morgan · back',tags:['toned','morgan'],u:'2026-10-06',ui:'TrueView Tuesday'},
+ {id:'f1',src:CI+'Flowing-Hair-obverse.jpg',l:'1795 Flowing Hair · front',tags:['toned','early silver'],u:'2026-10-04',ui:'Ask the community'},
+ {id:'f2',src:CI+'Flowing-Hair-reverse.jpg',l:'1795 Flowing Hair · back',tags:['early silver']},
+ {id:'p1',src:CI+'Peace-obverse.jpg',l:'1921 Peace · front',tags:['peace']},
+ {id:'p2',src:CI+'Peace-reverse.jpg',l:'1921 Peace · back',tags:['peace']},
+ {id:'d1',src:CI+'Mercury--Winged-Liberty--obverse.jpg',l:'1916-D Mercury · front',tags:['key date'],u:'2026-10-13',ui:'Coin of the week'},
+ {id:'d2',src:CI+'Mercury--Winged-Liberty--reverse.jpg',l:'1916-D Mercury · back',tags:['key date']}
+];
+var TAGS=['toned','morgan','peace','early silver','key date'];
+
+/* Other campaigns, shown on the calendar and in lists. */
+var CAMPS=[
+ {id:'tvt', name:'TrueView Tuesday', day:2,time:'19:00',c:'#C3A8F0',on:true},
+ {id:'cotw',name:'Coin of the week', day:2,time:'10:00',c:'#E8C36A',on:true,topics:'Show & tell',img:'photo tagged key date',n:1},
+ {id:'set', name:'Set spotlight',    day:5,time:'18:00',c:'#7CD1A4',on:true,topics:'Sets',img:'any photo',n:7},
+ {id:'ask', name:'Ask the community',day:0,time:'12:00',c:'#8EBBF2',on:true,topics:'Ask the community',img:'AI picks: photo or text-only',n:null},
+ {id:'dyk', name:'Did you know',     day:4,time:'12:00',c:'#F59088',on:false,topics:'Did you know',img:'text-only',n:null}
+];
+function camp(id){for(var i=0;i<CAMPS.length;i++)if(CAMPS[i].id===id)return CAMPS[i];return null;}
+/* Posts already on the calendar (MK-10 option A data). */
+var POSTS=[
+ {d:'2026-10-01',t:'12:00',c:null,  st:'posted',title:"Hi, we're StackerMint 👋",img:'01-post-welcome.png'},
+ {d:'2026-10-04',t:'12:00',c:'ask', st:'posted',title:'Same money. Only one stays.',img:'09-post-pick.png'},
+ {d:'2026-10-06',t:'10:00',c:'cotw',st:'posted',title:'Coin of the week: 1800 $5',img:'02-post-cotw.png'},
+ {d:'2026-10-06',t:'19:00',c:'tvt', st:'posted',title:'TrueView Tuesday 🌈',img:'10-post-tv-tuesday.png'},
+ {d:'2026-10-09',t:'18:00',c:'set', st:'posted',title:'Carson City Morgans',img:'05-post-set-cc.png'},
+ {d:'2026-10-11',t:'12:00',c:'ask', st:'missed',title:'What set are you building?',img:'04-post-set-building.png'},
+ {d:'2026-10-13',t:'10:00',c:'cotw',st:'scheduled',title:'Coin of the week: 1916-D Mercury',img:'06-post-set-last.png'},
+ {d:'2026-10-13',t:'19:00',c:'tvt', st:'scheduled',title:'Toning is chemistry, not damage.',img:'12-post-toned.png'},
+ {d:'2026-10-16',t:'18:00',c:'set', st:'scheduled',title:'Set complete. All 24 Peace dollars',img:'07-post-set-done.png'},
+ {d:'2026-10-18',t:'12:00',c:'ask', st:'review',title:'Dream coin',img:null,cands:2},
+ {d:'2026-10-20',t:'19:00',c:'tvt', st:'review',title:'Both sides of the story.',img:'11-post-tv-sides.png',cands:3},
+ {d:'2026-10-23',t:'18:00',c:'set', st:'review',title:'A type set is one of each design',img:'08-post-typeset.png',cands:2}
+];
+
+/* The campaign being edited. TrueView Tuesday started life as an MK-10 slot; this is its campaign form. */
+var C={name:'TrueView Tuesday',on:true,day:2,time:'19:00',every:1,start:'2026-10-06',end:'',
+ cats:['Toned & TrueView'],off:[],img:'tag',tags:['toned'],repeats:false,
+ brief:'Show off the toning. One line. Ask people to share their best toner.',ahead:3};
+var SAVED=JSON.stringify(C);
+function dirty(){return JSON.stringify(C)!==SAVED;}
+
+/* ---------- rules ---------- */
+function isOcc(ds){
+  if(dow(ds)!==C.day||ds<C.start||(C.end&&ds>C.end))return false;
+  return C.every===1||Math.floor(daysBetween(C.start,ds)/7)%C.every===0;
+}
+function tvtPost(ds){return POSTS.filter(function(p){return p.c==='tvt'&&p.d===ds;})[0]||null;}
+/* Open occurrences: on the schedule, today or later, with nothing planned yet. */
+function openOcc(n){var out=[],d=TODAY,guard=0;while(out.length<n&&guard++<400){if(isOcc(d)&&!tvtPost(d))out.push(d);d=add(d,1);}return out;}
+function planned(){return POSTS.filter(function(p){return p.c==='tvt'&&p.d>=TODAY;});}
+function ideaPool(){
+  var out=[];C.cats.forEach(function(c){IDEAS[c].forEach(function(i){if(C.off.indexOf(c+'|'+i.t)<0)out.push({c:c,i:i});});});
+  /* unused first in menu order, then the least recently used */
+  return out.filter(function(x){return !x.i.u;}).concat(out.filter(function(x){return x.i.u;}).sort(function(a,b){return a.i.u<b.i.u?-1:1;}));
+}
+function photoMatch(){return PHOTOS.filter(function(p){return !C.tags.length||p.tags.some(function(t){return C.tags.indexOf(t)>=0;});});}
+function photoFree(p){return !p.u||C.repeats;}
+function photoAvail(){return photoMatch().filter(photoFree);}
+function tagWord(){return C.tags.length?'tagged '+list(C.tags):'in the library';}
+function plan(){
+  var occ=openOcc(3),ideas=ideaPool(),ph=C.img==='text'?[]:photoAvail();
+  return occ.map(function(d,i){
+    var r={d:d,idea:ideas.length?ideas[i%ideas.length]:null,photo:null,text:false,short:false};
+    if(C.img==='text')r.text=true;
+    else if(ph[i])r.photo=ph[i];
+    else if(C.img==='ai')r.text=true;
+    else r.short=true;
+    var pr=add(d,-7*C.ahead);r.when=pr<=TODAY?'now':nice(pr);
+    return r;
+  });
+}
+function shortage(){
+  if(C.img==='text')return null;
+  var n=photoAvail().length;if(n>=3)return null;
+  return {n:n,txt:(n===0?'No':'Only '+n)+' unused photo'+(n===1?'':'s')+' '+tagWord()};
+}
+
+/* ---------- sentence ---------- */
+function sentence(clickable){
+  function seg(s,html){return clickable?'<button type="button" class="sx" data-step="'+s+'" onclick="jump('+s+')">'+html+'</button>':'<b>'+html+'</b>';}
+  var when=(C.every===2?'Every other ':'Every ')+DOWL[C.day]+' at '+hm(C.time)+(C.end?', until '+nice(C.end):'');
+  var cats=C.cats.length?list(C.cats)+' idea':'an idea from any topic';
+  var img=C.img==='text'?'as text only, no photo':C.img==='ai'?'with a photo '+tagWord()+' or as text only, the AI decides':'with '+(C.repeats?'a':'an unused')+' photo '+tagWord();
+  return seg(1,esc(when))+', post a '+seg(2,esc(cats))+' '+seg(3,esc(img))+'. The AI writes the caption from '+seg(4,'your brief')+' and prepares '+seg(1,C.ahead+' week'+(C.ahead>1?'s':'')+' ahead')+'. Nothing posts until you confirm.';
+}
+
+/* ---------- outputs ---------- */
+function thumbFor(r){
+  if(r.photo)return '<img class="th" src="'+r.photo.src+'" alt="">';
+  if(r.short)return '<span class="th none" aria-hidden="true">!</span>';
+  return '<span class="th ph" style="background:#1D2024;color:#C9CBCF;font-size:11px;display:flex;align-items:center;justify-content:center">Aa</span>';
+}
+function renderNext(el){
+  var p=plan(),pl=planned(),sh=shortage(),h='';
+  if(pl.length)h+='<p class="done" style="margin:0 0 6px">Already planned: '+pl.map(function(x){return nice(x.d)+' <span class="pill '+(x.st==='scheduled'?'t-ready':'t-draft')+'">'+(x.st==='scheduled'?'scheduled':x.cands+' in Review')+'</span>';}).join(' · ')+(pl.some(function(x){return dow(x.d)!==C.day||x.t!==C.time;})?' <span class="faint">(keep their own day and time)</span>':'')+'</p>';
+  h+='<div class="nx">';
+  if(!p.length)h+='<p class="hint">No dates left before the end date.</p>';
+  p.forEach(function(r){
+    var idea=r.idea?'<b class="soft" style="font-weight:500">'+esc(r.idea.i.t)+'</b> <span class="faint">· '+esc(r.idea.c)+'</span>':'<span class="faint">no topic picked</span>';
+    var img=r.photo?esc(r.photo.l):r.short?'<span style="color:#F59088">no unused photo left</span>':(C.img==='ai'&&!C.repeats&&photoAvail().length<=p.indexOf(r)?'text only (photos used up)':'text only');
+    h+='<div class="nx-row">'+thumbFor(r)+'<div style="display:flex;flex-direction:column;gap:3px;min-width:0"><span class="d">'+nice(r.d)+' · '+C.time+'</span><span class="it">'+idea+'</span><span class="it" style="font-size:12px">'+img+'</span><span class="ai">'+(r.when==='now'?'<b>AI drafts candidates when you save</b>':'AI proposes candidates on <b>'+r.when+'</b>')+'</span></div></div>';
+  });
+  h+='</div>';
+  if(sh)h+='<div class="warn" role="alert" style="margin-top:8px"><span aria-hidden="true">⚠</span><span><b>'+esc(sh.txt)+'</b>, so upload more or allow repeats.'+(C.img==='ai'?' Until then the AI goes text-only.':'')+'<span style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><label class="btn sm" style="position:relative">Upload photos<input type="file" accept="image/*" multiple onchange="upload(this)" style="position:absolute;inset:0;opacity:0;cursor:pointer"></label><button type="button" class="btn sm ghost" onclick="upd(\'repeats\',true)">Allow repeats</button></span></span></div>';
+  el.innerHTML=h;
+}
+/* Mini calendar: 5 weeks from this Monday. Dashed = this campaign's open dates (ghosts); purple when unsaved. */
+function renderMini(el,weeks){
+  weeks=weeks||5;var s=monStart(TODAY),h='';
+  ['M','T','W','T','F','S','S'].forEach(function(x){h+='<span class="h">'+x+'</span>';});
+  for(var i=0;i<weeks*7;i++){
+    var d=add(s,i),cls='c'+(d<TODAY?' past':'')+(d===TODAY?' today':''),inner='',dots='';
+    var tp=tvtPost(d);
+    if(tp)inner+='<span class="mk p" title="'+esc(tp.title)+'">'+tp.t+'</span>';
+    else if(d>=TODAY&&C.on&&isOcc(d))inner+='<span class="mk '+(dirty()?'gx':'g')+'" title="'+esc(C.name)+' · open">'+C.time+'</span>';
+    POSTS.forEach(function(p){if(p.d===d&&p.c!=='tvt')dots+='<i style="background:'+(p.c?camp(p.c).c:'#9A9DA3')+'"></i>';});
+    CAMPS.forEach(function(c){if(c.id!=='tvt'&&c.on&&d>=TODAY&&c.day===dow(d)&&!POSTS.some(function(p){return p.d===d&&p.c===c.id;}))dots+='<i style="background:transparent;border:1px solid '+c.c+'"></i>';});
+    h+='<div class="'+cls+'"><span class="n">'+D(d).getDate()+'</span>'+inner+(dots?'<span class="ds">'+dots+'</span>':'')+'</div>';
+  }
+  el.innerHTML=h;el.setAttribute('aria-label','Next five weeks. Dashed boxes are '+C.name+' dates the AI will fill.');
+}
+function renderPool(el){
+  if(C.img==='text'){el.innerHTML='<p class="hint">Text-only posts use the brand card (MK-2). No photo is needed.</p>';return;}
+  var m=photoMatch(),a=photoAvail(),h='<p class="okline" style="margin:0 0 8px;color:'+(a.length>=3?'#7CD1A4':'#F2A33A')+'">'+a.length+' of '+m.length+' photos '+tagWord()+' are free to use'+(C.repeats?' (repeats allowed)':', not used in the last 90 days')+'</p><div class="pool">';
+  m.forEach(function(p){var used=!photoFree(p);h+='<div class="ph-c'+(used?' used':'')+(p.nw?' new':'')+'" title="'+esc(p.l)+(p.u?' · used '+nice(p.u)+' in '+p.ui:'')+'"><img src="'+p.src+'" alt="'+esc(p.l)+'"><span>'+(used?'used '+D(p.u).getDate()+' '+MON[D(p.u).getMonth()]:p.nw?'new':esc(p.l.split(' · ')[0]))+'</span></div>';});
+  h+='<label class="up"><input type="file" accept="image/*" multiple onchange="upload(this)" aria-label="Upload photos"><span style="font-size:20px;line-height:1">+</span>Upload'+(C.tags.length?'<span class="faint" style="font-size:10px">tagged '+esc(C.tags[0])+'</span>':'')+'</label></div>';
+  el.innerHTML=h;
+}
+function renderIdeas(el){
+  if(!C.cats.length){el.innerHTML='<p class="hint">Pick at least one topic. With none, the AI draws from the whole idea menu.</p>';return;}
+  var h='';
+  C.cats.forEach(function(c){
+    h+='<div class="lbl" style="margin:10px 0 2px">'+esc(c)+'</div><div class="ideas">';
+    IDEAS[c].forEach(function(i){var k=c+'|'+i.t,on=C.off.indexOf(k)<0;
+      h+='<label class="idea'+(i.u?' used':'')+'"><input type="checkbox" '+(on?'checked':'')+' onchange="toggleIdea(\''+esc(k).replace(/'/g,"\\'")+'\')"><span><b>'+esc(i.t)+'</b> <span class="q">'+esc(i.q)+'</span></span><span class="u">'+(i.u?(i.us||'used')+' '+D(i.u).getDate()+' '+MON[D(i.u).getMonth()]:'fresh')+'</span></label>';});
+    h+='</div>';
+  });
+  el.innerHTML=h;
+}
+
+/* ---------- controls (rendered once; refreshCtl keeps their state in sync) ---------- */
+function ctlDays(){var h='<div class="tgs days" role="group" aria-label="Day of the week">';[1,2,3,4,5,6,0].forEach(function(i){h+='<button type="button" class="tg" data-k="day" data-v="'+i+'" onclick="upd(\'day\','+i+')">'+DOW[i]+'</button>';});return h+'</div>';}
+function ctlTime(){return '<input class="inp" type="time" value="'+C.time+'" onchange="upd(\'time\',this.value)" aria-label="Time">';}
+function ctlEvery(){return '<select class="inp" onchange="upd(\'every\',+this.value)" aria-label="Repeat"><option value="1">Every week</option><option value="2">Every other week</option></select>';}
+function ctlStart(){return '<input class="inp" type="date" value="'+C.start+'" onchange="upd(\'start\',this.value)" aria-label="Starts">';}
+function ctlEnd(){return '<input class="inp" type="date" value="'+C.end+'" onchange="upd(\'end\',this.value)" aria-label="Ends (optional)">';}
+function ctlCats(){var h='<div class="tgs" role="group" aria-label="Topics">';CATS.forEach(function(c){h+='<button type="button" class="tg" data-k="cats" data-v="'+esc(c)+'" onclick="upd(\'cats\',this.dataset.v)">'+esc(c)+' <span class="faint mono" style="font-size:11px">'+IDEAS[c].length+'</span></button>';});return h+'</div>';}
+function ctlImg(){return '<div class="seg" role="group" aria-label="Image"><button type="button" data-k="img" data-v="tag" onclick="upd(\'img\',\'tag\')">Photo from the library</button><button type="button" data-k="img" data-v="ai" onclick="upd(\'img\',\'ai\')">AI decides: photo or text</button><button type="button" data-k="img" data-v="text" onclick="upd(\'img\',\'text\')">Text only</button></div>';}
+function ctlTags(){var h='<div class="tgs" role="group" aria-label="Photo tags" data-imgonly>';TAGS.forEach(function(t){h+='<button type="button" class="tg" data-k="tags" data-v="'+t+'" onclick="upd(\'tags\',this.dataset.v)">'+t+'</button>';});return h+'</div>';}
+function ctlRepeats(){return '<label class="chk" data-imgonly><input type="checkbox" data-k="repeats" onchange="upd(\'repeats\',this.checked)">Allow a photo again within 90 days</label>';}
+function ctlBrief(){return '<textarea class="inp" maxlength="200" oninput="C.brief=this.value;briefCount();refreshLight()" aria-label="Brief">'+esc(C.brief)+'</textarea><p class="hint"><span class="bc mono"></span> · one line of guidance for the AI. It writes the caption; you never type one here.</p>';}
+function ctlAhead(){var h='<select class="inp" onchange="upd(\'ahead\',+this.value)" aria-label="Prepare ahead">';[1,2,3,4,6].forEach(function(n){h+='<option value="'+n+'"'+(n===C.ahead?' selected':'')+'>'+n+' week'+(n>1?'s':'')+' ahead</option>';});return h+'</select>';}
+function laterBox(){return '<div class="later"><button type="button" class="btn sm" disabled>Connect a data source</button><span>Later phase: pull photos and facts from coins\' real collection. For now the AI uses the idea menu and the photo library.</span></div>';}
+function roRules(){
+  return '<div class="ro"><h4>Copy rules · every campaign <a href="#" onclick="toast(\'Copy rules live in Marketing settings (MK-6).\');return false">Settings</a></h4><ul><li>Short and human, one or two lines.</li><li>No filler like “tell us below, we read every one”.</li><li>No cert-lookup claims yet.</li><li>Sets are the centrepiece.</li><li>Comparisons pair coins of similar value and say where the price came from.</li></ul></div>'+
+  '<div class="ro"><h4>Your taste · learned across the project <a href="#" onclick="toast(\'Like and dislike candidates on Review (MK-16).\');return false">Review</a></h4><p class="soft" style="margin:0;font-size:13px;line-height:1.55">From <span class="mono">21</span> likes and <span class="mono">8</span> dislikes.</p><ul><li><span class="like">Likes</span> short questions, close-up toning photos, set counts in the first line.</li><li><span class="dislike">Dislikes</span> two or more emoji, history paragraphs, “don\'t miss out”.</li></ul><p class="hint">Brand fonts, colours and the swirl are fixed. Taste never changes them.</p></div>';
+}
+function briefCount(){document.querySelectorAll('.bc').forEach(function(e){e.textContent=C.brief.length+' / 200';});}
+
+function upd(k,v){
+  if(k==='cats'||k==='tags'){var a=C[k],i=a.indexOf(v);if(i>=0)a.splice(i,1);else a.push(v);}
+  else C[k]=v;
+  refresh();
+}
+function toggleIdea(k){var i=C.off.indexOf(k);if(i>=0)C.off.splice(i,1);else C.off.push(k);refresh();}
+function refreshCtl(){
+  document.querySelectorAll('[data-k]').forEach(function(e){
+    var k=e.dataset.k,v=e.dataset.v,cur=C[k],on;
+    if(k==='repeats'){e.checked=C.repeats;return;}
+    if(Array.isArray(cur))on=cur.indexOf(v)>=0;else on=String(cur)===v;
+    e.setAttribute('aria-pressed',on);
+  });
+  document.querySelectorAll('[data-imgonly]').forEach(function(e){e.style.opacity=C.img==='text'?.4:1;e.style.pointerEvents=C.img==='text'?'none':'';});
+  document.querySelectorAll('select[aria-label=Repeat]').forEach(function(e){e.value=C.every;});
+  briefCount();
+}
+/* Uploads go to the project's photo library, tagged with this campaign's tags so the AI can use them. */
+function upload(inp){
+  var fs=[].slice.call(inp.files||[]);if(!fs.length)return;
+  fs.forEach(function(f,i){PHOTOS.push({id:'u'+Date.now()+i,src:URL.createObjectURL(f),l:f.name.replace(/\.[^.]+$/,'').slice(0,28),tags:C.tags.length?C.tags.slice():['untagged'],nw:true});});
+  refresh();toast('Added '+fs.length+' photo'+(fs.length>1?'s':'')+' to the library'+(C.tags.length?', tagged '+list(C.tags,'and'):'')+'.');
+}
+var toastT=null;
+function toast(m){var t=document.getElementById('toast');t.innerHTML='<span>'+m+'</span>';t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('on');},5000);}
+function save(){
+  var n=openOcc(3).filter(function(d){return add(d,-7*C.ahead)<=TODAY;}).length;
+  SAVED=JSON.stringify(C);refresh();
+  toast('Saved. '+C.name+' shows as dashed ghosts on the Calendar. The AI drafts candidates for '+n+' date'+(n===1?'':'s')+' now; you confirm each one on Review.');
+}
+function discard(){C=JSON.parse(SAVED);refresh();if(window.rebuild)rebuild();toast('Changes discarded.');}
+function packCard(){
+  return '<div class="ro" style="border-style:solid;background:#16181B"><h4 style="color:#F2F1EE">Starter pack · First two weeks</h4><p class="soft" style="margin:0;font-size:13px;line-height:1.55">The kit\'s launch arc as a pack: 4 campaigns (Coin of the week, TrueView Tuesday, Set spotlight, Ask the community) plus 5 one-off posts (Why we built it, Mint marks, Better than a camera roll, Slab shot Saturday, What\'s it worth). Applying skips anything you already have.</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn sm" onclick="toast(\'Preview: the pack\\\'s posts show as purple dashed chips on the Calendar. Nothing is placed yet.\')">Preview on calendar</button><button type="button" class="btn sm" onclick="toast(\'Applied: 0 new campaigns (all 4 exist), 5 one-off drafts added to Review.\')">Apply pack</button></div></div>';
+}
+var MQ=window.matchMedia('(max-width:767px)');
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&window.closeAll)closeAll();});
+
+document.querySelectorAll('[data-sub]').forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();if(window.subnav)subnav(a.dataset.sub);});});
+
+var W=1,NAMES=['When','What','Images','Voice','Check and save'];
+function rebuild(){
+  document.getElementById('nm').value=C.name;
+  [['c-days',ctlDays],['c-time',ctlTime],['c-every',ctlEvery],['c-start',ctlStart],['c-end',ctlEnd],['c-ahead',ctlAhead],['c-cats',ctlCats],['c-img',ctlImg],['c-tags',ctlTags],['c-rep',ctlRepeats],['c-later',laterBox],['c-brief',ctlBrief],['c-ro',roRules]].forEach(function(x){document.getElementById(x[0]).innerHTML=x[1]();});
+  refresh();
+}
+function jump(s){if(s<1||s>5)return;W=s;if(document.getElementById('v-list').classList.contains('on'))go('wiz');refresh();}
+function helpFor(){
+  if(W===1)return '<h2 style="margin:0;font-size:15px">On the calendar</h2><div class="mini" id="mini1" role="img"></div><p class="hint">Change the day or time: the dashed dates move.</p>';
+  if(W===2){var p=ideaPool();return '<h2 style="margin:0;font-size:15px">Idea pool</h2><p class="soft" style="margin:0;font-size:13px"><span class="mono">'+p.filter(function(x){return !x.i.u;}).length+'</span> fresh ideas, <span class="mono">'+p.filter(function(x){return x.i.u;}).length+'</span> used recently. When the fresh ones run out, the oldest come back.</p>';}
+  if(W===3)return '<h2 style="margin:0;font-size:15px">How images are picked</h2><p class="soft" style="margin:0;font-size:13px;line-height:1.55">The AI picks the photo that best fits the idea and your brief, and never reuses one within 90 days unless you allow it. Text-only posts use the brand card.</p>';
+  if(W===4)return '<h2 style="margin:0;font-size:15px">A post you liked</h2><img src="'+K+'10-post-tv-tuesday.png" alt="TrueView Tuesday post from 6 Oct" style="width:100%;border-radius:8px"><p class="soft" style="margin:0;font-size:13px;white-space:pre-line">TrueView Tuesday 🌈\nA Morgan with a century of album toning. Show us your best toner.</p><p class="hint">Posted Tue 6 Oct · ♥ 88. Likes like this one steer the voice; the brand stays fixed.</p>';
+  return '<h2 style="margin:0;font-size:15px">Ready?</h2><p class="soft" style="margin:0;font-size:13px">'+(shortage()?'<span style="color:#F2A33A">One warning: '+esc(shortage().txt)+'.</span> You can save anyway; the date without a photo waits for you on Review.':'No warnings. Save when you are happy.')+'</p>';
+}
+function refreshLight(){
+  document.getElementById('sent').innerHTML=sentence(true);
+  document.querySelectorAll('.sx').forEach(function(b){b.classList.toggle('cur',+b.dataset.step===W);});
+  renderNext(document.getElementById('next'));
+  document.getElementById('help').innerHTML=helpFor();
+  var m1=document.getElementById('mini1');if(m1)renderMini(m1);
+  renderMini(document.getElementById('mini'));
+  document.getElementById('dirty').style.display=dirty()?'':'none';
+}
+function refresh(){
+  document.getElementById('steps').innerHTML=NAMES.map(function(n,i){return '<button type="button" onclick="jump('+(i+1)+')"'+(W===i+1?' aria-current="step"':'')+(i+1<W?' class="ok"':'')+'><b>'+(i+1<W?'✓':i+1)+'</b><span>'+n+'</span></button>';}).join('');
+  document.querySelectorAll('.step').forEach(function(s){s.classList.toggle('on',+s.dataset.s===W);});
+  document.getElementById('back').style.visibility=W===1?'hidden':'';
+  document.getElementById('nextb').style.display=W===5?'none':'';
+  refreshCtl();renderIdeas(document.getElementById('ideas'));renderPool(document.getElementById('pool'));refreshLight();renderList();
+}
+function renderList(){
+  document.getElementById('clist').innerHTML=CAMPS.map(function(c){
+    var t=c.id==='tvt',s=t?sentence(false):'Every '+DOWL[c.day]+' at '+hm(c.time)+', post a <b>'+esc(c.topics)+'</b> idea, '+esc(c.img)+'.';
+    return '<div class="card scard"><div style="display:flex;gap:8px;align-items:center"><span style="width:10px;height:10px;border-radius:3px;background:'+c.c+'"></span><strong style="flex:1">'+esc(t?C.name:c.name)+'</strong>'+((t?C.on:c.on)?'<span class="pill t-built">On</span>':'<span class="pill t-docs">Paused</span>')+'</div><p class="soft" style="margin:0;font-size:13px;line-height:1.55">'+s+'</p>'+(t&&shortage()?'<span class="pill t-draft" style="align-self:flex-start">'+esc(shortage().txt)+'</span>':'')+'<a href="#" onclick="'+(t?'go(\'wiz\')':'toast(\'Opens the wizard for '+esc(c.name)+'.\')')+';return false" style="font-size:13px">Edit</a></div>';
+  }).join('');
+}
+function go(v){document.getElementById('v-wiz').classList.toggle('on',v==='wiz');document.getElementById('v-list').classList.toggle('on',v==='list');
+  document.getElementById('crumb').innerHTML='<a href="#">All projects</a> / <a href="#">coins</a> / <a href="#">Marketing</a> / '+(v==='wiz'?'<a href="#" onclick="go(\'list\');return false">Campaigns</a> / '+esc(C.name):'Campaigns');window.scrollTo(0,0);}
+function subnav(s){if(s==='campaigns')go('list');else toast('Not part of this mockup. '+s[0].toUpperCase()+s.slice(1)+' is covered by MK-1, MK-9 or MK-10.');}
+document.getElementById('pack').innerHTML=packCard();
+rebuild();
+
+</script>
+</body>
+</html>

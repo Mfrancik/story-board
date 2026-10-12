@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MK-7 campaign setup v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;background:#0E0F11;color:#F2F1EE;font-family:Geist,system-ui,sans-serif}
+a{color:#F2A33A;text-decoration:none}a:hover{color:#FFC26B;text-decoration:underline;text-underline-offset:3px}
+a:focus-visible{outline:2px solid #F2A33A;outline-offset:2px}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.wrap{max-width:1240px;margin:0 auto;padding:32px 32px 64px;display:flex;flex-direction:column;gap:32px}
+.lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9A9DA3;font-weight:500}
+p{line-height:1.6;color:#C9CBCF;margin:0}
+.opt{background:#16181B;border:1px solid #26292E;border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:16px}
+.opt h2{margin:0;font-size:20px;font-weight:600;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.opt h2 .k{font-family:'Geist Mono',monospace;font-size:13px;color:#F2A33A;border:1px solid #5C4219;border-radius:999px;padding:2px 10px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:7px 8px;border-top:1px solid #1F2226;vertical-align:top}
+th{color:#9A9DA3;font-weight:500;width:34%}
+td{color:#C9CBCF}
+td .new{color:#F59088}
+.frame{border:1px solid #26292E;border-radius:10px;overflow:hidden;background:#0E0F11}
+iframe{display:block;width:100%;height:720px;border:0}
+.open{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:8px;background:#F2A33A;color:#1A1205;font-weight:500;font-size:14px;align-self:flex-start}
+.open:hover{color:#1A1205;background:#FFC26B;text-decoration:none}
+.gaps li{margin:0 0 10px;line-height:1.55;color:#C9CBCF;font-size:14px}
+.note{border:1px solid #5C4219;background:#1E1A13;border-radius:12px;padding:14px 16px}
+.note p{color:#F2D9B0}
+@media (max-width:900px){.cols{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:640px){.wrap{padding:20px 16px 48px;gap:24px}.opt{padding:16px}iframe{height:640px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:8px">
+    <span class="lbl">MK-7 · mockups v2 · pick one</span>
+    <h1 style="margin:0;font-size:30px;font-weight:600;letter-spacing:-.01em">Setting up a campaign, simplified: TrueView Tuesday</h1>
+    <p style="max-width:880px">You asked for it to be “simple and easy to manage and use and intuitive, not super complicated, but still needs to do everything we need”. A campaign now has only five things: a <strong>name</strong>, the <strong>weekly day(s) and time</strong> with an on/off switch, <strong>topics</strong> (ideas ticked from the kit's idea menu plus your own topics in your own words, each with optional detail), a one-or-two-sentence <strong>brief</strong>, and <strong>photos</strong> (library photo, text only, or let the AI decide). Prepare-ahead is no longer a setting: it is always the next 2 weeks, and the <strong>Fill next 2 weeks</strong> button in the calendar tray makes the drafts when you want them. All three options use the same data and the calendar from MK-10 option A. Each one shows the campaign list with on/off switches, the self-writing sentence, the Next posts preview, adding your own topics, and the dashed ghosts that land on the calendar when you save. Every page works at 375px.</p>
+  </header>
+
+  <div class="note" role="note"><p><strong>v2: simplified after the feasibility review; v1 kept in <a href="v1/index.html">v1/</a>.</strong> Gone from v1: photo tags and the 90-day reuse rule, the low-photo warning, start and end dates, every-other-week, prepare-ahead weeks, the starter pack, templates and the data-source box. What's left of that is one quiet line under Photos: “Coins photos: coming later”. The Marketing sub-nav is now Calendar · Review · Library · Settings, and campaigns live in the Calendar tray.</p></div>
+
+  <div class="note" role="note"><p><strong>New in all three: Upcoming posts.</strong> You asked to “see the next several posts of that one specifically in a modal I can pop up and view easily”. Every campaign now has an <strong>Upcoming posts</strong> button: in the tray list, inside the campaign form (next to Next posts), and on that campaign's dashed ghosts on the calendar. It opens one modal with the campaign sentence and its on/off switch on top, then the next 6 dates in order. Each row shows its state: <strong>confirmed</strong> (thumbnail, caption, Copy caption and Download image), <strong>3 drafts to review</strong> (Review link), <strong>open</strong> (a Fill button for that one date), or <strong>missed</strong> for the last past date when it didn't go out. Esc or a click on the backdrop closes it. Set spotlight and Ask the community show every state; TrueView Tuesday is new, so its dates start open.</p></div>
+
+  <section class="opt" aria-labelledby="a-h">
+    <h2 id="a-h"><span class="k">A</span>One plain page <span style="font-size:14px;font-weight:400;color:#9A9DA3">the sentence on top, four short sections</span></h2>
+    <div class="cols">
+      <p>Clicking a campaign in the Calendar tray, or <strong>+ New campaign</strong>, opens a normal page. The sentence sits on top and rewrites itself as you type. Below it are four numbered sections: 1 Name and when, 2 Topics (your own words first, then the idea menu grouped by category), 3 Brief / voice, 4 Photos. Next posts is pinned on the right. <strong>Create campaign</strong> takes you back to the Calendar with the new ghosts pulsing. This is <strong>the most obvious</strong> of the three: nothing is hidden, nothing to learn, and it follows the canonical “dedicated page” pattern.</p>
+      <table>
+        <tr><th>Optimises</th><td>Clarity: every field visible at once, the familiar form pattern</td></tr>
+        <tr><th>Try</th><td>Type a topic in “Add a topic” and press Enter, then <span class="mono">+ Detail</span>. Untick Tue and tick Fri. Create, then <span class="mono">Fill next 2 weeks</span>.</td></tr>
+        <tr><th>Risk</th><td>You leave the calendar to edit, and the page gets long on a phone (the idea menu is the long part)</td></tr>
+      </table>
+    </div>
+    <div class="frame"><iframe src="option-a.html" title="Option A preview" loading="lazy"></iframe></div>
+    <a class="open" href="option-a.html">Open option A full size</a>
+  </section>
+
+  <section class="opt" aria-labelledby="b-h">
+    <h2 id="b-h"><span class="k">B</span>Slide-over from the calendar <span style="font-size:14px;font-weight:400;color:#9A9DA3">same fields, compact, never leave the month</span></h2>
+    <div class="cols">
+      <p>The tray's campaign list opens a 440px slide-over from the right. The calendar stays readable beside it (no dimming on wide screens), and the campaign's dates show on the month in <strong>purple while unsaved</strong>, then turn amber dashed on Create. The form is compact: a short sentence, day toggles and time on two lines, your own topics with the idea menu folded into one “+ From the idea menu” drawer, a two-line brief, a three-way photo switch, and the two next dates. This is <strong>the quickest for small changes</strong>, like moving a day, pausing, or adding one topic.</p>
+      <table>
+        <tr><th>Optimises</th><td>Speed and context: edit and see the effect on your month together</td></tr>
+        <tr><th>Try</th><td>Tick Thu: purple ghosts appear on Thursdays. Add a topic. Create: purple turns amber. Close it and flip a switch in the tray.</td></tr>
+        <tr><th>Risk</th><td>The idea menu is folded away, so the menu ideas are less visible than your own topics (on purpose, but worth confirming)</td></tr>
+      </table>
+    </div>
+    <div class="frame"><iframe src="option-b.html" title="Option B preview" loading="lazy"></iframe></div>
+    <a class="open" href="option-b.html">Open option B full size</a>
+  </section>
+
+  <section class="opt" aria-labelledby="c-h">
+    <h2 id="c-h"><span class="k">C</span>The sentence is the form <span style="font-size:14px;font-weight:400;color:#9A9DA3">fill in the blanks, topics underneath</span></h2>
+    <div class="cols">
+      <p>A modal over the calendar, with a big editable sentence: “Every <u>Tuesday</u> <u>at 7pm</u>, post about <u>toned coins and TrueView, plus 2 topics in your own words</u>, <u>with a photo from the library</u>.” and “Sounds like: <u>“…”</u>”. Click an underlined part and a small editor opens right under the sentence (day toggles, time with quick picks, the three photo choices, the brief). Clicking the topics part jumps to the Topics list below, where you add your own words or pick from the idea menu by category. The tray lists every campaign as its sentence too. With six fields, the modal follows the canonical simple-record pattern. This is <strong>the most readable</strong>: what you see is what the campaign does.</p>
+      <table>
+        <tr><th>Optimises</th><td>Understanding: the summary and the form are the same thing</td></tr>
+        <tr><th>Try</th><td>Click “Every Tuesday” and add Friday. Click “at 7pm” and pick 12pm. Click the topics part, add a topic. Create, and read the tray.</td></tr>
+        <tr><th>Risk</th><td>Less familiar: the first time, you have to notice that the underlined words are clickable. A long topic list makes the topics part of the sentence vague (“plus 4 topics in your own words”).</td></tr>
+      </table>
+    </div>
+    <div class="frame"><iframe src="option-c.html" title="Option C preview" loading="lazy"></iframe></div>
+    <a class="open" href="option-c.html">Open option C full size</a>
+  </section>
+
+  <section aria-labelledby="gaps-h" style="display:flex;flex-direction:column;gap:12px">
+    <h2 id="gaps-h" style="margin:0;font-size:18px;font-weight:600">Gaps and questions</h2>
+    <ul class="gaps" style="margin:0;padding-left:20px">
+      <li><strong>Where campaigns live.</strong> With no Campaigns sub-nav item, the list is the Calendar tray (all three options). Settings could carry a second link to it. Is the tray enough?</li>
+      <li><strong>Fill next 2 weeks.</strong> It covers every campaign that is on, and only open dates (no post, no drafts yet). The mockups make 3 drafts per date. Should Create also offer “Fill these now”, or keep filling as one deliberate button?</li>
+      <li><strong>Topic rotation.</strong> The Next posts preview assumes the AI takes turns: your own topic, then a menu idea, and so on. Should your own words get more weight, or should the AI pick freely from the pool?</li>
+      <li><strong>Menu ideas with placeholders.</strong> Ideas like “Slot filled” or “Key date spotlight” need <span class="mono">[set]</span> or <span class="mono">[key date]</span> data that won't exist until the phase-3 coins API. Hide them for now, or let the AI write around them?</li>
+      <li><strong>Changing a day.</strong> Posts that are already scheduled or have drafts keep their own date; only the ghosts move. Pausing a campaign removes its ghosts and leaves its drafts in Review.</li>
+      <li><strong>Copy rules and taste.</strong> No longer shown in the form. They apply to every campaign, as warnings and as like/dislike examples; Settings and Review own them.</li>
+      <li><strong>Upcoming posts modal.</strong> A per-date Fill only fills that date. A missed row offers “Post it now”, which opens the post to copy and post by hand; the Mac-asleep rule (mark missed, never send late) still needs confirming. Should the modal show more than 6 dates, or a “Show more”?</li>
+      <li><strong>Editing other campaigns.</strong> Only TrueView Tuesday opens in these mockups; the others say they open in the same form. Create and edit share one form, as the reuse rule requires.</li>
+    </ul>
+  </section>
+</div>
+</body>
+</html>

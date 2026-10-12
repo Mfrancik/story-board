@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MK-10 option C — Calendar, slot runway</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+/* Shell tokens, copied from the RD-11 mockups (resources/css/app.css shell values). */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;background:#0E0F11;color:#F2F1EE;font-family:Geist,system-ui,sans-serif;-webkit-text-size-adjust:100%}
+a{color:#F2A33A;text-decoration:none}a:hover{color:#FFC26B;text-decoration:underline;text-underline-offset:3px}
+a:focus-visible,button:focus-visible{outline:2px solid #F2A33A;outline-offset:2px}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.card{background:#16181B;border:1px solid #26292E;border-radius:12px}
+.lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9A9DA3;font-weight:500}
+.muted{color:#9A9DA3}.faint{color:#7E8187}.soft{color:#C9CBCF}
+.navi{display:flex;align-items:center;gap:10px;padding:0 12px;border-radius:8px;color:#C9CBCF;font-size:14px;min-height:44px}
+.navi:hover{background:#1D2024;color:#F2F1EE;text-decoration:none}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid #33373D;color:#C9CBCF;white-space:nowrap}
+.t-built{border-color:#2D5A44;color:#7CD1A4}.t-fix{border-color:#2D5A44;color:#7CD1A4}
+.t-draft{border-color:#5C4219;color:#F2A33A}.t-ready{border-color:#2B4A6E;color:#8EBBF2}
+.t-docs{border-color:#33373D;color:#9A9DA3}.t-fail{border-color:#6B2F2B;color:#F59088}.t-pass{border-color:#2D5A44;color:#7CD1A4}
+.t-pick{border-color:#4A3B6B;color:#C3A8F0}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+.live{background:#6CA6F0;box-shadow:0 0 0 4px rgba(108,166,240,.18)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:8px;font:500 14px Geist,sans-serif;border:1px solid #33373D;background:#1D2024;color:#F2F1EE;cursor:pointer}
+.btn:hover{background:#24282D;color:#F2F1EE;text-decoration:none}
+.bar{height:8px;border-radius:4px;background:#26292E;overflow:hidden;display:flex}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.sample{display:inline-block;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:#C3A8F0;border:1px dashed #4A3B6B;border-radius:4px;padding:0 5px;margin-left:6px;vertical-align:1px}
+.legend{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;font-size:13px;color:#C9CBCF;padding:12px 16px;border:1px solid #26292E;border-radius:10px;background:#121417}
+.legend i{display:inline-block;width:22px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:6px}
+/* Shell frame: sidebar on desktop, top bar + drawer below 768px (as layouts/shell does). */
+.shell{display:flex;min-height:100vh}
+.side{width:232px;flex:none;padding:20px 14px;border-right:1px solid #1F2226;display:flex;flex-direction:column;gap:22px}
+.topbar{display:none}
+main{flex:1;min-width:0;padding:28px 32px 56px;display:flex;flex-direction:column;gap:24px}
+.crumb{font-size:12px;color:#9A9DA3}.crumb a{color:#9A9DA3}
+.tabs{display:flex;gap:24px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid #1F2226;font-size:14px;padding-bottom:1px}
+.tabs a{flex:none;color:#9A9DA3;padding-bottom:12px;margin-bottom:-2px;border-bottom:2px solid transparent;min-height:36px}
+.tabs a:hover{color:#F2F1EE;text-decoration:none}
+.tabs a[aria-current]{color:#F2F1EE;border-color:#F2F1EE;font-weight:500}
+.tabs .new{font-size:10px;color:#F2A33A;margin-left:4px;vertical-align:2px}
+@media (max-width:767px){
+  .side{display:none}
+  .shell{flex-direction:column}
+  .topbar{display:flex;position:sticky;top:0;z-index:5;height:56px;align-items:center;gap:8px;padding:0 8px;border-bottom:1px solid #1F2226;background:rgba(14,15,17,.95)}
+  main{padding:20px 16px 48px;gap:20px}
+  .tabs{gap:18px}
+}
+
+/* Marketing area — shared across MK-10 options. Status colours reuse the shell's pill tokens. */
+.sub{display:flex;gap:6px;flex-wrap:wrap;margin-top:-8px}
+.sub a{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border-radius:8px;color:#9A9DA3;font-size:13px}
+.sub a:hover{background:#1D2024;color:#F2F1EE;text-decoration:none}
+.sub a[aria-current]{background:#1D2024;color:#F2F1EE;font-weight:500}
+.sub .n{font-family:'Geist Mono',monospace;font-size:11px;color:#1A1205;background:#F2A33A;border-radius:999px;padding:0 6px;line-height:16px}
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.seg{display:inline-flex;border:1px solid #33373D;border-radius:8px;overflow:hidden}
+.seg button{min-height:40px;padding:0 14px;border:0;background:#16181B;color:#9A9DA3;font:500 13px Geist,sans-serif;cursor:pointer}
+.seg button[aria-pressed=true]{background:#24282D;color:#F2F1EE}
+.btn.sm{min-height:40px;padding:0 12px;font-size:13px}
+.btn.pri{background:#F2A33A;border-color:#F2A33A;color:#1A1205}
+.btn.pri:hover{background:#FFC26B;color:#1A1205}
+.btn.ghost{background:transparent}
+.btn.danger{border-color:#6B2F2B;color:#F59088;background:transparent}
+.iconbtn{width:40px;padding:0}
+.range{font-size:15px;font-weight:600;min-width:0}
+/* status chips */
+.chip{display:flex;align-items:center;gap:6px;min-width:0;font-size:12px;line-height:1.25;border-radius:6px;padding:3px 6px;border:1px solid #33373D;background:#1A1D21;color:#F2F1EE;cursor:pointer;text-align:left;font-family:Geist,sans-serif;width:100%}
+.chip:hover{background:#20242A}
+.chip .tm{font-family:'Geist Mono',monospace;font-size:11px;color:#9A9DA3;flex:none}
+.chip .tt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip .th{width:22px;height:22px;border-radius:4px;flex:none;object-fit:cover;background:#F4F3F0}
+.chip .meta{font-size:11px;flex:none;font-family:'Geist Mono',monospace}
+.chip[draggable=true]{cursor:grab}
+.chip.dragging{opacity:.4}
+.s-posted{border-left:3px solid #5FBF8F}.s-posted .meta{color:#7CD1A4}
+.s-scheduled{border-left:3px solid #6CA6F0}.s-scheduled .meta{color:#8EBBF2}
+.s-review{border-color:#5C4219;border-left:3px solid #F2A33A;background:#1E1A13}.s-review .meta{color:#F2A33A}
+.s-missed{border-color:#6B2F2B;border-left:3px solid #F59088;background:#1F1514}.s-missed .meta{color:#F59088}
+.s-ghost{border:1px dashed #5C4219;background:transparent;color:#C9A36A}.s-ghost .tm{color:#8C7448}.s-ghost .meta{color:#C9A36A}
+.s-preview{border:1px dashed #4A3B6B;background:rgba(195,168,240,.06);color:#D9C8F7}.s-preview .meta{color:#C3A8F0}
+.ph{display:flex;align-items:center;justify-content:center;background:#F4F3F0;color:#7A6447}
+.ph img{width:60%;height:60%;opacity:.75}
+.key{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12px;color:#9A9DA3}
+.key span{display:inline-flex;align-items:center;gap:6px}
+.key i{width:12px;height:12px;border-radius:3px;display:inline-block}
+/* gap */
+.gapbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:12px 14px;border:1px solid #6B2F2B;border-radius:10px;background:#1F1514;color:#F2D4D1;font-size:14px}
+.gapbar strong{color:#F59088}
+.gapbar .acts{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.gapday{background-image:repeating-linear-gradient(135deg,rgba(245,144,136,.09) 0 6px,transparent 6px 12px)!important}
+.gaptag{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:#F59088;font-weight:600}
+/* slots panel */
+.slots{display:flex;flex-direction:column;gap:2px}
+.slot{display:flex;align-items:center;gap:10px;padding:8px 4px;border-top:1px solid #1F2226;min-height:52px}
+.slot:first-child{border-top:0}
+.slot .nm{font-size:13px;font-weight:500}
+.slot .wh{font-family:'Geist Mono',monospace;font-size:11px;color:#9A9DA3}
+.slot .sw{width:10px;height:10px;border-radius:3px;flex:none}
+.slot.off .nm,.slot.off .wh{color:#6A6D73}
+.switch{margin-left:auto;flex:none;width:44px;height:26px;border-radius:13px;border:1px solid #33373D;background:#26292E;position:relative;cursor:pointer;padding:0}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#7E8187;transition:left .15s}
+.switch[aria-checked=true]{background:#3A2A12;border-color:#5C4219}
+.switch[aria-checked=true]::after{left:21px;background:#F2A33A}
+.addslot{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px dashed #33373D;border-radius:10px;margin-top:6px}
+.addslot .row{display:flex;gap:8px;flex-wrap:wrap}
+.inp{min-height:40px;padding:0 10px;border-radius:8px;border:1px solid #33373D;background:#121417;color:#F2F1EE;font:14px Geist,sans-serif;min-width:0}
+/* drawer + modal + toast */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:30;display:none}
+.scrim.on{display:block}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(420px,100%);background:#16181B;border-left:1px solid #26292E;z-index:31;transform:translateX(100%);transition:transform .2s;display:flex;flex-direction:column;overflow-y:auto}
+.drawer.on{transform:none}
+.drawer .hd{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid #1F2226;position:sticky;top:0;background:#16181B}
+.drawer .bd{padding:16px;display:flex;flex-direction:column;gap:14px}
+.drawer .big-th{width:100%;aspect-ratio:1;border-radius:10px;object-fit:cover;background:#F4F3F0}
+.cap{font-size:14px;line-height:1.55;color:#C9CBCF;white-space:pre-line}
+.modal{position:fixed;z-index:31;left:50%;top:50%;transform:translate(-50%,-50%);width:min(640px,calc(100% - 24px));max-height:calc(100vh - 40px);overflow-y:auto;background:#16181B;border:1px solid #26292E;border-radius:14px;display:none;flex-direction:column}
+.modal.on{display:flex}
+.seqrow{display:grid;grid-template-columns:86px 36px minmax(0,1fr);gap:10px;align-items:center;padding:8px 0;border-top:1px solid #1F2226;font-size:13px}
+.seqrow .d{font-family:'Geist Mono',monospace;font-size:12px;color:#9A9DA3}
+.seqrow .th{width:36px;height:36px;border-radius:6px;object-fit:cover}
+.seqrow.skip{opacity:.55}
+.seqrow .why{display:block;font-size:12px;color:#9A9DA3;margin-top:2px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:40;background:#24282D;border:1px solid #33373D;color:#F2F1EE;border-radius:10px;padding:10px 12px 10px 16px;font-size:14px;display:none;align-items:center;gap:12px;max-width:calc(100% - 24px);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.toast.on{display:flex}
+.toast button{background:none;border:0;color:#F2A33A;font:500 14px Geist,sans-serif;cursor:pointer;min-height:36px;padding:0 6px}
+.drop-ok{outline:2px solid #F2A33A;outline-offset:-2px;background-color:rgba(242,163,58,.06)!important}
+.drop-no{outline:2px solid #F59088;outline-offset:-2px}
+/* agenda (mobile) */
+.agenda{display:flex;flex-direction:column;gap:14px}
+.ag-day{display:flex;flex-direction:column;gap:6px}
+.ag-day h3{margin:0;font-size:13px;font-weight:600;display:flex;gap:8px;align-items:center}
+.ag-day h3 .mono{font-weight:400;color:#9A9DA3;font-size:12px}
+.ag-day .chip{min-height:52px;padding:6px 8px;font-size:13px}
+.ag-day .chip .th{width:38px;height:38px}
+.ag-empty{font-size:12px;color:#6A6D73;padding:4px 0}
+.ag-gap{padding:10px 12px;border-radius:8px;border:1px dashed #6B2F2B;color:#F59088;font-size:13px}
+.only-m{display:none}
+@media (max-width:767px){.only-d{display:none!important}.only-m{display:block}}
+
+/* Option C — runway: a horizontal timeline, one swimlane per slot plus a one-offs lane. */
+.c-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.c-stats .m{border:1px solid #26292E;border-radius:10px;padding:10px 14px;background:#16181B;display:flex;flex-direction:column;gap:2px}
+.c-stats .v{font-family:'Geist Mono',monospace;font-size:22px}
+.c-stats .l{font-size:12px;color:#9A9DA3}
+.rw{border:1px solid #26292E;border-radius:12px;overflow-x:auto;background:#121417}
+.rw-in{display:grid;min-width:max-content}
+.rw .rh{position:sticky;left:0;z-index:2;background:#16181B;border-right:1px solid #26292E;border-top:1px solid #1F2226;padding:8px 10px;display:flex;align-items:center;gap:8px;width:220px;min-height:64px}
+.rw .rh .nm{font-size:13px;font-weight:500;line-height:1.25}
+.rw .rh .wh{font-family:'Geist Mono',monospace;font-size:11px;color:#9A9DA3}
+.rw .rh.off .nm,.rw .rh.off .wh{color:#6A6D73}
+.rw .rh .switch{transform:scale(.9)}
+.rw .top{position:sticky;top:0;z-index:1;background:#16181B;border-bottom:1px solid #26292E;padding:6px 4px;font-size:11px;text-align:center;color:#9A9DA3;display:flex;flex-direction:column;gap:2px}
+.rw .top b{font-family:'Geist Mono',monospace;font-size:12px;color:#C9CBCF;font-weight:500}
+.rw .top.today{color:#F2A33A}.rw .top.today b{color:#F2A33A}
+.rw .top.wk{border-left:1px solid #33373D}
+.rw .corner{position:sticky;left:0;top:0;z-index:3;background:#16181B;border-right:1px solid #26292E;border-bottom:1px solid #26292E;padding:8px 10px;font-size:12px;color:#9A9DA3;display:flex;align-items:flex-end}
+.rw .rib{height:18px;position:relative;border-bottom:1px solid #1F2226}
+.rw .rib.on{background:#3A1E1C}
+.rw .rib.on::before{content:"";position:absolute;left:0;right:0;top:7px;height:4px;background:#F59088}
+.rw .rib .gt{position:absolute;left:4px;top:-1px;z-index:1;font-size:10px;font-weight:600;color:#F59088;background:#3A1E1C;padding:0 4px;white-space:nowrap;text-transform:uppercase;letter-spacing:.05em}
+.rw .cc{border-top:1px solid #1F2226;padding:4px;display:flex;flex-direction:column;gap:3px;min-width:0;min-height:64px}
+.rw .cc.wk{border-left:1px solid #33373D}
+.rw .cc.past{background:#101214}
+.rw .cc.due{background:rgba(242,163,58,.035)}
+.rw .cc.today{box-shadow:inset 1px 0 0 #F2A33A,inset -1px 0 0 #F2A33A}
+.rw.z-week .cc .chip{flex-direction:column;align-items:stretch;padding:5px}
+.rw.z-week .cc .chip .th{width:100%;height:auto;aspect-ratio:1}
+.rw.z-week .cc .chip .tt{white-space:normal}
+.rw.z-month .cc{padding:3px 2px;align-items:center}
+.rw .tile-chip{width:34px;height:34px;padding:0;border-radius:6px;overflow:hidden;position:relative;border:2px solid #33373D;background:#121417;cursor:pointer;flex:none}
+.rw .tile-chip img,.rw .tile-chip .ph{width:100%;height:100%;object-fit:cover;display:flex}
+.rw .tile-chip.s-posted{border-color:#5FBF8F}.rw .tile-chip.s-scheduled{border-color:#6CA6F0}.rw .tile-chip.s-review{border-color:#F2A33A}.rw .tile-chip.s-missed{border-color:#F59088}
+.rw .tile-chip.s-ghost{border:2px dashed #8C7448;background:transparent}.rw .tile-chip.s-preview{border:2px dashed #7E66AE}
+.rw .tile-chip .r{position:absolute;right:1px;bottom:1px;font:600 9px 'Geist Mono',monospace;background:rgba(14,15,17,.85);color:#7CD1A4;border-radius:3px;padding:0 2px}
+.rw .addrow{position:sticky;left:0;border-top:1px solid #1F2226;padding:8px 10px;background:#16181B;width:220px}
+.rw .addrow summary{list-style:none;cursor:pointer;color:#F2A33A;font-size:13px;min-height:36px;display:flex;align-items:center}
+@media (max-width:900px){.c-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:767px){.c-lanes-m{display:flex;flex-direction:column;gap:10px}}
+
+</style>
+</head>
+<body>
+<!-- MK-10 option C — "Runway". Horizontal timeline, one swimlane per slot plus one-offs, gap ribbon on top; slots (MK-7) are the row heads.
+     Data: StackerMint (project coins) Facebook plan as of Mon 12 Oct 2026. Thumbnails and captions are the real kit. -->
+<div class="shell">
+  <div class="topbar">
+    <button class="btn" aria-label="Open menu" style="width:44px;padding:0;border:0;background:transparent">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9CBCF" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <span style="font-weight:600">Story Board</span>
+  </div>
+
+  <nav class="side" aria-label="Board">
+    <div style="display:flex;align-items:center;gap:10px;padding:0 6px">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="1" width="24" height="24" rx="7" fill="none" stroke="#F2A33A" stroke-width="2"/><path d="M8 9h10M8 13h6M8 17h8" stroke="#F2A33A" stroke-width="2" stroke-linecap="round"/></svg>
+      <span style="font-weight:600;font-size:16px">Story Board</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <a class="navi" href="#">Home</a>
+      <a class="navi" href="#">Mockups</a>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <span class="lbl" style="padding:0 12px 6px">Projects</span>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>asset-track</a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>client-dashboard</a>
+      <a class="navi" href="#" aria-current="page" style="background:#1D2024;color:#F2F1EE;font-weight:500"><span class="dot" style="background:#5FBF8F"></span>coins</a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>rent-track</a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>story-board</a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="legend" role="note" aria-label="Mockup legend">
+      <strong style="color:#F2F1EE">MK-10 · option C · Slot runway</strong>
+      <span><i style="background:#F2A33A"></i>amber = a link or button</span>
+      <span class="soft">One row per slot. Drag a chip along its row or into another row. Toggle a slot at its row head.</span>
+      <span class="faint">today is Mon 12 Oct 2026 · real StackerMint kit</span>
+    </div>
+
+    <header style="display:flex;flex-direction:column;gap:4px">
+      <p class="crumb" style="margin:0"><a href="#">All projects</a> / <a href="#">coins</a> / <a href="#">Marketing</a> / Calendar</p>
+      <h1 style="margin:0;display:flex;align-items:center;gap:10px;font-size:24px;font-weight:600;letter-spacing:-.01em">coins <span class="dot" style="background:#5FBF8F"></span><span style="font-size:13px;font-weight:400;color:#9A9DA3">ok</span></h1>
+      <p class="muted" style="margin:0;font-size:14px">Marketing as <strong class="soft" style="font-weight:500">StackerMint</strong> · Facebook page connected · posts go out from this Mac's queue</p>
+    </header>
+    <nav class="tabs" aria-label="Project pages">
+      <a href="#">Overview</a><a href="#">Stories</a><a href="#">Preflight</a><a href="#">Handbook</a><a href="#">Map</a>
+      <a href="#" aria-current="page">Marketing<span class="new">NEW</span></a>
+    </nav>
+    <nav class="sub" aria-label="Marketing pages">
+      <a href="#">Library</a><a href="#">Review <span class="n" id="revn">3</span></a><a href="#" aria-current="page">Calendar</a><a href="#">Designer</a><a href="#">Settings</a>
+    </nav>
+
+    <div class="toolbar">
+      <div class="seg" role="group" aria-label="Range"><button type="button" class="iconbtn" aria-label="Earlier" onclick="nav(-1)">‹</button><button type="button" onclick="nav(0)">Now</button><button type="button" class="iconbtn" aria-label="Later" onclick="nav(1)">›</button></div>
+      <span class="range" id="range"></span>
+      <div class="seg only-d" role="group" aria-label="Zoom" style="margin-left:auto"><button type="button" data-view="week" onclick="setView('week')">Week</button><button type="button" data-view="month" onclick="setView('month')">Month</button></div>
+      <button type="button" class="btn sm" onclick="openSeq()" style="border-color:#4A3B6B;color:#D9C8F7">✦ Apply first-two-weeks sequence</button>
+    </div>
+    <div class="c-stats" id="stats"></div>
+    <div class="gapbar" id="gap" role="alert"></div>
+    <div class="key">
+      <span><i style="background:#6CA6F0"></i>scheduled</span><span><i style="background:#F2A33A"></i>needs review</span><span><i style="border:1px dashed #C9A36A"></i>open slot</span><span><i style="background:#5FBF8F"></i>posted · ♥</span><span><i style="background:#F59088"></i>missed</span><span><i style="border:1px dashed #C3A8F0"></i>preview</span><span><i style="background:#F59088;height:4px"></i>gap ribbon</span>
+      <span class="faint" style="margin-left:auto">One row per slot. Drop into a slot's row on its day and it fills that slot.</span>
+    </div>
+    <div id="cal"></div>
+
+  </main>
+</div>
+<div class="scrim" id="scrim" onclick="closeAll()"></div>
+<aside class="drawer" id="drawer" aria-label="Post detail"></aside>
+<div class="modal" id="seq" role="dialog" aria-label="First-two-weeks sequence"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+/* MK-10 mockup engine — shared state, gap rule, ghosts, sequence preview, drawer, toast and HTML5 drag.
+   Each option supplies window.renderCal(); everything else calls render() after a change. */
+var K = '../MK-kit/posts/';
+/* swirl.svg from the kit, inlined: the kit file has no xmlns, so it can't load as an <img>. */
+var SWIRL = "data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 aria-hidden=%27true%27 focusable=%27false%27 viewBox=%270 0 23 23%27 width=%2723%27 height=%2723%27 fill=%27%23A8834F%27%3E%3Cpath d=%27M8.24443 16.0935C8.575 16.0855 8.89899 16.0595 9.20728 16.016L9.22499 16.0132C9.90412 15.912 10.5598 15.7306 11.1741 15.4746C12.1264 15.0801 13.0198 14.4815 13.7569 13.7461C14.6252 12.9407 15.6289 13.1835 16.1943 13.7495C16.7595 14.3161 17.0023 15.3189 16.2012 16.18C15.6295 16.7586 14.6869 16.8475 14.0081 16.384C13.4738 16.0198 12.7407 16.2232 12.3681 16.6209C12.1507 16.8532 12.029 17.152 12.0344 17.4409C12.0404 17.7529 12.1832 18.04 12.4264 18.2289C13.1472 18.7894 14.0569 19.098 14.9878 19.098C16.0995 19.098 17.1663 18.658 17.9137 17.8926C19.0712 16.7523 19.4314 15.0775 18.8543 13.5226C18.2777 11.9698 16.916 10.9381 15.3015 10.8298C14.0889 10.7384 12.9047 11.1738 12.051 12.0278C11.2687 12.8118 10.279 13.3426 9.18899 13.5618C6.69531 14.0464 4.31076 12.9201 3.11364 10.6913C1.91965 8.46842 2.2985 5.86188 4.07934 4.05019C5.22561 2.86306 6.86845 2.27793 8.585 2.44421C10.3304 2.61278 11.8515 3.51106 12.7578 4.90875C13.0164 5.3076 13.4692 5.52303 13.9392 5.47017C14.3584 5.42446 14.7175 5.16903 14.8995 4.78733C15.0792 4.41019 15.0523 3.97705 14.8278 3.6282C13.5389 1.62765 11.2907 0.286809 8.81328 0.0410981C6.36388 -0.20147 4.01334 0.637948 2.36307 2.34136C-0.00175392 4.71618 -0.647174 8.11357 0.678809 11.2075C1.97622 14.2346 4.7999 16.0952 8.07557 16.0952C8.13157 16.0952 8.18814 16.0946 8.24443 16.0935Z%27/%3E%3Cpath d=%27M20.3738 8.9676C19.1347 7.85504 17.5338 7.13962 15.8661 6.95306C13.4496 6.67563 10.9873 7.53733 9.28221 9.26103C8.96021 9.58559 8.52765 9.76445 8.06423 9.76445C7.59909 9.76445 7.16738 9.58731 6.8511 9.26817C6.05539 8.39561 6.29653 7.47162 6.74453 6.94563C7.22452 6.3822 8.12708 6.02821 8.9745 6.58249C9.38507 6.85134 9.8782 6.87106 10.2936 6.6362C10.6613 6.42878 10.8905 6.05192 10.9068 5.62821C10.9225 5.21508 10.7288 4.83222 10.3888 4.60451C8.74593 3.50481 6.48567 3.72138 5.13283 5.10679C4.24942 5.96992 3.81714 7.19219 3.94628 8.46018C4.07542 9.72645 4.74341 10.8339 5.77883 11.4979C7.41652 12.5761 9.60992 12.3553 10.9948 10.973C12.2596 9.71416 14.0024 9.1356 15.7756 9.38617C16.9818 9.55874 18.1161 10.1222 18.9698 10.9727C20.0332 12.0361 20.6186 13.4521 20.6184 14.9601C20.6184 16.4684 20.0318 17.8849 18.9669 18.95C17.823 20.1346 16.1796 20.72 14.461 20.5563C12.7156 20.3875 11.1945 19.4889 10.2882 18.0912C10.0262 17.6869 9.58335 17.4746 9.10707 17.5301C8.68765 17.5755 8.32879 17.8309 8.1468 18.2129C7.96708 18.5898 7.99394 19.0232 8.21851 19.372C9.50735 21.3732 11.7576 22.7143 14.2373 22.9597C14.5119 22.9869 14.7899 23.0006 15.0633 23.0006C17.2258 23.0006 19.2215 22.1689 20.6821 20.6609C22.2349 19.1175 23.092 16.9629 23.0338 14.7495C22.9755 12.5356 22.0061 10.4282 20.3738 8.96846V8.9676Z%27/%3E%3C/svg%3E";
+var TODAY = '2026-10-12';
+var HORIZON = '2026-11-08'; // the gap rule looks four weeks ahead
+var DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var S = {
+  view: 'month',
+  slots: [
+    {id:'cotw', name:'Coin of the week', day:2, time:'10:00', on:true, c:'#E8C36A'},
+    {id:'tvt',  name:'TrueView Tuesday', day:2, time:'19:00', on:true, c:'#C3A8F0'},
+    {id:'set',  name:'Set spotlight',    day:5, time:'18:00', on:true, c:'#7CD1A4'},
+    {id:'ask',  name:'Ask the community',day:0, time:'12:00', on:true, c:'#8EBBF2'},
+    {id:'dyk',  name:'Did you know',     day:4, time:'12:00', on:false, c:'#F59088'}
+  ],
+  posts: [
+    {id:'p1', d:'2026-10-01', t:'12:00', slot:null, st:'posted', img:'01-post-welcome.png', title:"Hi, we're StackerMint 👋", cap:"Hi, we're StackerMint 👋\n\nA home for your coins, notes, and bullion. Organize it, see what it's worth, and show it off.", r:34, cm:5},
+    {id:'p2', d:'2026-10-04', t:'12:00', slot:'ask', st:'posted', img:'09-post-pick.png', title:'Same money. Only one stays.', cap:'Same money. Only one stays.\n\n1795 Flowing Hair dollar, PCGS VF25. Or a common-date Saint-Gaudens $20, like a 1924, in PCGS MS67. Both around $10,000.\n\nRarity or condition?', r:51, cm:23},
+    {id:'p3', d:'2026-10-06', t:'10:00', slot:'cotw', st:'posted', img:'02-post-cotw.png', title:'Coin of the week: 1800 $5 Capped Bust', cap:'Coin of the week: an 1800 $5 Capped Bust half eagle.\n\nThe Mint was eight years old when this was struck. Most early gold was melted, so few survive.', r:47, cm:9},
+    {id:'p4', d:'2026-10-06', t:'19:00', slot:'tvt', st:'posted', img:'10-post-tv-tuesday.png', title:'TrueView Tuesday 🌈', cap:'TrueView Tuesday 🌈\n\nA Morgan with a century of album toning. Show us your best toner.', r:88, cm:31},
+    {id:'p5', d:'2026-10-09', t:'18:00', slot:'set', st:'posted', img:'05-post-set-cc.png', title:'Carson City Morgans', cap:'Carson City Morgans. Thirteen coins, 1878 to 1893.\n\nNine down. The 1889-CC is the hard one.', r:29, cm:4},
+    {id:'p6', d:'2026-10-11', t:'12:00', slot:'ask', st:'missed', img:'04-post-set-building.png', title:'What set are you building right now?', cap:'What set are you building right now?', why:'The Mac was asleep from 11:52 to 14:10. Nothing is ever sent late on its own.'},
+    {id:'p7', d:'2026-10-13', t:'10:00', slot:'cotw', st:'scheduled', img:'06-post-set-last.png', title:'Coin of the week: 1916-D Mercury', cap:'76 down. One to go.\n\nThe 1916-D Mercury dime. Only 264,000 made.'},
+    {id:'p8', d:'2026-10-13', t:'19:00', slot:'tvt', st:'scheduled', img:'12-post-toned.png', title:'Toning is chemistry, not damage.', cap:'Toning is chemistry, not damage.\n\nNatural color can add value. Cleaning almost always takes it away.'},
+    {id:'p9', d:'2026-10-16', t:'18:00', slot:'set', st:'scheduled', img:'07-post-set-done.png', title:'Set complete. All 24 Peace dollars', cap:'Set complete. All 24 Peace dollars, 1921 to 1935.'},
+    {id:'p10',d:'2026-10-18', t:'12:00', slot:'ask', st:'review', img:null, title:'Dream coin', cap:'Money is no object. What one coin are you buying?', cands:2},
+    {id:'p11',d:'2026-10-20', t:'19:00', slot:'tvt', st:'review', img:'11-post-tv-sides.png', title:'Both sides of the story.', cap:'Both sides of the story.\n\nEvery coin gets a clean front and back.', cands:3},
+    {id:'p12',d:'2026-10-23', t:'18:00', slot:'set', st:'review', img:'08-post-typeset.png', title:'A type set is one of each design', cap:'A type set is one of each design, not every date.\n\nFour down, two to go.', cands:2}
+  ],
+  library: [
+    {img:'13-post-share.png', title:'Better than a camera roll', cap:'Your collection deserves better than a camera roll.\n\nShare the whole thing with one link.'},
+    {img:'03-ad-value.png', title:"What's your collection worth today?", cap:"What's your collection worth today?\n\nStackerMint keeps a running value and shows how it's grown."},
+    {img:'14-ad-invite.png', title:'A few at a time', cap:"We're letting collectors in a few at a time.\n\nRequest an invite. One email when it's your turn."},
+    {img:'15-ad-stack.png', title:'All in one place', cap:'Coins, paper money, and bullion. All in one place.'}
+  ],
+  preview: [],
+  seqOpen: false
+};
+/* The kit's "first two weeks" arc, as day offsets from the chosen start. Slot items fill the slot on that day. */
+var SEQ = [
+  {o:0, t:'18:00', slot:null,  img:null, title:'Why we built it', cap:'We were tired of keeping a collection in a spreadsheet. So we built the thing we wanted.'},
+  {o:1, t:'10:00', slot:'cotw',img:null, title:'Key date: the 1909-S VDB', cap:'A key date is the hardest coin to find in a series. For Lincoln cents, think 1909-S VDB.'},
+  {o:1, t:'19:00', slot:'tvt', img:null, title:'Rate the rainbow', cap:'Rate this toning, 1 to 10.'},
+  {o:2, t:'12:00', slot:null,  img:null, title:'Mint marks', cap:'That tiny letter matters. D is Denver, S is San Francisco, O is New Orleans, CC is Carson City.'},
+  {o:3, t:'18:00', slot:null,  img:'13-post-share.png', title:'Better than a camera roll', cap:'Your collection deserves better than a camera roll.\n\nShare the whole thing with one link.'},
+  {o:4, t:'18:00', slot:'set', img:null, title:'One slot left', cap:'Nine down, four to go. The 1889-CC is the last wall.'},
+  {o:5, t:'11:00', slot:null,  img:null, title:'Slab shot Saturday', cap:"It's Saturday. Show us your favorite slab."},
+  {o:6, t:'12:00', slot:'ask', img:null, title:'Grade it', cap:'No peeking at the label. What grade would you give this one?'},
+  {o:8, t:'10:00', slot:'cotw',img:null, title:'Coin of the week: 1921 Peace', cap:'Coin of the week: a 1921 Peace dollar, high relief. What do you see first, the strike or the color?'},
+  {o:8, t:'19:00', slot:'tvt', img:null, title:'Front or back?', cap:'Some coins tone better on the back. Which side wins on this one?'},
+  {o:9, t:'12:00', slot:null,  img:'03-ad-value.png', title:"What's it worth today?", cap:"What's your collection worth today?\n\nStackerMint keeps a running value and shows how it's grown."},
+  {o:11,t:'18:00', slot:'set', img:null, title:'Set complete', cap:'Set complete. Congrats to everyone who finished a set this month.'},
+  {o:13,t:'12:00', slot:'ask', img:null, title:'Silver or gold?', cap:'Silver or gold?'}
+];
+var SEQ_SKIP = [
+  {title:"Hi, we're StackerMint 👋", why:'already posted Thu 1 Oct'},
+  {title:'Coin of the week: 1800 $5 Capped Bust', why:'already posted Tue 6 Oct'},
+  {title:'What set are you building right now?', why:'missed Sun 11 Oct, resolve that first'}
+];
+var seqStart = '2026-10-19';
+
+/* ---------- dates ---------- */
+function D(s){var p=s.split('-');return new Date(+p[0],p[1]-1,+p[2]);}
+function F(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function add(s,n){var d=D(s);d.setDate(d.getDate()+n);return F(d);}
+function dow(s){return D(s).getDay();}
+function nice(s){var d=D(s);return DOW[d.getDay()]+' '+d.getDate()+' '+MON[d.getMonth()];}
+function monStart(s){var w=dow(s);return add(s,w===0?-6:1-w);}
+function slotById(id){for(var i=0;i<S.slots.length;i++)if(S.slots[i].id===id)return S.slots[i];return null;}
+function esc(x){return String(x).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+
+/* ---------- items on a day: posts + preview + open-slot ghosts ---------- */
+function itemsOn(ds){
+  var out=S.posts.filter(function(p){return p.d===ds;});
+  S.preview.forEach(function(p){if(p.d===ds)out.push(p);});
+  if(ds>=TODAY){
+    S.slots.forEach(function(sl){
+      if(!sl.on||sl.day!==dow(ds))return;
+      var taken=out.some(function(p){return p.slot===sl.id;});
+      if(!taken)out.push({id:'g-'+sl.id+'-'+ds,d:ds,t:sl.time,slot:sl.id,st:'ghost',title:sl.name,ghost:true});
+    });
+  }
+  return out.sort(function(a,b){return a.t<b.t?-1:1;});
+}
+function confirmedOn(ds){return S.posts.some(function(p){return p.d===ds&&(p.st==='scheduled'||p.st==='posted');});}
+/* Gap rule (MK-11): 4+ consecutive days from today with nothing confirmed. */
+function gaps(){
+  var runs=[],cur=null,d=TODAY;
+  while(d<=HORIZON){
+    if(!confirmedOn(d)){if(!cur)cur={a:d,b:d,n:0};cur.b=d;cur.n++;}
+    else{if(cur&&cur.n>=4)runs.push(cur);cur=null;}
+    d=add(d,1);
+  }
+  if(cur&&cur.n>=4){cur.open=true;runs.push(cur);}
+  return runs;
+}
+function isGap(ds){return gaps().some(function(g){return ds>=g.a&&ds<=g.b;});}
+function counts(){
+  var rev=S.posts.filter(function(p){return p.st==='review';}).length, open=0, d=TODAY;
+  while(d<=HORIZON){open+=itemsOn(d).filter(function(i){return i.ghost;}).length;d=add(d,1);}
+  return {rev:rev,open:open};
+}
+
+/* ---------- chip markup ---------- */
+function thumb(p,cls){
+  if(p.img)return '<img class="'+cls+'" src="'+K+p.img+'" alt="" loading="lazy">';
+  return '<span class="'+cls+' ph"><img src="'+SWIRL+'" alt=""></span>';
+}
+function meta(p){
+  if(p.st==='posted')return '♥ '+p.r;
+  if(p.st==='missed')return 'missed';
+  if(p.st==='review')return p.cands?p.cands+' to review':'review';
+  if(p.st==='ghost')return 'needs review';
+  if(p.st==='preview')return 'preview';
+  return '';
+}
+function canDrag(p){return p.st==='scheduled'||p.st==='review'||p.st==='missed';}
+/* size: 'xs' = time + title, 'sm' = thumb + time + title, 'md' = adds the status word */
+function chip(p,size){
+  var sl=p.slot?slotById(p.slot):null;
+  var lab=p.st==='ghost'?'Open slot · '+p.title:p.title;
+  var h='<button type="button" class="chip s-'+p.st+'" data-id="'+p.id+'"'+(canDrag(p)?' draggable="true"':'')+' title="'+esc(p.t+' · '+lab+(sl&&!p.ghost?' · '+sl.name:''))+'">';
+  if(size!=='xs'&&!p.ghost)h+=thumb(p,'th');
+  if(size!=='xs'&&p.ghost)h+='<span class="th" style="background:transparent;border:1px dashed #5C4219;display:inline-block"></span>';
+  h+='<span class="tm">'+p.t+'</span><span class="tt">'+esc(lab)+'</span>';
+  if(size!=='xs'||p.st==='posted'||p.st==='missed')h+='<span class="meta">'+meta(p)+'</span>';
+  return h+'</button>';
+}
+
+/* ---------- toast ---------- */
+var toastT=null;
+function toast(msg,undo){
+  var t=document.getElementById('toast');
+  t.innerHTML='<span>'+msg+'</span>'+(undo?'<button type="button" id="undo">Undo</button>':'');
+  t.classList.add('on');
+  if(undo)document.getElementById('undo').onclick=function(){undo();t.classList.remove('on');render();};
+  clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('on');},6000);
+}
+
+/* ---------- moves ---------- */
+function findPost(id){for(var i=0;i<S.posts.length;i++)if(S.posts[i].id===id)return S.posts[i];return null;}
+function snap(){return JSON.stringify(S.posts);}
+function restore(j){S.posts=JSON.parse(j);}
+function moveTo(id,ds,t,slotId){
+  if(ds<TODAY){toast('That day has passed. Pick today or later.');return;}
+  if(id.indexOf('lib-')===0){
+    var L=S.library[+id.slice(4)],before=snap();
+    S.posts.push({id:'n'+Date.now(),d:ds,t:t||'12:00',slot:null,st:'scheduled',img:L.img,title:L.title,cap:L.cap});
+    render();toast('Scheduled “'+esc(L.title)+'” for '+nice(ds)+' '+(t||'12:00')+'.',function(){restore(before);});return;
+  }
+  var p=findPost(id);if(!p)return;
+  var before2=snap(),wasSlot=p.slot?slotById(p.slot):null,oldD=p.d;
+  var ts=slotId?slotById(slotId):null;
+  if(ts&&ts.day===dow(ds)){t=ts.time;}
+  p.d=ds;if(t)p.t=t;
+  var msg='Moved to '+nice(ds)+' '+p.t+'.';
+  if(ts&&ts.day===dow(ds)&&p.slot!==ts.id){p.slot=ts.id;wasSlot=null;msg+=' It now fills '+ts.name+'.';}
+  if(p.st==='missed'){p.st='scheduled';msg='Rescheduled the missed post for '+nice(ds)+' '+p.t+'.';}
+  if(wasSlot&&(dow(ds)!==wasSlot.day||(t&&t!==wasSlot.time))){
+    p.slot=null;
+    if(oldD>=TODAY)msg+=' It is a one-off now; the '+wasSlot.name+' slot on '+nice(oldD)+' is open again.';
+  }
+  render();toast(msg,function(){restore(before2);});
+}
+function setStatus(id,st){
+  var p=findPost(id),before=snap();
+  if(st==='send'){p.st='posted';p.d=TODAY;p.t='now';p.r=0;p.cm=0;closeAll();render();toast('Sent to Facebook just now.',null);return;}
+  p.st=st;if(st==='scheduled')p.cands=0;
+  closeAll();render();
+  toast(st==='scheduled'?'Confirmed. It will post '+nice(p.d)+' at '+p.t+'.':'Moved back to Review.',function(){restore(before);});
+}
+
+/* ---------- drawer ---------- */
+function closeAll(){['drawer','scrim','seq'].forEach(function(i){var e=document.getElementById(i);if(e)e.classList.remove('on');});S.seqOpen=false;}
+function openDetail(id){
+  var p=findPost(id),g=null;
+  if(!p){S.preview.forEach(function(x){if(x.id===id)p=x;});}
+  if(!p&&id.indexOf('g-')===0){var parts=id.split('-');g=slotById(parts[1]);p={st:'ghost',d:id.slice(-10),t:g.time,title:g.name,slot:g.id};}
+  if(!p)return;
+  var sl=p.slot?slotById(p.slot):null,acts='';
+  var label={posted:'Posted',scheduled:'Scheduled',review:'Needs review',missed:'Missed',ghost:'Open slot · needs review',preview:'Sequence preview'}[p.st];
+  if(p.st==='scheduled')acts='<button class="btn sm" onclick="setStatus(\''+p.id+'\',\'review\')">Unschedule</button><button class="btn sm ghost">Edit caption</button>';
+  if(p.st==='review')acts='<button class="btn sm pri" onclick="setStatus(\''+p.id+'\',\'scheduled\')">Confirm and schedule</button><button class="btn sm">See '+(p.cands||1)+' candidates</button>';
+  if(p.st==='missed')acts='<button class="btn sm pri" onclick="setStatus(\''+p.id+'\',\'send\')">Send now</button><button class="btn sm" onclick="closeAll();toast(\'Drag the red chip to a new day, or pick a date in the editor.\')">Reschedule</button><button class="btn sm danger">Skip it</button>';
+  if(p.st==='posted')acts='<a class="btn sm" href="#">View on Facebook</a>';
+  if(p.st==='ghost')acts='<button class="btn sm pri">Draft candidates now</button><button class="btn sm">Pick from Library</button><button class="btn sm ghost">Skip this week</button>';
+  var body=(p.st==='ghost'?'<div class="big-th" style="border:2px dashed #5C4219;background:transparent;display:flex;align-items:center;justify-content:center;color:#C9A36A;font-size:14px;aspect-ratio:2">The AI drafts 3 candidates the evening before. Nothing posts until you confirm one.</div>':thumb(p,'big-th'))+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span class="pill chip-pill s-'+p.st+'" style="border-left-width:3px">'+label+'</span><span class="mono muted" style="font-size:12px">'+nice(p.d)+' · '+p.t+'</span>'+(sl?'<span class="pill">'+sl.name+'</span>':'<span class="pill">One-off</span>')+'</div>'+
+    (p.st==='posted'?'<p class="soft" style="margin:0;font-size:14px"><span class="mono" style="color:#7CD1A4">♥ '+p.r+'</span> reactions · <span class="mono">'+p.cm+'</span> comments · read 09:00 today</p>':'')+
+    (p.st==='missed'?'<p style="margin:0;font-size:14px;color:#F2D4D1;background:#1F1514;border:1px solid #6B2F2B;border-radius:8px;padding:10px 12px">'+p.why+'</p>':'')+
+    (p.cap?'<p class="cap" style="margin:0">'+esc(p.cap)+'</p>':'')+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">'+acts+'</div>';
+  document.getElementById('drawer').innerHTML='<div class="hd"><strong style="font-size:15px;flex:1;min-width:0">'+esc(p.title)+'</strong><button class="btn iconbtn ghost" aria-label="Close" onclick="closeAll()">✕</button></div><div class="bd">'+body+'</div>';
+  document.getElementById('drawer').classList.add('on');document.getElementById('scrim').classList.add('on');
+}
+
+/* ---------- slots panel (MK-7) ---------- */
+function renderSlots(el){
+  var h='<div class="slots">';
+  S.slots.forEach(function(sl,i){
+    h+='<div class="slot'+(sl.on?'':' off')+'"><span class="sw" style="background:'+sl.c+'"></span><div style="min-width:0"><div class="nm">'+esc(sl.name)+'</div><div class="wh">'+DOW[sl.day]+' · '+sl.time+' · weekly</div></div><button type="button" class="switch" role="switch" aria-checked="'+sl.on+'" aria-label="'+esc(sl.name)+' on or off" onclick="toggleSlot('+i+')"></button></div>';
+  });
+  h+='</div><details class="addslot-wrap"><summary class="btn sm ghost" style="list-style:none;margin-top:6px;width:100%">+ Add a slot</summary><form class="addslot" onsubmit="addSlot(this);return false"><input class="inp" name="n" placeholder="Name, e.g. Slab shot Saturday" required><div class="row"><select class="inp" name="d">'+DOW.map(function(x,i){return '<option value="'+i+'"'+(i===6?' selected':'')+'>'+x+'</option>';}).join('')+'</select><input class="inp" type="time" name="t" value="11:00" style="flex:1"></div><button class="btn sm pri">Add slot</button></form></details>';
+  el.innerHTML=h;
+}
+function toggleSlot(i){var sl=S.slots[i];sl.on=!sl.on;render();toast(sl.name+(sl.on?' is on. Its open days show as dashed ghosts.':' is off. Confirmed posts stay; empty days stop asking.'));}
+function addSlot(f){var c=['#E8A0C8','#9AD6D0','#D6C08A'][S.slots.length%3];S.slots.push({id:'s'+Date.now(),name:f.n.value,day:+f.d.value,time:f.t.value,on:true,c:c});render();toast('Added “'+esc(f.n.value)+'”. The AI drafts candidates for each open day.');}
+
+/* ---------- sequence (MK-11) ---------- */
+function seqItems(start){
+  return SEQ.map(function(s,i){
+    var ds=add(start,s.o),taken=s.slot&&S.posts.some(function(p){return p.d===ds&&p.slot===s.slot;});
+    return {id:'q'+i,d:ds,t:s.t,slot:s.slot,st:'preview',img:s.img,title:s.title,cap:s.cap,taken:taken};
+  });
+}
+function openSeq(){
+  var items=seqItems(seqStart),place=items.filter(function(x){return !x.taken;});
+  var rows=items.map(function(x){
+    var sl=x.slot?slotById(x.slot):null;
+    return '<div class="seqrow'+(x.taken?' skip':'')+'"><span class="d">'+nice(x.d)+'<br>'+x.t+'</span>'+thumb(x,'th')+'<span>'+esc(x.title)+'<span class="why">'+(x.taken?'kept: you already have a candidate in this slot':(sl?'fills '+sl.name:'one-off post'))+'</span></span></div>';
+  }).join('')+SEQ_SKIP.map(function(x){return '<div class="seqrow skip"><span class="d">—</span><span></span><span>'+esc(x.title)+'<span class="why">skipped: '+x.why+'</span></span></div>';}).join('');
+  var m=document.getElementById('seq');
+  m.innerHTML='<div class="drawer-like" style="padding:18px 18px 8px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid #1F2226"><div style="display:flex;align-items:center;gap:10px"><strong style="font-size:17px;flex:1">Apply first-two-weeks sequence</strong><button class="btn iconbtn ghost" aria-label="Close" onclick="closeAll()">✕</button></div><p class="soft" style="margin:0;font-size:14px;line-height:1.5">The starter arc from the kit: show-and-tell, a how-it-works post, a question every Sunday. It lands as <strong style="color:#F2A33A">needs review</strong>. Nothing is scheduled until you confirm each one.</p><label style="display:flex;gap:10px;align-items:center;font-size:13px;color:#9A9DA3">Start on <input class="inp" type="date" value="'+seqStart+'" min="'+TODAY+'" onchange="seqStart=this.value;if(S.preview.length)S.preview=seqItems(seqStart).filter(function(x){return !x.taken;});openSeq();render()"></label></div><div style="padding:4px 18px 8px">'+rows+'</div><div style="position:sticky;bottom:0;background:#16181B;border-top:1px solid #1F2226;padding:12px 18px;display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span class="muted" style="font-size:13px;flex:1;min-width:160px">Places <strong style="color:#F2F1EE">'+place.length+'</strong> drafts · '+(items.length-place.length+SEQ_SKIP.length)+' skipped</span><button class="btn sm" onclick="previewSeq()">'+(S.preview.length?'Hide preview':'Preview on calendar')+'</button><button class="btn sm pri" onclick="applySeq()">Apply '+place.length+' drafts</button></div>';
+  m.classList.add('on');document.getElementById('scrim').classList.add('on');S.seqOpen=true;
+}
+function previewSeq(){
+  S.preview=S.preview.length?[]:seqItems(seqStart).filter(function(x){return !x.taken;});
+  closeAll();render();
+  if(S.preview.length)toast('Purple dashed chips are the preview. Nothing has been placed yet.',null);
+}
+function applySeq(){
+  var before=snap(),items=seqItems(seqStart).filter(function(x){return !x.taken;});
+  items.forEach(function(x,i){S.posts.push({id:'s'+i+Date.now(),d:x.d,t:x.t,slot:x.slot,st:'review',img:x.img,title:x.title,cap:x.cap,cands:1});});
+  S.preview=[];closeAll();render();
+  toast(items.length+' drafts added to Review. The gap warning stays until you confirm them.',function(){restore(before);});
+}
+
+/* ---------- gap banner ---------- */
+function gapBanner(el){
+  var g=gaps(),c=counts();
+  if(!g.length){el.innerHTML='';el.style.display='none';return;}
+  el.style.display='';
+  var r=g[0];
+  el.innerHTML='<span class="dot" style="background:#F59088"></span><span><strong>'+(r.open?r.n+'+':r.n)+' days with nothing confirmed</strong>, '+nice(r.a)+' to '+(r.open?nice(HORIZON)+' and beyond':nice(r.b))+'. '+c.rev+' drafts wait in Review; '+c.open+' slots are still empty.</span><span class="acts"><a class="btn sm" href="#">Open Review</a><button class="btn sm pri" onclick="openSeq()">Apply first-two-weeks sequence</button></span>';
+  if(g.length>1)el.innerHTML+='<span class="muted" style="font-size:12px;width:100%">Also '+g.slice(1).map(function(x){return nice(x.a)+'–'+nice(x.b);}).join(', ')+'.</span>';
+}
+
+/* ---------- mobile agenda ---------- */
+function renderAgenda(el,from,days){
+  var h='<div class="agenda">',d=from,inGap=false;
+  for(var i=0;i<days;i++){
+    var it=itemsOn(d),gp=d>=TODAY&&isGap(d);
+    if(gp&&!inGap){var gg=gaps().filter(function(x){return d>=x.a&&d<=x.b;})[0];h+='<div class="ag-gap">Gap: '+(gg.open?gg.n+'+':gg.n)+' days with nothing confirmed from '+nice(gg.a)+'</div>';}
+    inGap=gp;
+    h+='<div class="ag-day"><h3>'+nice(d)+(d===TODAY?' <span class="pill t-draft" style="font-size:11px">today</span>':'')+'</h3>';
+    h+=it.length?it.map(function(p){return chip(p,'md');}).join(''):'<div class="ag-empty">Nothing planned</div>';
+    h+='</div>';d=add(d,1);
+  }
+  el.innerHTML=h+'</div>';
+}
+
+/* ---------- drag and drop (delegated) ---------- */
+var dragId=null;
+document.addEventListener('dragstart',function(e){
+  var c=e.target.closest&&e.target.closest('[draggable=true]');if(!c)return;
+  dragId=c.getAttribute('data-id');c.classList.add('dragging');
+  e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',dragId);
+});
+document.addEventListener('dragend',function(e){dragId=null;document.querySelectorAll('.dragging,.drop-ok,.drop-no').forEach(function(x){x.classList.remove('dragging','drop-ok','drop-no');});});
+document.addEventListener('dragover',function(e){
+  var z=e.target.closest&&e.target.closest('[data-drop]');if(!z||!dragId)return;
+  e.preventDefault();
+  document.querySelectorAll('.drop-ok,.drop-no').forEach(function(x){if(x!==z)x.classList.remove('drop-ok','drop-no');});
+  z.classList.add(z.getAttribute('data-drop')<TODAY?'drop-no':'drop-ok');
+});
+document.addEventListener('drop',function(e){
+  var z=e.target.closest&&e.target.closest('[data-drop]');if(!z||!dragId)return;
+  e.preventDefault();var id=dragId;dragId=null;
+  moveTo(id,z.getAttribute('data-drop'),z.getAttribute('data-time'),z.getAttribute('data-slot'));
+});
+document.addEventListener('click',function(e){
+  var c=e.target.closest&&e.target.closest('.chip[data-id]');
+  if(c){openDetail(c.getAttribute('data-id'));}
+});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAll();});
+
+function setView(v){S.view=v;render();}
+var MQ=window.matchMedia('(max-width:767px)');
+MQ.addEventListener('change',function(){render();});
+function render(){
+  document.querySelectorAll('[data-view]').forEach(function(b){b.setAttribute('aria-pressed',b.getAttribute('data-view')===S.view);});
+  var gb=document.getElementById('gap');if(gb)gapBanner(gb);
+  var sp=document.getElementById('slots');if(sp)renderSlots(sp);
+  var rn=document.getElementById('revn');if(rn)rn.textContent=counts().rev;
+  window.renderCal();
+}
+document.addEventListener('DOMContentLoaded',render);
+
+/* Option C renderer — runway. Month zoom = last week + next four (35 days, thumbnail tiles);
+   week zoom = one week, wide cells with full chips. Rows: every slot (on or off) + one-offs. */
+var anchor=add(monStart(TODAY),-7);
+function nav(n){anchor=n===0?add(monStart(TODAY),S.view==='week'?0:-7):add(anchor,7*n);render();}
+var _setView=setView;
+setView=function(v){S.view=v;anchor=add(monStart(TODAY),v==='week'?0:-7);render();};
+function tileChip(p){
+  var h='<button type="button" class="tile-chip chip s-'+p.st+'" data-id="'+p.id+'"'+(canDrag(p)?' draggable="true"':'')+' title="'+esc(p.t+' · '+(p.ghost?'Open slot · ':'')+p.title+' · '+meta(p))+'" style="width:34px;padding:0">';
+  if(!p.ghost)h+=thumb(p,'');
+  if(p.st==='posted')h+='<span class="r">'+p.r+'</span>';
+  return h+'</button>';
+}
+function renderStats(){
+  var el=document.getElementById('stats');if(!el)return;
+  var wk=add(monStart(TODAY),6),sched=0,rev=0,open=0,d=TODAY;
+  while(d<=HORIZON){itemsOn(d).forEach(function(p){if(p.st==='scheduled')sched++;else if(p.st==='review')rev++;else if(p.ghost)open++;});d=add(d,1);}
+  var posted=S.posts.filter(function(p){return p.st==='posted';}),re=posted.reduce(function(a,p){return a+(p.r||0);},0);
+  el.innerHTML='<div class="m"><span class="v" style="color:#8EBBF2">'+sched+'</span><span class="l">confirmed, next 4 weeks</span></div><div class="m"><span class="v" style="color:#F2A33A">'+rev+'</span><span class="l">drafts in Review</span></div><div class="m"><span class="v" style="color:#C9A36A">'+open+'</span><span class="l">open slots, no draft yet</span></div><div class="m"><span class="v" style="color:#7CD1A4">♥ '+re+'</span><span class="l">'+posted.length+' posted since 1 Oct</span></div>';
+}
+window.renderCal=function(){
+  renderStats();
+  var el=document.getElementById('cal'),rg=document.getElementById('range');
+  if(MQ.matches){
+    rg.textContent='Next two weeks';
+    var h0='<section class="card" style="padding:12px 14px;display:flex;flex-direction:column;gap:6px"><h2 class="lbl" style="margin:0">Slots</h2><div id="slotsm"></div></section><div id="agm" style="margin-top:14px"></div>';
+    el.innerHTML=h0;renderSlots(document.getElementById('slotsm'));renderAgenda(document.getElementById('agm'),add(TODAY,-1),15);return;
+  }
+  var n=S.view==='week'?7:35,cw=S.view==='week'?150:44,gs=gaps();
+  rg.textContent=nice(anchor)+' – '+nice(add(anchor,n-1));
+  var h='<div class="rw z-'+S.view+'"><div class="rw-in" style="grid-template-columns:220px repeat('+n+','+cw+'px)">';
+  h+='<div class="corner">Slot</div>';
+  var days=[];for(var i=0;i<n;i++)days.push(add(anchor,i));
+  days.forEach(function(d,i){h+='<div class="top'+(d===TODAY?' today':'')+(dow(d)===1&&i>0?' wk':'')+'">'+(S.view==='week'?DOW[dow(d)]:DOW[dow(d)].charAt(0))+'<b>'+D(d).getDate()+(D(d).getDate()===1||i===0?' '+MON[D(d).getMonth()]:'')+'</b></div>';});
+  /* gap ribbon row */
+  h+='<div class="rh" style="min-height:18px;padding:0 10px;font-size:11px;color:#F59088">Gap ribbon · 4+ days unconfirmed</div>';
+  days.forEach(function(d){
+    var g=d>=TODAY?gs.filter(function(x){return d>=x.a&&d<=x.b;})[0]:null;
+    h+='<div class="rib'+(g?' on':'')+'">'+(g&&(g.a===d||d===days[0])?'<span class="gt">'+(g.open?g.n+'+':g.n)+' days</span>':'')+'</div>';
+  });
+  /* slot lanes */
+  var rows=S.slots.map(function(s,i){return {s:s,i:i};});rows.push({s:null});
+  rows.forEach(function(r){
+    var s=r.s;
+    if(s)h+='<div class="rh'+(s.on?'':' off')+'"><span class="sw" style="width:10px;height:10px;border-radius:3px;background:'+s.c+';flex:none"></span><div style="min-width:0;flex:1"><div class="nm">'+esc(s.name)+'</div><div class="wh">'+DOW[s.day]+' '+s.time+(s.on?'':' · off')+'</div></div><button type="button" class="switch" role="switch" aria-checked="'+s.on+'" aria-label="'+esc(s.name)+' on or off" onclick="toggleSlot('+r.i+')"></button></div>';
+    else h+='<div class="rh"><span class="sw" style="width:10px;height:10px;border-radius:3px;border:1px solid #7E8187;flex:none"></span><div><div class="nm">One-offs</div><div class="wh">any day · any time</div></div></div>';
+    days.forEach(function(d,i){
+      var it=itemsOn(d).filter(function(p){return s?p.slot===s.id:!p.slot;});
+      var due=s&&s.on&&s.day===dow(d)&&d>=TODAY;
+      h+='<div class="cc'+(d<TODAY?' past':'')+(due?' due':'')+(d===TODAY?' today':'')+(dow(d)===1&&i>0?' wk':'')+'" data-drop="'+d+'"'+(s?' data-slot="'+s.id+'"':'')+'>'+it.map(function(p){return S.view==='week'?chip(p,'sm'):tileChip(p);}).join('')+'</div>';
+    });
+  });
+  h+='<details class="addrow"><summary>+ Add a slot</summary><form class="addslot" onsubmit="addSlot(this);return false" style="border:0;padding:6px 0"><input class="inp" name="n" placeholder="Slab shot Saturday" required><div class="row"><select class="inp" name="d">'+DOW.map(function(x,i){return '<option value="'+i+'"'+(i===6?' selected':'')+'>'+x+'</option>';}).join('')+'</select><input class="inp" type="time" name="t" value="11:00" style="flex:1"></div><button class="btn sm pri">Add slot</button></form></details>';
+  el.innerHTML=h+'</div></div>';
+};
+
+</script>
+</body>
+</html>
