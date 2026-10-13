@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Storage;
 /**
  * Journey marketing-post (docs/journeys/marketing-post.md): from a recurring campaign to approved posts, ready to
  * publish. Created by MK-1 with step 1; each later MK story adds its step (MK-2: step 2, the brand in Settings; MK-7:
- * step 3, the campaign page; MK-8: step 4, Fill; MK-9: step 5, the post studio). Claude is faked with Http::fake
+ * step 3, the campaign page; MK-8: step 4, Fill; MK-9: step 5, the post studio; MK-10: step 6, the calendar). Claude is faked with Http::fake
  * (fakeClaude()) by one reply carrying both `drafts` (what Fill reads) and `caption` (what Revise reads), since the
  * first matching fake wins. Only RefreshProjectJob is faked on the queue, so Fill's DraftOccurrenceJob runs inline on
  * the sync queue. `JOURNEY_SHOTS=1` saves each step to `storage/app/journey-shots/marketing-post/`.
@@ -116,4 +116,16 @@ it('walks the marketing-post journey', function () {
     expect($second->fresh())->status->toBe(MarketingPost::STATUS_APPROVED)->version->toBe(2)->asset_id->toBe($photo->id)
         ->and($drafts[0]->fresh()->status)->toBe(MarketingPost::STATUS_DISCARDED)
         ->and($drafts[2]->fresh()->status)->toBe(MarketingPost::STATUS_DISCARDED);
+
+    // Step 6 (MK-10): the calendar, from the marketing sub-nav, shows the post approved in step 5 on its date, Tue 3
+    // Nov, a month ahead of the one it opens on.
+    $page->click('[data-studio-close]')
+        ->click('[data-marketing-page="calendar"]')
+        ->assertPathIs('/p/coins/marketing/calendar')
+        ->assertSeeIn('[data-calendar-range]', 'October 2026')
+        ->click('[data-calendar-next]')
+        ->assertSeeIn('[data-calendar-range]', 'November 2026');
+    journeyStep('marketing-post', 'calendar', '/p/coins/marketing/calendar', $page)
+        ->assertAttribute('[data-calendar-grid] [data-calendar-day="2026-11-03"] [data-chip="trueview-tuesday"]', 'data-chip-state', 'approved')
+        ->assertNoJavaScriptErrors();
 });

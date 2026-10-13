@@ -1,5 +1,7 @@
 <?php
 
+use Dom\Element;
+use Dom\HTMLDocument;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\Support\JourneyShots;
@@ -64,6 +66,19 @@ expect()->extend('toBeOne', function () {
 function journeyStep(string $journey, string $step, string $route, ?object $page = null): object
 {
     return JourneyShots::step($journey, $step, $route, $page);
+}
+
+/**
+ * The elements of `$html` that match CSS `$selector`, in document order (MK-10). PHP 8.4's HTML5 parser, so Alpine's
+ * `@click` and `:class` attributes parse as they do in a browser and a test can read nested markup without a regex.
+ *
+ * @return list<Element>
+ */
+function htmlQuery(string $html, string $selector): array
+{
+    $doc = HTMLDocument::createFromString($html, LIBXML_NOERROR);
+
+    return iterator_to_array($doc->querySelectorAll($selector), false);
 }
 
 /**

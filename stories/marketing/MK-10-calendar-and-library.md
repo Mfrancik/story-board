@@ -1,5 +1,5 @@
 # MK-10 — Calendar and Library (secondary views)
-Status: approved        Journey: marketing-post (step 6 of 7)
+Status: built           Journey: marketing-post (step 6 of 7)
 Source: owner picks: calendar option A ("a for calandar works"), library option B ("i like B best"), then "library can
 be grouped in campaigns" and calendar demoted to secondary
 

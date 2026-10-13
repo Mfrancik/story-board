@@ -16,8 +16,10 @@ use App\Livewire\Board\ProjectOverview;
 use App\Livewire\Board\ProjectPreflight;
 use App\Livewire\Board\ProjectStories;
 use App\Livewire\Board\StoryPage;
+use App\Livewire\Marketing\Calendar as MarketingCalendar;
 use App\Livewire\Marketing\CampaignList;
 use App\Livewire\Marketing\CampaignPage;
+use App\Livewire\Marketing\Library as MarketingLibrary;
 use App\Livewire\Marketing\Settings as MarketingSettings;
 use App\Models\Story;
 use Illuminate\Support\Facades\Route;
@@ -64,7 +66,7 @@ Route::middleware(RefreshStaleProjects::class)->group(function () {
         ->name('projects.map');
 
     // One project's Marketing tab (MK-1): its campaigns with how far out each is approved and what needs the owner.
-    // Calendar, Library and Inspiration join under `projects.marketing.*` as their stories land.
+    // Calendar and Library (MK-10) sit under `projects.marketing.*`; Inspiration joins there when its story lands.
     Route::livewire('/p/{project:name}/marketing', CampaignList::class)
         ->middleware(EnsureProjectIsShown::class)
         ->name('projects.marketing');
@@ -78,6 +80,15 @@ Route::middleware(RefreshStaleProjects::class)->group(function () {
     Route::livewire('/p/{project:name}/marketing/campaigns/{campaign}', CampaignPage::class)
         ->middleware(EnsureProjectIsShown::class)
         ->name('projects.marketing.campaign');
+
+    // Marketing calendar and library (MK-10): every campaign's posts on a month or week grid, and the approved and
+    // posted posts as an archive. Both open the post studio; their names put them in the marketing sub-nav.
+    Route::livewire('/p/{project:name}/marketing/calendar', MarketingCalendar::class)
+        ->middleware(EnsureProjectIsShown::class)
+        ->name('projects.marketing.calendar');
+    Route::livewire('/p/{project:name}/marketing/library', MarketingLibrary::class)
+        ->middleware(EnsureProjectIsShown::class)
+        ->name('projects.marketing.library');
 
     // Marketing settings (MK-2): the project's brand, favourite photos and copy rules. Its name puts Settings in
     // the marketing sub-nav, which lists only pages whose route exists.
