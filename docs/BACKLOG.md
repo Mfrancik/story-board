@@ -13,7 +13,13 @@ An entry leaves `## Open` exactly two ways:
 - **It ships** — a story named it in `Source: F-<n>`, and `/document` removed it
   on completion. Its trace lives in that story file and in git. A preflight gate
   to pin this is written at `wip/backlog_sync_gate.sh` but is not yet installed.
-- **It's cut** — moved to `## Cut` with a reason, via `/feature cut` or at retro.
+- **It's cut** — moved to `### F-18 — 2026-10-13 — Delete a campaign
+Area: marketing campaigns (MK-1/MK-7 campaign page)
+Scope: PROJECT
+
+Delete a campaign (marketing): there is no way to remove a campaign today — the campaign page's "Discard" only resets unsaved form edits, so the owner couldn't clear coins' seeded campaigns (2026-10-13; wiped by hand in the dev DB instead). Wants a Delete campaign action with a confirm, that also decides what happens to its posts (FK nulls campaign_id, so posts would silently become one-offs) and its feedback/taste votes; logged.
+
+## Cut` with a reason, via `/feature cut` or at retro.
 
 It does not leave because it got scheduled, and it does not leave because someone
 tidied up.
