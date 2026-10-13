@@ -427,7 +427,9 @@ it('creates a one-off post on a chosen date with no campaign, and refuses a past
         ->assertHasErrors(['oneOffAt']);
     expect(MarketingPost::count())->toBe(0);
 
-    $page->set('oneOffAt', '2026-10-16T12:00')->call('createOneOff')->assertHasNoErrors()->assertSeeHtml('data-studio-state="review"');
+    $page->set('oneOffAt', '2026-10-16T12:00')->call('createOneOff')->assertHasNoErrors()->assertSeeHtml('data-studio-state="review"')
+        // A one-off has no campaign date to skip; Skip would 404 there, so it is not offered.
+        ->assertDontSeeHtml('data-skip');
 
     $post = MarketingPost::sole();
     expect($post)->campaign_id->toBeNull()->source->toBe('manual')->status->toBe(MarketingPost::STATUS_DRAFT)

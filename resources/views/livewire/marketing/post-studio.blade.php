@@ -362,8 +362,9 @@
                                 <span class="mr-auto hidden text-sm text-ink-muted md:inline">
                                     {{ $needs ? 'Add a photo before approving.' : (count($post->lint ?? []) > 0 ? count($post->lint).' copy '.Str::plural('warning', count($post->lint)).'. You decide.' : 'Nothing posts until you approve.') }}
                                 </span>
-                                <button type="button" wire:click="skip" wire:loading.attr="disabled" data-skip class="{{ $ghost }} max-md:flex-1">Skip date</button>
                                 @if ($campaign)
+                                    {{-- A one-off has no campaign date to skip; skip() would 404 without one. --}}
+                                    <button type="button" wire:click="skip" wire:loading.attr="disabled" data-skip class="{{ $ghost }} max-md:flex-1">Skip date</button>
                                     <button type="button" wire:click="regenerate" wire:loading.attr="disabled" wire:target="regenerate" data-regenerate @disabled(! $aiReady) class="{{ $ghost }} max-md:flex-1">
                                         <span wire:loading.remove wire:target="regenerate">Regenerate all 3</span>
                                         <span wire:loading wire:target="regenerate" class="inline-flex items-center gap-2">{!! $spin !!}Drafting…</span>
