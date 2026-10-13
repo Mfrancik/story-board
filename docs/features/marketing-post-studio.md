@@ -61,7 +61,7 @@ not one of the posts on the date being shown (another date's, another project's,
 
 | Studio action | Action | What it does |
 |---|---|---|
-| Rebuild ("What should change?" + chips) | `ReviseDraft` (MK-8) | New version in place; the card shows "v2 · Undo · Compare" |
+| Rebuild ("What should change?" + chips) | `ReviseDraft` (MK-8) | New version in place; the card shows "v2 · Undo · Compare". An unchanged result is undone and explained (below) |
 | Undo | `UndoRevision` | Restores the latest kept version (caption, photo, meta), deletes that version row, re-lints |
 | Compare | Alpine only | Before / Now captions side by side |
 | 👍 / 👎 + reasons | `RecordFeedback` | Replaces the post's one vote row; reasons are `REASONS` (dislikes only) |
@@ -76,6 +76,16 @@ not one of the posts on the date being shown (another date's, another project's,
 | Unapprove (confirm-modal) | `UnapprovePost` | Back to draft; the discarded siblings stay discarded |
 | Mark as posted / Post it now | `MarkPostPosted` | `posted` + `posted_at`; an optional link → `facebook` network row |
 | + One-off post | `CreateOneOffPost` | A `manual` draft with no campaign, at a future time |
+
+**A rebuild that changes nothing.** `revise()` compares the trimmed caption and `asset_id` before and after
+`ReviseDraft`. If both match, it undoes the new version with `UndoRevision`, keeps the owner's note as taste
+feedback, and returns false so the box keeps the text and the studio stays open. It then sets the locked
+`$unchanged` (`post_id`, `reason`, `message`), shown as a warning under that draft's box
+(`data-revise-unchanged`). `app/Actions/Marketing/ExplainUnchangedRevision.php` picks the reason from the note, the
+chips, the campaign's `photo_mode` and whether the project has favourites, in this order: `same_caption` (no photo
+asked for), `text_only`, `no_favourites` (adds an "Open Settings" link), `per_post`, `photo_chip` (asked in words,
+chip not chosen), and `kept_photo`. Any later change (`changed()`), `open()`, `close()` and Approve & next clear it
+([ADR-080](../decisions/ADR-080-marketing-an-unchanged-rebuild-is-undone-and-explained.md)).
 
 **The photo hold.** `MarketingPost::needsPhoto()` is true when the campaign's mode is `per_post`, the post has no
 `asset_id`, and `is_text_only` is false. While it holds, Approve and Approve & next are disabled with "Needs a photo",
@@ -125,7 +135,8 @@ is open.
   `SetPostPhoto::handle($post, ?$asset)`, `UndoRevision::handle($post)`, `SkipOccurrence::handle($campaign, $date)`,
   `RestoreOccurrence::handle($campaign, $date)`, `CreateOneOffPost::handle($project, $at, $caption, $now)`,
   `FindOccurrencePosts::handle($campaign, $date)` / `::at()`, `ListDatesToApprove::handle($project, ?$campaign, $now)`,
-  `BuildCampaignRunway::datesToApprove($campaign, $now)`.
+  `BuildCampaignRunway::datesToApprove($campaign, $now)`, `ExplainUnchangedRevision::handle($post, $feedback, $chips)`
+  → `{reason, message}` (reads only).
 - Refusals: `app/Exceptions/MarketingPostRefusedException.php` has a `reason` (`not_draft`, `needs_photo`,
   `not_approved`, `past`, `decided`, `not_skipped`, `unknown_reason`, `bad_vote`, `empty_caption`, `not_editable`,
   `no_version`). Every Action refuses through the `Concerns/RefusesPostActions` trait, so every guard has a log line.
@@ -154,6 +165,9 @@ Post events carry `post_id`, `campaign_id` and `version`, per the story.
 - `marketing.studio.opened` (debug). `marketing.runway.failed` (warning, `source: studio`) when a campaign's
   timezone cannot be read. The studio then shows the error instead of the date.
 - The AI calls log MK-8's `marketing.ai.revise.*` / `marketing.ai.draft.*`.
+- `marketing.ai.revise.unchanged` (info): `project`, `campaign_id`, `post_id`, `reason` (the `ExplainUnchangedRevision`
+  constants). It follows `marketing.ai.revise.succeeded` and the `marketing.post.revision_undone` of the rollback, so
+  `revision_undone` does not always mean the owner pressed Undo.
 - A healthy Approve & next reads `studio.opened` → `post.approved` with its `discarded` ids → the next date's render.
   There is no second `opened`, because the studio moves in place.
 
@@ -163,7 +177,11 @@ Post events carry `post_id`, `campaign_id` and `version`, per the story.
   placeholder, one-offs, missed posts, and the entry points from both host pages. Claude is faked with
   `fakeClaude()`.
 - `tests/Browser/Marketing/PostStudioTest.php`: flipping (arrows, dots, keyboard) and Escape; Rebuild → v2 →
-  Compare (no round trip) → Undo; the 375 px sheet with no sideways scroll and Approve visible.
+  Compare (no round trip) → Undo; the 375 px sheet with no sideways scroll and Approve visible; the studio staying
+  open after a Rebuild when the host's shape changes mid-session (idea menu seeded on the campaign page, a campaign
+  paused on the list); an unchanged rebuild showing its warning with the note kept.
+- The feature tests also cover the unchanged rebuild: no version kept and the log line, one dataset row per
+  `ExplainUnchangedRevision` reason, and the warning clearing on the next real change.
 - `tests/Browser/Journeys/MarketingPostTest.php` step 5: open Nov 3 on TrueView Tuesday, flip to draft 2, Rebuild,
   check that Approve & next is held, use a favourite, then Approve & next lands on Oct 27 with the counter down. The
   photo is a favourite, not an upload, because Pest's browser server drops uploaded files (RUNBOOK, MK-2). The upload
@@ -183,6 +201,11 @@ Post events carry `post_id`, `campaign_id` and `version`, per the story.
   [ADR-078](../decisions/ADR-078-marketing-text-only-is-a-stored-choice.md).
 - One vote per post, Undo deletes the kept version, and hand edits keep the version →
   [ADR-079](../decisions/ADR-079-marketing-one-vote-per-post-and-what-makes-a-version.md).
+- A rebuild that comes back the same is undone in the studio and explained, rather than changing MK-8's
+  `ReviseDraft` (Do-NOT-touch) or keeping a no-op version →
+  [ADR-080](../decisions/ADR-080-marketing-an-unchanged-rebuild-is-undone-and-explained.md).
+- Both hosts mount the studio with an explicit `wire:key="post-studio"`. Livewire's auto key shifts when the host's
+  loops change shape, which remounted the studio closed (RUNBOOK, 2026-10-12).
 - One-off posts are hand-written (`source` manual), as the story says. The prototype had AI draft three, but MK-8's
   drafting is campaign-only and MK-9 does not change it.
 - Dislike reasons follow the story (too wordy, wrong tone, boring, off-brand), not the prototype's list.
@@ -202,7 +225,16 @@ Post events carry `post_id`, `campaign_id` and `version`, per the story.
 - The placeholder for a skipped open date is identified by its empty caption. Captions are otherwise never empty
   (`EditPostCaption` and `CreateOneOffPost` refuse it).
 - Livewire uploads are not browser-tested (Pest limitation). A real upload in a browser is still owed.
+- An unchanged rebuild still made, and paid for, one Claude call. Only the version is rolled back.
+- The photo-request check is an English word match (photo, image, picture, pic). A request worded otherwise is
+  explained as `same_caption`.
+- On a one-off post (no campaign, so `photo_mode` is null) the `per_post` message still says "for this campaign".
+- Do not drop the `wire:key` on either `<livewire:marketing.post-studio>` tag; the studio would close after writes
+  again on some page shapes.
 
 ## Change history
 2026-10-12 — Post studio: flip, revise/undo/compare, votes, caption, photo, approve & next, skip/restore, regenerate,
 approved-post actions, mark posted with link, one-off posts; `marketing_post_networks`, `is_text_only` (MK-9, `9d71022`)
+2026-10-12 — Skip date is hidden on one-off posts, where it 404'd for want of a campaign (MK-9, `ec8603c`)
+2026-10-12 — Studio stays open after a change (explicit `wire:key` on both hosts); a rebuild that changes nothing is
+undone and explained under the box (`ExplainUnchangedRevision`, ADR-080) (MK-9, `d415a49`)

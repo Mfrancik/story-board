@@ -96,7 +96,7 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
   SVG logos sanitised with PHP's DOM and previewed from saved values → ADR-065–067. MK-7: the timeline reuses the runway's
   rules and a reschedule moves no posts; URL is a project-scoped slug fixed at creation; Unsaved changes is Alpine against a locked snapshot → ADR-068–070. MK-8: drafting state in the cache; draft job
   once and unique per date; all-or-nothing drafts, cost in micro-USD; one prompts service and call shape → ADR-071–074. MK-9: one studio component opened by events; "to approve" one rule for list and studio;
-  skip writes a placeholder, Restore undoes it; Text only is stored; one vote per post, only Revise makes a version → ADR-075–079
+  skip writes a placeholder, Restore undoes it; Text only is stored; one vote per post, only Revise makes a version; an unchanged rebuild is undone and explained → ADR-075–080
 - Preflight audit scope, audit cost record, build-artifact disposal (kit) → ADR-001 to ADR-003
 
 ## Current phase and what's next
