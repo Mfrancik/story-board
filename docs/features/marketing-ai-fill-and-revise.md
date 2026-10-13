@@ -198,8 +198,9 @@ All events carry `campaign_id`. Cost is logged as `cost_cents`, a float rounded 
 - Taste examples quote a post's *current* caption. A liked post that was later revised is quoted as revised.
 - The system prompt may be under the model's cache minimum. It then goes uncached without any error, which is
   harmless.
-- Cost is priced by the reply's `model` string. A model or snapshot ID not in `PRICES`, a fallback model included,
-  records `cost_micro_usd: null`.
+- Cost is priced by the reply's `model` string, matched to the longest `PRICES` alias it starts with, so a dated
+  snapshot (`claude-sonnet-5-5-20261001`) is priced as its alias. A model in no listed family (e.g. an unlisted
+  fallback) still records `cost_micro_usd: null` — check `model` in `marketing.ai.draft.succeeded`.
 - "Fill N open dates" covers the next 14 days only. Later open dates have row buttons.
 - If no worker runs, a date shows "Drafting…" for up to 10 minutes and then reads as open. The queued job still runs
   once a worker starts. A Retry made before then is refused as `not_open` if the first job has already drafted.

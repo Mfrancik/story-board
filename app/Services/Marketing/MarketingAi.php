@@ -137,16 +137,22 @@ class MarketingAi implements MarketingAiClient
     }
 
     /**
-     * The call's estimated cost in micro-USD, or null for a model with no listed price.
+     * The call's estimated cost in micro-USD, or null for a model with no listed price (alias or dated snapshot).
      *
      * @param  array{input_tokens: int, output_tokens: int, cache_read_input_tokens: int, cache_creation_input_tokens: int}  $usage
      */
     private function cost(string $model, array $usage): ?int
     {
-        if (! isset(self::PRICES[$model])) {
+        // The reply may name a dated snapshot (`claude-sonnet-5-5-20261001`) rather than the alias asked for, so
+        // price by the longest listed alias the id starts with; an exact-key lookup would silently record no cost.
+        $alias = collect(array_keys(self::PRICES))
+            ->filter(fn (string $listed): bool => $model === $listed || str_starts_with($model, $listed.'-'))
+            ->sortByDesc(fn (string $listed): int => strlen($listed))
+            ->first();
+        if ($alias === null) {
             return null;
         }
-        [$in, $out, $read, $write] = self::PRICES[$model];
+        [$in, $out, $read, $write] = self::PRICES[$alias];
 
         return (int) round($usage['input_tokens'] * $in + $usage['output_tokens'] * $out
             + $usage['cache_read_input_tokens'] * $read + $usage['cache_creation_input_tokens'] * $write);

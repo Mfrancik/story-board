@@ -474,3 +474,18 @@ it('marks the date failed and rethrows when a draft job crashes unexpectedly', f
     fillPage()->assertSeeHtml('data-fill-failed="2026-10-27"');
     Log::shouldHaveReceived('error')->with('marketing.ai.draft.failed', ['campaign_id' => $this->tvt->id, 'date' => '2026-10-27', 'reason' => 'exception', 'exception' => 'database went away'])->once();
 });
+
+it('prices a reply from a dated snapshot of a listed model, so the cost is never silently null', function () {
+    // Not fakeClaude(): its stub would match first and answer with the alias.
+    config(['services.anthropic.key' => 'test-key-not-real', 'services.anthropic.model' => 'claude-sonnet-5-5']);
+    $reply = claudeReply(['drafts' => [['caption' => 'A.', 'asset_id' => null], ['caption' => 'B.', 'asset_id' => null], ['caption' => 'C.', 'asset_id' => null]]]);
+    // The API may answer with a dated snapshot id rather than the alias that was asked for.
+    $reply['model'] = 'claude-sonnet-5-5-20261001';
+    Http::fake(['api.anthropic.com/*' => Http::response($reply)]);
+
+    fillPage()->call('fillDate', '2026-10-27')->assertHasNoErrors();
+
+    $meta = postsOn($this->tvt, '2026-10-27')->first()->generation_meta;
+    expect($meta['model'])->toBe('claude-sonnet-5-5-20261001')
+        ->and($meta['cost_micro_usd'])->toBe(5000);
+});
