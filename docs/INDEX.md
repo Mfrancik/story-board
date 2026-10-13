@@ -3,7 +3,7 @@ One line per feature. /document maintains this file.
 
 | Feature | Summary | Status | Last updated | Doc |
 |---|---|---|---|---|
-| Project registry and story reader | Registers local project checkouts and keeps a read-only, git-sourced snapshot of each project's stories at its ref. | active | 2026-10-11 | [doc](features/project-registry-and-reader.md) |
+| Project registry and story reader | Registers local project checkouts and keeps a read-only, git-sourced snapshot of each project's stories at its ref. | active | 2026-10-12 | [doc](features/project-registry-and-reader.md) |
 | Home overview | The `/` page in the dark shell: count sentence, headline figures, Needs me, Live now, project tiles and Shipped this week, narrowed by a `?projects=` filter. | active | 2026-10-11 | [doc](features/home-overview.md) |
 | Not on main | Indexes stories and mockups on unmerged branches, in worktrees and untracked; counted on the overview's tiles and shown as versions on the story page. | active | 2026-10-11 | [doc](features/not-on-main.md) |
 | Story page and mockups | `/p/{project}/s/{id}` in the dark shell: tags, title, one summary line, Pick, the mockups in one sandboxed frame with Today, and every other detail folded below. | active | 2026-10-11 | [doc](features/story-page-and-mockups.md) |
@@ -16,7 +16,7 @@ One line per feature. /document maintains this file.
 | Project handbook | `/p/{project}/handbook`: a project's rules, lessons, standards, runbook, decisions and skills from git, with standards and skills badged against the dev-standards kit. | active | 2026-10-11 | [doc](features/project-handbook.md) |
 | Production connection and metrics | A project's read-only production MySQL connection on `/projects`, proven SELECT-only on every open, with preset and custom-SQL metrics you can test. | active | 2026-09-29 | [doc](features/production-connection.md) |
 | Production dashboard | The old `/prod` page of every project's production metrics with changes and 30-day trends; deleted in RD-9 for the overview's tiles. | retired | 2026-10-11 | [doc](features/production-dashboard.md) |
-| Project overview | `/p/{project}`, a project's landing page: tiles for progress, Needs you, Live now, latest preflight, production, About and biggest initiatives, plus Refresh this project. | active | 2026-10-12 | [doc](features/project-overview.md) |
+| Project overview | `/p/{project}`, a project's landing page: tiles for progress, Needs you, Live now, preflight, production, About, initiatives and git activity, plus Refresh this project. | active | 2026-10-12 | [doc](features/project-overview.md) |
 | Stories by initiative | `/p/{project}/stories`: a project's on-ref stories grouped by initiative in two panes, tagged by status, with filter chips and Expand all; rows link to the story page. | active | 2026-10-12 | [doc](features/stories-by-initiative.md) |
 | Preflight history | `/p/{project}/preflight`: a project's preflight runs from its cost CSVs as a newest-first ledger, with where each ran, trend figures, two SVG charts, Alpine filters and a columns picker. | active | 2026-10-12 | [doc](features/preflight-history.md) |
 | Marketing: campaigns list | `/p/{project}/marketing`: a project's recurring campaigns, each with next post, approved-through, a 6-date runway and needs-you badges, under an alerts banner; plus the marketing schema. | active | 2026-10-12 | [doc](features/marketing-campaigns-list.md) |

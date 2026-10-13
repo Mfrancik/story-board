@@ -1,5 +1,5 @@
 # Project registry and story reader
-Status: active   ·   Last updated: 2026-10-11   ·   Stories: SB-2, SB-3, SB-5, RD-2, RD-7
+Status: active   ·   Last updated: 2026-10-12   ·   Stories: SB-2, SB-3, SB-5, RD-2, RD-7, RD-12
 
 ## Overview
 The board keeps a list of local project checkouts and a snapshot of every story file at each
@@ -52,10 +52,14 @@ dispatch). Staleness keys on the last *attempt*, not on `indexed_at` (which only
 **The git gateway.** `app/Services/GitReader.php` is the only app code that runs git. `run()`
 refuses any subcommand not in `ALLOWED` (`fetch`, `ls-tree`, `show`, `rev-parse`, `cat-file`,
 `remote`, and since SB-5 `for-each-ref`, `merge-base`, `worktree`, `status`), refuses `remote` with
-arguments, allows `worktree` only as `worktree list` and `status` only with `--porcelain`
-([ADR-012](../decisions/ADR-012-off-main-reads-stay-read-only-and-in-git.md)), allows `log` (RD-7) only as
-`log LOG_FORMAT --since=@<unix> <ref> --` (built by `GitReader::log()`, run with `-c log.showSignature=false`;
-[ADR-052](../decisions/ADR-052-git-log-is-admitted-in-one-fixed-form.md)), and refuses any `--output`/`-o` argument. Every ref goes
+arguments, allows `worktree` only as `worktree list` and `status` only as `--porcelain` with the listing options
+`-z` / `--untracked-files=all|normal` before `--` (`isReadOnlyStatus()`; RD-12 dropped every other option, so no
+`-v` diff — [ADR-012](../decisions/ADR-012-off-main-reads-stay-read-only-and-in-git.md),
+[ADR-081](../decisions/ADR-081-git-activity-reads-are-fixed-log-and-status-forms.md)), allows `log` only in the three
+fixed forms of `isReadOnlyLog()` — `log()`'s `log LOG_FORMAT --since=@<unix> <ref> --` (RD-7,
+[ADR-052](../decisions/ADR-052-git-log-is-admitted-in-one-fixed-form.md)), and RD-12's `commitStats()`
+(`--shortstat --no-ext-diff --no-textconv --max-count=<1–99>`) and `filesChangedSince()` (`-z --name-only
+--no-renames --since=@<unix>`), all run with `-c log.showSignature=false` — and refuses any `--output`/`-o` argument. Every ref goes
 through `assertRef()` (`REF_PATTERN`: no leading `-`, no `..`; `D` flag so `$` cannot match
 before a trailing newline). git runs with
 `GIT_TERMINAL_PROMPT=0`, ssh `BatchMode=yes`, `GIT_OPTIONAL_LOCKS=0`, and fetch adds
@@ -190,3 +194,4 @@ the first line of git's stderr.
 2026-09-29 — `board:project enable`; enable/disable go through `SwitchProject` and log `source` (SB-12)
 2026-10-11 — Page-load refresh is the `RefreshStaleProjects` middleware on every board page route (RD-2, `43b01ed`)
 2026-10-11 — `GitReader` admits `log` in one fixed form, `GitReader::log()` (RD-7, `4d12af1`)
+2026-10-12 — `status` options narrowed to listings; `log` gains the `--shortstat` and `--name-only` forms for the project overview's activity tiles (RD-12, `9b0addd`)
