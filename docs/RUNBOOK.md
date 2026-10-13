@@ -10,7 +10,12 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
-## 2026-10-12 — Tests in a worktree collide with another tree's run, or Pest fails silently
+## 2026-10-12 — A second Http::fake for Claude is ignored in the same test
+Symptom: in the marketing journey, Fill's Claude reply worked but the later Revise got the drafts-shaped reply, so `ReviseDraft` failed as `invalid_reply` (no `caption`), even though a second `fakeClaude([...caption...])` had been registered for it.
+Root cause: `Http::fake()` stubs stack, and the first stub whose URL pattern matches answers every request. Both stubs matched `api.anthropic.com/*`, so the second was never reached.
+Fix: register one fake whose payload carries both keys, `drafts` (read by `DraftOccurrence`) and `caption` (read by `ReviseDraft`); each reader ignores the other's key (`tests/Browser/Journeys/MarketingPostTest.php`, MK-9). Use `Http::fakeSequence()` instead when the replies must differ in order.
+Log trail: `marketing.ai.revise.failed` with `reason: invalid_reply` straight after a good `marketing.ai.draft.succeeded`.
+ with another tree's run, or Pest fails silently
 Symptom: during MK-8, Pest runs in a `.claude/worktrees/*` checkout could not be trusted while another tree also ran tests, and some failing runs printed nothing at all.
 Root cause: `phpunit.xml` pins `DB_DATABASE=story_board_test`, so every worktree and the main checkout share one test database, and `RefreshDatabase` in one tree resets it under another. The silent failures are an output-plugin issue that `PAO_DISABLE=1` switches off.
 Fix: give each tree its own database. Prefix the run with `DB_DATABASE=story_board_test_<tree> php artisan test …`, after creating that MySQL database. When Pest prints nothing on a failure, also prefix `PAO_DISABLE=1` to get the plain report (MK-8).

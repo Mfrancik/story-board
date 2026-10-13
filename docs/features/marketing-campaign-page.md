@@ -5,7 +5,7 @@ Status: active   ·   Last updated: 2026-10-12   ·   Stories: MK-7, MK-8
 `/p/{project}/marketing/campaigns/{slug}` is one campaign's page. It shows what the campaign will post and how far
 out it is approved, lists what it has already posted, and lets the owner change its rules in place: name, days,
 time, timezone, topics, brief and photo choice. The owner works from this page. It is also where MK-8's Fill and
-MK-9's studio will start. `/campaigns/new` is the same page in create mode, so create and edit share one form.
+the [post studio](marketing-post-studio.md) (MK-9) start. `/campaigns/new` is the same page in create mode, so create and edit share one form.
 
 ## How it works
 **Routes** (`routes/web.php`). There are two routes, both behind `EnsureProjectIsShown`:
@@ -45,7 +45,8 @@ copy them ([ADR-068](../decisions/ADR-068-marketing-campaign-timeline-reuses-the
 Each row is drawn by `resources/views/components/marketing/occurrence-row.blade.php`. It shows the date and time, a
 state pill, the approved post's preview and caption or the drafts' count and thumbnails, and the Off schedule tag.
 An open row has Fill / Drafting… / Retry, and the header has "Fill N open dates" (MK-8, see
-[marketing-ai-fill-and-revise.md](marketing-ai-fill-and-revise.md)). Rows open nothing yet: the studio arrives with MK-9.
+[marketing-ai-fill-and-revise.md](marketing-ai-fill-and-revise.md)). Each row opens its date in the post studio
+(MK-9): a full-row button sits under the row's content, and Fill sits above it so it still works on its own.
 
 **Criteria form** (`resources/views/livewire/marketing/campaign-page.blade.php`). The inputs are deferred
 `wire:model`s, so typing makes no request. "Unsaved changes" is Alpine: a `dirty` getter compares the normalised
@@ -159,7 +160,6 @@ unique index on `name`; `(project_id, slug)` is unique.
   JSON casts strictly. Any new JSON column compared on save needs `SaveCampaign::canonical()` or something like it.
 - Past posts are not paginated. The timezone select lists every identifier (about 420). The create page's sentence
   updates only after a round trip, not while typing.
-- Timeline rows and their badges are not controls until MK-9 (studio); only an open row's Fill is.
 - Off-schedule dates disappear from the timeline once they pass, unless they were missed. Posted ones then show only
   under Past posts.
 - A campaign cannot be deleted yet (out of scope).
@@ -167,3 +167,4 @@ unique index on `name`; `(project_id, slug)` is unique.
 ## Change history
 2026-10-12 — Campaign page: criteria edited in place, future and past posts, create mode, on/off (MK-7, `b5deb57`)
 2026-10-12 — Fill per open date and "Fill N open dates" with Drafting / Retry states (MK-8, `e694a73`)
+2026-10-12 — Every timeline row opens its date in the post studio (MK-9, `9d71022`)

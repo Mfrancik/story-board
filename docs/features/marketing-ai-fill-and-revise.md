@@ -8,8 +8,8 @@ it replaced. Regenerate swaps a date's drafts for three new ones. The AI writes 
 layout stay fixed by the brand (MK-2) and never appear in a prompt. Every call records its model, tokens, estimated
 cost and duration. Every caption is linted against the copy rules. The lint warns and never blocks.
 
-Fill has UI on the campaign page (MK-7). Revise and Regenerate are Actions only for now: their buttons come with the
-studio (MK-9).
+Fill has UI on the campaign page (MK-7). Revise, Regenerate and likes/dislikes have their buttons in the
+[post studio](marketing-post-studio.md) (MK-9).
 
 ## How it works
 **Fill, from the page.** `app/Livewire/Marketing/CampaignPage.php` has two actions. `fillDate($date)` is a row's
@@ -193,9 +193,8 @@ All events carry `campaign_id`. Cost is logged as `cost_cents`, a float rounded 
   [ADR-074](../decisions/ADR-074-marketing-prompts-service-and-claude-call-shape.md).
 
 ## Known limitations & gotchas
-- **No UI for Revise, Regenerate, likes or dislikes** until MK-9. Until then `marketing_feedback` fills only
-  through `ReviseDraft`, so taste has notes but no votes.
-- Taste examples quote a post's *current* caption. A liked post that was later revised is quoted as revised.
+- Taste examples quote a post's *current* caption. A liked post that was later revised is quoted as revised. Since
+  MK-9 added votes, this is reachable: like a draft, then Rebuild it, and the like now quotes the rebuilt text.
 - The system prompt may be under the model's cache minimum. It then goes uncached without any error, which is
   harmless.
 - Cost is priced by the reply's `model` string, matched to the longest `PRICES` alias it starts with, so a dated
@@ -211,3 +210,4 @@ All events carry `campaign_id`. Cost is logged as `cost_cents`, a float rounded 
 
 ## Change history
 2026-10-12 — Fill (per date and "Fill N open dates"), DraftOccurrence, Revise, Regenerate, taste, lint, cost in generation_meta (MK-8, `e694a73`)
+2026-10-12 — Revise, Regenerate and votes get their UI in the post studio (MK-9, `9d71022`)

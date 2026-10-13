@@ -11,7 +11,7 @@ per story.
 | 2 | Brand, favourites and copy rules in place (StackerMint seeded from the kit) | MK-2 | stories/marketing/MK-2-brand-kit-and-photos.md | built |
 | 3 | Open TrueView Tuesday, add own topics, see future posts | MK-7 | stories/marketing/MK-7-campaign-page.md | built |
 | 4 | Fill open dates: AI drafts 3 per date | MK-8 | stories/marketing/MK-8-ai-fill-and-revise.md | built |
-| 5 | Studio: flip, "what should change?", add a photo, Approve & next | MK-9 | stories/marketing/MK-9-post-studio.md | approved |
+| 5 | Studio: flip, "what should change?", add a photo, Approve & next | MK-9 | stories/marketing/MK-9-post-studio.md | built |
 | 6 | See approved posts on the calendar and in the library | MK-10 | stories/marketing/MK-10-calendar-and-library.md | approved |
 | 7 | Drop past ads into Inspiration; drafts cite what inspired them | MK-18 | stories/marketing/MK-18-inspiration-dump.md | approved |
 

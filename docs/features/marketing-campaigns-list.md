@@ -7,7 +7,8 @@ Tuesday · Tue 19:00 weekly"). For each campaign it shows how far out posts are 
 The owner thinks in campaigns, so this is the first page of the marketing initiative (`stories/marketing/README.md`).
 MK-1 also lays the generic schema (`marketing_campaigns`, `marketing_posts`) that MK-2, 7, 8, 9, 10 and 18 build on.
 The page only reads. A row's name opens the campaign's page and "+ New campaign" opens it in create mode, where
-campaigns are created, edited and switched ([campaign page](marketing-campaign-page.md), MK-7). Approving posts arrives with MK-9.
+campaigns are created, edited and switched ([campaign page](marketing-campaign-page.md), MK-7). The badges, "Start approving" and "+ One-off post" open the
+[post studio](marketing-post-studio.md) (MK-9).
 
 ## How it works
 **Route.** `routes/web.php` registers `GET /p/{project:name}/marketing` as `projects.marketing` behind
@@ -149,7 +150,6 @@ None. Each campaign carries its own `timezone`, and `app.timezone` plays no part
   [ADR-064](../decisions/ADR-064-marketing-tab-count-reuses-the-runway.md).
 - Missed is derived, never stored, so it cannot disagree with the clock (story rule).
 - Deliberate deviations from the prototype:
-  - No "Start approving" button, because MK-9's studio does not exist yet.
   - No per-row on/off switch: the switch lives in the campaign page's header (MK-7).
   - The runway header reads "Runway · next 6 dates", not "6 weeks", because a campaign can post on several days a week.
 
@@ -164,8 +164,10 @@ None. Each campaign carries its own `timezone`, and `app.timezone` plays no part
   a test. Only approved and open dates are tested.
 - `EnsureProjectIsShown`'s docblock list of guarded pages does not yet mention Marketing.
 - Paused rows still show their approved-through line and runway bar, faded.
-- Only the row's name is a link; the badges are labels only until MK-9.
+- The badges are buttons wrapped around `marketing/alert-badge` (which stays a label): "N to approve" and "Needs a
+  photo" open the campaign's first date to approve, "Missed" its missed date, "N open dates" its first open date.
 
 ## Change history
 2026-10-12 — Marketing tab: campaigns list with approval runway and alerts; marketing schema (MK-1, `1f54714`)
 2026-10-12 — Row names link to the campaign page; "+ New campaign" in the header and empty state (MK-7, `b5deb57`)
+2026-10-12 — Badges, "Start approving" and "+ One-off post" open the post studio (MK-9, `9d71022`)
