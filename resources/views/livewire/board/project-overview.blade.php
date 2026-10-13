@@ -1,13 +1,15 @@
 {{--
     RD-11 project overview, option B "command center" (docs/mockups/RD-11/option-b.html) in the RD-2 shell: the project
     header with Refresh this project (F-16), the tabs with Overview first, then a 4 → 2 → 1 column tile grid in option B's
-    order — Story progress, Needs you, Live now, Latest preflight, Production, About, Biggest initiatives. Option B's git
-    tiles (commits per day, last edits, most-edited files) are RD-12. Production values come from stored snapshots only.
+    order — Story progress, Needs you, Live now, Latest preflight, Commits per day, Production, About, Biggest initiatives,
+    Last edits (with the working copy's uncommitted count), Most-edited code today. The three git tiles are RD-12, read
+    through ReadGitActivity. Production values come from stored snapshots only.
 
-    Each tile's data may be null — its source threw (ProjectOverview::attempt logged it) — so that tile shows its error
-    and the others still render. The page polls only while a refresh the owner asked for is on its way.
+    Each tile's data may be null — its source threw (ProjectOverview::attempt logged it), or one git read failed
+    (ReadGitActivity logged it) — so that tile shows its error and the others still render. The page polls only while a refresh the owner asked for is on its way.
 --}}
 @use('App\Actions\Board\ListNeedsMe')
+@use('App\Actions\Board\ReadGitActivity')
 @use('App\Actions\Board\ReadPreflightHistory')
 @use('App\Actions\Board\ReadProjectStories')
 @use('App\Livewire\Board\Overview')
@@ -21,6 +23,11 @@
     $panelError = 'text-sm text-fail';
     $big = 'font-mono text-3xl leading-none font-medium tracking-tight';
     $stories = route('projects.stories', $model->name);
+    // RD-12's git reads, each null when it failed; all null when the whole read threw.
+    $commits = $activity['commits'] ?? null;
+    $edits = $activity['edits'] ?? null;
+    $hotFiles = $activity['files'] ?? null;
+    $uncommitted = $activity['uncommitted'] ?? null;
 @endphp
 <main class="mx-auto flex max-w-7xl min-w-0 flex-col gap-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
     @php
@@ -221,6 +228,35 @@
             @endif
         </section>
 
+        {{-- Commits per day (RD-12): the ref's commits on each of the last 14 days, today's bar brighter, drawn as the preflight chart is. --}}
+        <section data-tile="commits" data-activity-state="{{ $commits === null ? 'error' : ($commits['total'] === 0 ? 'empty' : 'ok') }}" aria-labelledby="ov-commits" class="{{ $tile }} md:col-span-2">
+            <h2 id="ov-commits" class="{{ $heading }}">Commits per day · {{ ReadGitActivity::DAYS }} days</h2>
+            @if ($commits === null)
+                <p role="alert" class="{{ $panelError }}">Could not read the commits on {{ $model->ref }}. The rest of the page is unaffected.</p>
+            @else
+                @php
+                    $cdays = $commits['days'];
+                    $cpeak = max(1, max(array_column($cdays, 'count')));
+                    $last = count($cdays) - 1;
+                @endphp
+                <p class="flex flex-wrap items-baseline gap-x-2.5">
+                    <span data-commits-total class="{{ $big }}">{{ number_format($commits['total']) }}</span>
+                    <span class="{{ $note }}">on {{ $model->ref }} in {{ ReadGitActivity::DAYS }} days</span>
+                </p>
+                <svg data-commits-chart viewBox="0 0 {{ count($cdays) * 20 - 6 }} 60" preserveAspectRatio="none" class="block h-16 w-full" role="img"
+                    aria-label="Commits per day on {{ $model->ref }}, {{ $cdays[0]['day']->format('j M') }} ({{ $cdays[0]['count'] }}) to today ({{ $commits['today'] }}).">
+                    @foreach ($cdays as $i => $d)
+                        @php $h = $d['count'] / $cpeak * 56; @endphp
+                        @if ($d['count'] > 0)<rect x="{{ $i * 20 }}" y="{{ 60 - $h }}" width="14" height="{{ $h }}" rx="2" @class(['fill-live', 'opacity-60' => $i !== $last]) />@endif
+                    @endforeach
+                </svg>
+                <p class="flex flex-wrap gap-x-4 text-xs text-ink-muted">
+                    <span>{{ $cdays[0]['day']->format('j M') }} · <b class="font-mono font-medium text-ink">{{ $cdays[0]['count'] }}</b></span>
+                    <span data-commits-today class="ml-auto">today · <b class="font-mono font-medium text-ink">{{ $commits['today'] }}</b></span>
+                </p>
+            @endif
+        </section>
+
         {{-- Production: stored snapshots of the connected metrics; one line when there is no connection. --}}
         @php $metrics = $production['metrics'] ?? null; @endphp
         <section data-tile="production" data-production-state="{{ $production === null ? 'error' : ($metrics === null ? 'none' : 'ok') }}" aria-labelledby="ov-production"
@@ -289,6 +325,79 @@
                                 <span class="bg-built" style="width: {{ round($initiative['built'] / max(1, $initiative['total']) * 100, 2) }}%"></span>
                             </span>
                             <span data-initiative-count class="text-right font-mono text-xs text-ink-muted">{{ $initiative['built'] }}/{{ $initiative['total'] }}</span>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+        </section>
+
+        {{-- Last edits (RD-12): the ref's latest commits, a subject's story ID linked when the snapshot has that story;
+             the working copy's uncommitted-path count sits beside the heading. --}}
+        @php
+            $uncommittedState = $uncommitted === null ? 'error' : $uncommitted;
+        @endphp
+        <section data-tile="edits" data-activity-state="{{ $edits === null ? 'error' : ($edits === [] ? 'empty' : 'ok') }}" aria-labelledby="ov-edits" class="{{ $tile }} gap-1.5 md:col-span-2">
+            <h2 id="ov-edits" class="{{ $heading }} flex-wrap">Last edits
+                <span data-uncommitted="{{ $uncommittedState }}" @if ($uncommitted === null) role="alert" @endif
+                    @class(['ml-auto text-xs font-normal tracking-normal normal-case', 'text-fail' => $uncommitted === null, 'text-needs' => $uncommitted > 0])>
+                    @if ($uncommitted === null)
+                        Could not read the working copy
+                    @elseif ($uncommitted === 0)
+                        Working copy clean
+                    @else
+                        Working copy: {{ number_format($uncommitted) }} uncommitted {{ Str::plural('path', $uncommitted) }}
+                    @endif
+                </span>
+            </h2>
+            @if ($edits === null)
+                <p role="alert" class="{{ $panelError }}">Could not read the latest commits on {{ $model->ref }}.</p>
+            @elseif ($edits === [])
+                <p class="{{ $note }}">No commits on {{ $model->ref }} yet.</p>
+            @else
+                <ul class="flex flex-col">
+                    @foreach ($edits as $edit)
+                        @php $editAt = $edit['at']->setTimezone(config('app.timezone')); @endphp
+                        <li wire:key="edit-{{ $edit['sha'] }}" data-edit="{{ $edit['short'] }}" class="flex min-h-11 min-w-0 items-center gap-3 border-t border-hairline text-sm">
+                            <span class="w-14 shrink-0 font-mono text-xs text-ink-faint" title="{{ $editAt->toDateTimeString() }}">{{ $editAt->diffForHumans(short: true) }}</span>
+                            <span class="flex min-w-0 flex-1 items-center gap-2">
+                                <span class="hidden shrink-0 font-mono text-xs text-ink-faint sm:inline">{{ $edit['short'] }}</span>
+                                {{-- The type pill gives way below 640 px, so the subject and the +/− counts keep the row. --}}
+                                @if ($edit['type'] !== null)<span class="hidden shrink-0 sm:inline-flex"><x-shell.tag mono>{{ $edit['type'] }}</x-shell.tag></span>@endif
+                                @if ($edit['linked'])
+                                    <a href="{{ route('stories.show', ['project' => $model->name, 'storyId' => $edit['story_id']]) }}" wire:navigate data-edit-story="{{ $edit['story_id'] }}"
+                                        class="inline-flex min-h-11 shrink-0 items-center rounded-md font-mono text-xs text-needs hover:underline {{ $focus }}">{{ $edit['story_id'] }}</a>
+                                @elseif ($edit['story_id'] !== null)
+                                    <span class="shrink-0 font-mono text-xs text-ink-soft">{{ $edit['story_id'] }}</span>
+                                @endif
+                                <span class="min-w-0 truncate" title="{{ $edit['subject'] }}">{{ $edit['subject'] }}</span>
+                            </span>
+                            <span class="shrink-0 font-mono text-xs whitespace-nowrap text-ink-faint">
+                                @if ($edit['added'] === null)
+                                    <span class="sr-only">no line changes (a merge)</span><span aria-hidden="true">—</span>
+                                @else
+                                    <span class="sr-only">lines added</span><span data-edit-added class="text-go">+{{ number_format($edit['added']) }}</span>
+                                    <span class="sr-only">lines removed</span><span data-edit-removed class="text-fail">−{{ number_format($edit['removed']) }}</span>
+                                @endif
+                            </span>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+        </section>
+
+        {{-- Most-edited code today (RD-12): files by commits on the ref touching them since midnight; docs/ and stories/ left out. --}}
+        <section data-tile="files" data-activity-state="{{ $hotFiles === null ? 'error' : ($hotFiles === [] ? 'empty' : 'ok') }}" aria-labelledby="ov-files" class="{{ $tile }} md:col-span-2 xl:col-span-4">
+            <h2 id="ov-files" class="{{ $heading }}">Most-edited code today</h2>
+            @if ($hotFiles === null)
+                <p role="alert" class="{{ $panelError }}">Could not read today's changed files on {{ $model->ref }}.</p>
+            @elseif ($hotFiles === [])
+                <p class="{{ $note }}">No code files changed on {{ $model->ref }} today.</p>
+            @else
+                <ul class="grid grid-cols-1 gap-x-6 sm:grid-cols-2 xl:grid-cols-3">
+                    @foreach ($hotFiles as $file)
+                        <li wire:key="file-{{ $loop->index }}" data-hot-file="{{ $file['path'] }}" class="flex min-w-0 justify-between gap-2.5 border-t border-hairline py-1.5 text-xs">
+                            <span class="min-w-0 font-mono break-all text-ink-soft">{{ $file['path'] }}</span>
+                            <span class="shrink-0 text-ink-faint">{{ $file['commits'] }} {{ Str::plural('commit', $file['commits']) }}</span>
                         </li>
                     @endforeach
                 </ul>
