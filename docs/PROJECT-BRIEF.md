@@ -1,5 +1,5 @@
 # Project brief — story-board
-Last refreshed: 2026-10-12 (MK-9)
+Last refreshed: 2026-10-12 (MK-10)
 
 ## What it is, and for whom
 A localhost Laravel app for one owner, with no auth (removed in RD-1). It reads the `stories/` folder of
@@ -21,7 +21,9 @@ It also shows:
   holds each project's brand, favourite photos and copy rules, seeded for StackerMint by `marketing:seed-kit`; MK-7
   gives each campaign a page to create, edit and switch it and to see its next 8 dates and past posts; MK-8's Fill
   has Claude draft 3 captions per open date on the queue; MK-9's post studio is the one modal where a date's drafts
-  are flipped, revised, voted on, given a photo and approved, and approved posts are copied and marked posted.
+  are flipped, revised, voted on, given a photo and approved, and approved posts are copied and marked posted;
+  MK-10's calendar shows every campaign's posts and open dates by day, and its library keeps approved and posted
+  posts as an archive.
 
 ## Domain model
 - **Project**: a registered checkout (`name`, `path`, `ref`, `is_enabled`). Off hides it everywhere and stops its
@@ -56,25 +58,26 @@ It also shows:
   initiative rollup. `MockupGateParser` reads a story's mockup gate.
 
 ## Features
-27 entries: 22 active, 5 retired by RD-9 (old dashboard, old sidebar, story modal, old `/p/{project}`, `/prod`; their docs
+28 entries: 23 active, 5 retired by RD-9 (old dashboard, old sidebar, story modal, old `/p/{project}`, `/prod`; their docs
 stay as history, and [retired-pages.md](features/retired-pages.md) maps what replaced each). Every page is in the dark
 shell. `/` is the home overview (RD-5) with a project filter (RD-6), project tiles and Shipped this week (RD-7); the
 Preflight page and tiles say where each run ran (RD-8). `/p/{project}` is the project overview (RD-11): a tile grid,
 Overview first in the project tabs, the sidebar's landing page, and Refresh this project. `/p/{project}/marketing`
 is the Marketing tab's campaigns list (MK-1), last in the tabs with a count of posts to approve, with its
 Settings page (MK-2: brand, favourites, copy rules) and a page per campaign at `/marketing/campaigns/{slug}` (MK-7)
-with AI Fill per date (MK-8); every campaign date and list badge opens the post studio (MK-9). Each one's route, summary and doc: [INDEX.md](INDEX.md); the
+with AI Fill per date (MK-8); every campaign date and list badge opens the post studio (MK-9). `/marketing/calendar`
+and `/marketing/library` (MK-10) show posts across campaigns and open the same studio. Each one's route, summary and doc: [INDEX.md](INDEX.md); the
 stories behind it: its doc's header line.
 
 ## Journeys
-- [marketing-post](journeys/marketing-post.md): campaign to approved posts. Steps 1–5 (MK-1, MK-2, MK-7, MK-8, MK-9) are built,
-  and steps 6–7 (MK-10, 18) are approved. Every SB and RD story is `Journey: none`.
+- [marketing-post](journeys/marketing-post.md): campaign to approved posts. Steps 1–6 (MK-1, MK-2, MK-7, MK-8, MK-9, MK-10) are
+  built, and step 7 (MK-18) is approved. Every SB and RD story is `Journey: none`.
 
 ## Stories
 - **built**: SB-2–5, SB-7–12, SB-14–19, SB-21–25 · RD-1 clean foundation · RD-2 dark shell and sidebar ·
   RD-3 short story page · RD-4 re-skin kept pages · RD-5 home overview · RD-6 home project filter · RD-7 project tiles and Shipped · RD-8 preflight "Ran on" · RD-9 retire old pages · RD-11 project overview
-- **built (marketing)**: MK-1 campaigns list and marketing schema · MK-2 brand kit, favourite photos, copy rules · MK-7 campaign page · MK-8 AI fill and revise · MK-9 post studio
-- **approved**: RD-12 project git activity tiles · MK-10 (phase 1, next) · MK-18
+- **built (marketing)**: MK-1 campaigns list and marketing schema · MK-2 brand kit, favourite photos, copy rules · MK-7 campaign page · MK-8 AI fill and revise · MK-9 post studio · MK-10 calendar and library
+- **approved**: RD-12 project git activity tiles · MK-18 (phase 1, next)
 - **draft**: SB-20 preflight run errors · RD-10 preflight run record (parked)
 - **draft (parked)**: SB-6 the board on an always-live domain
 - **cut**: SB-13 pick a mockup (SB-21's pick covers it)
@@ -96,7 +99,8 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
   SVG logos sanitised with PHP's DOM and previewed from saved values → ADR-065–067. MK-7: the timeline reuses the runway's
   rules and a reschedule moves no posts; URL is a project-scoped slug fixed at creation; Unsaved changes is Alpine against a locked snapshot → ADR-068–070. MK-8: drafting state in the cache; draft job
   once and unique per date; all-or-nothing drafts, cost in micro-USD; one prompts service and call shape → ADR-071–074. MK-9: one studio component opened by events; "to approve" one rule for list and studio;
-  skip writes a placeholder, Restore undoes it; Text only is stored; one vote per post, only Revise makes a version; an unchanged rebuild is undone and explained → ADR-075–080
+  skip writes a placeholder, Restore undoes it; Text only is stored; one vote per post, only Revise makes a version; an unchanged rebuild is undone and explained → ADR-075–080. MK-10: the calendar composes the runway's rules in fixed queries;
+  gap = first 4+ unapproved days within 28; the library leaves out drafts and missed posts; peek, grid/list and the narrow agenda need no round trip → ADR-084–087
 - Preflight audit scope, audit cost record, build-artifact disposal (kit) → ADR-001 to ADR-003
 
 ## Current phase and what's next
@@ -106,8 +110,8 @@ page in the shell, the home overview with its filter, tiles and Shipped this wee
 (git activity tiles on the project overview). RD-10 (preflight run record writer) is parked. Dead code RD-9 left is
 backlog F-15. Open for the owner: the home overview's project tiles still link to Stories, not the project overview.
 
-Marketing phase 1 has started ([stories/marketing/README.md](../stories/marketing/README.md)). MK-1, MK-2, MK-7, MK-8 and MK-9 are built;
-next is MK-10 (calendar and library, which also gives one-off posts a way back into the studio), then MK-18. Owed
+Marketing phase 1 has started ([stories/marketing/README.md](../stories/marketing/README.md)). MK-1, MK-2, MK-7, MK-8, MK-9 and MK-10
+are built; next is MK-18 (Inspiration, and the library's Save to Inspiration). Owed
 by the owner: set `ANTHROPIC_API_KEY` and do the real-key checks: MK-8's (Fill one coins date, read the captions,
 note the cost) and MK-9's (open the studio, flip, revise, approve two dates, Copy caption, one real photo upload). A campaign
 can still be saved with no topics; Fill then drafts from the brief alone. The owner runs `php artisan migrate` and `marketing:seed-kit`
@@ -148,8 +152,9 @@ Backlog: [BACKLOG.md](BACKLOG.md).
   awaits owner confirmation. "New page" can be wrong for routes not in `routes/*.php`.
 - The app map's page weight is its cost driver (coins: about 3.1 MB). Shots are read from the working tree,
   not the ref. Journey shots must not run under `--parallel`.
-- Marketing: past posts are not paginated; a one-off post cannot be reopened once the studio closes (until MK-10);
-  Save to Inspiration is hidden until MK-18 and Download until phase 3 renders text cards. Fill needs `ANTHROPIC_API_KEY`, a queue worker and a shared cache; AI cost uses a price table in code. The tab's count
+- Marketing: past posts are not paginated; Save to Inspiration (studio and library cards) is hidden until MK-18 and Download until phase 3 renders text cards. Fill needs `ANTHROPIC_API_KEY`, a queue worker and a shared cache; AI cost uses a price table in code. The tab's count
   is computed on every project page render, so a campaign with a bad timezone logs a warning on each render.
   Browser tests cannot upload files (Pest's server drops them), and a real photo upload is not yet browser-checked.
+  The calendar's gap banner looks 28 days ahead only. `htmlQuery()` in `tests/Pest.php` needs PHP 8.4 while
+  composer allows ^8.3.
 - The dev server runs on port 8010. By owner ruling, this repo has no git remote.

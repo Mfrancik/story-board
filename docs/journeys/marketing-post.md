@@ -12,7 +12,7 @@ per story.
 | 3 | Open TrueView Tuesday, add own topics, see future posts | MK-7 | stories/marketing/MK-7-campaign-page.md | built |
 | 4 | Fill open dates: AI drafts 3 per date | MK-8 | stories/marketing/MK-8-ai-fill-and-revise.md | built |
 | 5 | Studio: flip, "what should change?", add a photo, Approve & next | MK-9 | stories/marketing/MK-9-post-studio.md | built |
-| 6 | See approved posts on the calendar and in the library | MK-10 | stories/marketing/MK-10-calendar-and-library.md | approved |
+| 6 | See approved posts on the calendar and in the library | MK-10 | stories/marketing/MK-10-calendar-and-library.md | built |
 | 7 | Drop past ads into Inspiration; drafts cite what inspired them | MK-18 | stories/marketing/MK-18-inspiration-dump.md | approved |
 
 Phase 2 adds: connect the Page → publish / send on schedule → engagement and campaign analytics.

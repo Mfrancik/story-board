@@ -10,8 +10,8 @@ Review page, so the owner can approve several weeks ahead in one sitting from wh
 
 ## How it works
 **One component, many doors.** `app/Livewire/Marketing/PostStudio.php` is a child Livewire component. It is
-mounted on the campaigns list (`campaign-list.blade.php`) and on the campaign page (`campaign-page.blade.php`, only
-once a campaign exists). It starts closed and renders `<div data-studio-closed>` until one of two events arrives:
+mounted on the campaigns list (`campaign-list.blade.php`), the campaign page (`campaign-page.blade.php`, only
+once a campaign exists), and since MK-10 the calendar and library. It starts closed and renders `<div data-studio-closed>` until one of two events arrives:
 - `open-studio` → `open(?campaign, ?date, ?post)`:
   - **campaign + date**: a timeline row (`components/marketing/occurrence-row.blade.php`, a full-row button under
     the row's content), the list's "Missed" badge, or its "N open dates" badge (the first open date).
@@ -51,7 +51,7 @@ the brand's font, colours and radius with its logo. A post with a photo shows th
 photo. A post with no photo gets the brand text card. A post held by `needsPhoto()` shows "Needs a photo" with a
 slot for Upload / Use a favourite. Type scales with the card (`.post-card` in `resources/css/app.css`). The brand
 values go only into CSS custom properties, and the sanitised SVG logo is the one unescaped value. MK-10's library
-cards are meant to reuse it.
+cards reuse it.
 
 **Each action is a thin call into an Action.** The studio validates input, then calls an Action. A refused Action
 throws `MarketingPostRefusedException` and is toasted (or shown under the field for reschedule, the post link and
@@ -215,9 +215,8 @@ Post events carry `post_id`, `campaign_id` and `version`, per the story.
 - **"Save to Inspiration" is not drawn** until MK-18 ships its action.
 - **Download is hidden when the post has no photo** (text-only, or a manual post with none). Rendering the text card
   to an image is phase 3.
-- **A one-off post has no way back into the studio yet.** Nothing outside the studio dispatches `open-studio` with
-  a `post`, and one-offs have no campaign, so they never enter the "to approve" queue or the campaigns list's
-  counts. Once the studio closes, a one-off is reachable only after MK-10 (calendar and library) adds a door.
+- **One-offs are reachable only from the calendar and library** (MK-10), which dispatch `open-studio` with a `post`.
+  They have no campaign, so they never enter the "to approve" queue or the campaigns list's counts.
 - Taste examples (MK-8's `BuildTasteExamples`) quote a post's *current* caption. A draft liked and then rebuilt is
   quoted as rebuilt, which is now reachable through the studio.
 - Unapprove does not bring back the drafts discarded on approve. Regenerate makes new ones.
@@ -238,3 +237,4 @@ approved-post actions, mark posted with link, one-off posts; `marketing_post_net
 2026-10-12 — Skip date is hidden on one-off posts, where it 404'd for want of a campaign (MK-9, `ec8603c`)
 2026-10-12 — Studio stays open after a change (explicit `wire:key` on both hosts); a rebuild that changes nothing is
 undone and explained under the box (`ExplainUnchangedRevision`, ADR-080) (MK-9, `d415a49`)
+2026-10-12 — Mounted on the calendar and library, whose cards give one-off posts a way back in (MK-10, `80be063`)
