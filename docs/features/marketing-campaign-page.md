@@ -1,5 +1,5 @@
 # Marketing: campaign page
-Status: active   ·   Last updated: 2026-10-12   ·   Stories: MK-7
+Status: active   ·   Last updated: 2026-10-12   ·   Stories: MK-7, MK-8
 
 ## Overview
 `/p/{project}/marketing/campaigns/{slug}` is one campaign's page. It shows what the campaign will post and how far
@@ -44,7 +44,8 @@ copy them ([ADR-068](../decisions/ADR-068-marketing-campaign-timeline-reuses-the
 
 Each row is drawn by `resources/views/components/marketing/occurrence-row.blade.php`. It shows the date and time, a
 state pill, the approved post's preview and caption or the drafts' count and thumbnails, and the Off schedule tag.
-Rows are plain list items: the studio arrives with MK-9 and Fill buttons with MK-8.
+An open row has Fill / Drafting… / Retry, and the header has "Fill N open dates" (MK-8, see
+[marketing-ai-fill-and-revise.md](marketing-ai-fill-and-revise.md)). Rows open nothing yet: the studio arrives with MK-9.
 
 **Criteria form** (`resources/views/livewire/marketing/campaign-page.blade.php`). The inputs are deferred
 `wire:model`s, so typing makes no request. "Unsaved changes" is Alpine: a `dirty` getter compares the normalised
@@ -152,16 +153,17 @@ unique index on `name`; `(project_id, slug)` is unique.
 - On/off is its own Action, `ToggleCampaign`, with its own log event, so a pause never reads as a criteria edit.
 
 ## Known limitations & gotchas
-- **A campaign can be saved with no topics.** The prototype requires a topic and the story does not. This is an open
-  owner question before MK-8, whose Fill drafts from topics.
+- **A campaign can be saved with no topics.** The prototype requires a topic and the story does not. Fill (MK-8) then
+  drafts from the brief alone.
 - **JSON key order.** MySQL returns JSON object keys in its own order (`own` before `ideas`), and Eloquent compares
   JSON casts strictly. Any new JSON column compared on save needs `SaveCampaign::canonical()` or something like it.
 - Past posts are not paginated. The timezone select lists every identifier (about 420). The create page's sentence
   updates only after a round trip, not while typing.
-- Timeline rows and their badges are not controls until MK-9 (studio), and there is no Fill until MK-8.
+- Timeline rows and their badges are not controls until MK-9 (studio); only an open row's Fill is.
 - Off-schedule dates disappear from the timeline once they pass, unless they were missed. Posted ones then show only
   under Past posts.
 - A campaign cannot be deleted yet (out of scope).
 
 ## Change history
 2026-10-12 — Campaign page: criteria edited in place, future and past posts, create mode, on/off (MK-7, `b5deb57`)
+2026-10-12 — Fill per open date and "Fill N open dates" with Drafting / Retry states (MK-8, `e694a73`)

@@ -10,6 +10,12 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-10-12 — Tests in a worktree collide with another tree's run, or Pest fails silently
+Symptom: during MK-8, Pest runs in a `.claude/worktrees/*` checkout could not be trusted while another tree also ran tests, and some failing runs printed nothing at all.
+Root cause: `phpunit.xml` pins `DB_DATABASE=story_board_test`, so every worktree and the main checkout share one test database, and `RefreshDatabase` in one tree resets it under another. The silent failures are an output-plugin issue that `PAO_DISABLE=1` switches off.
+Fix: give each tree its own database. Prefix the run with `DB_DATABASE=story_board_test_<tree> php artisan test …`, after creating that MySQL database. When Pest prints nothing on a failure, also prefix `PAO_DISABLE=1` to get the plain report (MK-8).
+Log trail: none; test tooling.
+
 ## 2026-10-12 — Saving a campaign logged `topics` as changed when the topics were not touched
 Symptom: after Save on the campaign page, `marketing.campaign.updated` listed `topics` (and sometimes `days`) in `changed` although the owner had only edited the time. Tests asserting topics with `toBe` failed on key order.
 Root cause: MySQL stores JSON objects in its own key order and returns `{"own":…,"ideas":…}`, not the `{"ideas":…,"own":…}` that was written. Eloquent compares JSON casts strictly, so the same value in a different key order counts as dirty.
