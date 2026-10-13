@@ -42,6 +42,36 @@ class MarketingAsset extends Model
     /** The image types a marketing photo may be: what Facebook takes and every browser shows. */
     public const PHOTO_MIMES = ['image/jpeg', 'image/png', 'image/webp'];
 
+    /**
+     * The largest image accepted anywhere in Marketing, in KB (10 MB): far above a phone photo or a saved ad, well
+     * below what Facebook refuses. Settings, the studio and the Inspiration wall all validate against it.
+     */
+    public const MAX_KB = 10 * 1024;
+
+    /**
+     * The `mime` of an inspiration saved from a post with no photo (MK-18): there is no file (`path` is empty), the
+     * caption in `ai_notes` is drawn as the brand text card instead.
+     */
+    public const TEXT_CARD_MIME = 'text/x-marketing-text-card';
+
+    /** `ai_notes.status` while the one vision read is queued or running (MK-18). */
+    public const READ_READING = 'reading';
+
+    /** `ai_notes.status` once the read stored its notes (or the notes came with the asset: kit, saved post). */
+    public const READ_DONE = 'read';
+
+    /** `ai_notes.status` when the read failed; the owner may Retry. */
+    public const READ_FAILED = 'failed';
+
+    /** No read has been asked for (a favourite photo from before MK-18, until the backfill). */
+    public const READ_UNREAD = 'unread';
+
+    /**
+     * Minutes after which a read still "reading" is treated as failed: past the job's timeout, so the job is gone (no
+     * worker, or it died) and the owner should get Retry rather than a spinner forever.
+     */
+    public const READ_STALE_MINUTES = 10;
+
     /** @var list<string> */
     protected $fillable = ['project_id', 'purpose', 'is_favourite', 'path', 'original_name', 'mime', 'width', 'height', 'ai_notes'];
 
@@ -64,6 +94,38 @@ class MarketingAsset extends Model
     public function scopeFavouritePhotos(Builder $query): void
     {
         $query->where('purpose', self::PURPOSE_PHOTO)->where('is_favourite', true)->latest('id');
+    }
+
+    /**
+     * The project's inspiration images (MK-18), newest first.
+     *
+     * @param  Builder<MarketingAsset>  $query
+     */
+    public function scopeInspiration(Builder $query): void
+    {
+        $query->where('purpose', self::PURPOSE_INSPIRATION)->latest('id');
+    }
+
+    /**
+     * Where the asset's one AI read stands: READ_UNREAD, READ_READING, READ_DONE or READ_FAILED. A read left
+     * "reading" for more than READ_STALE_MINUTES reads as failed, so a lost job can be retried.
+     */
+    public function readState(): string
+    {
+        $status = $this->ai_notes['status'] ?? null;
+        if ($status === self::READ_READING && $this->updated_at !== null && $this->updated_at->lt(now()->subMinutes(self::READ_STALE_MINUTES))) {
+            return self::READ_FAILED;
+        }
+
+        return in_array($status, [self::READ_READING, self::READ_DONE, self::READ_FAILED], true) ? $status : self::READ_UNREAD;
+    }
+
+    /**
+     * Whether this is an inspiration saved from a text-only post: no file, drawn as the brand text card.
+     */
+    public function isTextCard(): bool
+    {
+        return $this->mime === self::TEXT_CARD_MIME;
     }
 
     /**

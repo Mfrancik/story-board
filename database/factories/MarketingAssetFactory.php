@@ -32,4 +32,23 @@ class MarketingAssetFactory extends Factory
             'ai_notes' => null,
         ];
     }
+
+    /**
+     * An inspiration image (MK-18), read by the AI: `$notes` override the default read notes.
+     *
+     * @param  array<string, mixed>  $notes
+     */
+    public function inspiration(array $notes = []): static
+    {
+        return $this->state(fn () => [
+            'purpose' => MarketingAsset::PURPOSE_INSPIRATION,
+            'is_favourite' => false,
+            'path' => 'marketing/test/inspirations/'.$this->faker->uuid().'.jpg',
+            'original_name' => 'ad.jpg',
+            'ai_notes' => [
+                'status' => MarketingAsset::READ_DONE, 'source' => 'upload',
+                'headline' => 'A headline', 'style' => ['short headline'], 'topic' => 'coins', ...$notes,
+            ],
+        ]);
+    }
 }

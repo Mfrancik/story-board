@@ -66,7 +66,7 @@ class MarketingAi implements MarketingAiClient
     /**
      * {@inheritDoc}
      */
-    public function complete(string $system, string $user, array $schema): array
+    public function complete(string $system, string|array $user, array $schema): array
     {
         if (! $this->isConfigured()) {
             throw new MarketingAiException('Add ANTHROPIC_API_KEY to .env to draft with AI.', 'not_configured');
@@ -111,7 +111,7 @@ class MarketingAi implements MarketingAiClient
         $text = collect((array) $response->json('content'))->first(fn ($block) => is_array($block) && ($block['type'] ?? null) === 'text');
         $data = is_array($text) ? json_decode((string) ($text['text'] ?? ''), true) : null;
         if (! is_array($data)) {
-            throw new MarketingAiException('Claude replied with something other than the drafts asked for.', 'invalid_reply', $response->status(), $duration);
+            throw new MarketingAiException('Claude replied with something other than the JSON asked for.', 'invalid_reply', $response->status(), $duration);
         }
 
         $model = is_string($response->json('model')) ? $response->json('model') : $this->model();
@@ -130,7 +130,7 @@ class MarketingAi implements MarketingAiClient
                 ...$usage,
                 'cost_micro_usd' => $this->cost($model, $usage),
                 // Enough to tell two calls' prompts apart, or match one to a re-run, without storing the prompt.
-                'prompt_hash' => hash('sha256', $system."\n\n".$user),
+                'prompt_hash' => hash('sha256', $system."\n\n".(is_string($user) ? $user : json_encode($user))),
                 'duration_ms' => $duration,
             ],
         ];

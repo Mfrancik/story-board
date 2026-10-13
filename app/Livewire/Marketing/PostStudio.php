@@ -14,9 +14,11 @@ use App\Actions\Marketing\ListDatesToApprove;
 use App\Actions\Marketing\MarkPostPosted;
 use App\Actions\Marketing\RecordFeedback;
 use App\Actions\Marketing\RegenerateOccurrence;
+use App\Actions\Marketing\RemoveSavedInspiration;
 use App\Actions\Marketing\ReschedulePost;
 use App\Actions\Marketing\RestoreOccurrence;
 use App\Actions\Marketing\ReviseDraft;
+use App\Actions\Marketing\SaveToInspiration;
 use App\Actions\Marketing\SetPostPhoto;
 use App\Actions\Marketing\SkipOccurrence;
 use App\Actions\Marketing\StoreMarketingAsset;
@@ -27,6 +29,7 @@ use App\Exceptions\MarketingAiException;
 use App\Exceptions\MarketingDraftRefusedException;
 use App\Exceptions\MarketingPostRefusedException;
 use App\Livewire\Board\Concerns\GuardsProjectPage;
+use App\Livewire\Marketing\Concerns\ValidatesMarketingImages;
 use App\Models\MarketingAsset;
 use App\Models\MarketingCampaign;
 use App\Models\MarketingPost;
@@ -37,6 +40,7 @@ use Carbon\CarbonImmutable;
 use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Locked;
@@ -58,10 +62,13 @@ use Livewire\WithFileUploads;
  * own count, so the two agree.
  *
  * Every post id the client sends is checked against the date the studio is on, so a forged id is a 404.
+ *
+ * MK-18 adds a draft's "Inspired by" row (the inspiration its prompt quoted) and "♡ Save to Inspiration" with Undo.
  */
 class PostStudio extends Component
 {
     use GuardsProjectPage;
+    use ValidatesMarketingImages;
     use WithFileUploads {
         _uploadErrored as livewireUploadErrored;
     }
@@ -312,8 +319,8 @@ class PostStudio extends Component
         $post = $this->shownPost((int) $key);
         try {
             $this->validate(
-                ['uploads.'.$key => ['required', 'file', 'mimetypes:'.implode(',', MarketingAsset::PHOTO_MIMES), 'max:'.Settings::PHOTO_MAX_KB]],
-                ['uploads.*.mimetypes' => 'Photos must be JPG, PNG or WebP images.', 'uploads.*.max' => 'Photos can be 10 MB at most.', 'uploads.*.required' => 'Choose a photo.'],
+                ['uploads.'.$key => ['required', ...$this->imageRules()]],
+                [...$this->imageMessages('uploads.*', 'Photos'), 'uploads.*.required' => 'Choose a photo.'],
             );
         } finally {
             $file = $this->uploads[(int) $key] ?? null;
@@ -345,7 +352,7 @@ class PostStudio extends Component
             }
             unset($this->uploads[(int) substr($name, strlen('uploads.'))]);
 
-            throw ValidationException::withMessages([$name => ['Photos can be 10 MB at most.']]);
+            throw ValidationException::withMessages([$name => [$this->imageTooBig('Photos')]]);
         }
     }
 
@@ -375,6 +382,33 @@ class PostStudio extends Component
     {
         $post = $this->shownPost($id);
         $this->attempt(fn () => $set->handle($post, null)) && $this->changed('Text only: the brand text card');
+    }
+
+    /**
+     * "♡ Save to Inspiration" (MK-18): post `$id` becomes a favourite inspiration, so later drafts follow it. Saving a
+     * post already saved changes nothing.
+     *
+     * Side effects: SaveToInspiration copies the photo, writes the asset and logs; toasts.
+     */
+    public function saveToInspiration(SaveToInspiration $save, int $id): void
+    {
+        $post = $this->shownPost($id);
+        if ($save->handle($post)['created']) {
+            Flux::toast(variant: 'success', text: 'Saved to Inspiration');
+        }
+    }
+
+    /**
+     * "Undo" beside "Saved": remove the inspiration saved from post `$id`. The post and its photo stay.
+     *
+     * Side effects: RemoveSavedInspiration deletes the asset and its copy of the file, and logs; toasts.
+     */
+    public function undoInspiration(RemoveSavedInspiration $remove, int $id): void
+    {
+        $post = $this->shownPost($id);
+        if ($remove->handle($post)) {
+            Flux::toast(variant: 'success', text: 'Removed from Inspiration');
+        }
     }
 
     /**
@@ -592,6 +626,9 @@ class PostStudio extends Component
             'drafting' => $draftingState,
             'aiReady' => $ai->isConfigured(),
             'favourites' => $state === 'one-off' ? new Collection : $model->marketingAssets()->favouritePhotos()->get(),
+            // MK-18: the inspiration each draft was written from ("Inspired by"), and which posts are saved as inspiration.
+            'inspired' => $this->inspiredBy($model, $shown),
+            'saved' => SaveToInspiration::savedPostIds($model->id, array_values($shown->modelKeys())),
             'minAt' => $now->setTimezone($zone)->format('Y-m-d\TH:i'),
         ]);
     }
@@ -612,6 +649,20 @@ class PostStudio extends Component
         $campaign = $this->campaign();
 
         return $campaign === null || $this->date === null ? new Collection : $find->handle($campaign, $this->date);
+    }
+
+    /**
+     * The inspiration images the shown posts' drafts quoted (`generation_meta.inspiration_ids`), by id, in one query.
+     * An image deleted since is simply not there.
+     *
+     * @param  Collection<int, MarketingPost>  $shown
+     * @return SupportCollection<int, MarketingAsset>
+     */
+    private function inspiredBy(Project $model, Collection $shown): SupportCollection
+    {
+        $ids = $shown->flatMap(fn (MarketingPost $p) => (array) ($p->generation_meta['inspiration_ids'] ?? []))->unique()->values()->all();
+
+        return $ids === [] ? collect() : MarketingAsset::where('project_id', $model->id)->whereKey($ids)->get()->keyBy('id')->toBase();
     }
 
     /**

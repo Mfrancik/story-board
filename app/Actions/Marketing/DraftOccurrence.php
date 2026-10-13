@@ -104,7 +104,9 @@ class DraftOccurrence
                 'asset_id' => $this->asset($campaign, $draft['asset_id'], $prompt['assets']),
                 'source' => 'ai',
                 'generation_meta' => [...$meta, 'call' => 'draft', 'candidate' => $i + 1, 'drafts_in_call' => count($drafts),
-                    'topic_key' => $prompt['topics'][$i]['key'] ?? null, 'topic' => $prompt['topics'][$i]['label'] ?? null],
+                    'topic_key' => $prompt['topics'][$i]['key'] ?? null, 'topic' => $prompt['topics'][$i]['label'] ?? null,
+                    // MK-18: which inspiration the prompt quoted, for the studio's "Inspired by" row.
+                    'inspiration_ids' => $prompt['inspiration_ids']],
                 'lint' => $this->lint->handle($draft['caption'], $brandRules),
             ]));
         });

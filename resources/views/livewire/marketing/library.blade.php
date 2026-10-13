@@ -5,8 +5,8 @@
     (by month, newest first; past months start collapsed), each with its count.
 
     The grid / list toggle is Alpine (`layout`, read by the cards through `group-data-[layout=list]/lib` variants), so
-    it makes no request. A card opens its post in the post studio (MK-9). "Save to Inspiration" is MK-18's and has no
-    placeholder here.
+    it makes no request. A card opens its post in the post studio (MK-9). Each card's "♡ Save to Inspiration" (MK-18)
+    is a sibling of the card's button, not inside it (a button cannot hold a button), laid over the card's corner.
 --}}
 @php
     $focus = 'outline-needs focus-visible:outline-2 focus-visible:outline-offset-2';
@@ -27,7 +27,7 @@
 
     <div class="flex flex-col gap-1">
         <h2 class="text-xl font-semibold tracking-tight">Library</h2>
-        <p class="text-sm text-ink-muted">Everything approved or posted. Drafts stay on their campaign.</p>
+        <p class="text-sm text-ink-muted">Everything approved or posted. Drafts stay on their campaign; ads you like live in <a href="{{ route('projects.marketing.inspiration', $model->name) }}" wire:navigate class="text-needs hover:underline {{ $focus }}">Inspiration</a>.</p>
     </div>
 
     <div class="flex flex-wrap items-center gap-3">
@@ -77,7 +77,8 @@
                                 $zone = $post->campaign?->timezone ?? (string) config('board.timezone');
                                 $at = $post->isPosted() && $post->posted_at ? $post->posted_at : $post->scheduled_for;
                             @endphp
-                            <button type="button" data-library-card="{{ $post->id }}" wire:key="card-{{ $post->id }}"
+                            <div wire:key="card-{{ $post->id }}" class="relative min-w-0">
+                            <button type="button" data-library-card="{{ $post->id }}"
                                 wire:click="$dispatch('open-studio', { post: {{ $post->id }} })" aria-label="Open {{ $at->copy()->setTimezone($zone)->format('D j M') }} post in the studio"
                                 class="flex min-w-0 flex-col gap-2 rounded-xl border border-edge bg-surface p-2 text-left hover:border-rim hover:bg-raised group-data-[layout=list]/lib:flex-row group-data-[layout=list]/lib:items-center group-data-[layout=list]/lib:gap-3 group-data-[layout=list]/lib:rounded-none group-data-[layout=list]/lib:border-0 {{ $focus }}">
                                 <span class="block w-full shrink-0 group-data-[layout=list]/lib:w-14">
@@ -91,6 +92,19 @@
                                     <span class="font-mono text-xs text-ink-muted">{{ $at->copy()->setTimezone($zone)->format('D j M · H:i') }}</span>
                                 </span>
                             </button>
+                            <div class="absolute top-3 right-3 group-data-[layout=list]/lib:top-1/2 group-data-[layout=list]/lib:-translate-y-1/2">
+                                @if ($saved->contains($post->id))
+                                    <span data-saved-inspiration="{{ $post->id }}" class="inline-flex min-h-8 items-center gap-1 rounded-full bg-ground/90 py-0.5 pr-1 pl-2.5 text-xs text-needs">
+                                        ♥ Saved ·
+                                        <button type="button" wire:click="undoInspiration({{ $post->id }})" wire:loading.attr="disabled" wire:target="undoInspiration" data-undo-inspiration="{{ $post->id }}" class="rounded px-1.5 py-1 text-ink hover:bg-raised {{ $focus }}">Undo</button>
+                                    </span>
+                                @else
+                                    <button type="button" wire:click="saveToInspiration({{ $post->id }})" wire:loading.attr="disabled" wire:target="saveToInspiration" data-save-inspiration="{{ $post->id }}"
+                                        aria-label="Save to Inspiration" title="Save to Inspiration"
+                                        class="inline-flex size-9 items-center justify-center rounded-full bg-ground/90 text-base text-ink hover:text-needs {{ $focus }}">♡</button>
+                                @endif
+                            </div>
+                            </div>
                         @endforeach
                     </div>
                 </details>

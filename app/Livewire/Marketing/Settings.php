@@ -4,12 +4,14 @@ namespace App\Livewire\Marketing;
 
 use App\Actions\Marketing\DeleteMarketingAsset;
 use App\Actions\Marketing\FindProjectAsset;
+use App\Actions\Marketing\QueueAssetRead;
 use App\Actions\Marketing\ReadLogoFromRepo;
 use App\Actions\Marketing\SaveBrand;
 use App\Actions\Marketing\SetBrandLogo;
 use App\Actions\Marketing\StoreMarketingAsset;
 use App\Exceptions\MarketingLogoException;
 use App\Livewire\Board\Concerns\GuardsProjectPage;
+use App\Livewire\Marketing\Concerns\ValidatesMarketingImages;
 use App\Models\MarketingAsset;
 use App\Models\MarketingBrand;
 use App\Models\Project;
@@ -36,12 +38,10 @@ use Livewire\WithFileUploads;
 class Settings extends Component
 {
     use GuardsProjectPage;
+    use ValidatesMarketingImages;
     use WithFileUploads {
         _uploadErrored as livewireUploadErrored;
     }
-
-    /** The largest photo accepted, in KB (10 MB): far above a phone photo, well below what Facebook refuses. */
-    public const PHOTO_MAX_KB = 10 * 1024;
 
     /** The largest logo file accepted, in KB; SanitiseSvg refuses anything bigger anyway. */
     public const LOGO_MAX_KB = 512;
@@ -198,9 +198,11 @@ class Settings extends Component
 
     /**
      * Photos were chosen in "Add favourites": validate every one (JPG, PNG or WebP, 10 MB at most), then store them
-     * all as favourites. One bad file stores none, so the owner fixes the pick and adds them again in one go.
+     * all as favourites and queue each one's AI read (MK-18: what is in it, so Fill picks photos by content). One bad
+     * file stores none, so the owner fixes the pick and adds them again in one go.
      *
-     * Side effects: writes files and asset rows (StoreMarketingAsset logs `marketing.asset.stored` each); toasts.
+     * Side effects: writes files and asset rows (StoreMarketingAsset logs `marketing.asset.stored` each); one
+     * ReadInspiration job per photo (QueueAssetRead); toasts.
      */
     public function updatedPhotos(): void
     {
@@ -212,12 +214,8 @@ class Settings extends Component
         }
         try {
             $this->validate(
-                ['photos' => ['array', 'max:20'], 'photos.*' => ['file', 'mimetypes:'.implode(',', MarketingAsset::PHOTO_MIMES), 'max:'.self::PHOTO_MAX_KB]],
-                [
-                    'photos.max' => 'Add up to 20 photos at a time.',
-                    'photos.*.mimetypes' => 'Photos must be JPG, PNG or WebP images.',
-                    'photos.*.max' => 'Photos can be 10 MB at most.',
-                ],
+                ['photos' => ['array', 'max:20'], 'photos.*' => $this->imageRules()],
+                ['photos.max' => 'Add up to 20 photos at a time.', ...$this->imageMessages('photos.*', 'Photos')],
             );
         } catch (ValidationException $e) {
             // Livewire appends the next pick to this array: a rejected file left here would fail every later upload.
@@ -227,9 +225,10 @@ class Settings extends Component
         }
 
         $store = app(StoreMarketingAsset::class);
+        $read = app(QueueAssetRead::class);
         $project = $this->model();
         foreach ($this->photos as $photo) {
-            $store->handle($project, $photo);
+            $read->handle($store->handle($project, $photo));
         }
         $count = count($this->photos);
         $this->reset('photos');
@@ -248,7 +247,7 @@ class Settings extends Component
      */
     public function _uploadErrored($name, $errorsInJson, $isMultiple): void
     {
-        $limits = ['photos' => 'Photos can be 10 MB at most.', 'logoFile' => 'The logo can be 512 KB at most.'];
+        $limits = ['photos' => $this->imageTooBig('Photos'), 'logoFile' => 'The logo can be 512 KB at most.'];
 
         try {
             $this->livewireUploadErrored($name, $errorsInJson, $isMultiple);
@@ -283,6 +282,24 @@ class Settings extends Component
     }
 
     /**
+     * "Retry" under a favourite whose read failed: queue its read again (MK-18). Another project's id is refused.
+     *
+     * Side effects: QueueAssetRead writes the status, queues the job and logs; FindProjectAsset logs a refusal.
+     */
+    public function retryRead(int $id, FindProjectAsset $find, QueueAssetRead $read): void
+    {
+        $asset = $find->handle($this->model(), $id);
+        if ($asset === null) {
+            Flux::toast(variant: 'warning', text: 'That photo is no longer here.');
+
+            return;
+        }
+        if ($read->handle($asset)) {
+            Flux::toast(variant: 'success', text: 'Reading it again…');
+        }
+    }
+
+    /**
      * Render the settings page.
      */
     public function render(): View|string
@@ -294,10 +311,14 @@ class Settings extends Component
 
         $model = $this->model();
 
+        $favourites = $model->marketingAssets()->favouritePhotos()->get();
+
         return view('livewire.marketing.settings', [
             'model' => $model,
             'brand' => $model->marketingBrand,
-            'favourites' => $model->marketingAssets()->favouritePhotos()->get(),
+            'favourites' => $favourites,
+            // Poll only while a photo is being read (MK-18), so an idle page makes no requests.
+            'reading' => $favourites->contains(fn (MarketingAsset $a) => $a->readState() === MarketingAsset::READ_READING),
         ])->title($model->name.' · Marketing settings');
     }
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Marketing\StoreInspiration;
 use App\Actions\Marketing\StoreMarketingAsset;
 use App\Jobs\RefreshProjectJob;
 use App\Models\MarketingCampaign;
@@ -13,19 +14,23 @@ use Illuminate\Support\Facades\Storage;
 /**
  * Journey marketing-post (docs/journeys/marketing-post.md): from a recurring campaign to approved posts, ready to
  * publish. Created by MK-1 with step 1; each later MK story adds its step (MK-2: step 2, the brand in Settings; MK-7:
- * step 3, the campaign page; MK-8: step 4, Fill; MK-9: step 5, the post studio; MK-10: step 6, the calendar). Claude is faked with Http::fake
- * (fakeClaude()) by one reply carrying both `drafts` (what Fill reads) and `caption` (what Revise reads), since the
- * first matching fake wins. Only RefreshProjectJob is faked on the queue, so Fill's DraftOccurrenceJob runs inline on
- * the sync queue. `JOURNEY_SHOTS=1` saves each step to `storage/app/journey-shots/marketing-post/`.
+ * step 3, the campaign page; MK-8: step 4, Fill; MK-9: step 5, the post studio; MK-10: step 6, the calendar; MK-18:
+ * step 7, inspiration). Claude is faked with Http::fake (fakeClaude()) by one reply carrying `drafts` (what Fill
+ * reads), `caption` (what Revise reads) and `headline`/`style`/`topic` (what an inspiration read reads), since the
+ * first matching fake wins. Only RefreshProjectJob is faked on the queue, so Fill's DraftOccurrenceJob and the
+ * inspiration read run inline on the sync queue. The local disk is faked from the start, because step 2's seed now
+ * copies the kit's images into inspiration. `JOURNEY_SHOTS=1` saves each step to `storage/app/journey-shots/marketing-post/`.
  */
 beforeEach(function () {
     Carbon::setTestNow('2026-10-12 11:00');
     Queue::fake([RefreshProjectJob::class]);
+    Storage::fake('local');
     fakeClaude(['drafts' => [
         ['caption' => "Rainbow toning on a Morgan.\nShow us your best toner.", 'asset_id' => null],
         ['caption' => 'Album toning, straight from the paper.', 'asset_id' => null],
         ['caption' => 'Rate this rainbow from one to ten.', 'asset_id' => null],
-    ], 'caption' => 'Album toning, straight from the paper. Show us yours.']);
+    ], 'caption' => 'Album toning, straight from the paper. Show us yours.',
+        'headline' => 'Rainbow album toning', 'style' => ['dark full-bleed coin'], 'topic' => 'album toning']);
     $coins = Project::factory()->create(['name' => 'coins', 'indexed_at' => now(), 'refresh_attempted_at' => now(), 'state' => Project::STATE_OK]);
     $tvt = MarketingCampaign::factory()->for($coins)->named('TrueView Tuesday')->on([2], '19:00')->create();
     MarketingPost::factory()->forCampaign($tvt, '2026-10-13 19:00')->approved()->create();
@@ -93,7 +98,6 @@ it('walks the marketing-post journey', function () {
     // a favourite picked in the studio, not an upload through the input: Pest's browser server does not forward
     // multipart files (see tests/Browser/Marketing/SettingsTest.php); the upload is covered in
     // tests/Feature/Marketing/PostStudioTest.php.
-    Storage::fake('local');
     $photo = app(StoreMarketingAsset::class)->handle(Project::where('name', 'coins')->firstOrFail(), UploadedFile::fake()->image('morgan.jpg', 400, 400));
     [, $second] = $drafts->all();
     $page->click('[data-open-studio="2026-11-03"]')
@@ -127,5 +131,32 @@ it('walks the marketing-post journey', function () {
         ->assertSeeIn('[data-calendar-range]', 'November 2026');
     journeyStep('marketing-post', 'calendar', '/p/coins/marketing/calendar', $page)
         ->assertAttribute('[data-calendar-grid] [data-calendar-day="2026-11-03"] [data-chip="trueview-tuesday"]', 'data-chip-state', 'approved')
+        ->assertNoJavaScriptErrors();
+
+    // Step 7 (MK-18): one ad the owner likes goes on the Inspiration wall and is read (fake Claude), then Fill on the
+    // next open date quotes it, and the studio shows it in that draft's "Inspired by" row. The image is stored by
+    // StoreInspiration, not dropped through the input: Pest's browser server does not forward multipart files; the
+    // drop is covered in tests/Feature/Marketing/InspirationTest.php.
+    $ad = app(StoreInspiration::class)->handle(Project::where('name', 'coins')->firstOrFail(), UploadedFile::fake()->image('liked-ad.png', 300, 300));
+    expect($ad->fresh()->ai_notes['headline'])->toBe('Rainbow album toning');
+    $page->click('[data-marketing-page="inspiration"]')
+        ->assertPathIs('/p/coins/marketing/inspiration')
+        ->assertSeeIn('[data-inspiration="'.$ad->id.'"]', 'Rainbow album toning')
+        ->click('[data-favourite-inspiration="'.$ad->id.'"]')
+        ->assertAttribute('[data-favourite-inspiration="'.$ad->id.'"]', 'aria-pressed', 'true');
+    journeyStep('marketing-post', 'inspiration', '/p/coins/marketing/inspiration', $page)->assertNoJavaScriptErrors();
+
+    $page = visit('/p/coins/marketing/campaigns/trueview-tuesday')
+        ->assertAttribute('[data-occurrence="2026-11-10"]', 'data-occurrence-state', 'open')
+        ->click('[data-fill="2026-11-10"]')
+        ->assertAttribute('[data-occurrence="2026-11-10"]', 'data-occurrence-state', 'review')
+        ->click('[data-open-studio="2026-11-10"]')
+        ->assertVisible('[data-studio] [role="dialog"]');
+    $filled = MarketingPost::whereDate('scheduled_for', '2026-11-10')->orderBy('id')->firstOrFail();
+    // The hearted ad comes first; the seeded kit's TrueView Tuesday post follows as the closest match.
+    expect($filled->generation_meta['inspiration_ids'][0])->toBe($ad->id);
+    journeyStep('marketing-post', 'inspired by', '/p/coins/marketing/campaigns/trueview-tuesday', $page)
+        ->assertSeeIn('[data-inspired-by="'.$filled->id.'"]', 'Inspired by')
+        ->assertVisible('[data-inspired-by="'.$filled->id.'"] [data-inspired-asset="'.$ad->id.'"]')
         ->assertNoJavaScriptErrors();
 });

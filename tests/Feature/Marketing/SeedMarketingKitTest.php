@@ -7,6 +7,7 @@ use App\Models\MarketingPost;
 use App\Models\Project;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
 use Tests\Support\GitFixture;
 
 /**
@@ -16,11 +17,12 @@ use Tests\Support\GitFixture;
  */
 beforeEach(function () {
     Queue::fake();
+    Storage::fake('local');
     $this->kit = base_path('tests/Fixtures/marketing-kit');
     $this->coins = Project::factory()->create(['name' => 'coins', 'indexed_at' => now(), 'refresh_attempted_at' => now(), 'state' => Project::STATE_OK]);
 });
 
-it('seeds exactly 5 campaigns and one brand when run twice, and turns no kit file into a post', function () {
+it('seeds exactly 5 campaigns and one brand when run twice, and turns no kit file into a post or a photo', function () {
     Log::spy();
     $this->artisan('marketing:seed-kit', ['project' => 'coins', 'kitPath' => $this->kit])->assertSuccessful();
     $this->artisan('marketing:seed-kit', ['project' => 'coins', 'kitPath' => $this->kit])->assertSuccessful();
@@ -28,7 +30,9 @@ it('seeds exactly 5 campaigns and one brand when run twice, and turns no kit fil
     expect(MarketingCampaign::count())->toBe(5)
         ->and(MarketingBrand::count())->toBe(1)
         ->and(MarketingPost::count())->toBe(0)
-        ->and(MarketingAsset::count())->toBe(0);
+        // MK-18: the kit's post images become inspiration (2 in the fixture), never photos.
+        ->and(MarketingAsset::where('purpose', MarketingAsset::PURPOSE_PHOTO)->count())->toBe(0)
+        ->and(MarketingAsset::where('purpose', MarketingAsset::PURPOSE_INSPIRATION)->count())->toBe(2);
     Log::shouldHaveReceived('info')->with('marketing.kit_seed.succeeded', Mockery::on(fn ($c) => $c['project'] === 'coins' && $c['campaigns_created'] === 5))->once();
     Log::shouldHaveReceived('info')->with('marketing.kit_seed.succeeded', Mockery::on(fn ($c) => $c['campaigns_created'] === 0))->once();
 });

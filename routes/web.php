@@ -19,6 +19,7 @@ use App\Livewire\Board\StoryPage;
 use App\Livewire\Marketing\Calendar as MarketingCalendar;
 use App\Livewire\Marketing\CampaignList;
 use App\Livewire\Marketing\CampaignPage;
+use App\Livewire\Marketing\Inspiration as MarketingInspiration;
 use App\Livewire\Marketing\Library as MarketingLibrary;
 use App\Livewire\Marketing\Settings as MarketingSettings;
 use App\Models\Story;
@@ -66,7 +67,7 @@ Route::middleware(RefreshStaleProjects::class)->group(function () {
         ->name('projects.map');
 
     // One project's Marketing tab (MK-1): its campaigns with how far out each is approved and what needs the owner.
-    // Calendar and Library (MK-10) sit under `projects.marketing.*`; Inspiration joins there when its story lands.
+    // Calendar and Library (MK-10) and Inspiration (MK-18) sit under `projects.marketing.*`.
     Route::livewire('/p/{project:name}/marketing', CampaignList::class)
         ->middleware(EnsureProjectIsShown::class)
         ->name('projects.marketing');
@@ -89,6 +90,12 @@ Route::middleware(RefreshStaleProjects::class)->group(function () {
     Route::livewire('/p/{project:name}/marketing/library', MarketingLibrary::class)
         ->middleware(EnsureProjectIsShown::class)
         ->name('projects.marketing.library');
+
+    // Marketing inspiration (MK-18): one unorganised wall of ads the owner likes, each read by Claude once, that Fill
+    // quotes as examples of tone and copy. Its name puts Inspiration in the marketing sub-nav.
+    Route::livewire('/p/{project:name}/marketing/inspiration', MarketingInspiration::class)
+        ->middleware(EnsureProjectIsShown::class)
+        ->name('projects.marketing.inspiration');
 
     // Marketing settings (MK-2): the project's brand, favourite photos and copy rules. Its name puts Settings in
     // the marketing sub-nav, which lists only pages whose route exists.

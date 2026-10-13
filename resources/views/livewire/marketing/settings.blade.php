@@ -160,7 +160,7 @@
                     <h3 id="fav-h" class="flex flex-wrap items-center gap-2 text-base font-semibold">
                         Favourite photos <span class="rounded-full border border-rim px-2 py-0.5 text-xs font-normal text-ink-muted">optional</span>
                     </h3>
-                    <p class="text-sm text-ink-muted">A few photos you love to show off. Campaigns set to "Pick from favourites" use these. Most posts get their own photo when you approve them.</p>
+                    <p class="text-sm text-ink-muted">A few photos you love to show off. Campaigns set to "Pick from favourites" use these. Claude looks at each one once, so drafts pick photos by what they show. Most posts get their own photo when you approve them.</p>
                 </div>
 
                 <ul role="list" class="grid grid-cols-3 gap-2 sm:grid-cols-4" data-favourite-grid>
@@ -178,6 +178,18 @@
                                 loading="lazy" @if ($photo->width && $photo->height) width="{{ $photo->width }}" height="{{ $photo->height }}" @endif
                                 class="block aspect-square w-full rounded-md bg-raised object-cover">
                             <p class="mt-1 truncate text-xs text-ink-muted" title="{{ $photo->original_name }}">{{ $photo->original_name }}</p>
+                            {{-- MK-18: what Claude saw in the photo, which Fill's photo list shows instead of the file name. --}}
+                            @php $read = $photo->readState(); @endphp
+                            <p data-photo-note="{{ $photo->id }}" data-read-state="{{ $read }}" class="text-xs text-ink-faint">
+                                @if ($read === \App\Models\MarketingAsset::READ_READING)
+                                    <span class="inline-flex items-center gap-1.5"><span class="size-3 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true"></span>Reading…</span>
+                                @elseif ($read === \App\Models\MarketingAsset::READ_FAILED)
+                                    <span class="text-fail">Couldn’t read ·</span>
+                                    <button type="button" wire:click="retryRead({{ $photo->id }})" wire:loading.attr="disabled" wire:target="retryRead" data-retry-read="{{ $photo->id }}" class="rounded text-live hover:underline {{ $focus }}">Retry</button>
+                                @elseif ($description = trim((string) ($photo->ai_notes['description'] ?? '')))
+                                    <span class="line-clamp-2" title="{{ $description }}">{{ $description }}</span>
+                                @endif
+                            </p>
                             <button type="button" data-delete-photo="{{ $photo->id }}" x-on:click="deleting = { id: {{ $photo->id }}, name: @js($photo->original_name) }"
                                 aria-label="Delete {{ $photo->original_name }}"
                                 class="absolute top-1 right-1 flex size-7 items-center justify-center rounded-full bg-ground/80 text-ink hover:bg-danger hover:text-ground {{ $focus }}">
@@ -186,6 +198,9 @@
                         </li>
                     @endforeach
                 </ul>
+                @if ($reading)
+                    <div wire:poll.3s data-polling class="sr-only">Reading photos…</div>
+                @endif
                 @if ($photoErrors->isNotEmpty())
                     <div data-photo-errors role="alert" class="text-sm text-danger">
                         @foreach ($photoErrors as $message)

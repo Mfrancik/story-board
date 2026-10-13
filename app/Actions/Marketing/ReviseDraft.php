@@ -87,7 +87,9 @@ class ReviseDraft
             ]);
             $post->update([
                 'caption' => $caption, 'asset_id' => $asset, 'version' => $post->version + 1,
-                'generation_meta' => [...$meta, 'call' => 'revise', 'topic_key' => $post->generation_meta['topic_key'] ?? null, 'topic' => $post->generation_meta['topic'] ?? null],
+                'generation_meta' => [...$meta, 'call' => 'revise', 'topic_key' => $post->generation_meta['topic_key'] ?? null, 'topic' => $post->generation_meta['topic'] ?? null,
+                    // A rebuild keeps the draft's examples (MK-18), so its "Inspired by" row survives the rewrite.
+                    'inspiration_ids' => $post->generation_meta['inspiration_ids'] ?? []],
                 'lint' => $this->lint->handle($caption, $rules),
             ]);
         });

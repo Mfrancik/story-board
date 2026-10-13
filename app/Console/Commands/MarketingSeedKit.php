@@ -22,7 +22,7 @@ class MarketingSeedKit extends Command
         {--logo-path= : The logo file inside the project repo, e.g. resources/views/components/app-mark.blade.php}';
 
     /** @var string */
-    protected $description = "Seed a project's marketing brand, copy rules, idea menu and starter campaigns from a kit folder";
+    protected $description = "Seed a project's marketing brand, copy rules, idea menu, starter campaigns and kit inspiration from a kit folder";
 
     /**
      * Run the seed and print what it did. Fails, writing nothing, for an unknown project or a missing kit.
@@ -43,6 +43,7 @@ class MarketingSeedKit extends Command
         $this->info('Brand '.($r['brand_created'] ? 'created' : 'already there: kept as it is, idea menu refreshed').'.');
         $this->info("Idea menu: {$r['ideas']} ideas in {$r['categories']} categories.");
         $this->info("Campaigns: {$r['campaigns_created']} created, {$r['campaigns_kept']} already there.");
+        $this->info("Inspiration: {$r['inspiration_created']} kit images added, {$r['inspiration_kept']} already there.");
         if (str_starts_with($r['logo'], 'failed')) {
             $this->warn('Logo not read — '.substr($r['logo'], strlen('failed: ')));
         } else {

@@ -4,8 +4,10 @@ namespace App\Actions\Marketing;
 
 use App\Exceptions\MarketingKitException;
 use App\Exceptions\MarketingLogoException;
+use App\Models\MarketingAsset;
 use App\Models\MarketingCampaign;
 use App\Models\Project;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -16,13 +18,19 @@ use Illuminate\Support\Str;
  *
  * Idempotent by "create what is missing, never overwrite": a brand that exists keeps its values and rules (the owner
  * may have edited them), and a campaign whose slug exists is left as it is. Only the idea menu is always re-read,
- * because the kit owns it and Settings cannot edit it. The kit's post images are not imported: they become
- * inspiration in MK-18, never posts.
+ * because the kit owns it and Settings cannot edit it.
+ *
+ * MK-18: the kit's post and cover images (`posts/`, `covers/`) become inspiration — reference ads, never posts —
+ * with their kit captions as the notes, so no image is sent to Claude. An image is added once, keyed by its path in
+ * the kit (`ai_notes.kit_file`).
  */
 class SeedMarketingKit
 {
     /** The kit's text file: bios, captions per post, and the idea menu. */
     public const CAPTIONS_FILE = 'captions-and-bios.txt';
+
+    /** The kit folders whose images become inspiration (MK-18): the 15 posts and 3 covers of the original kit. */
+    public const INSPIRATION_DIRS = ['posts', 'covers'];
 
     /** StackerMint's look, from the brief and the coins app (tan, ink, Instrument Sans, 5 px corners, soft tan halo). */
     public const BRAND = [
@@ -67,16 +75,17 @@ class SeedMarketingKit
     /**
      * Create the action.
      */
-    public function __construct(private readonly SaveBrand $save, private readonly ReadLogoFromRepo $readLogo) {}
+    public function __construct(private readonly SaveBrand $save, private readonly ReadLogoFromRepo $readLogo, private readonly StoreMarketingAsset $store) {}
 
     /**
      * Seed `$projectName` from the kit folder at `$kitPath`; with `$logoPath`, also read the logo from the project's
      * repo at `$logoRef`. A logo that cannot be read does not undo the rest: it is reported in `logo`.
      *
-     * Side effects: writes `marketing_brands` and `marketing_campaigns` in one transaction, then the logo; logs
-     * `marketing.kit_seed.succeeded` with the counts, or `marketing.kit_seed.failed` with the reason.
+     * Side effects: writes `marketing_brands` and `marketing_campaigns` in one transaction, then the kit's images as
+     * inspiration (files and `marketing_assets` rows), then the logo; logs `marketing.kit_seed.succeeded` with the
+     * counts, or `marketing.kit_seed.failed` with the reason.
      *
-     * @return array{brand_created: bool, campaigns_created: int, campaigns_kept: int, categories: int, ideas: int, logo: string}
+     * @return array{brand_created: bool, campaigns_created: int, campaigns_kept: int, inspiration_created: int, inspiration_kept: int, categories: int, ideas: int, logo: string}
      *
      * @throws MarketingKitException for an unknown project, a missing kit folder or captions file; nothing is written.
      */
@@ -95,7 +104,8 @@ class SeedMarketingKit
             $this->fail($projectName, 'missing_captions', "The kit at {$kitPath} has no ".self::CAPTIONS_FILE.'.');
         }
 
-        $menu = $this->ideaMenu((string) file_get_contents($captions));
+        $captionsText = (string) file_get_contents($captions);
+        $menu = $this->ideaMenu($captionsText);
 
         $result = DB::transaction(function () use ($project, $menu) {
             $brandCreated = ! $project->marketingBrand()->exists();
@@ -110,6 +120,8 @@ class SeedMarketingKit
 
             return ['brand_created' => $brandCreated, 'campaigns_created' => $created, 'campaigns_kept' => count(self::CAMPAIGNS) - $created];
         });
+
+        $result += $this->inspiration($project, $kitPath, $this->kitCaptions($captionsText));
 
         $logo = 'skipped';
         if ($logoPath !== null && $logoPath !== '') {
@@ -172,6 +184,82 @@ class SeedMarketingKit
         }
 
         return $menu;
+    }
+
+    /**
+     * The kit's captions per image, from the "--- posts/01-post-welcome.png (post, sets) ---" sections: the caption text
+     * (to the next section or "== … ==" heading) and the tags in brackets, keyed by the image's path in the kit.
+     *
+     * @return array<string, array{caption: string, tags: list<string>}>
+     */
+    public function kitCaptions(string $captions): array
+    {
+        $out = [];
+        $current = null;
+        foreach (preg_split('/\R/u', $captions) ?: [] as $line) {
+            if (preg_match('/^---\s*(\S+?)\s*(?:\(([^)]*)\))?\s*---$/u', trim($line), $m)) {
+                $current = $m[1];
+                $out[$current] = ['caption' => '', 'tags' => array_values(array_filter(array_map('trim', explode(',', $m[2] ?? ''))))];
+
+                continue;
+            }
+            if (preg_match('/^==.*==$/u', trim($line))) {
+                $current = null;
+
+                continue;
+            }
+            if ($current !== null) {
+                $out[$current]['caption'] .= $line."\n";
+            }
+        }
+
+        return array_map(fn (array $c) => ['caption' => trim($c['caption']), 'tags' => $c['tags']], $out);
+    }
+
+    /**
+     * Add each image in the kit's INSPIRATION_DIRS that the project does not have yet as inspiration, its kit caption
+     * as the notes: headline (the caption's first line, or a title made from the file name), caption, and the topic
+     * from its tags ("toned", "sets"). Already added images are kept as they are.
+     *
+     * @param  array<string, array{caption: string, tags: list<string>}>  $captions
+     * @return array{inspiration_created: int, inspiration_kept: int}
+     */
+    private function inspiration(Project $project, string $kitPath, array $captions): array
+    {
+        $have = $project->marketingAssets()->where('purpose', MarketingAsset::PURPOSE_INSPIRATION)->pluck('ai_notes')
+            ->map(fn ($notes) => is_array($notes) ? ($notes['kit_file'] ?? null) : null)->filter()->flip();
+
+        $created = 0;
+        $kept = 0;
+        foreach (self::INSPIRATION_DIRS as $dir) {
+            foreach (glob("{$kitPath}/{$dir}/*") ?: [] as $file) {
+                $mime = (string) mime_content_type($file);
+                if (! in_array($mime, MarketingAsset::PHOTO_MIMES, true)) {
+                    continue;
+                }
+                $key = $dir.'/'.basename($file);
+                if ($have->has($key)) {
+                    $kept++;
+
+                    continue;
+                }
+
+                $kit = $captions[$key] ?? ['caption' => '', 'tags' => []];
+                $lines = array_values(array_filter(array_map('trim', preg_split('/\R/u', $kit['caption']) ?: []), fn (string $l) => $l !== ''));
+                // "cover-1-welcome-home.png" → "Welcome home"; "14-ad-invite.png" → "Invite".
+                $title = Str::ucfirst(str_replace('-', ' ', (string) preg_replace('/^(cover-\d+-|\d+[a-z]?-(post|ad)-)/', '', pathinfo($file, PATHINFO_FILENAME))));
+                $topic = array_values(array_diff($kit['tags'], ['post', 'ad']))[0] ?? null;
+
+                $asset = $this->store->handle($project, new UploadedFile($file, basename($file), $mime, test: true), MarketingAsset::PURPOSE_INSPIRATION, favourite: false);
+                $asset->update(['ai_notes' => [
+                    'status' => MarketingAsset::READ_DONE, 'source' => 'kit', 'kit_file' => $key,
+                    'headline' => $lines[0] ?? $title, 'caption' => $kit['caption'], 'style' => [], 'topic' => $topic,
+                ]]);
+                $created++;
+            }
+        }
+
+        return ['inspiration_created' => $created, 'inspiration_kept' => $kept];
     }
 
     /**

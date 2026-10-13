@@ -1,5 +1,5 @@
 # MK-18 — Inspiration dump: past ads the AI builds from
-Status: approved        Journey: marketing-post (step 7 of 7)
+Status: built           Journey: marketing-post (step 7 of 7)
 Source: owner 2026-10-12: "a place to dump ads ive already done that i like so we can build off those and have similar
 designs. ideally a single dumping place that has many images, unorganized. ONLY if you believe this is going to be
 effective"

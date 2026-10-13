@@ -42,7 +42,7 @@ it('shows the brand beside the favourites, serves a favourite and deletes it thr
         ->waitForText('Photo deleted')
         ->assertSee('No favourites yet.')
         ->assertNoJavaScriptErrors();
-    expect(MarketingAsset::count())->toBe(0);
+    expect(MarketingAsset::where('purpose', MarketingAsset::PURPOSE_PHOTO)->count())->toBe(0); // the seed's kit inspiration (MK-18) stays
 });
 
 it('Given a 375px viewport, then settings is one column with no sideways scroll', function () {

@@ -3,9 +3,13 @@
 namespace App\Livewire\Marketing;
 
 use App\Actions\Marketing\ListLibraryPosts;
+use App\Actions\Marketing\RemoveSavedInspiration;
+use App\Actions\Marketing\SaveToInspiration;
 use App\Livewire\Board\Concerns\GuardsProjectPage;
+use App\Models\MarketingPost;
 use App\Models\Project;
 use Carbon\CarbonImmutable;
+use Flux\Flux;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Layout;
@@ -18,7 +22,8 @@ use Livewire\Livewire;
  * a calm archive of every approved and posted post — Coming up by week, Posted by month — as brand-drawn cards
  * (marketing/post-preview) with a campaign chip or "One-off". Campaign filter chips and a caption search narrow both
  * sections; the grid / list toggle is Alpine. A card opens the post in the studio (MK-9), which sits on this page
- * unchanged and tells it to re-read (`marketing-changed`) when it changes a post.
+ * unchanged and tells it to re-read (`marketing-changed`) when it changes a post. Each card also has MK-18's
+ * "♡ Save to Inspiration" (with Undo once saved).
  *
  * The route's EnsureProjectIsShown refuses an unknown or disabled project before mount; GuardsProjectPage re-checks on
  * updates.
@@ -59,6 +64,32 @@ class Library extends Component
     }
 
     /**
+     * A card's "♡ Save to Inspiration" (MK-18): post `$id` becomes a favourite inspiration. Saving it again changes
+     * nothing.
+     *
+     * Side effects: SaveToInspiration copies the photo, writes the asset and logs; toasts. Another project's post is
+     * a logged 404.
+     */
+    public function saveToInspiration(int $id, SaveToInspiration $save): void
+    {
+        if ($save->handle($this->post($id))['created']) {
+            Flux::toast(variant: 'success', text: 'Saved to Inspiration');
+        }
+    }
+
+    /**
+     * "Undo" on a saved card: remove the inspiration saved from post `$id`.
+     *
+     * Side effects: RemoveSavedInspiration deletes and logs; toasts. Another project's post is a logged 404.
+     */
+    public function undoInspiration(int $id, RemoveSavedInspiration $remove): void
+    {
+        if ($remove->handle($this->post($id))) {
+            Flux::toast(variant: 'success', text: 'Removed from Inspiration');
+        }
+    }
+
+    /**
      * The post studio (MK-9) changed a post: re-render so the library shows it. The body is empty on purpose; the
      * request itself re-renders the page.
      */
@@ -90,7 +121,24 @@ class Library extends Component
             'campaigns' => $model->marketingCampaigns()->orderBy('name')->get(['id', 'name', 'slug']),
             'brand' => $model->marketingBrand()->first(),
             'narrowed' => $this->filter !== ListLibraryPosts::ALL || trim($this->search) !== '',
+            // MK-18: which cards are already saved as inspiration, in one query.
+            'saved' => SaveToInspiration::savedPostIds($model->id, array_values(collect([...$library['coming'], ...$library['posted']])
+                ->flatMap(fn (array $group) => $group['posts']->pluck('id'))->map(fn ($id) => (int) $id)->all())),
         ])->title('Library · '.$model->name.' · Marketing');
+    }
+
+    /**
+     * This project's post `$id`, or a 404 logged as `marketing.library.save_refused` (another project's or no post).
+     */
+    private function post(int $id): MarketingPost
+    {
+        $post = $this->model()->marketingPosts()->whereKey($id)->first();
+        if ($post === null) {
+            Log::warning('marketing.library.save_refused', ['project' => $this->project, 'post_id' => $id]);
+            abort(404);
+        }
+
+        return $post;
     }
 
     /**

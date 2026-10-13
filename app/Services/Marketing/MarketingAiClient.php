@@ -22,14 +22,16 @@ interface MarketingAiClient
 
     /**
      * Ask the model once. `$system` is the fixed, cacheable part (brand voice and copy rules); `$user` the part that
-     * changes per call. The reply is JSON matching `$schema`.
+     * changes per call: text, or a list of Messages API content blocks when it carries an image (MK-18's vision
+     * read). The reply is JSON matching `$schema`.
      *
      * Side effects: one external HTTP call.
      *
+     * @param  string|list<array<string, mixed>>  $user
      * @param  array<string, mixed>  $schema  a JSON schema for the reply
      * @return array{data: array<string, mixed>, meta: array{model: string, input_tokens: int, output_tokens: int, cache_read_input_tokens: int, cache_creation_input_tokens: int, cost_micro_usd: int|null, prompt_hash: string, duration_ms: int}}
      *
      * @throws MarketingAiException when there is no key, the call fails or times out, the model refuses, or the reply is not the JSON asked for
      */
-    public function complete(string $system, string $user, array $schema): array;
+    public function complete(string $system, string|array $user, array $schema): array;
 }

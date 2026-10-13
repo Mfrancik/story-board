@@ -3,12 +3,15 @@
 namespace App\Services\Marketing;
 
 use App\Actions\Marketing\BuildTasteExamples;
+use App\Actions\Marketing\PickInspirationExamples;
 use App\Models\MarketingAsset;
 use App\Models\MarketingBrand;
 use App\Models\MarketingCampaign;
 use App\Models\MarketingPost;
 use App\Models\Project;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 /**
  * The prompts Claude drafts and revises marketing captions from (MK-8), and the JSON schemas of the replies.
@@ -53,8 +56,9 @@ class MarketingPrompts
 
     /**
      * @param  BuildTasteExamples  $taste  the owner's likes, dislikes and notes as examples
+     * @param  PickInspirationExamples  $inspiration  the ads the owner likes, as examples of tone and copy (MK-18)
      */
-    public function __construct(private BuildTasteExamples $taste) {}
+    public function __construct(private BuildTasteExamples $taste, private PickInspirationExamples $inspiration) {}
 
     /**
      * The fixed, cacheable part for `$project`: who the captions are for, the voice and the copy rules.
@@ -94,10 +98,10 @@ class MarketingPrompts
 
     /**
      * The prompt for DRAFTS captions for `$campaign`'s date `$at`. Also returns `topics` (one per draft, in order),
-     * `assets` (the photo ids the model may answer with) and `skipped_ideas` (ticked ideas left out for their
-     * placeholders).
+     * `assets` (the photo ids the model may answer with), `skipped_ideas` (ticked ideas left out for their
+     * placeholders) and `inspiration_ids` (the inspiration quoted as examples, MK-18).
      *
-     * @return array{system: string, user: string, topics: list<array{key: string, label: string}>, assets: list<int>, skipped_ideas: list<string>}
+     * @return array{system: string, user: string, topics: list<array{key: string, label: string}>, assets: list<int>, skipped_ideas: list<string>, inspiration_ids: list<int>}
      */
     public function draft(MarketingCampaign $campaign, CarbonImmutable $at): array
     {
@@ -105,6 +109,7 @@ class MarketingPrompts
         [$pool, $skipped] = $this->topicPool($campaign, $project->marketingBrand()->first());
         $topics = $this->rotate($campaign, $pool);
         [$photo, $assets] = $this->photos($campaign, $project, null);
+        $examples = $this->inspiration->handle($campaign);
 
         $lines = $this->heading($campaign, $at);
         if ($topics === []) {
@@ -118,10 +123,12 @@ class MarketingPrompts
 
         return [
             'system' => $this->system($project),
-            'user' => implode("\n", [...$lines, ...$this->tasteLines($campaign), '', $photo]),
+            // Inspiration sits beside the taste examples, never inside them: taste is the owner's verdicts on drafts.
+            'user' => implode("\n", [...$lines, ...$this->tasteLines($campaign), ...$this->inspirationLines($examples), '', $photo]),
             'topics' => $topics,
             'assets' => $assets,
             'skipped_ideas' => $skipped,
+            'inspiration_ids' => array_values($examples->map(fn (MarketingAsset $a) => $a->id)->all()),
         ];
     }
 
@@ -300,6 +307,36 @@ class MarketingPrompts
     }
 
     /**
+     * The ads the owner likes (MK-18) as prompt lines: each one's words and how it is written. Their words, not their
+     * look: layout matching waits for the designer (phase 3). None when there is no inspiration.
+     *
+     * @param  Collection<int, MarketingAsset>  $examples
+     * @return list<string>
+     */
+    private function inspirationLines(Collection $examples): array
+    {
+        if ($examples->isEmpty()) {
+            return [];
+        }
+        $oneLine = fn (string $text) => trim((string) preg_replace('/\s*\R\s*/', ' / ', $text));
+
+        $lines = ['', 'Ads the owner likes (follow their tone and wording; never copy them):'];
+        foreach ($examples as $asset) {
+            $n = $asset->ai_notes ?? [];
+            $headline = trim((string) ($n['headline'] ?? ''));
+            $caption = trim((string) ($n['caption'] ?? ''));
+            $line = '- '.($headline !== '' ? '"'.$oneLine($headline).'"' : '(no words on the image)');
+            if ($caption !== '' && $oneLine($caption) !== $oneLine($headline)) {
+                $line .= ' with the caption "'.Str::limit($oneLine($caption), 280).'"';
+            }
+            $about = array_filter([implode(', ', (array) ($n['style'] ?? [])), (string) ($n['topic'] ?? '')], fn (string $s) => $s !== '');
+            $lines[] = $line.($about !== [] ? ' ('.implode('; ', $about).')' : '');
+        }
+
+        return $lines;
+    }
+
+    /**
      * What the model is told about photos for `$campaign`'s photo mode, and the asset ids it may answer with.
      * Only `favourites` and `ai_decides` offer photos, and only the project's own favourites; `$except` (the
      * post's current photo) is left out so "Different photo" gets a different one.
@@ -318,7 +355,7 @@ class MarketingPrompts
 
         $favourites = MarketingAsset::query()->where('project_id', $project->id)->favouritePhotos()
             ->when($except !== null, fn ($q) => $q->whereKeyNot($except))
-            ->limit(self::MAX_PHOTOS)->get(['id', 'original_name']);
+            ->limit(self::MAX_PHOTOS)->get(['id', 'original_name', 'ai_notes']);
         if ($favourites->isEmpty()) {
             return ['Photos: there are no favourite photos yet. Set asset_id to null.', []];
         }
@@ -326,7 +363,12 @@ class MarketingPrompts
         $intro = $mode === MarketingCampaign::PHOTO_FAVOURITES
             ? 'Photos: for each caption pick the favourite photo that fits it best, by its id (or null if none fits):'
             : 'Photos: for each caption pick a favourite photo by its id, or null to post it as text only:';
-        $list = $favourites->map(fn (MarketingAsset $a) => "- id {$a->id}: {$a->original_name}")->all();
+        // What the photo shows (MK-18's read) when known; the file name only while it is unread or the read failed.
+        $list = $favourites->map(function (MarketingAsset $a) {
+            $description = trim((string) ($a->ai_notes['description'] ?? ''));
+
+            return "- id {$a->id}: ".($description !== '' ? $description : $a->original_name);
+        })->all();
 
         return [implode("\n", [$intro, ...$list]), array_values($favourites->pluck('id')->map(fn ($id) => (int) $id)->all())];
     }

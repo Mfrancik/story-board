@@ -6,8 +6,8 @@
 
     Alpine holds the pure-UI state and never asks the server: `cur` (which draft is shown: ← / →, the dots, the arrow
     keys), `compare`, the favourites grid, the reschedule and mark-posted forms, and `unapproving` for
-    board/confirm-modal. Everything that reads or writes data is a Livewire call. "Save to Inspiration" ships with
-    MK-18 and is not drawn yet.
+    board/confirm-modal. Everything that reads or writes data is a Livewire call. MK-18 adds "♡ Save to Inspiration"
+    (with Undo) beside each post's votes, and an "Inspired by" row of the inspiration its draft was written from.
 --}}
 @php
     $focus = 'outline-needs focus-visible:outline-2 focus-visible:outline-offset-2';
@@ -183,7 +183,35 @@
                                         </button>
                                     </span>
                                 @endif
+                                {{-- MK-18: one click keeps a post the owner likes as a favourite inspiration; Undo takes it back. --}}
+                                @if ($saved->contains($post->id))
+                                    <span data-saved-inspiration="{{ $post->id }}" class="inline-flex items-center gap-1 rounded-full border border-needs/50 py-0.5 pr-1 pl-2.5 text-xs text-needs">
+                                        ♥ Saved to Inspiration ·
+                                        <button type="button" wire:click="undoInspiration({{ $post->id }})" wire:loading.attr="disabled" wire:target="undoInspiration" data-undo-inspiration="{{ $post->id }}" class="rounded px-1.5 py-1 text-ink hover:bg-raised {{ $focus }}">Undo</button>
+                                    </span>
+                                @else
+                                    <button type="button" wire:click="saveToInspiration({{ $post->id }})" wire:loading.attr="disabled" wire:target="saveToInspiration" data-save-inspiration="{{ $post->id }}"
+                                        class="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-rim px-3 text-xs font-medium text-ink-soft hover:bg-raised hover:text-ink {{ $focus }}">♡ Save to Inspiration</button>
+                                @endif
                             </div>
+
+                            @php $examples = collect((array) ($post->generation_meta['inspiration_ids'] ?? []))->map(fn ($id) => $inspired->get($id))->filter(); @endphp
+                            @if ($examples->isNotEmpty())
+                                {{-- MK-18: the inspiration this draft's prompt quoted as examples of tone and copy. --}}
+                                <div data-inspired-by="{{ $post->id }}" class="flex flex-wrap items-center justify-center gap-1.5 text-xs tracking-wider text-ink-muted uppercase">
+                                    <span>Inspired by</span>
+                                    @foreach ($examples as $example)
+                                        @php $exampleTitle = trim((string) ($example->ai_notes['headline'] ?? '')) ?: 'Inspiration image'; @endphp
+                                        <a href="{{ route('projects.marketing.inspiration', $model->name) }}" wire:navigate data-inspired-asset="{{ $example->id }}" title="{{ $exampleTitle }}" class="rounded {{ $focus }}">
+                                            @if ($example->isTextCard())
+                                                <span class="flex size-8 items-center justify-center rounded border border-rim bg-raised text-xs normal-case text-ink-soft" aria-label="{{ $exampleTitle }}">Aa</span>
+                                            @else
+                                                <img src="{{ route('marketing.asset', [$model->name, $example->id]) }}" alt="{{ $exampleTitle }}" class="block size-8 rounded border border-rim object-cover">
+                                            @endif
+                                        </a>
+                                    @endforeach
+                                </div>
+                            @endif
 
                             @if ($state === 'review' && $vote?->vote === -1)
                                 <div data-reasons="{{ $post->id }}" class="flex flex-wrap items-center justify-center gap-1.5">

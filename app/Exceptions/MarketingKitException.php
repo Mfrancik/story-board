@@ -5,8 +5,9 @@ namespace App\Exceptions;
 use RuntimeException;
 
 /**
- * `marketing:seed-kit` cannot seed: the project is unknown, or the kit folder or its captions file is missing.
- * Thrown before anything is written; the command prints the message and logs `marketing.kit_seed.failed`.
+ * A marketing console command cannot run: `marketing:seed-kit` (the project is unknown, or the kit folder or its
+ * captions file is missing; logs `marketing.kit_seed.failed`) or `marketing:read-favourites` (unknown project, MK-18;
+ * logs `marketing.photo.backfill_refused`). Thrown before anything is written; the command prints the message.
  */
 class MarketingKitException extends RuntimeException
 {
