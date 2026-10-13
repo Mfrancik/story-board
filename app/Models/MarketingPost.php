@@ -25,6 +25,7 @@ use Illuminate\Support\Carbon;
  * @property string $caption
  * @property int $version 1 as drafted, +1 per revision (MK-8); earlier versions are in `versions`
  * @property int|null $asset_id
+ * @property bool $is_text_only the owner chose "Text only" in the studio (MK-9): no photo is wanted
  * @property string $source
  * @property array<string, mixed>|null $generation_meta
  * @property list<array{code: string, match: string}>|null $lint copy-rules warnings on the current caption (MK-8)
@@ -56,7 +57,7 @@ class MarketingPost extends Model
     public const STATUSES = [self::STATUS_DRAFT, self::STATUS_APPROVED, self::STATUS_POSTED, self::STATUS_SKIPPED, self::STATUS_DISCARDED];
 
     /** @var list<string> */
-    protected $fillable = ['project_id', 'campaign_id', 'scheduled_for', 'status', 'caption', 'version', 'asset_id', 'source', 'generation_meta', 'lint', 'posted_at'];
+    protected $fillable = ['project_id', 'campaign_id', 'scheduled_for', 'status', 'caption', 'version', 'asset_id', 'is_text_only', 'source', 'generation_meta', 'lint', 'posted_at'];
 
     /**
      * A new post is version 1, so an unsaved or just-created post reads its version without a re-fetch.
@@ -65,6 +66,7 @@ class MarketingPost extends Model
      */
     protected $attributes = [
         'version' => 1,
+        'is_text_only' => false,
     ];
 
     /**
@@ -78,6 +80,7 @@ class MarketingPost extends Model
             'generation_meta' => 'array',
             'lint' => 'array',
             'version' => 'integer',
+            'is_text_only' => 'boolean',
         ];
     }
 
@@ -132,6 +135,16 @@ class MarketingPost extends Model
     }
 
     /**
+     * Where the post went out (MK-9): one row per network, Facebook's holding the link "Mark as posted" saved.
+     *
+     * @return HasMany<MarketingPostNetwork, $this>
+     */
+    public function networks(): HasMany
+    {
+        return $this->hasMany(MarketingPostNetwork::class, 'post_id');
+    }
+
+    /**
      * The posts a campaign's runway reads (BuildCampaignRunway): every dated, kept
      * post from a day before `$now` on (the day's slack covers a date that starts
      * earlier in the campaign's timezone than in UTC), plus every approved post still
@@ -154,5 +167,24 @@ class MarketingPost extends Model
     public function isPosted(): bool
     {
         return $this->status === self::STATUS_POSTED || $this->posted_at !== null;
+    }
+
+    /**
+     * Whether the post is missed as of `$now`: approved, its time passed, not marked posted. Derived, never stored
+     * (the same rule as BuildCampaignRunway's `missed`).
+     */
+    public function isMissed(CarbonInterface $now): bool
+    {
+        return $this->status === self::STATUS_APPROVED && ! $this->isPosted() && $this->scheduled_for !== null && $this->scheduled_for < $now;
+    }
+
+    /**
+     * Whether the post is held back from approval for want of a photo (MK-9): its campaign wants a photo per post,
+     * it has none, and the owner has not chosen "Text only". Reads `campaign` (eager-load it in lists).
+     */
+    public function needsPhoto(): bool
+    {
+        return $this->asset_id === null && ! $this->is_text_only
+            && $this->campaign?->photo_mode === MarketingCampaign::PHOTO_PER_POST;
     }
 }

@@ -1,5 +1,5 @@
 # MK-9 — Post studio: big preview, flip, rebuild from feedback, approve & next
-Status: approved        Journey: marketing-post (step 5 of 7)
+Status: built           Journey: marketing-post (step 5 of 7)
 Source: owner prototype round 2: "click fill, i want a modal to pop up with a big screen of the ad, and maybe 2 or 3 to
 flip through, and a box i can respond with changes where AI rebuilds… review kind of becomes redundant"
 

@@ -24,6 +24,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 /**
@@ -34,7 +35,8 @@ use Livewire\Component;
  *
  * The criteria inputs are deferred `wire:model`s, so typing makes no request; the "Unsaved changes" marker is Alpine,
  * comparing the inputs with `stored`. Adding or removing an own topic, Save, Discard and the switch are the only
- * round trips. Timeline rows open the studio with MK-9.
+ * round trips. Each timeline date opens the post studio (MK-9, `open-studio`), which sits on this page and tells it
+ * to re-read when it changes a post (`marketing-changed`).
  *
  * Fill (MK-8): each open row has Fill, and the Future posts header has "Fill N open dates" (the next two weeks).
  * Both queue one DraftOccurrenceJob per date through FillCampaign; while any date is drafting the page polls, and
@@ -206,6 +208,13 @@ class CampaignPage extends Component
     {
         $this->queueFill($fill, null);
     }
+
+    /**
+     * The post studio (MK-9) changed a post: re-render so this page shows it. The body is empty on purpose; the
+     * request itself re-renders the page.
+     */
+    #[On('marketing-changed')]
+    public function refreshFromStudio(): void {}
 
     /**
      * Render the campaign page.

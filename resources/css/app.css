@@ -244,3 +244,157 @@ select:focus[data-flux-control] {
         transform: translateX(-100%);
     }
 }
+
+/* A marketing post drawn in its brand (MK-9, components/marketing/post-preview; MK-10's library cards reuse it). The
+   card is square and its type scales with its own width (container units), so the same post reads the same as a
+   720px studio preview and a 160px card. The brand's colours, font and radius arrive as custom properties on the
+   element (data, not theme): --pp-surface, --pp-ink, --pp-accent, --pp-font, --pp-radius. */
+.post-card {
+    container-type: inline-size;
+    position: relative;
+    aspect-ratio: 1 / 1;
+    width: 100%;
+    overflow: hidden;
+    border-radius: var(--pp-radius, 0.5rem);
+    background: var(--pp-surface, #fafafa);
+    color: var(--pp-ink, #222222);
+    font-family: var(--pp-font), ui-sans-serif, system-ui, sans-serif;
+}
+
+.post-card__label {
+    position: absolute;
+    left: 7cqw;
+    right: 40cqw;
+    top: 6.6cqw;
+    overflow: hidden;
+    font-size: 3cqw;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    opacity: 0.6;
+}
+
+.post-card__brand {
+    position: absolute;
+    right: 7cqw;
+    top: 5.8cqw;
+    display: flex;
+    align-items: center;
+    gap: 1.4cqw;
+    font-size: 2.9cqw;
+    font-weight: 500;
+}
+
+.post-card__brand svg,
+.post-card__foot svg {
+    width: 3.6cqw;
+    height: 3.6cqw;
+    color: var(--pp-accent);
+    fill: currentColor;
+}
+
+.post-card__head {
+    position: absolute;
+    left: 7cqw;
+    right: 7cqw;
+    top: 20cqw;
+    display: -webkit-box;
+    overflow: hidden;
+    font-weight: 600;
+    line-height: 1.04;
+    letter-spacing: -0.03em;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+}
+
+.post-card__sub {
+    position: absolute;
+    left: 7cqw;
+    right: 16cqw;
+    bottom: 20cqw;
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 3.6cqw;
+    line-height: 1.35;
+    opacity: 0.8;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+
+.post-card__rule {
+    position: absolute;
+    left: 7cqw;
+    right: 7cqw;
+    bottom: 14cqw;
+    height: 1.2cqw;
+    overflow: hidden;
+    border-radius: 1cqw;
+    background: color-mix(in srgb, var(--pp-ink) 12%, transparent);
+}
+
+.post-card__rule i {
+    display: block;
+    width: 38%;
+    height: 100%;
+    background: var(--pp-accent);
+}
+
+.post-card__foot {
+    position: absolute;
+    left: 7cqw;
+    bottom: 6cqw;
+    display: flex;
+    align-items: center;
+    gap: 1.4cqw;
+    font-size: 2.9cqw;
+    font-weight: 500;
+}
+
+/* Caption over photo: the photo fills the card, the caption's first line sits on a shade at the foot. */
+.post-card__photo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.post-card__over {
+    position: absolute;
+    inset: auto 0 0 0;
+    padding: 16cqw 7cqw 6cqw;
+    background: linear-gradient(to top, rgb(0 0 0 / 0.72), transparent);
+    color: #ffffff;
+    font-size: 4.6cqw;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+/* The brand mark on a photo: a small pill so it reads on any picture. */
+.post-card__chip {
+    padding: 1cqw 2cqw;
+    border-radius: 99cqw;
+    background: color-mix(in srgb, var(--pp-surface) 88%, transparent);
+}
+
+.post-card__needs {
+    display: flex;
+    height: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2.4cqw;
+    padding: 8cqw;
+    text-align: center;
+    background: repeating-linear-gradient(135deg, #f6f1ea 0 14px, #f1eadf 14px 28px);
+    color: #6b5a43;
+    font-size: 3.4cqw;
+}
+
+.post-card__needs b {
+    color: #222222;
+    font-size: 5.4cqw;
+    font-weight: 600;
+}

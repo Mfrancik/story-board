@@ -1,22 +1,31 @@
 <?php
 
+use App\Actions\Marketing\StoreMarketingAsset;
 use App\Jobs\RefreshProjectJob;
 use App\Models\MarketingCampaign;
 use App\Models\MarketingPost;
 use App\Models\Project;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Journey marketing-post (docs/journeys/marketing-post.md): from a recurring campaign to approved posts, ready to
  * publish. Created by MK-1 with step 1; each later MK story adds its step (MK-2: step 2, the brand in Settings; MK-7:
- * step 3, the campaign page; MK-8: step 4, Fill). Claude is faked with Http::fake (fakeClaude()), and only
- * RefreshProjectJob is faked on the queue, so Fill's DraftOccurrenceJob runs inline on the sync queue. `JOURNEY_SHOTS=1` saves each step to `storage/app/journey-shots/marketing-post/`.
+ * step 3, the campaign page; MK-8: step 4, Fill; MK-9: step 5, the post studio). Claude is faked with Http::fake
+ * (fakeClaude()) by one reply carrying both `drafts` (what Fill reads) and `caption` (what Revise reads), since the
+ * first matching fake wins. Only RefreshProjectJob is faked on the queue, so Fill's DraftOccurrenceJob runs inline on
+ * the sync queue. `JOURNEY_SHOTS=1` saves each step to `storage/app/journey-shots/marketing-post/`.
  */
 beforeEach(function () {
     Carbon::setTestNow('2026-10-12 11:00');
     Queue::fake([RefreshProjectJob::class]);
-    fakeClaude();
+    fakeClaude(['drafts' => [
+        ['caption' => "Rainbow toning on a Morgan.\nShow us your best toner.", 'asset_id' => null],
+        ['caption' => 'Album toning, straight from the paper.', 'asset_id' => null],
+        ['caption' => 'Rate this rainbow from one to ten.', 'asset_id' => null],
+    ], 'caption' => 'Album toning, straight from the paper. Show us yours.']);
     $coins = Project::factory()->create(['name' => 'coins', 'indexed_at' => now(), 'refresh_attempted_at' => now(), 'state' => Project::STATE_OK]);
     $tvt = MarketingCampaign::factory()->for($coins)->named('TrueView Tuesday')->on([2], '19:00')->create();
     MarketingPost::factory()->forCampaign($tvt, '2026-10-13 19:00')->approved()->create();
@@ -78,4 +87,33 @@ it('walks the marketing-post journey', function () {
     expect($drafts)->toHaveCount(3)
         ->and($drafts->pluck('source')->unique()->all())->toBe(['ai'])
         ->and($drafts->every(fn (MarketingPost $p) => $p->generation_meta['model'] === 'claude-sonnet-5-5'))->toBeTrue();
+
+    // Step 5 (MK-9): open Nov 3 in the post studio, flip to the second draft and ask for a change (Rebuild → v2), give
+    // it a photo, and Approve & next: the other drafts are discarded and the studio moves on to Oct 27. The photo is
+    // a favourite picked in the studio, not an upload through the input: Pest's browser server does not forward
+    // multipart files (see tests/Browser/Marketing/SettingsTest.php); the upload is covered in
+    // tests/Feature/Marketing/PostStudioTest.php.
+    Storage::fake('local');
+    $photo = app(StoreMarketingAsset::class)->handle(Project::where('name', 'coins')->firstOrFail(), UploadedFile::fake()->image('morgan.jpg', 400, 400));
+    [, $second] = $drafts->all();
+    $page->click('[data-open-studio="2026-11-03"]')
+        ->assertVisible('[data-studio] [role="dialog"]')
+        ->assertSeeIn('[data-studio-counter]', '2 of 2 to approve')
+        ->click('[data-draft="'.$drafts[0]->id.'"] [aria-label="Next draft"]')
+        ->fill('#fb-'.$second->id, 'Say it came from the album.')
+        ->click('[data-rebuild="'.$second->id.'"]')
+        ->assertSeeIn('[data-version="'.$second->id.'"]', 'v2')
+        ->assertAttribute('[data-approve-next="'.$second->id.'"]', 'disabled', '')
+        ->click('[data-use-favourite="'.$second->id.'"]')
+        ->click('[data-draft="'.$second->id.'"] [data-favourite="'.$photo->id.'"]')
+        ->assertEnabled('[data-approve-next="'.$second->id.'"]');
+    journeyStep('marketing-post', 'post studio', '/p/coins/marketing/campaigns/trueview-tuesday', $page)
+        ->click('[data-approve-next="'.$second->id.'"]')
+        ->assertSeeIn('[data-studio] h2', 'TrueView Tuesday')
+        ->assertSeeIn('[data-studio-when]', 'Tue 27 Oct · 19:00')
+        ->assertSeeIn('[data-studio-counter]', '1 of 1 to approve')
+        ->assertNoJavaScriptErrors();
+    expect($second->fresh())->status->toBe(MarketingPost::STATUS_APPROVED)->version->toBe(2)->asset_id->toBe($photo->id)
+        ->and($drafts[0]->fresh()->status)->toBe(MarketingPost::STATUS_DISCARDED)
+        ->and($drafts[2]->fresh()->status)->toBe(MarketingPost::STATUS_DISCARDED);
 });

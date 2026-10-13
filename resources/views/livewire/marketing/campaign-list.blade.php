@@ -4,8 +4,8 @@
     alerts banner, one row per campaign that is on, then the paused ones in a quieter group, and the runway key.
 
     Below 1024 px a row stacks its fields with small labels; from 1024 px it becomes the prototype's columns. A row's
-    name opens its campaign page and "+ New campaign" the same page in create mode (MK-7); badges are not links yet,
-    the post studio is MK-9. The analytics strip is MK-15 and has
+    name opens its campaign page and "+ New campaign" the same page in create mode (MK-7). The badges, "Start approving"
+    in the alerts banner and "+ One-off post" open the post studio (MK-9). The analytics strip is MK-15 and has
     no placeholder here. A row whose runway failed (CampaignList logged why) shows that error and nothing else.
 --}}
 @php
@@ -35,7 +35,10 @@
                 <h2 class="text-xl font-semibold tracking-tight">Campaigns</h2>
                 <p class="text-sm text-ink-muted">{{ $on->count() }} on regular posting @if ($paused->isNotEmpty()) · {{ $paused->count() }} paused @endif</p>
             </div>
-            <a href="{{ route('projects.marketing.campaign.create', $model->name) }}" wire:navigate data-new-campaign class="{{ $newButton }} ml-auto">+ New campaign</a>
+            <span class="ml-auto flex flex-wrap gap-2">
+                <button type="button" wire:click="$dispatch('start-one-off')" data-one-off class="inline-flex min-h-9 items-center justify-center rounded-lg border border-rim px-4 py-2 text-sm font-medium hover:bg-raised {{ $focus }}">+ One-off post</button>
+                <a href="{{ route('projects.marketing.campaign.create', $model->name) }}" wire:navigate data-new-campaign class="{{ $newButton }}">+ New campaign</a>
+            </span>
         </div>
 
         @if ($on->isNotEmpty())
@@ -57,6 +60,9 @@
                         @endphp
                         {!! implode(' · ', $bits) !!}
                     </span>
+                    @if ($toApprove > 0)
+                        <button type="button" wire:click="$dispatch('open-studio')" data-start-approving class="inline-flex min-h-9 items-center justify-center rounded-lg bg-needs px-3 text-sm font-medium text-needs-ink hover:brightness-110 {{ $focus }}">Start approving</button>
+                    @endif
                 </div>
             @else
                 <div data-marketing-alerts role="status" class="flex flex-wrap items-center gap-3.5 rounded-xl border border-go/40 bg-go/10 px-3.5 py-3 text-sm text-ink">
@@ -90,4 +96,7 @@
 
         <p class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-muted">Runway: each block is one upcoming date. <x-marketing.runway-bar legend /></p>
     @endif
+
+    {{-- MK-9: the post studio, opened by the badges, Start approving and + One-off post. --}}
+    <livewire:marketing.post-studio :project="$model->name" />
 </main>

@@ -102,7 +102,7 @@
                     @else
                         <ol role="list" class="-mx-2 flex flex-col">
                             @foreach ($timeline as $occurrence)
-                                <x-marketing.occurrence-row :occurrence="$occurrence" :project="$model->name" :photo-mode="$campaign->photo_mode"
+                                <x-marketing.occurrence-row :occurrence="$occurrence" :project="$model->name" :campaign-id="$campaign->id" :photo-mode="$campaign->photo_mode"
                                     :fill-state="$fillStates[$occurrence['date']] ?? null" :can-fill="$campaign->is_enabled" :ai-ready="$aiReady" wire:key="occ-{{ $occurrence['date'] }}" />
                             @endforeach
                         </ol>
@@ -313,4 +313,9 @@
             </form>
         </section>
     </div>
+
+    @if ($campaign)
+        {{-- MK-9: the post studio, opened by the timeline's rows. --}}
+        <livewire:marketing.post-studio :project="$model->name" />
+    @endif
 </main>

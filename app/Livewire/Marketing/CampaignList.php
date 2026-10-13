@@ -11,6 +11,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\Livewire;
 
@@ -21,8 +22,9 @@ use Livewire\Livewire;
  * badges — and the paused campaigns in a quieter group below.
  *
  * Reads only. A row's name opens the campaign's page, where it is switched on or off
- * and edited, and "+ New campaign" opens that page in create mode (MK-7); the studio
- * behind "to approve" is MK-9, so badges are not links yet. A
+ * and edited, and "+ New campaign" opens that page in create mode (MK-7). The badges,
+ * "Start approving" and "+ One-off post" open the post studio (MK-9), which sits on
+ * this page and tells it to re-read when it changes a post. A
  * campaign whose schedule cannot be worked out shows its own error row and the rest
  * of the page still renders. The route's EnsureProjectIsShown has already refused
  * an unknown or disabled project before this mounts; GuardsProjectPage re-checks on
@@ -41,6 +43,13 @@ class CampaignList extends Component
     {
         $this->project = $project->name;
     }
+
+    /**
+     * The post studio (MK-9) changed a post: re-render so this page shows it. The body is empty on purpose; the
+     * request itself re-renders the page.
+     */
+    #[On('marketing-changed')]
+    public function refreshFromStudio(): void {}
 
     /**
      * Render the campaigns list.

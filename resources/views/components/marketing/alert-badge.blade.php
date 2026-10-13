@@ -1,6 +1,6 @@
 {{-- One "needs you" badge on a campaign row (MK-1, the prototype's `.nb` and `.att`): `tone` is missed (red), photo
      (violet), approve (amber), open (dashed amber), thin (amber outline, "Nothing approved past this week") or quiet
-     (grey). A label, not a control: the studio these will open is MK-9. --}}
+     (grey). A label, not a control: on the campaigns list the caller wraps it in the button that opens the studio (MK-9). --}}
 @props(['tone' => 'approve'])
 @php
     $toneClass = match ($tone) {

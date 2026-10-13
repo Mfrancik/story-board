@@ -72,10 +72,7 @@ class BuildCampaignRunway
         $through = $this->approvedThrough($states);
         $endOfWeek = CarbonImmutable::instance($now)->setTimezone($zone)->endOfWeek(CarbonInterface::SUNDAY);
 
-        // Upcoming days whose posts are only drafts: each such day is one post to approve, however many candidates it has.
-        $toApprove = $posts->filter(fn (MarketingPost $p) => $p->scheduled_for >= $now)
-            ->groupBy(fn (MarketingPost $p) => $this->day($p, $zone))
-            ->filter(fn (Collection $day, string $key) => $this->state($byDay->get($key)) === 'review');
+        $toApprove = $this->toApprove($posts, $byDay, $zone, $now);
         $missed = $posts->filter(fn (MarketingPost $p) => $p->status === MarketingPost::STATUS_APPROVED && ! $p->isPosted() && $p->scheduled_for < $now)
             ->max('scheduled_for');
 
@@ -93,6 +90,45 @@ class BuildCampaignRunway
             // Nothing approved yet, or the approved run ends this week (ISO week, Monday to Sunday, local).
             'thin' => $through === null || $through->lessThanOrEqualTo($endOfWeek),
         ];
+    }
+
+    /**
+     * The dates of `$campaign` that need approval as of `$now` (MK-9's studio queue), earliest first: the same rule
+     * as handle()'s `to_approve`, so the studio's "1 of N" and the campaigns list's count always agree.
+     *
+     * @return list<array{date: string, at: CarbonImmutable}> each date (Y-m-d, campaign timezone) and its first draft's time
+     *
+     * @throws CampaignScheduleException when the campaign's timezone cannot be read
+     */
+    public function datesToApprove(MarketingCampaign $campaign, CarbonInterface $now): array
+    {
+        $zone = $this->schedule->zone($campaign);
+        if (! $campaign->relationLoaded('posts')) {
+            $campaign->load(['posts' => fn ($q) => $q->runwayWindow($now)]);
+        }
+        // As a base collection, the type handle()'s posts have, so both feed toApprove() the same shape.
+        $posts = $campaign->posts->toBase()->filter(fn (MarketingPost $p) => $p->scheduled_for !== null && $p->status !== MarketingPost::STATUS_DISCARDED);
+        $byDay = $posts->groupBy(fn (MarketingPost $p) => $this->day($p, $zone));
+
+        return array_values($this->toApprove($posts, $byDay, $zone, $now)
+            ->map(fn (Collection $day, string $date) => ['date' => $date, 'at' => CarbonImmutable::instance($day->min('scheduled_for'))->setTimezone($zone)])
+            ->sortBy('date')
+            ->all());
+    }
+
+    /**
+     * Upcoming days whose posts are only drafts, keyed by day: each such day is one post to approve, however many
+     * candidates it has.
+     *
+     * @param  Collection<int, MarketingPost>  $posts  the campaign's kept, dated posts
+     * @param  Collection<array-key, Collection<int, MarketingPost>>  $byDay  the same, by day
+     * @return Collection<array-key, Collection<int, MarketingPost>>
+     */
+    private function toApprove(Collection $posts, Collection $byDay, DateTimeZone $zone, CarbonInterface $now): Collection
+    {
+        return $posts->filter(fn (MarketingPost $p) => $p->scheduled_for >= $now)
+            ->groupBy(fn (MarketingPost $p) => $this->day($p, $zone))
+            ->filter(fn (Collection $day, string $key) => $this->state($byDay->get($key)) === 'review');
     }
 
     /**

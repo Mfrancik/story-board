@@ -1,6 +1,7 @@
 {{-- One campaign row of the MK-1 Campaigns list: name and schedule, next post and its state, approved-through with the
      runway bar, and the "needs you" badges. A paused campaign shows "Paused" in place of its next post's badges; a
-     campaign whose runway failed shows the reason across the row. The name links to the campaign's page (MK-7). --}}
+     campaign whose runway failed shows the reason across the row. The name links to the campaign's page (MK-7); the
+     badges open the post studio (MK-9). --}}
 @php
     $c = $row['campaign'];
     $r = $row['runway'];
@@ -44,17 +45,27 @@
                 @if (! $c->is_enabled)
                     <span class="text-ink-faint">Paused</span>
                 @else
+                    {{-- MK-9: each badge opens the post studio where it points: the missed date, the first date to approve, the first open date. --}}
                     @if ($r['missed'])
-                        <x-marketing.alert-badge tone="missed">Missed {{ $r['missed']->format('D') }}</x-marketing.alert-badge>
+                        <button type="button" wire:click="$dispatch('open-studio', { campaign: {{ $c->id }}, date: '{{ $r['missed']->toDateString() }}' })" data-open-missed="{{ $c->id }}" class="rounded-full {{ $focus }}">
+                            <x-marketing.alert-badge tone="missed">Missed {{ $r['missed']->format('D') }} ›</x-marketing.alert-badge>
+                        </button>
                     @endif
                     @if ($r['needs_photo'])
-                        <x-marketing.alert-badge tone="photo">Needs a photo</x-marketing.alert-badge>
+                        <button type="button" wire:click="$dispatch('open-studio', { campaign: {{ $c->id }} })" class="rounded-full {{ $focus }}">
+                            <x-marketing.alert-badge tone="photo">Needs a photo ›</x-marketing.alert-badge>
+                        </button>
                     @endif
                     @if ($r['to_approve'] > 0)
-                        <x-marketing.alert-badge tone="approve">{{ $r['to_approve'] }} to approve</x-marketing.alert-badge>
+                        <button type="button" wire:click="$dispatch('open-studio', { campaign: {{ $c->id }} })" data-open-studio="{{ $c->id }}" class="rounded-full {{ $focus }}">
+                            <x-marketing.alert-badge tone="approve">{{ $r['to_approve'] }} to approve ›</x-marketing.alert-badge>
+                        </button>
                     @endif
                     @if ($r['open_dates'] > 0)
-                        <x-marketing.alert-badge tone="open">{{ $r['open_dates'] }} open {{ Str::plural('date', $r['open_dates']) }}</x-marketing.alert-badge>
+                        @php $firstOpen = collect($r['runway'])->firstWhere('state', 'open'); @endphp
+                        <button type="button" wire:click="$dispatch('open-studio', { campaign: {{ $c->id }}, date: '{{ $firstOpen['at']->toDateString() }}' })" class="rounded-full {{ $focus }}">
+                            <x-marketing.alert-badge tone="open">{{ $r['open_dates'] }} open {{ Str::plural('date', $r['open_dates']) }} ›</x-marketing.alert-badge>
+                        </button>
                     @endif
                     @if (! $r['missed'] && ! $r['needs_photo'] && $r['to_approve'] === 0 && $r['open_dates'] === 0)
                         <span class="text-ink-faint">Nothing</span>

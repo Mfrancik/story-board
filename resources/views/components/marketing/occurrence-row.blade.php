@@ -6,8 +6,11 @@
 
      Fill (MK-8): an open row has a Fill button (wire:click `fillDate(date)` on the campaign page), "Drafting…" while its
      job runs (`fillState` drafting) and "Drafting failed · Retry" when it failed. `canFill` false (a paused campaign)
-     hides the button; `aiReady` false (no API key) disables it. Opening a date in the post studio is MK-9. --}}
-@props(['occurrence', 'project', 'photoMode' => null, 'fillState' => null, 'canFill' => false, 'aiReady' => false])
+     hides the button; `aiReady` false (no API key) disables it.
+
+     MK-9: the whole row opens the date in the post studio (`campaignId` given): a full-row button under the content
+     dispatches `open-studio`; the Fill button sits above it, so it still works on its own. --}}
+@props(['occurrence', 'project', 'campaignId' => null, 'photoMode' => null, 'fillState' => null, 'canFill' => false, 'aiReady' => false])
 @php
     $o = $occurrence;
     $state = $o['state'];
@@ -34,11 +37,17 @@
 @endphp
 <li data-occurrence="{{ $o['date'] }}" data-occurrence-state="{{ $state }}"
     {{ $attributes->class([
-        'grid grid-cols-1 gap-2 border-t border-hairline px-2 py-3.5 first:border-t-0 sm:grid-cols-12 sm:gap-3',
+        'relative grid grid-cols-1 gap-2 border-t border-hairline px-2 py-3.5 first:border-t-0 sm:grid-cols-12 sm:gap-3',
+        'rounded-lg hover:bg-raised/60' => $campaignId !== null,
         'border-l-4 border-l-needs bg-needs/5' => $o['flagged'] && $state !== 'missed',
         'border-l-4 border-l-fail bg-fail/5' => $state === 'missed',
     ]) }}>
-    <div class="flex items-baseline gap-2 sm:col-span-3 sm:flex-col sm:gap-0.5">
+    @if ($campaignId !== null)
+        <button type="button" data-open-studio="{{ $o['date'] }}" wire:click="$dispatch('open-studio', { campaign: {{ $campaignId }}, date: '{{ $o['date'] }}' })"
+            aria-label="Open {{ $o['at']->format('D j M') }} in the studio"
+            class="absolute inset-0 rounded-lg outline-needs focus-visible:outline-2 focus-visible:-outline-offset-2"></button>
+    @endif
+    <div class="pointer-events-none flex items-baseline gap-2 sm:col-span-3 sm:flex-col sm:gap-0.5">
         <span class="text-sm font-semibold text-ink">{{ $o['at']->format('D j M') }}</span>
         <span class="font-mono text-xs text-ink-muted">{{ $o['at']->format('H:i') }}</span>
         @unless ($o['on_schedule'])
@@ -46,7 +55,7 @@
         @endunless
     </div>
 
-    <div class="flex min-w-0 items-center gap-3 sm:col-span-9">
+    <div class="pointer-events-none flex min-w-0 items-center gap-3 sm:col-span-9">
         <span class="hidden size-3 shrink-0 rounded-full border-2 sm:block {{ $dot }}" aria-hidden="true"></span>
 
         @if ($state === 'open' || $state === 'skipped')
@@ -85,7 +94,7 @@
         </div>
 
         @if ($state === 'open' && $canFill)
-            <div class="flex shrink-0 items-center gap-2">
+            <div class="pointer-events-auto relative flex shrink-0 items-center gap-2">
                 @if ($fillState === 'failed')
                     <span data-fill-failed="{{ $o['date'] }}" class="text-xs whitespace-nowrap text-fail">Drafting failed ·</span>
                 @endif
