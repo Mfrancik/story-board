@@ -1,12 +1,14 @@
 # Project overview
-Status: active   ·   Last updated: 2026-10-12   ·   Stories: RD-11
+Status: active   ·   Last updated: 2026-10-12   ·   Stories: RD-11, RD-12
 
 ## Overview
 `/p/{project}` is a project's landing page in the dark shell: a dense tile grid (mockup option B, "command center")
 of its story progress, what needs the owner, its live sessions, its latest preflight, its production numbers, the
-"What it is" of its brief and its biggest initiatives, with a **Refresh this project** button in the header. RD-9
+"What it is" of its brief, its biggest initiatives and its git activity (commits per day, last edits, most-edited
+code files today), with a **Refresh this project** button in the header. RD-9
 retired the old project page, so a project had no landing page and links dropped the owner on Stories; this puts
-everything checked first on one screen, using only data the board already reads. Git activity tiles follow in RD-12.
+everything checked first on one screen. RD-12's activity tiles are the only part that reads git live, and only
+through fixed read-only `GitReader` forms.
 
 ## How it works
 **Route.** `routes/web.php` registers `GET /p/{project:name}` as `projects.overview` (a new name; the retired
@@ -37,6 +39,9 @@ state) and logs `board.overview_panel_failed`, the home overview's event, now wi
 | Production | `ReadProjectProduction::handle()` | Stored `ProdSnapshot`s only, 7-day window (`ListProjectTiles::PROD_DAYS`), `board/sparkline` + `MetricNumber`. No connection → one line "Production not connected · Set up" → `/projects`. |
 | About | `ReadHandbook::about()` | The brief's `## What it is…` section at the snapshot SHA via `board/prose`; no brief or no section → `board/handbook-empty`; not read yet → a note. |
 | Biggest initiatives | `ReadStoryProgress::handle()` | Top `TOP_INITIATIVES` by story count, built/total track; "All N" links to Stories. |
+| Commits per day (RD-12) | `ReadGitActivity` `commits` | 14-day SVG bar chart (`DAYS`), window total and today's count; zero days have no bar. Two columns. |
+| Last edits (RD-12) | `ReadGitActivity` `edits` + `uncommitted` | Latest `EDITS` commits: short sha, type pill, subject, story ID link, +/−, relative time. Header shows the uncommitted-path count or "Working copy clean". Two columns. |
+| Most-edited files today (RD-12) | `ReadGitActivity` `files` | Top `TOP_FILES` code files by commits touching them today; `NOT_CODE` (`docs/`, `stories/`) excluded. Full width. |
 
 **The new readers** (all read-only, in `app/Actions/Board/`):
 - `ReadStoryProgress` — one grouped `(initiative, status, count)` query on `Story::onRef()`, folded into tallies by
@@ -51,6 +56,25 @@ state) and logs `board.overview_panel_failed`, the home overview's event, now wi
 - `ReadHandbook::about()` — reads `docs/PROJECT-BRIEF.md` at `$project->sha`, takes the first `##` heading
   starting "What it is" (case-insensitive, so the kit's "What it is, and for whom" matches) up to the next `##`.
   Returns null (no brief), `''` (no such section) or HTML.
+
+**Git activity** (RD-12, `app/Actions/Board/ReadGitActivity.php:handle()`). Four reads, each on its own, so one
+failing read empties only its own tile:
+- `commits` — `GitReader::commitsPerDay()`: `log()`'s RD-7 form over the window, bucketed by committer day in
+  `app.timezone`, zero-filled, oldest first.
+- `edits` — `GitReader::commitStats()`: `git log --shortstat --no-ext-diff --no-textconv --max-count=<n>`. Subjects
+  are split into type / story ID / text by the CLAUDE.md step-6 pattern (`SUBJECT`); anything else shows whole. A
+  story ID links to its story page only when it is in this project's on-ref snapshot, as Shipped this week does. A
+  merge has no stat line, so it shows "—".
+- `files` — `GitReader::filesChangedSince()` from today's local midnight: `--name-only --no-renames`, ranked by
+  commits touching each path (ties A–Z), then filtered to code by `isCode()`.
+- `uncommitted` — `GitReader::uncommittedCount()`: `status --porcelain -z --untracked-files=normal` on the checkout,
+  counted (a rename counts once; an untracked directory counts once).
+
+The first three read the project's **ref** (`origin/main` after the last fetch), so unpushed local commits do not
+appear; only the uncommitted count reads the working copy. Each read is cached by `read()` (see
+[ADR-082](../decisions/ADR-082-git-activity-cache-holds-plain-values-and-never-failures.md)); the new git forms and
+the tightened `status` guard are [ADR-081](../decisions/ADR-081-git-activity-reads-are-fixed-log-and-status-forms.md).
+At 375 px Last edits hides the short sha and type pill; the +/− stays.
 
 **`ReadPreflightRuns` change** (owner-approved exception to the story's Do-NOT-touch list): each record now
 carries `verdict` (`GO` / `NO-GO`, anything else null — an odd verdict never skips the record), and the matching
@@ -80,19 +104,29 @@ None. No migration. Reads the on-ref `stories` snapshot, `projects` (`sha`, `sta
 - `ReadProjectProduction::handle(Project): ?list<{label, value, text, series: list<{day, value}>}>` (null = no connection).
 - `ReadHandbook::about(Project): ?string`; constants `BRIEF`, `ABOUT_HEADING`.
 - `ReadPreflightRuns::pairs(array $runs, array $records): array<int, int|null>`; records gain `verdict`.
+- `ReadGitActivity::handle(Project): array{commits: ?{days: list<{day, count}>, total, today}, edits: ?list<{sha, short, at, type, subject, story_id, linked, added, removed}>, files: ?list<{path, commits}>, uncommitted: ?int}` — null per key is that tile's error state.
+- `GitReader` (RD-12): `commitsPerDay(path, ref, days, timezone): array<Y-m-d,int>`, `commitStats(path, ref, count 1–99)`,
+  `filesChangedSince(path, ref, since): array<path,int>`, `uncommittedCount(path): int`; each throws `GitReaderException`.
 - `board/project-header` prop `actions` (optional slot). `board/project-tabs` gains the `overview` key.
 - Test hooks: `data-tile="<name>"`, `data-overview-grid`, `data-refresh-project`, `data-refreshing`,
-  `data-refresh-poll`, `data-preflight-verdict`, `data-production-none`, `data-about-state`, `data-crumb-project`.
+  `data-refresh-poll`, `data-preflight-verdict`, `data-production-none`, `data-about-state`, `data-crumb-project`;
+  RD-12: `data-activity-state` (`ok | empty | error`), `data-commits-total`, `data-commits-today`, `data-commits-chart`,
+  `data-edit`, `data-edit-story`, `data-edit-added`, `data-edit-removed`, `data-uncommitted`, `data-hot-file`.
 
 ## Configuration
-None new. `app.timezone` sets the preflight chart's days; the production window follows `ListProjectTiles::PROD_DAYS`.
+None new. `app.timezone` sets the preflight chart's days and the activity tiles' days (and "today" for
+most-edited); activity reads are cached `ReadGitActivity::CACHE_SECONDS` (300 s) in the default cache store; the production window follows `ListProjectTiles::PROD_DAYS`.
 
 ## Observability
 - `board.project_overview_viewed` (info): `project`, `stories`, `needs`, `sessions` (null for a failed tile).
   Page loads only — Livewire requests (refresh, polls) do not log it, so a refresh wait is not a line every 5 s.
 - `board.project_refresh_requested` (info): `project`, `request_id`. Follow the same `request_id` into
   `board.refresh_started` / `board.refresh_finished` (or `board.refresh_skipped` when the job's lock is held).
-- `board.overview_panel_failed` (error): `project`, `panel` (`progress | needs | live | preflight | production`),
+- `board.git_activity_failed` (warning, RD-12): `project`, `read` (`commits | edits | files | uncommitted`), `error`.
+  One per failed read per render — failures are not cached, so a broken repo logs on every render until fixed.
+- `board.git_refused` (from `GitReader`): a caller asked for a `log`/`status` form outside the fixed ones — a code
+  bug, not a repo problem.
+- `board.overview_panel_failed` (error): `project`, `panel` (`progress | needs | live | preflight | production | activity`),
   `error` class, `message`. One per failing tile per render.
 - `board.handbook_read_failed` (warning) with `section: about`: git failed reading the brief.
 - `board.project_page_refused` (info): unknown/disabled at load (from `EnsureProjectIsShown`) or `request: update`
@@ -107,6 +141,12 @@ None new. `app.timezone` sets the preflight chart's days; the production window 
   (button back, polling stops), a project switched off before Refresh (nothing queued, refusal logged), and a tile
   whose source throws. The disabled-project button case mounts the component directly, because the route 404s a
   disabled project before the component exists.
+- `tests/Feature/Board/ProjectGitActivityTest.php` (RD-12): one `it()` per acceptance criterion on `GitFixture`
+  repos, a dataset of refused `log`/`status` forms (L-11: deleting the guards turns them red), and a serialising-cache
+  case. Fixture commits must be made in date order (`--since` cut-off, RUNBOOK 2026-10-11).
+- `tests/Browser/ProjectGitActivityTest.php` (RD-12): the three tiles with today's numbers and a Last edits story
+  link; 375 px with no sideways scroll. Run under the browser lock, after `npm run build` in a worktree (new
+  Tailwind classes are unstyled until then).
 - `tests/Browser/ProjectOverviewTest.php`: sidebar → Overview with every tile at 4 columns, each tab and back,
   Refresh → "Refreshing…" and disabled; 2 columns at 768 px, 1 at 375 px with no sideways scroll. Columns are
   read from the grid's computed `gridTemplateColumns` (RUNBOOK 2026-10-12).
@@ -123,6 +163,13 @@ None new. `app.timezone` sets the preflight chart's days; the production window 
 - Tiles reuse the home overview's readers and rules and stored data only: Needs you and Live now pass a one-project
   `ProjectFilter`; progress uses the Stories page's kinds; Production reads snapshots, never a connection →
   [ADR-061](../decisions/ADR-061-project-overview-tiles-reuse-home-readers-and-stored-data.md).
+- Git activity reads are fixed read-only `GitReader` forms; `--no-textconv`/`--no-ext-diff` so a project's own diff
+  helpers never run; `status` options narrowed to listings →
+  [ADR-081](../decisions/ADR-081-git-activity-reads-are-fixed-log-and-status-forms.md).
+- Activity cache holds scalars only and never a failure →
+  [ADR-082](../decisions/ADR-082-git-activity-cache-holds-plain-values-and-never-failures.md).
+- RD-12 deviations: the mockup's "Full log" link is omitted (no log page exists); most-edited reads the ref, not
+  unpushed local commits.
 - Story wins over mockup: no production connection shows a "not connected · Set up" line (the mockup dropped the
   tile); the mockup's `/prod` link became "Settings" → `/projects`; gate details ("1 gate failed") are omitted.
 
@@ -135,8 +182,14 @@ None new. `app.timezone` sets the preflight chart's days; the production window 
 - About picks the first `## What it is…` heading; a brief that names it differently shows the "no section" state.
 - "Refreshing…" relies on `RefreshProject` stamping `refresh_attempted_at` first and `indexed_at` last; changing
   that order breaks completion detection.
-- No git activity yet (commits, last edits, most-edited files) — RD-12.
+- Activity windows use `git log --since`, which stops at the first commit older than the window: a history with
+  skewed committer dates (rebases, clock drift) can undercount commits per day and most-edited.
+- Commits per day and most-edited count committer dates; a commit dated in the future is dropped from the chart.
+- The uncommitted count can be up to 5 min stale (cached); the ref-based tiles change only after a refresh.
+- Most-edited "code" is everything outside `docs/` and `stories/` — config, lock files and tests count as code.
 
 ## Change history
 2026-10-12 — Project overview at `/p/{project}`: option B tile grid, Overview tab first, sidebar and breadcrumb
 repointed, Refresh this project (F-16) (RD-11, `cbef7bc`)
+2026-10-12 — Git activity tiles: commits per day, Last edits with uncommitted count, most-edited code files today;
+new read-only `GitReader` forms and a tighter `status` guard (RD-12, `9b0addd`)

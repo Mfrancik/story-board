@@ -4,6 +4,7 @@ namespace App\Livewire\Board;
 
 use App\Actions\Board\ListLiveSessions;
 use App\Actions\Board\ListNeedsMe;
+use App\Actions\Board\ReadGitActivity;
 use App\Actions\Board\ReadHandbook;
 use App\Actions\Board\ReadLatestPreflight;
 use App\Actions\Board\ReadProjectProduction;
@@ -28,7 +29,9 @@ use Throwable;
  * A project's overview at `/p/{project}` (RD-11, option B "command center"): a
  * dense tile grid of its story progress, what needs the owner, its live sessions,
  * its latest preflight, its production numbers, the "What it is" of its brief and
- * its biggest initiatives, above the project tabs with Overview first. Every tile
+ * its biggest initiatives, plus its git activity (RD-12: commits per day, last edits with
+ * the working copy's uncommitted count, most-edited code files today), above the project
+ * tabs with Overview first. Every tile
  * reads data the board already keeps, through the existing readers, each tile on
  * its own so one failing source shows that tile's error and the rest still render.
  *
@@ -100,9 +103,11 @@ class ProjectOverview extends Component
      * Render the overview's tiles.
      *
      * Side effects: reads the stored snapshot, the cached session scan, the
-     * preflight CSVs and run records, and the brief from git at the snapshot SHA;
-     * logs `board.project_overview_viewed` (info, counts) on the page load and
-     * `board.overview_panel_failed` (error) for a tile whose source threw.
+     * preflight CSVs and run records, the brief from git at the snapshot SHA, and the
+     * git activity through ReadGitActivity's cached read-only reads; logs
+     * `board.project_overview_viewed` (info, counts) on the page load,
+     * `board.overview_panel_failed` (error) for a tile whose source threw, and (from
+     * ReadGitActivity) `board.git_activity_failed` (warning) for each failed git read.
      */
     public function render(
         ReadStoryProgress $progress,
@@ -111,6 +116,7 @@ class ProjectOverview extends Component
         ReadLatestPreflight $preflight,
         ReadProjectProduction $production,
         ReadHandbook $handbook,
+        ReadGitActivity $activity,
     ): View|string {
         if ($this->gone) {
             // Nothing of a project that is off the board may render.
@@ -128,6 +134,8 @@ class ProjectOverview extends Component
             'preflight' => $this->attempt('preflight', fn () => ['run' => $preflight->handle($model)]),
             'production' => $this->attempt('production', fn () => ['metrics' => $production->handle($model)]),
             'about' => $this->about($model, $handbook),
+            // Each git read fails on its own inside the action; null here only if something else threw.
+            'activity' => $this->attempt('activity', fn () => $activity->handle($model)),
         ];
 
         // On the page load only: while a refresh is awaited the page polls, and a line per poll would be info spam.

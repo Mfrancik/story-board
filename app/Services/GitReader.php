@@ -21,7 +21,8 @@ class GitReader
     /**
      * Subcommands that cannot change a working tree, index, or branch. `fetch`
      * is the one that writes at all, and only to remote-tracking refs under .git.
-     * `worktree`, `status` and `log` are allowed in one read-only form each (see run()).
+     * `worktree` is allowed in one read-only form, `status` only as --porcelain listings and
+     * `log` in three fixed forms (see run()).
      */
     private const ALLOWED = ['fetch', 'ls-tree', 'show', 'rev-parse', 'cat-file', 'remote', 'for-each-ref', 'worktree', 'status', 'merge-base', 'log'];
 
@@ -33,6 +34,24 @@ class GitReader
 
     /** The one `--since` form `log` takes: an absolute unix time, never git's free-text dates. */
     private const LOG_SINCE = '/^--since=@\d+$/D';
+
+    /**
+     * The format of the `--shortstat` log (RD-12's Last edits): a record separator, then SHA,
+     * committer time and subject; git appends each commit's one-line stat after it.
+     */
+    public const STAT_FORMAT = '--format=%x1e%H%x1f%ct%x1f%s';
+
+    /** The format of the `--name-only` log (RD-12's most-edited files): a record separator and the SHA. */
+    public const FILES_FORMAT = '--format=%x1e%H';
+
+    /** How many commits the `--shortstat` log may ask for: 1–99, so no caller can stat a whole history. */
+    private const STAT_MAX_COUNT = '/^--max-count=[1-9]\d?$/D';
+
+    /**
+     * The options `status` may take before `--`. `-v`/`--verbose` would print the staged diff —
+     * file contents — and nothing else a caller needs changes what status reads.
+     */
+    private const STATUS_OPTIONS = ['--porcelain', '-z', '--untracked-files=all', '--untracked-files=normal'];
 
     /**
      * What a ref may look like: branch/remote names and SHAs. A leading `-` is
@@ -338,6 +357,132 @@ class GitReader
     }
 
     /**
+     * Commits reachable from `$ref` per day over the last `$days` days, today included, as
+     * `Y-m-d` => count, oldest first, every day present (a day with no commits is a zero).
+     * Days are calendar days in `$timezone`; a commit is counted on its committer date, the
+     * date `--since` walks by. Reads through log()'s fixed form, so it adds no new git form.
+     *
+     * @return array<string, int>
+     *
+     * @throws GitReaderException when the ref does not resolve or `$path` is not a repository.
+     */
+    public function commitsPerDay(string $path, string $ref, int $days, string $timezone): array
+    {
+        $today = CarbonImmutable::now($timezone)->startOfDay();
+        $first = $today->subDays($days - 1);
+
+        $counts = [];
+        for ($day = $first; $day->lte($today); $day = $day->addDay()) {
+            $counts[$day->toDateString()] = 0;
+        }
+        foreach ($this->log($path, $ref, $first) as $commit) {
+            $key = $commit['at']->setTimezone($timezone)->toDateString();
+            // A commit dated after today (a skewed clock) is outside the window, not a new day.
+            if (array_key_exists($key, $counts)) {
+                $counts[$key]++;
+            }
+        }
+
+        return $counts;
+    }
+
+    /**
+     * The latest `$count` commits on `$ref`, newest first, each with its lines added and
+     * removed from `git log --shortstat` — counts only, never a patch. A merge has no stat
+     * line, so its counts are null. `--no-textconv` and `--no-ext-diff` stop a project's
+     * own diff helpers from running; run() refuses any other form of this log.
+     *
+     * @return list<array{sha: string, at: CarbonImmutable, subject: string, added: int|null, removed: int|null}>
+     *
+     * @throws GitReaderException when the ref does not resolve, `$path` is not a repository, or `$count` is outside 1–99.
+     */
+    public function commitStats(string $path, string $ref, int $count): array
+    {
+        $this->assertRef($ref);
+        $out = $this->run($path, ['log', self::STAT_FORMAT, '--shortstat', '--no-ext-diff', '--no-textconv', '--max-count='.$count, $ref, '--'], config: ['log.showSignature=false']);
+
+        $commits = [];
+        foreach (explode("\x1e", $out) as $record) {
+            $lines = explode("\n", trim($record, "\n"), 2);
+            $parts = explode("\x1f", $lines[0], 3);
+            // Text before the first separator, or a malformed record, is not a commit.
+            if (count($parts) !== 3 || preg_match('/^[0-9a-f]{40,64}$/D', $parts[0]) !== 1 || ! ctype_digit($parts[1])) {
+                continue;
+            }
+            $stat = trim($lines[1] ?? '');
+            $commits[] = [
+                'sha' => $parts[0],
+                'at' => CarbonImmutable::createFromTimestamp((int) $parts[1]),
+                'subject' => $parts[2],
+                // `N files changed, X insertions(+), Y deletions(-)`; git leaves out a zero side.
+                'added' => $stat === '' ? null : (preg_match('/(\d+) insertions?\(\+\)/', $stat, $a) === 1 ? (int) $a[1] : 0),
+                'removed' => $stat === '' ? null : (preg_match('/(\d+) deletions?\(-\)/', $stat, $d) === 1 ? (int) $d[1] : 0),
+            ];
+        }
+
+        return $commits;
+    }
+
+    /**
+     * Every file changed by a commit on `$ref` since `$since`, as path => the number of
+     * commits that touched it, most first (ties A–Z). Names only (`--name-only`), never
+     * contents; merges list no files, so a change is not counted twice. `--no-renames`
+     * keeps a rename as its new path. run() refuses any other form of this log.
+     *
+     * @return array<string, int>
+     *
+     * @throws GitReaderException when the ref does not resolve or `$path` is not a repository.
+     */
+    public function filesChangedSince(string $path, string $ref, DateTimeInterface $since): array
+    {
+        $this->assertRef($ref);
+        $out = $this->run($path, ['log', '-z', self::FILES_FORMAT, '--name-only', '--no-renames', '--since=@'.$since->getTimestamp(), $ref, '--'], config: ['log.showSignature=false']);
+
+        $counts = [];
+        // Each record: `<sha>\0\n<path>\0<path>\0…`; -z keeps any path byte-exact.
+        foreach (explode("\x1e", $out) as $record) {
+            $entries = explode("\0", $record);
+            array_shift($entries);
+            foreach (array_unique(array_filter(array_map(fn ($e) => ltrim($e, "\n"), $entries), fn ($e) => $e !== '')) as $file) {
+                $counts[$file] = ($counts[$file] ?? 0) + 1;
+            }
+        }
+        uksort($counts, fn ($a, $b) => [$counts[$b], $a] <=> [$counts[$a], $b]);
+
+        return $counts;
+    }
+
+    /**
+     * How many paths in the checkout at `$path` are uncommitted — modified, staged, deleted
+     * or untracked (an untracked directory counts once, as git shows it). Counted from
+     * `status --porcelain -z`; no path or content leaves this method.
+     *
+     * @throws GitReaderException when `$path` is not a checkout.
+     */
+    public function uncommittedCount(string $path): int
+    {
+        // As untrackedStoryFiles(): never run a project's configured fsmonitor helper.
+        $out = $this->run($path, ['status', '--porcelain', '-z', '--untracked-files=normal'], timeout: 60, config: [
+            'core.fsmonitor=false', 'core.untrackedCache=false',
+        ]);
+
+        $entries = explode("\0", $out);
+        $count = 0;
+        for ($i = 0; $i < count($entries); $i++) {
+            if (strlen($entries[$i]) < 4) {
+                continue;
+            }
+            $count++;
+            // A rename or copy is followed by its old path as a separate entry: one path, not two.
+            if (str_contains('RC', $entries[$i][0]) || str_contains('RC', $entries[$i][1])) {
+                $i++;
+            }
+        }
+
+        return $count;
+    }
+
+    /**
      * Every story record at `$ref`, straight from the kit's bin/story-index
      * contract (docs/KIT-REFERENCE.md §story-index). The parser reads through
      * `git ls-tree` and `git cat-file` only, so it is inside the read-only rule.
@@ -400,18 +545,52 @@ class GitReader
     }
 
     /**
-     * Whether `$args` is the one `log` form the board runs: `log`, LOG_FORMAT,
-     * `--since=@<unix>`, a valid ref, `--`, and nothing else.
+     * Whether `$args` is one of the three fixed `log` forms the board runs, and nothing else:
+     * - log(): `log`, LOG_FORMAT, `--since=@<unix>`, a valid ref, `--` (RD-7);
+     * - commitStats(): `log`, STAT_FORMAT, `--shortstat`, `--no-ext-diff`, `--no-textconv`,
+     *   `--max-count=<1–99>`, a valid ref, `--` (RD-12) — counts per commit, never a patch;
+     * - filesChangedSince(): `log`, `-z`, FILES_FORMAT, `--name-only`, `--no-renames`,
+     *   `--since=@<unix>`, a valid ref, `--` (RD-12) — file names, never contents.
      *
      * @param  list<string>  $args
      */
     private function isReadOnlyLog(array $args): bool
     {
-        return count($args) === 5
+        $subjects = count($args) === 5
             && $args[1] === self::LOG_FORMAT
             && preg_match(self::LOG_SINCE, $args[2]) === 1
             && self::isValidRef($args[3])
             && $args[4] === '--';
+
+        // --no-textconv matters: git log runs a project's textconv filters by default, and --shortstat diffs.
+        $stats = count($args) === 8
+            && array_slice($args, 1, 4) === [self::STAT_FORMAT, '--shortstat', '--no-ext-diff', '--no-textconv']
+            && preg_match(self::STAT_MAX_COUNT, $args[5]) === 1
+            && self::isValidRef($args[6])
+            && $args[7] === '--';
+
+        $files = count($args) === 8
+            && array_slice($args, 1, 4) === ['-z', self::FILES_FORMAT, '--name-only', '--no-renames']
+            && preg_match(self::LOG_SINCE, $args[5]) === 1
+            && self::isValidRef($args[6])
+            && $args[7] === '--';
+
+        return $subjects || $stats || $files;
+    }
+
+    /**
+     * Whether `$args` is a read-only `status`: `--porcelain`, then only STATUS_OPTIONS before
+     * an optional `--` and the paths after it — so never `-v`, which prints the diff.
+     *
+     * @param  list<string>  $args
+     */
+    private function isReadOnlyStatus(array $args): bool
+    {
+        $separator = array_search('--', $args, true);
+        $options = array_slice($args, 1, $separator === false ? null : $separator - 1);
+
+        return in_array('--porcelain', $options, true)
+            && array_diff($options, self::STATUS_OPTIONS) === [];
     }
 
     /**
@@ -438,13 +617,14 @@ class GitReader
         if ($subcommand === 'worktree' && ($args[1] ?? '') !== 'list') {
             throw $this->refuse('git worktree is not allowed except `worktree list`: the board is read-only', $args);
         }
-        if ($subcommand === 'status' && ! in_array('--porcelain', $args, true)) {
-            throw $this->refuse('git status is not allowed without --porcelain: the board is read-only', $args);
+        // `status` lists paths, never contents: --porcelain and a few listing options only (RD-12).
+        if ($subcommand === 'status' && ! $this->isReadOnlyStatus($args)) {
+            throw $this->refuse('git status is not allowed except --porcelain with listing options: the board is read-only', $args);
         }
-        // `log` takes exactly the fixed format, one absolute --since, a ref and `--`: no patch,
-        // no other refs, no paths, and nothing git could read as a writing option.
+        // `log` takes one of three fixed forms (isReadOnlyLog): no patch, no other refs, no paths,
+        // no free-text dates, and nothing git could read as a writing option.
         if ($subcommand === 'log' && ! $this->isReadOnlyLog($args)) {
-            throw $this->refuse('git log is not allowed except the fixed format, --since and a ref: the board is read-only', $args);
+            throw $this->refuse('git log is not allowed except its fixed read-only forms: the board is read-only', $args);
         }
         foreach ($args as $arg) {
             if (str_starts_with($arg, '--output') || str_starts_with($arg, '-o')) {

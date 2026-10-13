@@ -63,7 +63,8 @@ It also shows:
 stay as history, and [retired-pages.md](features/retired-pages.md) maps what replaced each). Every page is in the dark
 shell. `/` is the home overview (RD-5) with a project filter (RD-6), project tiles and Shipped this week (RD-7); the
 Preflight page and tiles say where each run ran (RD-8). `/p/{project}` is the project overview (RD-11): a tile grid,
-Overview first in the project tabs, the sidebar's landing page, and Refresh this project. `/p/{project}/marketing`
+Overview first in the project tabs, the sidebar's landing page, and Refresh this project; RD-12 adds git activity
+tiles (commits per day, last edits with the uncommitted count, most-edited code files today). `/p/{project}/marketing`
 is the Marketing tab's campaigns list (MK-1), last in the tabs with a count of posts to approve, with its
 Settings page (MK-2: brand, favourites, copy rules) and a page per campaign at `/marketing/campaigns/{slug}` (MK-7)
 with AI Fill per date (MK-8); every campaign date and list badge opens the post studio (MK-9). `/marketing/calendar`
@@ -77,9 +78,9 @@ stories behind it: its doc's header line.
 
 ## Stories
 - **built**: SB-2–5, SB-7–12, SB-14–19, SB-21–25 · RD-1 clean foundation · RD-2 dark shell and sidebar ·
-  RD-3 short story page · RD-4 re-skin kept pages · RD-5 home overview · RD-6 home project filter · RD-7 project tiles and Shipped · RD-8 preflight "Ran on" · RD-9 retire old pages · RD-11 project overview
+  RD-3 short story page · RD-4 re-skin kept pages · RD-5 home overview · RD-6 home project filter · RD-7 project tiles and Shipped · RD-8 preflight "Ran on" · RD-9 retire old pages · RD-11 project overview · RD-12 project git activity
 - **built (marketing)**: MK-1 campaigns list and marketing schema · MK-2 brand kit, favourite photos, copy rules · MK-7 campaign page · MK-8 AI fill and revise · MK-9 post studio · MK-10 calendar and library · MK-18 inspiration
-- **approved**: RD-12 project git activity tiles
+- **approved**: none
 - **draft**: SB-20 preflight run errors · RD-10 preflight run record (parked)
 - **draft (parked)**: SB-6 the board on an always-live domain
 - **cut**: SB-13 pick a mockup (SB-21's pick covers it)
@@ -96,7 +97,7 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
 - Production only through `ProductionReader`, outcome cached, snapshot in-process → ADR-029–031. The board writes narrowly: one pick, one file, one local commit, via one `PickMockup` → [ADR-032](decisions/ADR-032-the-board-writes-narrowly-one-pick-one-file-one-commit.md), ADR-042
 - App map generated server-side; journey shots a pinned-manifest test helper; "New page" read from route files → ADR-033, ADR-035, ADR-036
 - RD foundation: starter kit and Fortify removed; kept logic in pure shared classes; dark shell scoped by `.shell`; refresh-on-load is one middleware; short story page in place → ADR-037–046
-- RD-9: mockup file route kept for `?v`; coverage ported before a test goes; `/?project=` ignored → ADR-056–058. RD-11 overview: `ReadPreflightRuns::pairs()`, refresh completion from the attempt stamp, tiles reuse home's readers → ADR-059–061
+- RD-9: mockup file route kept for `?v`; coverage ported before a test goes; `/?project=` ignored → ADR-056–058. RD-11 overview: `ReadPreflightRuns::pairs()`, refresh completion from the attempt stamp, tiles reuse home's readers → ADR-059–061. RD-12: git activity through fixed `log`/`status` forms (no textconv, `status` listings only); activity cached as plain values, failures never → ADR-081, ADR-082
 - Marketing (MK-1): posts match campaign dates by local day; approved-through lets skipped dates continue the run; "to approve" counts dates; tab, banner and badges share one count → ADR-062–064. MK-2: idea menu an ordered list, seed never overwrites,
   SVG logos sanitised with PHP's DOM and previewed from saved values → ADR-065–067. MK-7: the timeline reuses the runway's
   rules and a reschedule moves no posts; URL is a project-scoped slug fixed at creation; Unsaved changes is Alpine against a locked snapshot → ADR-068–070. MK-8: drafting state in the cache; draft job
@@ -108,10 +109,10 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
 - Preflight audit scope, audit cost record, build-artifact disposal (kit) → ADR-001 to ADR-003
 
 ## Current phase and what's next
-Phase 3, the redesign (RD). RD-1 to RD-9 and RD-11 are built: foundation, dark shell, short story page, every kept
-page in the shell, the home overview with its filter, tiles and Shipped this week, the reading side of preflight
-"Ran on", the deletion of every page the redesign replaced, and the project overview at `/p/{project}`. Next: RD-12
-(git activity tiles on the project overview). RD-10 (preflight run record writer) is parked. Dead code RD-9 left is
+Phase 3, the redesign (RD). RD-1 to RD-9, RD-11 and RD-12 are built: foundation, dark shell, short story page, every
+kept page in the shell, the home overview with its filter, tiles and Shipped this week, the reading side of preflight
+"Ran on", the deletion of every page the redesign replaced, and the project overview at `/p/{project}` with its git
+activity tiles. No other RD story is approved. RD-10 (preflight run record writer) is parked. Dead code RD-9 left is
 backlog F-15. Open for the owner: the home overview's project tiles still link to Stories, not the project overview.
 
 Marketing phase 1 has started ([stories/marketing/README.md](../stories/marketing/README.md)). MK-1, MK-2, MK-7, MK-8, MK-9 and MK-10

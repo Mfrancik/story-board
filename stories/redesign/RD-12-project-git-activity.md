@@ -1,5 +1,5 @@
 # RD-12 — Project overview: git activity tiles
-Status: approved        Journey: none
+Status: built           Journey: none
 Source: owner 2026-10-11 (same request as RD-11: *"last edits … recent updates"*).
 
 ## Story

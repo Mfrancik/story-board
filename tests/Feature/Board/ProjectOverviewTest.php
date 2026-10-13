@@ -78,7 +78,7 @@ it('Given an enabled project, when I open /p/{project}, then the Overview render
     expect($html)->toContain('<h1')->toContain('data-refresh-project')
         ->and($tabs[1])->toBe(['overview', 'stories', 'preflight', 'handbook', 'map', 'marketing'])
         ->and($nav[0])->toMatch('/data-project-tab="overview"[^>]*aria-current="page"/')
-        ->and($tiles[1])->toBe(['progress', 'needs', 'live', 'preflight', 'production', 'about', 'initiatives']);
+        ->and($tiles[1])->toBe(['progress', 'needs', 'live', 'preflight', 'commits', 'production', 'about', 'initiatives', 'edits', 'files']);
 });
 
 it('Given an unknown or disabled project, when I open /p/{project}, then it is refused and board.project_page_refused is logged with the reason', function (string $name, string $reason) {
