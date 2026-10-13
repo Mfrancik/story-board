@@ -26,6 +26,11 @@ not per draft). **Layout matching only arrives with the designer (phase 3)** —
   inspirations"): `SaveToInspiration` Action copies a post's image (or its text-card render data) and caption into a
   favourite inspiration asset with a "From your post" note and the source post id; one click from the studio and the
   library; Undo removes it; saving twice is a no-op.
+- **Favourite photos are read too** (owner 2026-10-12, after testing Fill: Claude was choosing photos by filename
+  only — "full (1).jpg"): the same one-time read runs on every favourite photo (`purpose=photo`, on upload and once
+  for existing ones) and stores `ai_notes.description` (what is in the picture, ≤ 120 chars). MK-8's photo list in
+  the prompt then shows `id: description` instead of the filename (filename only while unread or if the read failed).
+  Settings shows the note under each favourite with the same Reading… / Couldn't read · Retry states.
 
 ## Out of scope (do NOT build)
 - Visual layout cloning (needs the designer, phase 3), image generation, tagging/folders, embeddings.
@@ -43,6 +48,10 @@ not per draft). **Layout matching only arrives with the designer (phase 3)** —
 - Given a post I like, when I Save to Inspiration, then a favourite inspiration asset exists with the post's caption and
   source post id; saving it again creates nothing new; Undo deletes it.
 - Given a 375px viewport, then the wall is one or two columns with no sideways scroll.
+- Given a favourite photo is uploaded, then a read job is queued and a faked read stores its description.
+- Given favourites with descriptions, when a draft's prompt is built, then each photo is listed by id and description,
+  not filename; given an unread favourite, then it is listed by filename.
+- Given existing favourites with no description, when the backfill runs, then each gets exactly one read job.
 
 ## Applicable standards
 - Design: prototype Inspiration route; reuse MK-2's upload + asset components.
@@ -55,7 +64,8 @@ not per draft). **Layout matching only arrives with the designer (phase 3)** —
 - Why I chose it: "inspirations is good"; "a single dumping place that has many images, unorganized".
 
 ## Do NOT touch
-- `config/`; MK-8's taste logic (add examples beside it, don't change it).
+- `config/`; MK-8's taste logic (add examples beside it, don't change it). MK-8's photo list may change only to
+  show descriptions (owner 2026-10-12).
 
 ## Data & interfaces
 - Schema: `marketing_posts.generation_meta` records `inspiration_ids`; no new tables (MK-2's `marketing_assets.ai_notes`).
