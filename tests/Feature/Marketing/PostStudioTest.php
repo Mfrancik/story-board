@@ -115,6 +115,69 @@ it('Given I type a change and submit, then ReviseDraft runs (faked), the draft s
         ->and(MarketingPostVersion::where('post_id', $one->id)->count())->toBe(0);
 });
 
+it('Given a rebuild that changes nothing and no favourite photos, when I asked for an image, then the studio says why under the box, keeps no new version and logs it', function () {
+    // The owner's case: no favourites, and the model sent back the same caption and no photo.
+    fakeClaude(['caption' => 'First draft line.', 'asset_id' => null]);
+    [$one] = threeDrafts($this->tvt, '2026-10-13 19:00');
+    Log::spy();
+
+    studio($this->tvt, '2026-10-13')
+        ->call('revise', $one->id, 'id like an image of a nice toned morgan dollar')
+        ->assertReturned(false)
+        ->assertHasNoErrors()
+        ->assertSet('isOpen', true)
+        ->assertNotDispatched('marketing-changed')
+        ->assertSeeHtml('data-revise-unchanged="'.$one->id.'"')
+        ->assertSee('No favourite photos to pick from — upload one below or add favourites in Settings.')
+        ->assertDontSeeHtml('data-version="'.$one->id.'"');
+
+    // No no-op version stays; the note is still kept as the campaign's taste.
+    expect($one->fresh())->version->toBe(1)->caption->toBe('First draft line.')
+        ->and(MarketingPostVersion::where('post_id', $one->id)->count())->toBe(0)
+        ->and(MarketingFeedback::where('post_id', $one->id)->value('note'))->toBe('id like an image of a nice toned morgan dollar');
+    Log::shouldHaveReceived('info')->withArgs(fn ($e, $c) => $e === 'marketing.ai.revise.unchanged'
+        && $c['post_id'] === $one->id && $c['campaign_id'] === $this->tvt->id && $c['reason'] === 'no_favourites')->once();
+});
+
+it('Given a rebuild that changes nothing, then the studio names the reason it can know', function (string $mode, bool $favourite, string $feedback, array $chips, string $reason, string $message) {
+    $this->tvt->update(['photo_mode' => $mode]);
+    if ($favourite) {
+        MarketingAsset::factory()->for($this->coins)->create();
+    }
+    fakeClaude(['caption' => 'First draft line.', 'asset_id' => null]);
+    [$one] = threeDrafts($this->tvt, '2026-10-13 19:00');
+    Log::spy();
+
+    studio($this->tvt, '2026-10-13')
+        ->call('revise', $one->id, $feedback, $chips)
+        ->assertReturned(false)
+        ->assertSee($message);
+
+    expect($one->fresh()->version)->toBe(1);
+    Log::shouldHaveReceived('info')->withArgs(fn ($e, $c) => $e === 'marketing.ai.revise.unchanged' && $c['reason'] === $reason)->once();
+})->with([
+    'text only' => [MarketingCampaign::PHOTO_TEXT_ONLY, true, 'Add a photo of the coin', [], 'text_only', 'This campaign posts text only, so the AI won’t add a photo — upload one below to give this post one.'],
+    'photo per post' => [MarketingCampaign::PHOTO_PER_POST, true, '', ['Different photo'], 'per_post', 'The AI doesn’t pick photos for this campaign — use a favourite or upload one below.'],
+    'favourites, no chip' => [MarketingCampaign::PHOTO_FAVOURITES, true, 'A better picture please', [], 'photo_chip', 'The AI only picks a new photo when you choose “Different photo”.'],
+    'favourites, chip' => [MarketingCampaign::PHOTO_AI_DECIDES, true, '', ['Different photo'], 'kept_photo', 'The AI kept the same words and photo — try again, or pick a favourite below.'],
+    'words only' => [MarketingCampaign::PHOTO_PER_POST, false, 'Make it punchier', [], 'same_caption', 'The AI kept the same words — try saying what to change in the caption.'],
+]);
+
+it('Given an unchanged rebuild was explained, when the next rebuild changes the draft, then the explanation goes', function () {
+    [$one] = threeDrafts($this->tvt, '2026-10-13 19:00');
+    // Only the first matching fake answers, so the two replies are one sequence: the same words, then new ones.
+    config(['services.anthropic.key' => 'test-key-not-real', 'services.anthropic.model' => 'claude-sonnet-5-5']);
+    Http::fake(['api.anthropic.com/*' => Http::sequence()
+        ->push(claudeReply(['caption' => 'First draft line.', 'asset_id' => null]))
+        ->push(claudeReply(['caption' => 'Punchier: rainbow toning.', 'asset_id' => null]))]);
+    $page = studio($this->tvt, '2026-10-13')->call('revise', $one->id, 'Make it punchier')->assertSeeHtml('data-revise-unchanged="'.$one->id.'"');
+
+    $page->call('revise', $one->id, 'Make it punchier')
+        ->assertReturned(true)
+        ->assertDontSeeHtml('data-revise-unchanged')
+        ->assertSee('v2');
+});
+
 it('Given I dislike with reason "too wordy", then a feedback row with vote -1 and that reason exists', function () {
     [$one] = threeDrafts($this->tvt, '2026-10-13 19:00');
 

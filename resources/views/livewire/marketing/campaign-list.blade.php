@@ -98,5 +98,7 @@
     @endif
 
     {{-- MK-9: the post studio, opened by the badges, Start approving and + One-off post. --}}
-    <livewire:marketing.post-studio :project="$model->name" />
+    {{-- An explicit key, never Livewire's auto key: that one counts the loops drawn above this tag, so a page whose
+         shape changes on re-render gave the studio a new key and remounted it closed. See RUNBOOK. --}}
+    <livewire:marketing.post-studio :project="$model->name" wire:key="post-studio" />
 </main>

@@ -6,6 +6,7 @@ use App\Actions\Marketing\ApprovePost;
 use App\Actions\Marketing\BuildCampaignRunway;
 use App\Actions\Marketing\CreateOneOffPost;
 use App\Actions\Marketing\EditPostCaption;
+use App\Actions\Marketing\ExplainUnchangedRevision;
 use App\Actions\Marketing\FillCampaign;
 use App\Actions\Marketing\FindOccurrencePosts;
 use App\Actions\Marketing\FindProjectAsset;
@@ -101,6 +102,15 @@ class PostStudio extends Component
     public string $oneOffCaption = '';
 
     /**
+     * Why the last rebuild changed nothing, shown under that draft's "What should change?" box until anything else
+     * changes. Locked: the server's words, never the client's.
+     *
+     * @var array{post_id: int, reason: string, message: string}|null
+     */
+    #[Locked]
+    public ?array $unchanged = null;
+
+    /**
      * Keep the project's name. The studio starts closed.
      */
     public function mount(string $project): void
@@ -120,7 +130,7 @@ class PostStudio extends Component
     public function open(?int $campaign = null, ?string $date = null, ?int $post = null): void
     {
         $this->resetErrorBag();
-        $this->reset('campaignId', 'date', 'postId', 'queueAll', 'creatingOneOff', 'captions', 'uploads', 'oneOffAt', 'oneOffCaption');
+        $this->reset('campaignId', 'date', 'postId', 'queueAll', 'creatingOneOff', 'captions', 'uploads', 'oneOffAt', 'oneOffCaption', 'unchanged');
         $model = $this->model();
 
         if ($post !== null) {
@@ -158,7 +168,7 @@ class PostStudio extends Component
     public function close(): void
     {
         $this->isOpen = false;
-        $this->reset('creatingOneOff', 'captions', 'uploads');
+        $this->reset('creatingOneOff', 'captions', 'uploads', 'unchanged');
     }
 
     /**
@@ -201,16 +211,21 @@ class PostStudio extends Component
 
     /**
      * "Rebuild" in "What should change?": ReviseDraft (MK-8) rewrites draft `$id` from `$feedback` and `$chips`; the
-     * draft updates in place as its next version.
+     * draft updates in place as its next version. A rewrite that comes back the same (caption and photo) is put back
+     * with UndoRevision, so no version that changes nothing is kept, and the studio says why under the box
+     * (ExplainUnchangedRevision); the note stays as the campaign's taste.
      *
-     * Side effects: one Claude call and ReviseDraft's writes and logs; a refusal or failure shows under the box.
+     * Side effects: one Claude call and ReviseDraft's writes and logs; a refusal or failure shows under the box; an
+     * unchanged rewrite is undone (UndoRevision logs) and logs `marketing.ai.revise.unchanged` (info).
      *
      * @param  list<string>  $chips
      * @return bool whether it was rebuilt, so the box clears only then
      */
-    public function revise(ReviseDraft $revise, int $id, string $feedback = '', array $chips = []): bool
+    public function revise(ReviseDraft $revise, UndoRevision $undo, ExplainUnchangedRevision $explain, int $id, string $feedback = '', array $chips = []): bool
     {
         $post = $this->shownPost($id);
+        $this->unchanged = null;
+        $before = [trim((string) $post->caption), $post->asset_id];
         try {
             $revise->handle($post, $feedback, $chips);
         } catch (MarketingDraftRefusedException $e) {
@@ -219,6 +234,16 @@ class PostStudio extends Component
             return false;
         } catch (MarketingAiException $e) {
             $this->addError('feedback', 'The AI could not rebuild it ('.$e->reason.'). Try again in a moment.');
+
+            return false;
+        }
+
+        if ([trim((string) $post->caption), $post->asset_id] === $before) {
+            // ReviseDraft (MK-8, not this story's to change) always keeps a version; one identical to the draft is
+            // noise in Compare and Undo, so it is put back here. False keeps the owner's note in the box to edit.
+            $undo->handle($post);
+            $this->unchanged = ['post_id' => $post->id, ...$explain->handle($post, $feedback, $chips)];
+            Log::info('marketing.ai.revise.unchanged', ['project' => $this->project, 'campaign_id' => $post->campaign_id, 'post_id' => $post->id, 'reason' => $this->unchanged['reason']]);
 
             return false;
         }
@@ -371,7 +396,7 @@ class PostStudio extends Component
         if ($following !== null) {
             $this->campaignId = $following['campaign_id'];
             $this->date = $following['date'];
-            $this->reset('postId', 'uploads');
+            $this->reset('postId', 'uploads', 'unchanged');
             $this->syncCaptions();
             Flux::toast(variant: 'success', text: 'Approved '.$when?->format('D j M').'. Next: '.$following['at']->format('D j M'));
 
@@ -654,6 +679,8 @@ class PostStudio extends Component
      */
     private function changed(string $message, bool $sync = false): bool
     {
+        // Whatever changed, an earlier "the rebuild changed nothing" no longer describes the draft.
+        $this->unchanged = null;
         if ($sync) {
             $this->syncCaptions();
         }

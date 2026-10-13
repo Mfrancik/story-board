@@ -275,6 +275,13 @@
                                         @endforeach
                                     </div>
                                     <flux:error name="feedback" id="fb-err-{{ $post->id }}" />
+                                    @if (($unchanged['post_id'] ?? null) === $post->id)
+                                        {{-- A rebuild that changed nothing: a warning, not an error. The note stays in the box to edit. --}}
+                                        <p data-revise-unchanged="{{ $post->id }}" role="status" class="flex items-baseline gap-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-ink">
+                                            <span class="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-warning/25 text-xs font-bold text-warning" aria-hidden="true">!</span>
+                                            <span>{{ $unchanged['message'] }}@if ($unchanged['reason'] === \App\Actions\Marketing\ExplainUnchangedRevision::NO_FAVOURITES) <a href="{{ route('projects.marketing.settings', $model->name) }}" wire:navigate class="text-live hover:underline {{ $focus }}">Open Settings</a>@endif</span>
+                                        </p>
+                                    @endif
                                     <div class="flex flex-wrap items-center gap-3">
                                         <button type="button" data-rebuild="{{ $post->id }}" x-on:click="$wire.revise({{ $post->id }}, fb, chips).then((ok) => { if (ok) { fb = ''; chips = [] } })"
                                             wire:loading.attr="disabled" wire:target="revise" @disabled(! $aiReady) @if (! $aiReady) title="Add ANTHROPIC_API_KEY to .env" @endif class="{{ $primary }} min-h-9 px-3">

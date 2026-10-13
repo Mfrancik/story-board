@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\MarketingAsset;
+use App\Models\MarketingBrand;
 use App\Models\MarketingCampaign;
 use App\Models\MarketingPost;
 use App\Models\Project;
@@ -73,6 +74,69 @@ it('rebuilds a draft as v2, compares it with v1 without a round trip, and undoes
         ->assertNoJavaScriptErrors();
 
     expect($one->fresh()->version)->toBe(1);
+});
+
+it('Given the idea menu is seeded while the campaign page is open, when a draft is rebuilt, then the studio stays open on v2', function () {
+    // The owner's sequence: the page loaded with no idea menu, marketing:seed-kit then added one, and the page's
+    // re-render after the rebuild (marketing-changed) drew a non-empty @forelse above the studio's tag. Livewire's
+    // compiled-key bookkeeping leaves that loop open, so an auto-keyed studio got a new key and remounted closed.
+    fakeClaude(['caption' => 'Shorter: rainbow toning.', 'asset_id' => null]);
+    $one = $this->drafts->first();
+
+    $page = visit('/p/coins/marketing/campaigns/trueview-tuesday')->resize(1280, 900)
+        ->click('[data-open-studio="2026-10-13"]')
+        ->assertVisible('[data-studio] [role="dialog"]');
+
+    MarketingBrand::factory()->for($this->coins)->create(['idea_menu' => [
+        ['category' => 'Toned & TrueView', 'ideas' => [['title' => 'TrueView Tuesday', 'text' => 'Show us your best toner.']]],
+        ['category' => 'Sets', 'ideas' => [['title' => 'Slot filled', 'text' => 'Another slot filled.']]],
+    ]]);
+
+    $page->fill('#fb-'.$one->id, 'Make it shorter')
+        ->click('[data-rebuild="'.$one->id.'"]')
+        // The page under the studio re-read too: its menu is drawn, so its re-render has landed.
+        ->assertPresent('[data-idea-category]')
+        ->assertVisible('[data-studio] [role="dialog"]')
+        ->assertSeeIn('[data-version="'.$one->id.'"]', 'v2')
+        ->assertValue('#cap-'.$one->id, 'Shorter: rainbow toning.')
+        ->assertNoJavaScriptErrors();
+});
+
+it('Given a campaign is paused while the campaigns list is open, when a draft is rebuilt, then the studio stays open on v2', function () {
+    // The list's "Paused" section is a loop above the studio's tag that appears only when one is paused: the same
+    // shift in the studio's auto key as on the campaign page.
+    $other = MarketingCampaign::factory()->for($this->coins)->named('Sets Saturday')->on([6], '10:00')->create();
+    fakeClaude(['caption' => 'Shorter: rainbow toning.', 'asset_id' => null]);
+    $one = $this->drafts->first();
+
+    $page = visit('/p/coins/marketing')->resize(1280, 900)
+        ->click('[data-start-approving]')
+        ->assertVisible('[data-studio] [role="dialog"]');
+
+    $other->update(['is_enabled' => false]);
+
+    $page->fill('#fb-'.$one->id, 'Make it shorter')
+        ->click('[data-rebuild="'.$one->id.'"]')
+        ->assertSee('paused')
+        ->assertVisible('[data-studio] [role="dialog"]')
+        ->assertSeeIn('[data-version="'.$one->id.'"]', 'v2')
+        ->assertValue('#cap-'.$one->id, 'Shorter: rainbow toning.')
+        ->assertNoJavaScriptErrors();
+});
+
+it('Given a rebuild that changes nothing, then the studio says why under the box, stays open and keeps my note', function () {
+    fakeClaude(['caption' => 'First draft line.', 'asset_id' => null]);
+    $one = $this->drafts->first();
+
+    visit('/p/coins/marketing/campaigns/trueview-tuesday')->resize(1280, 900)
+        ->click('[data-open-studio="2026-10-13"]')
+        ->fill('#fb-'.$one->id, 'id like an image of a nice toned morgan dollar')
+        ->click('[data-rebuild="'.$one->id.'"]')
+        ->assertSeeIn('[data-revise-unchanged="'.$one->id.'"]', 'No favourite photos to pick from')
+        ->assertVisible('[data-studio] [role="dialog"]')
+        ->assertValue('#fb-'.$one->id, 'id like an image of a nice toned morgan dollar')
+        ->assertMissing('[data-version="'.$one->id.'"]')
+        ->assertNoJavaScriptErrors();
 });
 
 it('Given a 375px viewport, then the studio is a full-screen sheet with no sideways scroll and Approve stays visible', function () {

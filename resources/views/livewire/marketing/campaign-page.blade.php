@@ -316,6 +316,9 @@
 
     @if ($campaign)
         {{-- MK-9: the post studio, opened by the timeline's rows. --}}
-        <livewire:marketing.post-studio :project="$model->name" />
+        {{-- An explicit key, never Livewire's auto key: that one counts the loops drawn above this tag (and never closes
+             a non-empty forelse, like the idea menu's), so a page whose shape changes on re-render gave the studio a
+             new key and remounted it closed. See RUNBOOK. --}}
+        <livewire:marketing.post-studio :project="$model->name" wire:key="post-studio" />
     @endif
 </main>
