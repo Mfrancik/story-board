@@ -1,5 +1,5 @@
 # Marketing: post studio
-Status: active   ·   Last updated: 2026-10-12   ·   Stories: MK-9
+Status: active   ·   Last updated: 2026-10-13   ·   Stories: MK-9, MK-18
 
 ## Overview
 The post studio is one large modal where the owner handles a campaign date from start to finish. They see its three
@@ -102,7 +102,13 @@ skipped drafts back into drafts and discards the placeholder, which it recognise
 feedback given on that revision stays. Hand edits do not create a version
 ([ADR-079](../decisions/ADR-079-marketing-one-vote-per-post-and-what-makes-a-version.md)).
 
-**Uploads.** `updatedUploads()` validates against `MarketingAsset::PHOTO_MIMES` and `Settings::PHOTO_MAX_KB`. It
+**Inspiration (MK-18).** Beside each post's votes, "♡ Save to Inspiration" (`saveToInspiration()`) makes the post a
+favourite inspiration; it then reads "♥ Saved to Inspiration · Undo" (`undoInspiration()`). Under a draft whose
+prompt quoted inspiration, an "Inspired by" row shows those images as thumbnails (`inspiredBy()`, one query), each
+linking to the wall. See [marketing-inspiration.md](marketing-inspiration.md).
+
+**Uploads.** `updatedUploads()` validates with `Concerns/ValidatesMarketingImages` (`MarketingAsset::PHOTO_MIMES`,
+`MarketingAsset::MAX_KB`). A photo uploaded here for one post is not sent for an AI read. It
 always unsets the slot afterwards, because a rejected file left in the array would fail the next pick too.
 `_uploadErrored()` is aliased in the same way as in Settings (MK-2), so Livewire's own 12 MB temporary limit reads
 "Photos can be 10 MB at most." (see RUNBOOK, MK-2).
@@ -212,7 +218,6 @@ Post events carry `post_id`, `campaign_id` and `version`, per the story.
 - Fill on an open date inside the studio is an owner-kept extra, not in the story.
 
 ## Known limitations & gotchas
-- **"Save to Inspiration" is not drawn** until MK-18 ships its action.
 - **Download is hidden when the post has no photo** (text-only, or a manual post with none). Rendering the text card
   to an image is phase 3.
 - **One-offs are reachable only from the calendar and library** (MK-10), which dispatch `open-studio` with a `post`.
@@ -238,3 +243,4 @@ approved-post actions, mark posted with link, one-off posts; `marketing_post_net
 2026-10-12 — Studio stays open after a change (explicit `wire:key` on both hosts); a rebuild that changes nothing is
 undone and explained under the box (`ExplainUnchangedRevision`, ADR-080) (MK-9, `d415a49`)
 2026-10-12 — Mounted on the calendar and library, whose cards give one-off posts a way back in (MK-10, `80be063`)
+2026-10-13 — "Inspired by" row and Save to Inspiration with inline Undo; shared upload validation (MK-18, `b874421`)

@@ -10,6 +10,12 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-10-13 — The Inspiration wall rendered empty although images were stored
+Symptom: while building MK-18, `/marketing/inspiration` showed the empty state (or nothing) even though `marketing_assets` had inspiration rows for the project and `render()` queried them.
+Root cause: the view variable was named `$images`, the same as the component's public upload property (`public array $images` for `wire:model="images"`). Livewire's public properties override view data of the same name, so the view got the (empty) upload array instead of the query result.
+Fix: pass the query as `$wall` (`app/Livewire/Marketing/Inspiration.php:render()`) (MK-18, `b874421`). Rule: never give view data the name of a public Livewire property.
+Log trail: none; `marketing.inspiration.stored` showed the rows were written.
+
 ## 2026-10-12 — The post studio closes right after a Rebuild (or any change)
 Symptom: in the post studio, pressing Rebuild (and sometimes any other change) closed the modal, although the change was saved. It happened only on some page shapes: after the idea menu was seeded mid-session on the campaign page, after a campaign was paused on the campaigns list, or once a campaign had its first past post.
 Root cause: `<livewire:marketing.post-studio>` had no `wire:key` on either host page. Livewire then derives the child's key from the loop counters around the tag. A non-empty `@forelse` never closes its loop counter (in the compiled view `closeLoop` sits in the empty branch), so the count depends on how many loops ran and which were empty. When the host re-rendered on `marketing-changed` with a different loop shape, the studio's key changed and Livewire mounted a fresh studio, which starts closed.

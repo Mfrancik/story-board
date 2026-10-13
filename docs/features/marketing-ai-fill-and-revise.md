@@ -1,5 +1,5 @@
 # Marketing: AI fill and revise
-Status: active   ·   Last updated: 2026-10-12   ·   Stories: MK-8
+Status: active   ·   Last updated: 2026-10-13   ·   Stories: MK-8, MK-18
 
 ## Overview
 Fill asks Claude for three draft captions for each open campaign date, so the owner only picks and steers and never
@@ -68,7 +68,11 @@ prompts and their reply schemas ([ADR-074](../decisions/ADR-074-marketing-prompt
   - **Rotation**: it reads `generation_meta.topic_key` from the campaign's last `ROTATION_WINDOW` (30) posts. Topics
     never used come first, in the owner's order. Used topics follow, the longest-unused first. A pool smaller than 3
     wraps.
-  - **Photos**: up to `MAX_PHOTOS` (30) of the project's own favourites, by id and file name.
+  - **Photos**: up to `MAX_PHOTOS` (30) of the project's own favourites, by id and description (MK-18's one-time
+    read), or by file name while a photo is unread or its read failed.
+  - **Inspiration** (MK-18): up to 5 ads the owner likes from `PickInspirationExamples`, in their own block after the
+    taste lines, never inside them. Their ids come back as `inspiration_ids` and are stored on each draft
+    ([marketing-inspiration.md](marketing-inspiration.md), ADR-089).
 - `revise($post, $feedback, $chips)`: the post's caption, then the feedback, then the chips. Photos are offered again
   only when the chips include "Different photo" and the campaign's mode picks from favourites. The current photo is
   left out of that list. Otherwise the photo stays.
@@ -124,11 +128,12 @@ Migrations `2026_10_12_000006`–`000008`:
   `MarketingPost::feedback()`.
 - `generation_meta` on posts and versions: `model`, `input_tokens`, `output_tokens`, `cache_read_input_tokens`,
   `cache_creation_input_tokens`, `cost_micro_usd` (int or null), `prompt_hash`, `duration_ms`, `call`
-  (`draft|revise`), `topic_key`, `topic`. Drafts also carry `candidate` and `drafts_in_call`.
+  (`draft|revise`), `topic_key`, `topic`, `inspiration_ids` (MK-18; a revise keeps the draft's). Drafts also carry
+`candidate` and `drafts_in_call`.
 
 ## Interfaces
-- `MarketingAiClient`: `isConfigured()`, `model()`, and `complete(string $system, string $user, array $schema):
-  array{data, meta}`. It throws `MarketingAiException` (`reason`, `status`, `durationMs`, `errorType`).
+- `MarketingAiClient`: `isConfigured()`, `model()`, and `complete(string $system, string|array $user, array $schema):
+  array{data, meta}`; `$user` may be content blocks (MK-18's image read). It throws `MarketingAiException` (`reason`, `status`, `durationMs`, `errorType`).
 - `FillCampaign::handle(MarketingCampaign, CarbonInterface $now, ?string $date = null): list<string>` returns the
   dates queued. `::openDates()` returns the window's open dates; the page uses it for N.
 - `DraftOccurrence::handle(MarketingCampaign, CarbonImmutable $at, bool $replace = false): Collection<MarketingPost>`.
@@ -211,3 +216,5 @@ All events carry `campaign_id`. Cost is logged as `cost_cents`, a float rounded 
 ## Change history
 2026-10-12 — Fill (per date and "Fill N open dates"), DraftOccurrence, Revise, Regenerate, taste, lint, cost in generation_meta (MK-8, `e694a73`)
 2026-10-12 — Revise, Regenerate and votes get their UI in the post studio (MK-9, `9d71022`)
+2026-10-13 — Prompts quote inspiration examples and list photos by description; `complete()` takes content blocks
+for image reads (ADR-090) (MK-18, `b874421`)

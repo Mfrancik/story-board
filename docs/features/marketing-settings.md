@@ -1,5 +1,5 @@
 # Marketing: settings (brand kit, favourite photos, copy rules)
-Status: active   ·   Last updated: 2026-10-12   ·   Stories: MK-2
+Status: active   ·   Last updated: 2026-10-13   ·   Stories: MK-2, MK-18
 
 ## Overview
 `/p/{project}/marketing/settings` holds what every marketing draft for a project must look and sound like: one
@@ -33,7 +33,11 @@ saves. The page has four parts, plus a disabled Facebook "Phase 2" card:
   (`MarketingAsset::PHOTO_MIMES`), ≤ 10 MB each. One bad file stores none. Each goes through
   `StoreMarketingAsset::handle()` to `marketing/{project}/photos/<uuid>.<ext>` on the existing `local` disk (no
   config change); the uploaded name is kept only as a label. Delete is confirmed in `board/confirm-modal` (Alpine),
-  then `deletePhoto()` → `FindProjectAsset` → `DeleteMarketingAsset` (row first, then file).
+  then `deletePhoto()` → `FindProjectAsset` → `DeleteMarketingAsset` (row first, then file). Since MK-18 each new
+  favourite also gets one AI read (`QueueAssetRead`): its tile shows what Claude saw (`ai_notes.description`),
+  Reading…, or Couldn't read · Retry (`retryRead()`), and the page polls only while one is reading. Fill lists photos
+  by that description. Rules and messages come from `Concerns/ValidatesMarketingImages` and `MarketingAsset::MAX_KB`
+  (formerly `Settings::PHOTO_MAX_KB`). See [marketing-inspiration.md](marketing-inspiration.md).
 - **Copy rules.** `saveCopyRules()` stores the voice and the filler and banned lists (one per line; blanks and
   duplicates dropped).
 
@@ -48,8 +52,10 @@ the project, the kit folder and `captions-and-bios.txt` before writing anything,
 - always re-reads `idea_menu` from the file's `== IDEA MENU ==` section (`ideaMenu()`);
 - creates each of the `CAMPAIGNS` whose slug is missing.
 
-The logo is read afterwards, only with `--logo-path`, and a failure there is a warning, not a failed seed. Kit
-images are never imported (MK-18 makes them inspiration). Full rules: ADR-066.
+Since MK-18 the seed also adds the kit's `posts/` and `covers/` images as inspiration (never posts), with their kit
+captions as notes and no Claude call; already-added images are kept (see
+[marketing-inspiration.md](marketing-inspiration.md)). The logo is read afterwards, only with `--logo-path`, and a
+failure there is a warning, not a failed seed. Full rules: ADR-066.
 
 ## Data model
 Migrations `database/migrations/2026_10_12_000003_create_marketing_brands_table.php`, `…000004_create_marketing_assets_table.php`,
@@ -145,3 +151,5 @@ Context is project name and counts, never file or SVG contents.
 
 ## Change history
 2026-10-12 — Marketing settings: brand kit, favourite photos, copy rules, `marketing:seed-kit` (MK-2, `76e2101`)
+2026-10-13 — Favourites get a one-time AI read shown under each tile, with Retry; `marketing:read-favourites`
+backfill; seed adds kit images as inspiration; shared image validation (MK-18, `b874421`)

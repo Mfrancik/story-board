@@ -1,5 +1,5 @@
 # Marketing: calendar and library
-Status: active   ·   Last updated: 2026-10-12   ·   Stories: MK-10
+Status: active   ·   Last updated: 2026-10-13   ·   Stories: MK-10, MK-18
 
 ## Overview
 The campaign pages answer "how is this campaign doing". These two pages answer "what about everything". The
@@ -64,7 +64,10 @@ months are in the owner's timezone. Drafts, skipped and discarded posts never ap
 and falls back to All (`updatedFilter()`).
 
 Cards are `marketing/post-preview` with a campaign chip or a dashed "One-off" chip. A card dispatches `open-studio`
-with `{post: id}`; the studio opens a campaign post on its date and a one-off on its own. The grid / list toggle is
+with `{post: id}`; the studio opens a campaign post on its date and a one-off on its own. Since MK-18 each card has
+a "♡ Save to Inspiration" button laid over its corner (a sibling of the card's button, since a button cannot hold
+a button), which becomes "♥ Saved · Undo"; `render()` gets the saved post ids in one query
+([marketing-inspiration.md](marketing-inspiration.md)). The grid / list toggle is
 Alpine (`layout` on `<main>`, read by `group-data-[layout=list]` classes).
 
 **Staying fresh.** Both pages mount `<livewire:marketing.post-studio wire:key="post-studio">` and have an empty
@@ -86,7 +89,8 @@ writes `marketing_campaigns.is_enabled` through `ToggleCampaign`.
   checks a campaign id belongs to the project.
 - `Calendar`: `setView($view)`, `previous()`, `next()`, `today()`, `toggleCampaign($campaign)` (404 for another
   project's campaign). Constants `VIEWS`, `AGENDA_DAYS`.
-- `Library`: public `filter`, `search`.
+- `Library`: public `filter`, `search`; `saveToInspiration($id)`, `undoInspiration($id)` (another project's post is a
+  logged 404, `marketing.library.save_refused`).
 - Component `<x-marketing.calendar-chip :chip :project>`.
 - Outgoing event `open-studio`; listens for `marketing-changed`.
 - Test hooks: `data-calendar-grid`, `data-calendar-day`, `data-calendar-agenda`, `data-agenda-day`,
@@ -142,8 +146,6 @@ week and month labels. Campaign posts are placed by their campaign's own timezon
 - Skipped dates show nothing on the calendar, and a paused campaign shows its posts but no ghosts. Both are on purpose.
 
 ## Known limitations & gotchas
-- **No "♡ Save to Inspiration" on library cards yet.** The story lists it, but it is MK-18's action; it is left out
-  rather than drawn as a dead button.
 - **`htmlQuery()` needs PHP 8.4** (`Dom\HTMLDocument`), while `composer.json` allows `^8.3`. Local is 8.4 and CI is
   8.5, so it runs today; a PHP 8.3 machine would fail these tests.
 - No drag to reschedule (rescheduling stays in the studio). No engagement on cards (phase 2).
@@ -157,3 +159,4 @@ week and month labels. Campaign posts are placed by their campaign's own timezon
 ## Change history
 2026-10-12 — Calendar (month/week grid, ghosts, gap banner, tray, quick-peek, 375 px agenda) and library (Coming up
 by week, Posted by month, campaign filter, search, grid/list, cards open the studio) (MK-10, `80be063`)
+2026-10-13 — Library cards get Save to Inspiration with Undo; the intro links to Inspiration (MK-18, `b874421`)
