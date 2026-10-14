@@ -1,5 +1,5 @@
 # Marketing: ad renderer
-Status: active   ·   Last updated: 2026-10-13   ·   Stories: MK-5
+Status: active   ·   Last updated: 2026-10-13   ·   Stories: MK-5, MK-19
 
 ## Overview
 Every draft and approved post is rendered as a finished, on-brand ad image at 1080×1080 (1:1) and 1080×1350 (4:5),
@@ -23,12 +23,14 @@ way in. It is called after:
 
 It refuses a post that is not a draft or approved post still to go out (`not_renderable`), and a draft still
 waiting for its photo (`needs_photo`). Rendering that draft as a text card would show an ad it will not be, so the
-photo change renders it instead. Otherwise it writes the **ad spec** (`BuildDefaultAdSpec` when re-speccing) and
+photo change renders it instead. Otherwise it writes the **ad spec** (when re-speccing: Claude's recorded choice through
+`NormaliseAdSpec` since MK-19, else `BuildDefaultAdSpec`) and
 `ad.render.status = rendering` *before* dispatching `RenderPostAd`, because on the sync queue the job has finished by
 the time dispatch returns. The previous render ids are kept, so the studio still has something to show.
 
-**2. The default spec.** `app/Actions/Marketing/BuildDefaultAdSpec.php` fills the spec until MK-19's art director
-writes one. A post with a photo gets `photo_headline`, one without gets `text_card`. The headline is the caption's
+**2. The default spec.** `app/Actions/Marketing/BuildDefaultAdSpec.php` is the spec for a post Claude never
+art-directed (one-offs, pre-MK-19 drafts, a missing or unknown layout); every other spec comes from MK-19's
+[art director](marketing-art-director.md). A post with a photo gets `photo_headline`, one without gets `text_card`. The headline is the caption's
 first non-empty line and the subline is the rest, joined. `cta` and `badge` are null.
 
 **3. The job.** `app/Jobs/RenderPostAd.php` is `ShouldBeUniqueUntilProcessing` per post (`uniqueFor` 600 s), with
@@ -189,3 +191,5 @@ No new config: the timeout and the binary are constants in `AdRenderer` (`config
 2026-10-13 — Ad renderer: five layouts in three per-campaign styles, rendered to 1:1 and 4:5 PNGs by headless
 Chromium on the queue; studio preview, ratio switch, Download, Retry; library and calendar thumbnails;
 `marketing:render` backfill (MK-5, `6a9beb3`)
+2026-10-13 — Specs now come from Claude's art direction; re-specs read `generation_meta.ad` through `NormaliseAdSpec`
+(MK-19, `c21a4d7`)

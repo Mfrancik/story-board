@@ -10,6 +10,24 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-10-13 — A trimmed ad headline lost a whole word it had room for
+Symptom: while building MK-19, a 90-character headline cut to 60 with `Str::limit($text, 60, '', preserveWords: true)` came back one word shorter than needed: "…toner you| think" lost "you" although "you" fitted.
+Root cause: with `preserveWords`, `Str::limit` drops the last whole word whenever the cut lands immediately after it (on the following space), treating it as a partial word.
+Fix: `app/Actions/Marketing/NormaliseAdSpec.php:cut()` takes `max + 1` characters, cuts at the last space, then strips trailing punctuation; a single over-long word is cut mid-word (MK-19, `c21a4d7`). Pinned by `ArtDirectorTest` "Given a 90-character headline, then it is trimmed to ≤ 60 at a word boundary".
+Log trail: `marketing.ai.ad_spec_fixed` with `field: headline`, `reason: too_long`.
+
+## 2026-10-13 — One line of Livewire text split apart by inline @if
+Symptom: the studio's "Layout: … · CTA: …" line, written with an inline `@if` for the CTA part, came out as several text nodes, not one sentence, so text assertions on the line failed.
+Root cause: Livewire wraps every Blade `@if` block in morph marker comments (`<!--[if BLOCK]>…<![endif]-->`), which splits an inline sentence into several text nodes.
+Fix: build the line as one PHP string in the view's `@php` block (`$specLine` in `post-studio.blade.php`) and print it once (MK-19, `c21a4d7`). Rule: no inline `@if` inside a sentence in a Livewire view.
+Log trail: none; visible in the rendered HTML.
+
+## 2026-10-13 — A JSON value compared with === after a save never matched
+Symptom: the studio's "unchanged rebuild" check reported a change when it compared Claude's ad choice (`generation_meta.ad`) with `===`, although nothing had changed.
+Root cause: MySQL's JSON type stores objects with keys reordered (by length, then name), so the array read back has a different key order from the one written. `===` on arrays checks order; `==` does not.
+Fix: `PostStudio::revise()` compares the ad with `==`, and tests use `toEqual`, not `toBe`, for JSON columns (MK-19, `c21a4d7`).
+Log trail: none; found by `ArtDirectorTest`.
+
 ## 2026-10-13 — Rendered ads overflowed everywhere although the mockups fit
 Symptom: the first real MK-5 renders had text and photos spilling past their boxes in every style and layout. The same CSS looked right in `docs/mockups/MK-5/option-*.html`.
 Root cause: the mockups set `box-sizing: border-box` on every element in their page chrome, which was not ported with the ad CSS. Under the default `content-box`, every padded box grew by its padding.

@@ -1,5 +1,5 @@
 # Marketing: post studio
-Status: active   ·   Last updated: 2026-10-13   ·   Stories: MK-9, MK-18, MK-5
+Status: active   ·   Last updated: 2026-10-13   ·   Stories: MK-9, MK-18, MK-5, MK-19
 
 ## Overview
 The post studio is one large modal where the owner handles a campaign date from start to finish. They see its three
@@ -77,8 +77,9 @@ not one of the posts on the date being shown (another date's, another project's,
 | Mark as posted / Post it now | `MarkPostPosted` | `posted` + `posted_at`; an optional link → `facebook` network row |
 | + One-off post | `CreateOneOffPost` | A `manual` draft with no campaign, at a future time |
 
-**A rebuild that changes nothing.** `revise()` compares the trimmed caption and `asset_id` before and after
-`ReviseDraft`. If both match, it undoes the new version with `UndoRevision`, keeps the owner's note as taste
+**A rebuild that changes nothing.** `revise()` compares the trimmed caption, `asset_id` and (MK-19)
+Claude's ad choice `generation_meta.ad` before and after `ReviseDraft`. The ad is compared loosely (`==`) because
+MySQL JSON reorders its keys. If all match, it undoes the new version with `UndoRevision`, keeps the owner's note as taste
 feedback, and returns false so the box keeps the text and the studio stays open. It then sets the locked
 `$unchanged` (`post_id`, `reason`, `message`), shown as a warning under that draft's box
 (`data-revise-unchanged`). `app/Actions/Marketing/ExplainUnchangedRevision.php` picks the reason from the note, the
@@ -246,3 +247,5 @@ undone and explained under the box (`ExplainUnchangedRevision`, ADR-080) (MK-9, 
 2026-10-13 — "Inspired by" row and Save to Inspiration with inline Undo; shared upload validation (MK-18, `b874421`)
 2026-10-13 — Rendered ad replaces the HTML preview once it exists: 1:1 / 4:5 switch, Download 1:1 / 4:5, Rendering… and
 Retry; see [ad renderer](marketing-ad-renderer.md) (MK-5, `6a9beb3`)
+2026-10-13 — "Layout: … · CTA: …" line under each draft's ad; Rebuild's unchanged check also compares Claude's ad
+choice; see [art director](marketing-art-director.md) (MK-19, `c21a4d7`)

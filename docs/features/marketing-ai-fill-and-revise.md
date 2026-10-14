@@ -1,11 +1,12 @@
 # Marketing: AI fill and revise
-Status: active   ·   Last updated: 2026-10-13   ·   Stories: MK-8, MK-18
+Status: active   ·   Last updated: 2026-10-13   ·   Stories: MK-8, MK-18, MK-19
 
 ## Overview
 Fill asks Claude for three draft captions for each open campaign date, so the owner only picks and steers and never
 writes from scratch. Revise rewrites one draft from the owner's written feedback and chips, and keeps the version
-it replaced. Regenerate swaps a date's drafts for three new ones. The AI writes words only: colours, fonts and
-layout stay fixed by the brand (MK-2) and never appear in a prompt. Every call records its model, tokens, estimated
+it replaced. Regenerate swaps a date's drafts for three new ones. Colours, fonts and the ad style stay fixed by the
+brand (MK-2) and campaign (MK-5) and never appear in a prompt. Since MK-19 each draft also carries its ad's layout
+and on-image words; see [art director](marketing-art-director.md). Every call records its model, tokens, estimated
 cost and duration. Every caption is linted against the copy rules. The lint warns and never blocks.
 
 Fill has UI on the campaign page (MK-7). Revise, Regenerate and likes/dislikes have their buttons in the
@@ -58,8 +59,9 @@ date is); on `MarketingAiException` it marks the date failed; on any other throw
 prompts and their reply schemas ([ADR-074](../decisions/ADR-074-marketing-prompts-service-and-claude-call-shape.md)).
 - `system($project)`: the fixed part. It names the page (brand name or project name) and gives the brand's voice and
   the copy rules: at most two lines, the filler and banned phrases quoted, no cert lookups, and price sources on
-  comparisons. It ends with one line saying the look is fixed and not the model's job, without naming any part of
-  the look. This part is the prompt-cache prefix.
+  comparisons. It then says the look is fixed and not the model's job, without naming any part of the look, and
+  (MK-19) gives the layout menu and on-image copy rules ([art director](marketing-art-director.md)). This part is
+  the prompt-cache prefix.
 - `draft($campaign, $at)`: the user part. It gives the campaign, the local date and time, and the brief, then one
   topic per draft, then the taste examples, then the photo instruction for the campaign's photo mode.
   - **Topic pool**: the ticked menu ideas (with their sample line), then the own topics (with their detail). An
@@ -218,3 +220,5 @@ All events carry `campaign_id`. Cost is logged as `cost_cents`, a float rounded 
 2026-10-12 — Revise, Regenerate and votes get their UI in the post studio (MK-9, `9d71022`)
 2026-10-13 — Prompts quote inspiration examples and list photos by description; `complete()` takes content blocks
 for image reads (ADR-090) (MK-18, `b874421`)
+2026-10-13 — Each draft and rewrite returns an `ad` spec; three drafts in one layout are `invalid_reply`; see
+[art director](marketing-art-director.md) (MK-19, `c21a4d7`)
