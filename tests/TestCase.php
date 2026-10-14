@@ -2,8 +2,10 @@
 
 namespace Tests;
 
+use App\Services\Marketing\AdRendererClient;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\File;
+use Tests\Support\FakeAdRenderer;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -20,5 +22,9 @@ abstract class TestCase extends BaseTestCase
         $empty = sys_get_temp_dir().'/story-board-sessions/empty';
         File::ensureDirectoryExists($empty);
         config(['board.sessions_path' => $empty]);
+
+        // MK-5: renders run inline on the sync queue after Fill, Revise and photo changes; a real one would start
+        // Chromium in every such test. The one real render is tests/Browser/Marketing/AdRendererTest.php.
+        $this->app->instance(AdRendererClient::class, new FakeAdRenderer);
     }
 }

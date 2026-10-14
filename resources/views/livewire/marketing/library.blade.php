@@ -82,7 +82,13 @@
                                 wire:click="$dispatch('open-studio', { post: {{ $post->id }} })" aria-label="Open {{ $at->copy()->setTimezone($zone)->format('D j M') }} post in the studio"
                                 class="flex min-w-0 flex-col gap-2 rounded-xl border border-edge bg-surface p-2 text-left hover:border-rim hover:bg-raised group-data-[layout=list]/lib:flex-row group-data-[layout=list]/lib:items-center group-data-[layout=list]/lib:gap-3 group-data-[layout=list]/lib:rounded-none group-data-[layout=list]/lib:border-0 {{ $focus }}">
                                 <span class="block w-full shrink-0 group-data-[layout=list]/lib:w-14">
-                                    <x-marketing.post-preview :post="$post" :brand="$brand" :project="$model->name" :label="$post->campaign?->name" />
+                                    {{-- MK-5: the post's 1:1 ad once rendered; the HTML preview until then. --}}
+                                    @if ($renderId = $post->renderId('square'))
+                                        <img data-library-render="{{ $post->id }}" src="{{ route('marketing.asset', [$model->name, $renderId]) }}" width="1080" height="1080" loading="lazy"
+                                            alt="" class="block aspect-square h-auto w-full rounded-lg">
+                                    @else
+                                        <x-marketing.post-preview :post="$post" :brand="$brand" :project="$model->name" :label="$post->campaign?->name" />
+                                    @endif
                                 </span>
                                 <span class="flex min-w-0 flex-1 flex-col gap-1 px-1">
                                     <span class="flex flex-wrap items-center gap-2">

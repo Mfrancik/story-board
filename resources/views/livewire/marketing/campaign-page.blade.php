@@ -25,6 +25,11 @@
         \App\Models\MarketingCampaign::PHOTO_TEXT_ONLY => ['Text only', 'The brand text card'],
         \App\Models\MarketingCampaign::PHOTO_AI_DECIDES => ['Let AI decide', 'A favourite photo or text'],
     ];
+    $adStyles = [
+        \App\Models\MarketingCampaign::AD_STYLE_GALLERY => ['Gallery', 'light, white cards, closest to the kit'],
+        \App\Models\MarketingCampaign::AD_STYLE_VAULT => ['Vault', 'dark, the photo bleeds off the edge'],
+        \App\Models\MarketingCampaign::AD_STYLE_POSTER => ['Poster', 'bold colour blocks, footer bar'],
+    ];
     $ticked = fn (string $category) => collect($this->ideas)->filter(fn ($k) => str_starts_with($k, $category.'|'))->count();
 @endphp
 <main data-campaign-page="{{ $campaign?->slug ?? 'new' }}" class="mx-auto flex max-w-7xl min-w-0 flex-col gap-6 px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
@@ -144,7 +149,7 @@
                     return JSON.stringify({
                         name: $wire.name, days: [...$wire.days].map(Number).sort((a, b) => a - b), time: $wire.time, timezone: $wire.timezone,
                         ideas: [...$wire.ideas].sort(), own: $wire.own.map(o => ({ text: o.text, detail: o.detail ?? '' })),
-                        brief: $wire.brief ?? '', photoMode: $wire.photoMode,
+                        brief: $wire.brief ?? '', photoMode: $wire.photoMode, adStyle: $wire.adStyle,
                     });
                 },
                 get dirty() { return this.current() !== JSON.stringify($wire.stored); },
@@ -292,6 +297,18 @@
                     <flux:error name="photoMode" class="mt-1.5" />
                     <p class="mt-1.5 text-xs text-ink-muted">Favourite photos: {{ $favourites }} · <a href="{{ route('projects.marketing.settings', $model->name) }}" wire:navigate class="underline hover:text-ink">manage</a>.</p>
                 </fieldset>
+
+                {{-- MK-5: which of the three ad styles this campaign's posts are rendered in. --}}
+                <div>
+                    <label for="cp-ad-style" class="{{ $label }}">Ad style</label>
+                    <select id="cp-ad-style" wire:model="adStyle" data-ad-style-select @error('adStyle') aria-invalid="true" @enderror aria-describedby="cp-ad-style-hint cp-ad-style-err" class="{{ $input }} {{ $border('adStyle') }}">
+                        @foreach ($adStyles as $value => [$title, $hint])
+                            <option value="{{ $value }}">{{ $title }} · {{ $hint }}</option>
+                        @endforeach
+                    </select>
+                    <p id="cp-ad-style-hint" class="mt-1 text-xs text-ink-muted">The look of every ad this campaign renders. New renders use it; existing ones keep theirs.</p>
+                    <flux:error name="adStyle" id="cp-ad-style-err" class="mt-1.5" />
+                </div>
 
                 <div data-savebar class="sticky bottom-0 -mx-4 flex flex-wrap items-center gap-2 border-t border-hairline bg-surface px-4 pt-3 pb-1 sm:-mx-5 sm:px-5">
                     @if ($campaign)

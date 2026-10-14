@@ -21,13 +21,15 @@ class EditPostCaption
 
     /**
      * @param  LintCaption  $lint  the copy-rules lint
+     * @param  QueuePostRender  $render  queues the ad render with the new words (MK-5)
      */
-    public function __construct(private LintCaption $lint) {}
+    public function __construct(private LintCaption $lint, private QueuePostRender $render) {}
 
     /**
      * Set `$post`'s caption to `$caption` (trimmed) and re-lint it.
      *
-     * Side effects: writes the post; logs `marketing.post.caption_edited` (lint codes) or `marketing.post.refused`.
+     * Side effects: writes the post; queues its ad render (MK-5); logs `marketing.post.caption_edited` (lint codes) or
+     * `marketing.post.refused`.
      *
      * @throws MarketingPostRefusedException when the post has gone out, been skipped or discarded, or the caption is empty
      */
@@ -46,6 +48,8 @@ class EditPostCaption
         Log::info('marketing.post.caption_edited', [
             'post_id' => $post->id, 'campaign_id' => $post->campaign_id, 'version' => $post->version, 'lint' => array_column((array) $post->lint, 'code'),
         ]);
+        // The ad's headline is the caption's first line, so a hand edit is redrawn too (or the image would disagree).
+        $this->render->handle($post);
 
         return $post;
     }

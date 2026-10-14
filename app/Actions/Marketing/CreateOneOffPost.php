@@ -21,13 +21,15 @@ class CreateOneOffPost
 
     /**
      * @param  LintCaption  $lint  the copy-rules lint
+     * @param  QueuePostRender  $render  queues the new post's ad render (MK-5)
      */
-    public function __construct(private LintCaption $lint) {}
+    public function __construct(private LintCaption $lint, private QueuePostRender $render) {}
 
     /**
      * Create a draft one-off post for `$project` at `$at` with `$caption`.
      *
-     * Side effects: writes the post; logs `marketing.post.one_off_created` or `marketing.post.refused`.
+     * Side effects: writes the post; queues its ad render (MK-5); logs `marketing.post.one_off_created` or
+     * `marketing.post.refused`.
      *
      * @throws MarketingPostRefusedException when `$at` is not after `$now`, or the caption is empty
      */
@@ -47,6 +49,7 @@ class CreateOneOffPost
             'caption' => $caption, 'source' => 'manual', 'lint' => $this->lint->handle($caption, is_array($rules) ? $rules : []),
         ]);
         Log::info('marketing.post.one_off_created', ['post_id' => $post->id, 'campaign_id' => null, 'version' => $post->version, 'project' => $project->name]);
+        $this->render->handle($post);
 
         return $post;
     }

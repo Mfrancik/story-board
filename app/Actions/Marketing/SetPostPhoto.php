@@ -18,9 +18,15 @@ class SetPostPhoto
     use RefusesPostActions;
 
     /**
+     * @param  QueuePostRender  $render  queues the ad render with the new photo, or as the text card (MK-5)
+     */
+    public function __construct(private QueuePostRender $render) {}
+
+    /**
      * Give `$post` the photo `$asset`, or make it text only when null.
      *
-     * Side effects: writes the post; logs `marketing.post.photo_set` (asset_id, text_only) or `marketing.post.refused`.
+     * Side effects: writes the post; queues its ad render (MK-5); logs `marketing.post.photo_set` (asset_id,
+     * text_only) or `marketing.post.refused`.
      *
      * @throws MarketingPostRefusedException when the post has gone out, been skipped or discarded
      */
@@ -34,6 +40,7 @@ class SetPostPhoto
         Log::info('marketing.post.photo_set', [
             'post_id' => $post->id, 'campaign_id' => $post->campaign_id, 'version' => $post->version, 'asset_id' => $asset?->id, 'text_only' => $asset === null,
         ]);
+        $this->render->handle($post);
 
         return $post;
     }

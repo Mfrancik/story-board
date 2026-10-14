@@ -176,6 +176,7 @@
                     <button type="button" x-on:click="peek = null" aria-label="Close" class="inline-flex size-9 items-center justify-center rounded-lg text-ink-muted hover:bg-raised hover:text-ink {{ $focus }}">✕</button>
                 </div>
                 <span data-peek-state class="self-start rounded-full border px-2 py-0.5 text-xs" x-bind:class="{{ $peekTone }}" x-text="peek.state"></span>
+                <img data-peek-image x-show="peek.image" x-bind:src="peek.image" alt="The ad for this post" width="1080" height="1080" class="block aspect-square h-auto w-full rounded-lg">
                 <p class="text-sm text-ink-soft" x-show="peek.caption" x-text="peek.caption"></p>
                 <div class="flex flex-wrap gap-2">
                     <a data-peek-campaign x-show="peek.campaignUrl" x-bind:href="peek.campaignUrl" wire:navigate class="{{ $button }}">Open campaign ›</a>

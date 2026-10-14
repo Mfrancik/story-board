@@ -30,6 +30,8 @@
         'state' => $words[$state] ?? $state,
         'tone' => $state,
         'caption' => $caption,
+        // MK-5: the post's 1:1 ad, shown in the peek once rendered.
+        'image' => ($renderId = $chip['post']?->renderId('square')) !== null ? route('marketing.asset', [$project, $renderId]) : null,
         'campaignUrl' => $campaign ? route('projects.marketing.campaign', [$project, $campaign->slug]) : null,
         'studio' => $campaign ? ['campaign' => $campaign->id, 'date' => $chip['date']] : ['post' => $chip['post']?->id],
     ];

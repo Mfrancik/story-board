@@ -27,14 +27,15 @@ class ReviseDraft
      * @param  MarketingAiClient  $ai  the model
      * @param  MarketingPrompts  $prompts  what the model is asked
      * @param  LintCaption  $lint  the copy-rules lint run on the new caption
+     * @param  QueuePostRender  $render  queues the new version's ad render (MK-5)
      */
-    public function __construct(private MarketingAiClient $ai, private MarketingPrompts $prompts, private LintCaption $lint) {}
+    public function __construct(private MarketingAiClient $ai, private MarketingPrompts $prompts, private LintCaption $lint, private QueuePostRender $render) {}
 
     /**
      * Rewrite draft `$post` from `$feedback` and `$chips` (any of CHIPS) and return it as its next version.
      *
-     * Side effects: one Claude call; writes a version row, a feedback row and the post; logs
-     * `marketing.ai.revise.succeeded|failed|refused`, `marketing.ai.invalid_asset`, `marketing.lint.warned`.
+     * Side effects: one Claude call; writes a version row, a feedback row and the post; queues the post's ad render
+     * (MK-5); logs `marketing.ai.revise.succeeded|failed|refused`, `marketing.ai.invalid_asset`, `marketing.lint.warned`.
      *
      * @param  list<string>  $chips
      *
@@ -100,6 +101,7 @@ class ReviseDraft
         Log::info('marketing.ai.revise.succeeded', ['campaign_id' => $post->campaign_id, 'post_id' => $post->id, 'version' => $post->version,
             'chips' => $chips, 'model' => $meta['model'], 'input_tokens' => $meta['input_tokens'], 'output_tokens' => $meta['output_tokens'],
             'cost_cents' => $meta['cost_micro_usd'] === null ? null : round($meta['cost_micro_usd'] / 10000, 4), 'duration_ms' => $meta['duration_ms']]);
+        $this->render->handle($post);
 
         return $post;
     }

@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 
 /**
  * Creates or updates a project's campaign criteria (MK-7): name, schedule (days, time, timezone), topics, brief and
- * photo choice. The campaign page's one form saves through here in both modes, so create and edit are one path.
+ * photo choice, and (MK-5) the ad style its posts are rendered in. The campaign page's one form saves through here in both modes, so create and edit are one path.
  * Input is already validated by the caller; this only normalises it.
  *
  * Saving never touches posts. A post belongs to a date by its local day (ADR-062), so moving a campaign from Tuesday
@@ -23,7 +23,7 @@ class SaveCampaign
     /**
      * Save `$data` as a new campaign of `$project`, or onto `$campaign` when one is given.
      *
-     * @param  array{name: string, days: list<int|string>, time: string, timezone: string, topics: array{ideas: list<string>, own: list<array{text: string, detail?: string|null}>}, brief: string|null, photo_mode: string}  $data
+     * @param  array{name: string, days: list<int|string>, time: string, timezone: string, topics: array{ideas: list<string>, own: list<array{text: string, detail?: string|null}>}, brief: string|null, photo_mode: string, ad_style?: string|null}  $data
      *
      * Side effects: writes `marketing_campaigns`; logs `marketing.campaign.created` (project, campaign_id, slug) or
      * `marketing.campaign.updated` (project, campaign_id, changed: the columns that changed, possibly none).
@@ -61,7 +61,7 @@ class SaveCampaign
      * own topics trimmed, blank ones dropped, in the owner's order.
      *
      * @param  array<string, mixed>  $data
-     * @return array{name: string, days: list<int>, time: string, timezone: string, topics: array{ideas: list<string>, own: list<array{text: string, detail: string|null}>}, brief: string|null, photo_mode: string}
+     * @return array{name: string, days: list<int>, time: string, timezone: string, topics: array{ideas: list<string>, own: list<array{text: string, detail: string|null}>}, brief: string|null, photo_mode: string, ad_style: string|null}
      */
     private function normalise(array $data): array
     {
@@ -85,6 +85,10 @@ class SaveCampaign
             'topics' => ['ideas' => array_values(array_unique($data['topics']['ideas'])), 'own' => $own],
             'brief' => $brief === '' ? null : $brief,
             'photo_mode' => $data['photo_mode'],
+            // Null is gallery (MarketingCampaign::adStyle()), so the default is stored as null: an untouched form never
+            // reads as a change. Anything unknown is null too; the caller has already validated it.
+            'ad_style' => in_array($data['ad_style'] ?? null, MarketingCampaign::AD_STYLES, true) && $data['ad_style'] !== MarketingCampaign::AD_STYLE_GALLERY
+                ? $data['ad_style'] : null,
         ];
     }
 

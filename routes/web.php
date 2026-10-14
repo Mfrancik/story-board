@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\JourneyShotController;
 use App\Http\Controllers\MarketingAssetController;
+use App\Http\Controllers\MarketingRenderController;
 use App\Http\Controllers\MockupFileController;
 use App\Http\Controllers\MockupSetFileController;
 use App\Http\Middleware\EnsureProjectIsShown;
@@ -135,6 +136,14 @@ Route::get('/p/{project:name}/marketing/assets/{asset}', MarketingAssetControlle
     ->whereNumber('asset')
     ->middleware(EnsureProjectIsShown::class)
     ->name('marketing.asset');
+
+// One post's rendered ad as a download (MK-5): "Download 1:1" and "Download 4:5" in the studio. `size` takes any word
+// so an unknown one reaches the controller and is refused and logged there.
+Route::get('/p/{project:name}/marketing/posts/{post}/ad/{size}', MarketingRenderController::class)
+    ->whereNumber('post')
+    ->where('size', '[a-z]+')
+    ->middleware(EnsureProjectIsShown::class)
+    ->name('marketing.render');
 
 // Raw mockup bytes from a project's ref (SB-4). `file` may contain slashes (shots/01.png);
 // ReadMockupFile, not this pattern, decides what is allowed.

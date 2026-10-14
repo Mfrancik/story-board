@@ -15,10 +15,11 @@ use Illuminate\Support\Facades\Storage;
  * Journey marketing-post (docs/journeys/marketing-post.md): from a recurring campaign to approved posts, ready to
  * publish. Created by MK-1 with step 1; each later MK story adds its step (MK-2: step 2, the brand in Settings; MK-7:
  * step 3, the campaign page; MK-8: step 4, Fill; MK-9: step 5, the post studio; MK-10: step 6, the calendar; MK-18:
- * step 7, inspiration). Claude is faked with Http::fake (fakeClaude()) by one reply carrying `drafts` (what Fill
+ * step 7, inspiration; MK-5: step 8, rendered ads). Claude is faked with Http::fake (fakeClaude()) by one reply carrying `drafts` (what Fill
  * reads), `caption` (what Revise reads) and `headline`/`style`/`topic` (what an inspiration read reads), since the
  * first matching fake wins. Only RefreshProjectJob is faked on the queue, so Fill's DraftOccurrenceJob and the
- * inspiration read run inline on the sync queue. The local disk is faked from the start, because step 2's seed now
+ * inspiration read run inline on the sync queue, and so does each draft's RenderPostAd with the fake renderer
+ * (Tests\Support\FakeAdRenderer, bound in Tests\TestCase; the real render is tests/Browser/Marketing/AdRendererTest.php). The local disk is faked from the start, because step 2's seed now
  * copies the kit's images into inspiration. `JOURNEY_SHOTS=1` saves each step to `storage/app/journey-shots/marketing-post/`.
  */
 beforeEach(function () {
@@ -159,4 +160,28 @@ it('walks the marketing-post journey', function () {
         ->assertSeeIn('[data-inspired-by="'.$filled->id.'"]', 'Inspired by')
         ->assertVisible('[data-inspired-by="'.$filled->id.'"] [data-inspired-asset="'.$ad->id.'"]')
         ->assertNoJavaScriptErrors();
+
+    // Step 8 (MK-5): after Fill, every draft is a rendered on-brand ad. Ask the community (seeded in step 2) lets the
+    // AI decide on photos, so its drafts need none and render at once: the studio shows the render, with Download of
+    // the 1:1 and the 4:5 PNG.
+    $page = visit('/p/coins/marketing/campaigns/ask-the-community')
+        ->assertAttribute('[data-occurrence="2026-10-18"]', 'data-occurrence-state', 'open')
+        ->click('[data-fill="2026-10-18"]')
+        ->assertAttribute('[data-occurrence="2026-10-18"]', 'data-occurrence-state', 'review')
+        ->click('[data-open-studio="2026-10-18"]')
+        ->assertVisible('[data-studio] [role="dialog"]');
+    $rendered = MarketingPost::whereDate('scheduled_for', '2026-10-18')->orderBy('id')->get();
+    expect($rendered)->toHaveCount(3)
+        ->and($rendered->every(fn (MarketingPost $p) => $p->renderState() === MarketingPost::RENDER_RENDERED))->toBeTrue();
+    $first = $rendered->first();
+    journeyStep('marketing-post', 'rendered ad', '/p/coins/marketing/campaigns/ask-the-community', $page)
+        ->assertVisible('[data-ad-render="'.$first->id.'"]')
+        ->assertAttribute('[data-draft="'.$first->id.'"] [data-download-ad="square"]', 'href', route('marketing.render', ['coins', $first->id, 'square']))
+        ->assertAttribute('[data-draft="'.$first->id.'"] [data-download-ad="portrait"]', 'href', route('marketing.render', ['coins', $first->id, 'portrait']))
+        ->click('[data-draft="'.$first->id.'"] [data-ratio="portrait"]')
+        ->assertNoJavaScriptErrors();
+    foreach (['square' => [1080, 1080], 'portrait' => [1080, 1350]] as $size => $dims) {
+        $png = $this->get(route('marketing.render', ['coins', $first->id, $size]))->assertOk()->assertHeader('Content-Type', 'image/png')->streamedContent();
+        expect(array_slice(getimagesizefromstring($png) ?: [], 0, 2))->toBe($dims);
+    }
 });

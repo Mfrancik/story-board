@@ -25,6 +25,7 @@ use Illuminate\Support\Carbon;
  * @property array{ideas: list<string>, own: list<array{text: string, detail: string|null}>} $topics
  * @property string|null $brief
  * @property string $photo_mode
+ * @property string|null $ad_style one of AD_STYLES (MK-5); null reads as gallery
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -48,8 +49,20 @@ class MarketingCampaign extends Model
     /** Every photo choice, in the order the campaign form offers them (MK-7). */
     public const PHOTO_MODES = [self::PHOTO_PER_POST, self::PHOTO_FAVOURITES, self::PHOTO_TEXT_ONLY, self::PHOTO_AI_DECIDES];
 
+    /** Ad style (MK-5): light surface, white cards with the brand's halo — closest to the kit. The default. */
+    public const AD_STYLE_GALLERY = 'gallery';
+
+    /** Ad style (MK-5): ink ground, the photo bleeding off the edge, surface type, accent eyebrows and glow. */
+    public const AD_STYLE_VAULT = 'vault';
+
+    /** Ad style (MK-5): colour blocks of accent, soft and ink, split photo and text, an ink footer bar. */
+    public const AD_STYLE_POSTER = 'poster';
+
+    /** Every ad style, in the order the campaign form offers them. */
+    public const AD_STYLES = [self::AD_STYLE_GALLERY, self::AD_STYLE_VAULT, self::AD_STYLE_POSTER];
+
     /** @var list<string> */
-    protected $fillable = ['project_id', 'name', 'slug', 'days', 'time', 'timezone', 'is_enabled', 'topics', 'brief', 'photo_mode'];
+    protected $fillable = ['project_id', 'name', 'slug', 'days', 'time', 'timezone', 'is_enabled', 'topics', 'brief', 'photo_mode', 'ad_style'];
 
     /**
      * A new campaign starts with an empty topic pool, so `topics` always has both keys.
@@ -71,6 +84,14 @@ class MarketingCampaign extends Model
             'topics' => 'array',
             'is_enabled' => 'boolean',
         ];
+    }
+
+    /**
+     * The ad style its posts are rendered in (MK-5): the stored one, or gallery when none is set or it is unknown.
+     */
+    public function adStyle(): string
+    {
+        return in_array($this->ad_style, self::AD_STYLES, true) ? $this->ad_style : self::AD_STYLE_GALLERY;
     }
 
     /**

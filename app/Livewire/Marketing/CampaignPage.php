@@ -74,6 +74,9 @@ class CampaignPage extends Component
 
     public string $photoMode = MarketingCampaign::PHOTO_PER_POST;
 
+    /** The campaign's ad style (MK-5), one of MarketingCampaign::AD_STYLES. */
+    public string $adStyle = MarketingCampaign::AD_STYLE_GALLERY;
+
     /** The "Add a topic" input. */
     public string $newTopic = '';
 
@@ -146,6 +149,7 @@ class CampaignPage extends Component
         $campaign = $save->handle($model, $this->campaign(), [
             'name' => $this->name, 'days' => $this->days, 'time' => $this->time, 'timezone' => $this->timezone,
             'topics' => ['ideas' => $this->ideas, 'own' => $this->own], 'brief' => $this->brief, 'photo_mode' => $this->photoMode,
+            'ad_style' => $this->adStyle,
         ]);
 
         if ($this->campaignId === null) {
@@ -166,7 +170,7 @@ class CampaignPage extends Component
         $this->resetErrorBag();
         $campaign = $this->campaign();
         if ($campaign === null) {
-            $this->reset('name', 'days', 'time', 'ideas', 'own', 'brief', 'photoMode', 'newTopic');
+            $this->reset('name', 'days', 'time', 'ideas', 'own', 'brief', 'photoMode', 'adStyle', 'newTopic');
             $this->timezone = (string) config('board.timezone');
 
             return;
@@ -327,7 +331,9 @@ class CampaignPage extends Component
             'own.*.detail' => ['nullable', 'string', 'max:1000'],
             'brief' => ['nullable', 'string', 'max:240'],
             'photoMode' => ['required', Rule::in(MarketingCampaign::PHOTO_MODES)],
+            'adStyle' => ['required', Rule::in(MarketingCampaign::AD_STYLES)],
         ], [
+            'adStyle.in' => 'Pick one of the ad styles.',
             'name.unique' => 'This project already has a campaign with that name.',
             'days.required' => 'Pick at least one day.',
             'time.date_format' => 'Use a time like 19:00.',
@@ -349,6 +355,7 @@ class CampaignPage extends Component
         $this->own = array_map(fn (array $o) => ['text' => $o['text'], 'detail' => (string) $o['detail']], $campaign->topics['own'] ?? []);
         $this->brief = (string) $campaign->brief;
         $this->photoMode = $campaign->photo_mode;
+        $this->adStyle = $campaign->adStyle();
         $this->stored = $this->snapshot();
     }
 
@@ -368,7 +375,7 @@ class CampaignPage extends Component
         return [
             'name' => $this->name, 'days' => $days, 'time' => $this->time, 'timezone' => $this->timezone, 'ideas' => $ideas,
             'own' => array_map(fn (array $o) => ['text' => $o['text'], 'detail' => $o['detail']], $this->own),
-            'brief' => $this->brief, 'photoMode' => $this->photoMode,
+            'brief' => $this->brief, 'photoMode' => $this->photoMode, 'adStyle' => $this->adStyle,
         ];
     }
 

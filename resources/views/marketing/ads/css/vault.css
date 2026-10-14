@@ -1,0 +1,60 @@
+/* MK-5 ad style "vault" (docs/mockups/MK-5/option-b.html). */
+/* B · Vault: ink ground, the coin photo bleeds off the edge, surface type, accent eyebrows and glow. */
+.B{background:var(--ink);color:var(--surface);padding:72px}
+.B .brand .beta{background:color-mix(in srgb,var(--surface) 90%,transparent);color:var(--ink)}
+.B .eyebrow{font-size:30px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+.B .sub{font-size:36px;line-height:1.38;color:color-mix(in srgb,var(--surface) 78%,var(--ink))}
+.B .hdr{display:flex;justify-content:space-between;align-items:center;gap:24px;position:relative;z-index:2}
+.B .badge{display:inline-flex;align-items:center;background:var(--surface);color:var(--ink);font-size:30px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:18px 30px;border-radius:var(--radius);white-space:nowrap}
+.B .cta{display:inline-flex;align-items:center;background:var(--accent);color:var(--ink);font-size:34px;font-weight:600;padding:22px 40px;border-radius:var(--radius)}
+.B .z{position:relative;z-index:2}
+
+.B-photo .bleed{position:absolute;z-index:0}
+.B-photo .scrim{position:absolute;inset:0;z-index:1;background:
+  linear-gradient(90deg, color-mix(in srgb,var(--ink) 92%,transparent) 0 26%, transparent 62%),
+  linear-gradient(0deg, color-mix(in srgb,var(--ink) 92%,transparent) 0 8%, transparent 34%)}
+.B-photo .hl{margin-top:30px}
+.B-photo .fit{--bw:600;--bh:300;--max:132;--min:54;color:var(--surface)}
+.tall.B-photo .fit{--bh:380;--max:140}
+.B-photo .bot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;gap:40px}
+.B-photo .bot .sub{max-width:600px;font-size:34px}
+
+.B-text{padding:96px 96px 80px}
+.B-text .wm{position:absolute;right:-180px;bottom:-200px;width:880px;height:880px;color:var(--accent);opacity:.13}
+.B-text .body{flex:1;display:flex;flex-direction:column;justify-content:center;gap:40px;position:relative;z-index:2}
+.B-text .fitwrap{border-left:12px solid var(--accent);padding-left:52px}
+.B-text .fit{--bw:820;--bh:500;--max:170}
+.tall.B-text .fit{--bh:700;--max:180}
+
+.B-q{align-items:center;text-align:center}
+.B-q .body{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:36px}
+.B-q .quo{font-size:300px;line-height:.6;height:150px;font-weight:700;color:var(--accent);font-family:Georgia,'Times New Roman',serif}
+.B-q .fit{--bw:900;--bh:420;--max:124}
+.tall.B-q .fit{--bh:600;--max:132}
+.B-q .eyebrow{margin-bottom:-6px}
+
+.B-spot .glow{position:absolute;inset:0;background:radial-gradient(circle at 50% 46%, color-mix(in srgb,var(--accent) 42%,transparent), transparent 46%)}
+.B-spot .stage{flex:1;display:grid;place-items:center;position:relative;z-index:2;min-height:0}
+.B-spot .stamp{position:absolute;right:-30px;top:10px;width:200px;height:200px;border-radius:50%;background:var(--accent);color:var(--ink);display:grid;place-items:center;text-align:center;font-size:32px;font-weight:700;letter-spacing:.08em;line-height:1.1;text-transform:uppercase;transform:rotate(-12deg);box-shadow:0 0 0 10px var(--ink), 0 0 0 13px var(--accent)}
+.B-spot .txt{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px}
+/* MK-5 tuning: k .9 so a two-line name keeps its descenders inside the box. */
+.B-spot .fit{--bw:900;--bh:110;--max:84;--min:44;--k:.9}
+.tall.B-spot .fit{--bh:130;--max:92}
+
+.B-stat .rings{position:absolute;right:-300px;bottom:-300px;width:900px;height:900px;border-radius:50%;
+  background:repeating-radial-gradient(circle, transparent 0 46px, color-mix(in srgb,var(--accent) 22%,transparent) 46px 50px)}
+.B-stat .body{flex:1;display:flex;flex-direction:column;justify-content:center;gap:30px;position:relative;z-index:2}
+/* MK-5 tuning: the box is one line at the max size, descender room included (1.2em). */
+.B-stat .fit{--bw:936;--bh:280;--max:230;--k:.56;--kw:.5;color:var(--accent);letter-spacing:-.045em;font-variant-numeric:tabular-nums}
+.tall.B-stat .fit{--bh:300;--max:250}
+.B-stat .sub{font-size:44px;color:var(--surface);max-width:820px}
+.B-stat .foot{display:flex;justify-content:space-between;align-items:center;position:relative;z-index:2}
+.B-stat .foot>span:first-child{font-size:28px;color:color-mix(in srgb,var(--surface) 60%,var(--ink))}
+
+/* The post's photo: bleeding off the right edge under the scrim (photo + headline), or centred in the glow with the
+   badge stamped on it (spotlight; the mockup's 520 / 700 px coin). */
+/* Round, as the mockup's coin: a coin photo is a coin on a plain ground, and the circle keeps that ground out. */
+.B-photo .bleed{right:-360px;top:140px;width:1180px;height:1180px;border-radius:50%;overflow:hidden}
+.tall.B-photo .bleed{right:-430px;top:190px;width:1360px;height:1360px}
+.B-spot .shot{width:520px;height:520px;border-radius:50%;overflow:hidden}
+.tall.B-spot .shot{width:700px;height:700px}

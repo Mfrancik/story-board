@@ -20,14 +20,15 @@ class ApprovePost
 
     /**
      * @param  FindOccurrencePosts  $occurrence  the date's other drafts
+     * @param  QueuePostRender  $render  renders a post approved before it ever was (MK-5)
      */
-    public function __construct(private FindOccurrencePosts $occurrence) {}
+    public function __construct(private FindOccurrencePosts $occurrence, private QueuePostRender $render) {}
 
     /**
      * Approve draft `$post` and discard its date's other drafts.
      *
-     * Side effects: writes the post and its siblings; logs `marketing.post.approved` (post_id, campaign_id, version,
-     * discarded) or `marketing.post.refused`.
+     * Side effects: writes the post and its siblings; queues its ad render when it has none (MK-5); logs
+     * `marketing.post.approved` (post_id, campaign_id, version, discarded) or `marketing.post.refused`.
      *
      * @throws MarketingPostRefusedException when the post is not a draft, or still needs its photo
      */
@@ -54,6 +55,10 @@ class ApprovePost
         Log::info('marketing.post.approved', [
             'post_id' => $post->id, 'campaign_id' => $post->campaign_id, 'version' => $post->version, 'discarded' => $siblings->modelKeys(),
         ]);
+        // An approved post must have its ad to post; one that has it (or is rendering) keeps it as it is.
+        if (in_array($post->renderState(), [MarketingPost::RENDER_NONE, MarketingPost::RENDER_FAILED], true)) {
+            $this->render->handle($post, respec: false);
+        }
 
         return $post;
     }

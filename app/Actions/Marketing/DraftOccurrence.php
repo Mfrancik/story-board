@@ -32,6 +32,7 @@ class DraftOccurrence
      * @param  LintCaption  $lint  the copy-rules lint run on every caption
      * @param  CampaignSchedule  $schedule  the campaign's timezone, for which day a post is on
      * @param  BuildCampaignRunway  $runway  whose day() places a post on a date
+     * @param  QueuePostRender  $render  queues each new draft's ad render (MK-5)
      */
     public function __construct(
         private MarketingAiClient $ai,
@@ -39,13 +40,15 @@ class DraftOccurrence
         private LintCaption $lint,
         private CampaignSchedule $schedule,
         private BuildCampaignRunway $runway,
+        private QueuePostRender $render,
     ) {}
 
     /**
      * Draft `$campaign`'s date `$at` (the occurrence's time) and return the new posts, in candidate order.
      *
-     * Side effects: one Claude call; writes the posts (and with `$replace` discards the old drafts); logs
-     * `marketing.ai.draft.started|succeeded|failed|refused`, `marketing.ai.invalid_asset`, `marketing.lint.warned`.
+     * Side effects: one Claude call; writes the posts (and with `$replace` discards the old drafts); queues each new
+     * draft's ad render (MK-5, QueuePostRender); logs `marketing.ai.draft.started|succeeded|failed|refused`,
+     * `marketing.ai.invalid_asset`, `marketing.lint.warned`.
      *
      * @return Collection<int, MarketingPost>
      *
@@ -119,6 +122,9 @@ class DraftOccurrence
         Log::info('marketing.ai.draft.succeeded', [...$context, 'post_ids' => $posts->pluck('id')->all(), 'replaced' => $replace ? $existing->count() : 0,
             'model' => $meta['model'], 'input_tokens' => $meta['input_tokens'], 'output_tokens' => $meta['output_tokens'],
             'cost_cents' => $meta['cost_micro_usd'] === null ? null : round($meta['cost_micro_usd'] / 10000, 4), 'duration_ms' => $meta['duration_ms']]);
+
+        // MK-5: every draft becomes an ad image (a draft still waiting for its photo is skipped until it gets one).
+        $posts->each(fn (MarketingPost $post) => $this->render->handle($post));
 
         return $posts;
     }

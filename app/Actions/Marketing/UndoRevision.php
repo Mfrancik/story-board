@@ -20,14 +20,15 @@ class UndoRevision
 
     /**
      * @param  LintCaption  $lint  re-run on the restored caption
+     * @param  QueuePostRender  $render  queues the restored version's ad render (MK-5)
      */
-    public function __construct(private LintCaption $lint) {}
+    public function __construct(private LintCaption $lint, private QueuePostRender $render) {}
 
     /**
      * Put draft `$post` back to its previous version.
      *
-     * Side effects: writes the post, deletes its latest kept version; logs `marketing.post.revision_undone` or
-     * `marketing.post.refused`.
+     * Side effects: writes the post, deletes its latest kept version; queues its ad render (MK-5); logs
+     * `marketing.post.revision_undone` or `marketing.post.refused`.
      *
      * @throws MarketingPostRefusedException when the post is not a draft or has no earlier version
      */
@@ -51,6 +52,7 @@ class UndoRevision
         });
 
         Log::info('marketing.post.revision_undone', ['post_id' => $post->id, 'campaign_id' => $post->campaign_id, 'version' => $post->version]);
+        $this->render->handle($post);
 
         return $post;
     }

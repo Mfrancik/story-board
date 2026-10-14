@@ -1,0 +1,38 @@
+/* MK-5 ad templates: shared by every style. Ported from docs/mockups/MK-5/option-{a,b,c}.html (identical in all
+   three). Brand values arrive as CSS variables on .ad (BuildAdHtml prints them from MarketingBrand); no app tokens,
+   no JS, no external URLs. --soft is DERIVED (the brand has no soft field yet, F-19): accent mixed into white. */
+/* The mockups set border-box on everything from their page chrome; the ads are measured with it. */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0;background:transparent}
+.ad{
+  --soft:color-mix(in srgb, var(--accent) 22%, #fff);            /* derived, not a brand field */
+  --muted:color-mix(in srgb, var(--ink) 62%, var(--surface));
+  --halo:0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent), 0 28px 70px -16px color-mix(in srgb, var(--accent) 55%, transparent);
+  width:1080px; position:relative; overflow:hidden; display:flex; flex-direction:column;
+  font-family:var(--font), 'Helvetica Neue', Arial, sans-serif; background:var(--surface); color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+}
+.ad.sq{height:1080px}
+.ad.tall{height:1350px}
+.ad *{box-sizing:border-box}
+.ad p,.ad h1,.ad h2{margin:0}
+
+/* Brand lockup: the brand's logo_svg + name, as on every kit post. */
+.brand{display:flex;align-items:center;gap:14px;font-size:34px;font-weight:500;letter-spacing:-.01em;white-space:nowrap}
+.brand .swirl{width:40px;height:40px;color:var(--accent);flex:none;display:block}
+.swirl svg,.wm svg{display:block;width:100%;height:100%;fill:currentColor}
+
+/* Shrink-to-fit, pure CSS. Each layout gives its headline box in px (--bw x --bh); the size that fills that area
+   for --chars characters is sqrt(area / (k * chars)), and no wider than the box allows for the longest word
+   (--word), clamped to the layout's min/max. k covers glyph width x line-height x wrap slack. overflow:hidden is
+   the last guard, never the plan. */
+.fit{
+  font-size:clamp(calc(var(--min,44) * 1px), calc(min(sqrt(var(--bw) * var(--bh) / (var(--k,.74) * var(--chars))), var(--bw) / (var(--kw,.62) * var(--word))) * 1px), calc(var(--max,150) * 1px));
+  line-height:1.08; letter-spacing:-.028em; font-weight:600; text-wrap:balance;
+  max-width:calc(var(--bw) * 1px); max-height:calc(var(--bh) * 1px); overflow:hidden;
+  padding-bottom:.12em;  /* room for descenders and the font's tall ascent inside the box */
+}
+
+/* The post's photo (the mockups' CSS coin placeholders): cover its slot, cropped by the spec's crop. */
+.ad .img{display:block;width:100%;height:100%;object-fit:cover;object-position:center}
+.ad .img.fill{position:absolute;inset:0}

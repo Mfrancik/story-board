@@ -1,5 +1,5 @@
 # MK-5 — Ad renderer: every post becomes an on-brand image
-Status: approved       Journey: marketing-post (step 8 of 10)
+Status: built          Journey: marketing-post (step 8 of 10)
 Source: owner 2026-10-13: "i want to get this to actually generate and render ads for me to sift through and pick and
 choose"; phase 3 batch 1 approved ("approve all"); renderer: reuse Playwright (owner pick)
 

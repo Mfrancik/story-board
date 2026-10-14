@@ -12,6 +12,7 @@ use App\Actions\Marketing\FindOccurrencePosts;
 use App\Actions\Marketing\FindProjectAsset;
 use App\Actions\Marketing\ListDatesToApprove;
 use App\Actions\Marketing\MarkPostPosted;
+use App\Actions\Marketing\QueuePostRender;
 use App\Actions\Marketing\RecordFeedback;
 use App\Actions\Marketing\RegenerateOccurrence;
 use App\Actions\Marketing\RemoveSavedInspiration;
@@ -64,6 +65,8 @@ use Livewire\WithFileUploads;
  * Every post id the client sends is checked against the date the studio is on, so a forged id is a 404.
  *
  * MK-18 adds a draft's "Inspired by" row (the inspiration its prompt quoted) and "♡ Save to Inspiration" with Undo.
+ * MK-5 shows each post's rendered ad (1:1 / 4:5, Download of both) in place of the HTML preview once it exists, with
+ * "Rendering…" and "Couldn't render · Retry" meanwhile.
  */
 class PostStudio extends Component
 {
@@ -409,6 +412,24 @@ class PostStudio extends Component
         if ($remove->handle($post)) {
             Flux::toast(variant: 'success', text: 'Removed from Inspiration');
         }
+    }
+
+    /**
+     * "Retry" under a render that failed (or "Render" on a post never rendered): queue post `$id`'s ad render again,
+     * keeping its spec. The preview polls until it lands.
+     *
+     * Side effects: QueuePostRender writes the post's `ad`, queues the job and logs; a post that cannot be rendered
+     * yet (still waiting for its photo) is toasted.
+     */
+    public function retryRender(QueuePostRender $render, int $id): void
+    {
+        $post = $this->shownPost($id);
+        if ($render->handle($post, respec: false)) {
+            Flux::toast(text: 'Rendering the ad');
+
+            return;
+        }
+        Flux::toast(variant: 'warning', text: 'This post needs its photo before it can be rendered.');
     }
 
     /**

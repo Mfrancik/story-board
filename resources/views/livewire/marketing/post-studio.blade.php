@@ -8,6 +8,9 @@
     keys), `compare`, the favourites grid, the reschedule and mark-posted forms, and `unapproving` for
     board/confirm-modal. Everything that reads or writes data is a Livewire call. MK-18 adds "♡ Save to Inspiration"
     (with Undo) beside each post's votes, and an "Inspired by" row of the inspiration its draft was written from.
+    MK-5: a post with a rendered ad shows that image instead of the HTML preview, with a 1:1 / 4:5 switch (Alpine
+    `ratio`) and Download of both PNGs; while it renders the preview stays (marketing/post-preview is the fallback)
+    with "Rendering…" and the studio polls; a failed render says "Couldn’t render · Retry".
 --}}
 @php
     $focus = 'outline-needs focus-visible:outline-2 focus-visible:outline-offset-2';
@@ -44,6 +47,7 @@
         cur: 0,
         n: {{ $shown->count() }},
         compare: false,
+        ratio: 'square',
         favs: false,
         rs: false,
         mp: false,
@@ -116,9 +120,17 @@
                     <div wire:poll.2s data-polling class="sr-only">Drafting…</div>
                 @endif
             @else
+                @if ($shown->contains(fn ($p) => $p->renderState() === \App\Models\MarketingPost::RENDER_RENDERING))
+                    <div wire:poll.2s data-polling class="sr-only">Rendering…</div>
+                @endif
                 @foreach ($shown as $i => $post)
                     @php
                         $needs = $post->needsPhoto();
+                        $render = $post->renderState();
+                        $squareId = $post->renderId('square');
+                        $portraitId = $post->renderId('portrait');
+                        // A post waiting for its photo shows "Needs a photo", whatever was rendered before.
+                        $showRender = ! $needs && $squareId !== null && $portraitId !== null;
                         $previous = $post->versions->last();
                         $vote = $post->feedback->first();
                         $editable = in_array($state, ['review', 'approved', 'missed'], true);
@@ -131,18 +143,56 @@
                                 @if ($shown->count() > 1)
                                     <button type="button" x-on:click="go(-1)" aria-label="Previous draft" class="absolute top-1/2 left-2 z-10 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full border border-rim bg-surface/90 text-lg hover:bg-raised {{ $focus }}">←</button>
                                 @endif
-                                <x-marketing.post-preview :post="$post" :brand="$brand" :project="$model->name" :label="$campaign?->name" class="max-w-2xl shadow-2xl">
-                                    <span class="flex flex-wrap justify-center gap-2">
-                                        <label class="{{ $primary }} relative cursor-pointer overflow-hidden">Upload a photo
-                                            <input type="file" wire:model="uploads.{{ $post->id }}" accept="image/jpeg,image/png,image/webp" class="absolute inset-0 cursor-pointer opacity-0" aria-label="Upload a photo for this post">
-                                        </label>
-                                        <button type="button" x-on:click="favs = true; $nextTick(() => $refs.favs{{ $post->id }}?.scrollIntoView({ block: 'nearest' }))" class="{{ $secondary }} bg-surface text-ink">Use a favourite</button>
-                                    </span>
-                                </x-marketing.post-preview>
+                                @if ($showRender)
+                                    <figure data-ad-render="{{ $post->id }}" class="relative m-0 flex w-full max-w-2xl min-w-0 justify-center">
+                                        <img x-show="ratio === 'square'" src="{{ route('marketing.asset', [$model->name, $squareId]) }}" width="1080" height="1080"
+                                            alt="The ad for this post, square (1:1)" class="block h-auto w-full rounded-lg shadow-2xl">
+                                        <img x-show="ratio === 'portrait'" x-cloak src="{{ route('marketing.asset', [$model->name, $portraitId]) }}" width="1080" height="1350"
+                                            alt="The ad for this post, portrait (4:5)" class="block h-auto w-full max-w-xl rounded-lg shadow-2xl">
+                                        @if ($render === \App\Models\MarketingPost::RENDER_RENDERING)
+                                            <span data-rendering="{{ $post->id }}" class="absolute top-2 left-2 inline-flex items-center gap-2 rounded-full bg-ground/90 px-3 py-1 text-xs text-ink">{!! $spin !!}Rendering…</span>
+                                        @endif
+                                    </figure>
+                                @else
+                                    <x-marketing.post-preview :post="$post" :brand="$brand" :project="$model->name" :label="$campaign?->name" class="max-w-2xl shadow-2xl">
+                                        <span class="flex flex-wrap justify-center gap-2">
+                                            <label class="{{ $primary }} relative cursor-pointer overflow-hidden">Upload a photo
+                                                <input type="file" wire:model="uploads.{{ $post->id }}" accept="image/jpeg,image/png,image/webp" class="absolute inset-0 cursor-pointer opacity-0" aria-label="Upload a photo for this post">
+                                            </label>
+                                            <button type="button" x-on:click="favs = true; $nextTick(() => $refs.favs{{ $post->id }}?.scrollIntoView({ block: 'nearest' }))" class="{{ $secondary }} bg-surface text-ink">Use a favourite</button>
+                                        </span>
+                                    </x-marketing.post-preview>
+                                @endif
                                 @if ($shown->count() > 1)
                                     <button type="button" x-on:click="go(1)" aria-label="Next draft" class="absolute top-1/2 right-2 z-10 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full border border-rim bg-surface/90 text-lg hover:bg-raised {{ $focus }}">→</button>
                                 @endif
                             </div>
+
+                            @unless ($needs)
+                                <div data-render-bar="{{ $post->id }}" class="flex flex-wrap items-center justify-center gap-2 text-sm">
+                                    @if ($showRender)
+                                        <div role="group" aria-label="Ad shape" class="inline-flex rounded-lg border border-rim p-0.5">
+                                            <button type="button" x-on:click="ratio = 'square'" x-bind:aria-pressed="ratio === 'square'" data-ratio="square"
+                                                class="min-h-8 rounded-md px-3 text-xs font-medium {{ $focus }}" x-bind:class="ratio === 'square' ? 'bg-raised text-ink' : 'text-ink-muted'">1:1</button>
+                                            <button type="button" x-on:click="ratio = 'portrait'" x-bind:aria-pressed="ratio === 'portrait'" data-ratio="portrait"
+                                                class="min-h-8 rounded-md px-3 text-xs font-medium {{ $focus }}" x-bind:class="ratio === 'portrait' ? 'bg-raised text-ink' : 'text-ink-muted'">4:5</button>
+                                        </div>
+                                        <a href="{{ route('marketing.render', [$model->name, $post->id, 'square']) }}" download data-download-ad="square" class="{{ $small }}">Download 1:1</a>
+                                        <a href="{{ route('marketing.render', [$model->name, $post->id, 'portrait']) }}" download data-download-ad="portrait" class="{{ $small }}">Download 4:5</a>
+                                    @elseif ($render === \App\Models\MarketingPost::RENDER_RENDERING)
+                                        <span data-rendering="{{ $post->id }}" class="inline-flex items-center gap-2 text-ink-muted">{!! $spin !!}Rendering the ad…</span>
+                                    @endif
+                                    @if ($render === \App\Models\MarketingPost::RENDER_FAILED)
+                                        <span data-render-failed="{{ $post->id }}" class="inline-flex flex-wrap items-center gap-x-1.5 text-fail">Couldn’t render ·
+                                            <button type="button" wire:click="retryRender({{ $post->id }})" wire:loading.attr="disabled" wire:target="retryRender" data-retry-render="{{ $post->id }}" class="rounded px-1.5 py-1 text-ink underline hover:bg-raised {{ $focus }}">Retry</button>
+                                        </span>
+                                    @elseif ($render === \App\Models\MarketingPost::RENDER_NONE && in_array($state, ['review', 'approved', 'missed'], true))
+                                        <span class="inline-flex flex-wrap items-center gap-x-1.5 text-ink-muted">No ad image yet ·
+                                            <button type="button" wire:click="retryRender({{ $post->id }})" wire:loading.attr="disabled" wire:target="retryRender" data-render-now="{{ $post->id }}" class="rounded px-1.5 py-1 text-ink underline hover:bg-raised {{ $focus }}">Render it</button>
+                                        </span>
+                                    @endif
+                                </div>
+                            @endunless
 
                             @if ($shown->count() > 1)
                                 <div class="flex justify-center gap-1" role="group" aria-label="Drafts">
@@ -260,7 +310,9 @@
                                     @if ($state === 'missed')
                                         <ol class="flex list-decimal flex-col gap-1 pl-5 text-sm text-ink-soft">
                                             <li><button type="button" class="text-live hover:underline {{ $focus }}" x-on:click="navigator.clipboard.writeText(@js($post->caption)).then(() => $flux.toast({ text: 'Caption copied' }), () => $flux.toast({ text: 'Could not copy. Select the caption and copy it.', variant: 'warning' }))">Copy the caption</button></li>
-                                            @if ($post->asset)
+                                            @if ($post->renderId('square') !== null)
+                                                <li>Download the ad: <a href="{{ route('marketing.render', [$model->name, $post->id, 'square']) }}" download class="text-live hover:underline {{ $focus }}">1:1</a> · <a href="{{ route('marketing.render', [$model->name, $post->id, 'portrait']) }}" download class="text-live hover:underline {{ $focus }}">4:5</a></li>
+                                            @elseif ($post->asset)
                                                 <li><a href="{{ route('marketing.asset', [$model->name, $post->asset_id]) }}" download="{{ $post->asset->original_name }}" class="text-live hover:underline {{ $focus }}">Download the image</a></li>
                                             @endif
                                             <li>Post it on Facebook, then paste its link here.</li>
@@ -416,7 +468,8 @@
                                 @endif
                             @else
                                 <button type="button" data-copy-caption x-on:click="navigator.clipboard.writeText(@js($post->caption)).then(() => $flux.toast({ text: 'Caption copied' }), () => $flux.toast({ text: 'Could not copy. Select the caption and copy it.', variant: 'warning' }))" class="{{ $secondary }} max-md:flex-1">Copy caption</button>
-                                @if ($post->asset)
+                                {{-- With a rendered ad, its Download 1:1 / 4:5 sit under the preview; the bare photo only without one. --}}
+                                @if ($post->asset && $post->renderId('square') === null)
                                     <a href="{{ route('marketing.asset', [$model->name, $post->asset_id]) }}" download="{{ $post->asset->original_name }}" data-download class="{{ $secondary }} max-md:flex-1">Download image</a>
                                 @endif
                                 @if (in_array($state, ['approved', 'missed'], true))

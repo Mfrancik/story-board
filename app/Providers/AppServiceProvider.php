@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Services\Marketing\AdRenderer;
+use App\Services\Marketing\AdRendererClient;
 use App\Services\Marketing\MarketingAi;
 use App\Services\Marketing\MarketingAiClient;
 use Carbon\CarbonImmutable;
@@ -19,6 +21,8 @@ class AppServiceProvider extends ServiceProvider
     {
         // MK-8: the marketing Actions ask an interface for copy, so the model behind it can change in one place.
         $this->app->bind(MarketingAiClient::class, MarketingAi::class);
+        // MK-5: ads are rendered through an interface, so tests swap in a fake and never start a browser.
+        $this->app->bind(AdRendererClient::class, AdRenderer::class);
     }
 
     /**

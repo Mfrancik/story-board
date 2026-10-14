@@ -12,7 +12,7 @@ use Illuminate\Support\Carbon;
 
 /**
  * One marketing file of a project (MK-2): a photo (a favourite from Settings, or one uploaded for a single post in
- * MK-9) or, with MK-18, an inspiration image. The bytes are on the `local` disk at `path`, served only by the
+ * MK-9), with MK-18 an inspiration image, and with MK-5 a post's rendered ad. The bytes are on the `local` disk at `path`, served only by the
  * `marketing.asset` route and only under the asset's own project.
  *
  * @property int $id
@@ -38,6 +38,9 @@ class MarketingAsset extends Model
 
     /** A past ad the AI reads for examples (MK-18). */
     public const PURPOSE_INSPIRATION = 'inspiration';
+
+    /** A post's rendered ad, one per size (MK-5); the post's `ad.render` holds the ids. */
+    public const PURPOSE_RENDER = 'render';
 
     /** The image types a marketing photo may be: what Facebook takes and every browser shows. */
     public const PHOTO_MIMES = ['image/jpeg', 'image/png', 'image/webp'];
