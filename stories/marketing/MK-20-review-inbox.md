@@ -52,8 +52,11 @@ visual and fast — it belongs in one queue.
 ## Design mockup gate (visual stories only — else "n/a — non-visual")
 - Mockups: docs/mockups/MK-20/option-{a,b,c}.html — (a) grid: dates as rows of three; (b) one date at a time, big,
   with a filmstrip; (c) a swipe/stack variant for phone
-- Chosen option: <filled after the owner picks — no build before this>
-- Why I chose it: <owner's reason>
+- Chosen option: **A · Grid** — dates as rows of three ads, ←/→ move a focus ring between rows; on phone each row's
+  ads swipe sideways inside the row (docs/mockups/MK-20/option-a.html).
+- Why I chose it: owner pick 2026-10-13. Detail defaults (owner left unanswered → orchestrator defaults): Keep is
+  allowed on a failed render (approval doesn't need the image); chips only for campaigns with dates waiting; no
+  Undo toast (Keep is final from the inbox; the studio's Unapprove remains).
 
 ## Do NOT touch
 - `config/`; `ApprovePost`, `RecordFeedback`, `FillCampaign` behaviour (call them, don't fork them); the studio.

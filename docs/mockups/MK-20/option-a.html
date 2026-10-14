@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MK-20 option A — Review, grid</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600&amp;family=Instrument+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+/* Shell tokens, copied from the MK-10 mockups (resources/css/app.css shell values). */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;background:#0E0F11;color:#F2F1EE;font-family:Geist,system-ui,sans-serif;-webkit-text-size-adjust:100%}
+a{color:#F2A33A;text-decoration:none}a:hover{color:#FFC26B;text-decoration:underline;text-underline-offset:3px}
+a:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:2px solid #F2A33A;outline-offset:2px}
+.mono{font-family:'Geist Mono',ui-monospace,monospace}
+.card{background:#16181B;border:1px solid #26292E;border-radius:12px}
+.lbl{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9A9DA3;font-weight:500}
+.muted{color:#9A9DA3}.faint{color:#8A8D93}.soft{color:#C9CBCF}
+p{margin:0}
+.navi{display:flex;align-items:center;gap:10px;padding:0 12px;border-radius:8px;color:#C9CBCF;font-size:14px;min-height:44px}
+.navi:hover{background:#1D2024;color:#F2F1EE;text-decoration:none}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:8px;font:500 14px Geist,sans-serif;border:1px solid #33373D;background:#1D2024;color:#F2F1EE;cursor:pointer;white-space:nowrap}
+.btn:hover{background:#24282D;color:#F2F1EE;text-decoration:none}
+.btn.sm{min-height:40px;padding:0 12px;font-size:13px}
+.btn.pri{background:#F2A33A;border-color:#F2A33A;color:#1A1205}
+.btn.pri:hover{background:#FFC26B;color:#1A1205}
+.btn.ghost{background:transparent}
+.btn.danger{border-color:#6B2F2B;color:#F59088;background:transparent}
+.btn.danger:hover{background:#1F1514}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+kbd{font-family:'Geist Mono',monospace;font-size:11px;line-height:16px;min-width:18px;text-align:center;padding:0 4px;border-radius:4px;border:1px solid #33373D;border-bottom-width:2px;color:#C9CBCF;background:#121417;display:inline-block}
+.btn.pri kbd{background:rgba(0,0,0,.12);border-color:rgba(26,18,5,.35);color:#1A1205}
+.legend{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;font-size:13px;color:#C9CBCF;padding:12px 16px;border:1px solid #26292E;border-radius:10px;background:#121417}
+.legend .seg{margin-left:auto}
+.seg{display:inline-flex;border:1px solid #33373D;border-radius:8px;overflow:hidden}
+.seg button{min-height:36px;padding:0 12px;border:0;background:#16181B;color:#9A9DA3;font:500 13px Geist,sans-serif;cursor:pointer}
+.seg button[aria-pressed=true]{background:#24282D;color:#F2F1EE}
+
+/* Shell frame: sidebar on desktop, top bar below 768px (as layouts/shell does). */
+.shell{display:flex;min-height:100vh}
+.side{width:232px;flex:none;padding:20px 14px;border-right:1px solid #1F2226;display:flex;flex-direction:column;gap:22px}
+.topbar{display:none}
+main{flex:1;min-width:0;padding:28px 32px 56px;display:flex;flex-direction:column;gap:20px}
+.crumb{font-size:12px;color:#9A9DA3}.crumb a{color:#9A9DA3}
+.tabs{display:flex;gap:24px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid #1F2226;font-size:14px;padding-bottom:1px}
+.tabs a{flex:none;color:#9A9DA3;padding-bottom:12px;margin-bottom:-2px;border-bottom:2px solid transparent;min-height:36px}
+.tabs a:hover{color:#F2F1EE;text-decoration:none}
+.tabs a[aria-current]{color:#F2F1EE;border-color:#F2F1EE;font-weight:500}
+@media (max-width:767px){
+  .side{display:none}
+  .shell{flex-direction:column}
+  .topbar{display:flex;position:sticky;top:0;z-index:5;height:56px;align-items:center;gap:8px;padding:0 8px;border-bottom:1px solid #1F2226;background:rgba(14,15,17,.95)}
+  main{padding:16px 16px 48px;gap:16px}
+  .tabs{gap:18px}
+  .hide-sm{display:none!important}
+}
+
+/* Mockup split: the app on the left, the same file at 375px on the right (iframe #phone). */
+.split{display:grid;grid-template-columns:minmax(0,1fr)}
+.phonecol{padding:24px 24px 56px;border-top:1px solid #1F2226;display:flex;flex-direction:column;align-items:center;gap:10px}
+.phone{width:399px;max-width:100%;border:12px solid #26292E;border-radius:44px;overflow:hidden;background:#0E0F11;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.phone iframe{display:block;width:375px;max-width:100%;height:760px;border:0}
+@media (min-width:1500px){
+  .split{grid-template-columns:minmax(0,1fr) 448px}
+  .phonecol{border-top:0;border-left:1px solid #1F2226;position:sticky;top:0;height:100vh;overflow-y:auto;justify-content:flex-start}
+}
+html.inphone .mock-only{display:none!important}
+html.inphone .split{grid-template-columns:minmax(0,1fr)}
+
+/* Marketing sub-nav (components/marketing/sub-nav) + the new Review item with its count badge. */
+.sub{display:flex;gap:4px;flex-wrap:wrap;margin-top:-6px}
+.sub a{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border-radius:8px;color:#9A9DA3;font-size:14px}
+.sub a:hover{background:#1D2024;color:#F2F1EE;text-decoration:none}
+.sub a[aria-current]{background:#1D2024;color:#F2F1EE;font-weight:500}
+.sub .n{font-family:'Geist Mono',monospace;font-size:11px;color:#1A1205;background:#F2A33A;border-radius:999px;padding:0 6px;line-height:16px}
+
+/* Page head + campaign filter chips (scroll inside their own row on a phone, never the page). */
+.phead{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 16px}
+.phead h2{margin:0;font-size:20px;font-weight:600;letter-spacing:-.01em}
+.phead .cnt{font-size:14px;color:#9A9DA3}
+.keys{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:#9A9DA3;margin-left:auto}
+.keys span{display:inline-flex;align-items:center;gap:5px}
+.chips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px;margin:-2px}
+.fchip{flex:none;display:inline-flex;align-items:center;gap:7px;min-height:36px;padding:0 12px;border-radius:999px;border:1px solid #33373D;background:transparent;color:#C9CBCF;font:500 13px Geist,sans-serif;cursor:pointer}
+.fchip:hover{background:#1D2024}
+.fchip[aria-pressed=true]{background:#F2F1EE;color:#0E0F11;border-color:#F2F1EE}
+.fchip .c{font-family:'Geist Mono',monospace;font-size:11px;opacity:.7}
+.fchip i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.camp{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid #33373D;color:#C9CBCF;white-space:nowrap}
+.camp i{width:7px;height:7px;border-radius:50%;display:inline-block}
+
+/* Per-ad actions: Keep, like, dislike (+ MK-8 reasons), open in studio. */
+.acts{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.acts .btn.pri{flex:1;min-width:0}
+.ib{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:8px;border:1px solid #33373D;background:#16181B;color:#C9CBCF;cursor:pointer;flex:none}
+.ib:hover{background:#1D2024;color:#F2F1EE;text-decoration:none}
+.ib svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round}
+.ib.down svg{transform:scaleY(-1)}
+.ib[aria-pressed=true].up{border-color:#2D5A44;color:#7CD1A4;background:#13201A}
+.ib[aria-pressed=true].down{border-color:#6B2F2B;color:#F59088;background:#1F1514}
+.reasons{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid #6B2F2B;border-radius:10px;background:#1A1312}
+.reasons .row{display:flex;flex-wrap:wrap;gap:6px}
+.rchip{min-height:34px;padding:0 11px;border-radius:999px;border:1px solid #33373D;background:#16181B;color:#C9CBCF;font:500 13px Geist,sans-serif;cursor:pointer}
+.rchip[aria-pressed=true]{border-color:#F59088;color:#1F1514;background:#F59088}
+.voted{font-size:12px;color:#F59088;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.voted button{background:none;border:0;color:#9A9DA3;font:12px Geist,sans-serif;text-decoration:underline;cursor:pointer;padding:0;min-height:24px}
+.capt{font-size:13px;line-height:1.5;color:#C9CBCF;white-space:pre-line;overflow-wrap:anywhere}
+.clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+
+/* ---------- The rendered ads (MK-5): drawn here in CSS/SVG; in the app each is a 1080×1080 PNG. ---------- */
+.ad{container-type:inline-size;position:relative;aspect-ratio:1/1;width:100%;overflow:hidden;border-radius:6px;background:#FAFAFA;color:#222;font-family:'Instrument Sans',Geist,sans-serif;box-shadow:0 1px 0 rgba(255,255,255,.04),0 6px 24px rgba(0,0,0,.35)}
+.ad-label{position:absolute;left:7cqw;top:6.4cqw;right:42cqw;font-size:2.8cqw;font-weight:600;letter-spacing:.14em;text-transform:uppercase;opacity:.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ad-brand{position:absolute;right:7cqw;top:5.6cqw;display:flex;align-items:center;gap:1.4cqw;font-size:3cqw;font-weight:600}
+.ad-brand svg{width:3.8cqw;height:3.8cqw;fill:#B79F82}
+.ad-head{font-weight:600;line-height:1.04;letter-spacing:-.03em}
+.ad-sub{font-size:3.6cqw;line-height:1.35;opacity:.8}
+.ad-cta{display:inline-flex;align-items:center;gap:1.4cqw;padding:1.6cqw 3.4cqw;border-radius:99cqw;font-size:3cqw;font-weight:600;background:#B79F82;color:#222}
+.coin{display:block;filter:drop-shadow(0 2.4cqw 3cqw rgba(0,0,0,.35))}
+/* photo + headline */
+.l-photo{background:radial-gradient(circle at 50% 38%,#4A443C,#1B1916 70%);color:#fff}
+.l-photo .coin{position:absolute;left:19cqw;top:9cqw;width:62cqw;height:62cqw}
+.l-photo .ad-brand{padding:1cqw 2.2cqw;border-radius:99cqw;background:rgba(250,250,250,.9);color:#222}
+.l-photo .shade{position:absolute;inset:auto 0 0 0;padding:20cqw 7cqw 7cqw;background:linear-gradient(to top,rgba(0,0,0,.82),transparent)}
+.l-photo .ad-head{font-size:7.4cqw}
+.l-photo .ad-sub{margin-top:1.6cqw;font-size:3.4cqw}
+/* bold text card */
+.l-text .ad-head{position:absolute;left:7cqw;right:7cqw;top:20cqw}
+.l-text .ad-sub{position:absolute;left:7cqw;right:16cqw;bottom:21cqw}
+.l-text .rule{position:absolute;left:7cqw;right:7cqw;bottom:15cqw;height:1.2cqw;border-radius:1cqw;background:rgba(34,34,34,.12);overflow:hidden}
+.l-text .rule i{display:block;width:38%;height:100%;background:#B79F82}
+.l-text .foot{position:absolute;left:7cqw;bottom:7cqw;font-size:3cqw;font-weight:600}
+/* question */
+.l-q{background:#B79F82;color:#222}
+.l-q .mark{position:absolute;right:-4cqw;bottom:-18cqw;font:700 78cqw/1 Georgia,serif;color:rgba(255,255,255,.22)}
+.l-q .ad-brand svg{fill:#222}
+.l-q .body{position:absolute;left:7cqw;right:12cqw;top:24cqw;display:flex;flex-direction:column;gap:4cqw;align-items:flex-start}
+.l-q .ad-cta{background:#222;color:#FAFAFA}
+/* coin spotlight */
+.l-spot{background:#F4F1EC}
+.l-spot .coin{position:absolute;left:24cqw;top:13cqw;width:52cqw;height:52cqw}
+.l-spot .badge{position:absolute;left:50%;top:60cqw;transform:translateX(-50%);padding:1.4cqw 3.4cqw;border-radius:99cqw;background:#222;color:#FAFAFA;font:600 3cqw 'Geist Mono',monospace;letter-spacing:.06em;white-space:nowrap}
+.l-spot .ad-head{position:absolute;left:7cqw;right:7cqw;top:71cqw;text-align:center;font-size:7cqw}
+.l-spot .ad-sub{position:absolute;left:10cqw;right:10cqw;top:81cqw;text-align:center;font-size:3.3cqw}
+/* stat */
+.l-stat{background:#222;color:#FAFAFA}
+.l-stat .ad-brand svg{fill:#B79F82}
+.l-stat .big{position:absolute;left:7cqw;right:7cqw;top:22cqw;font:600 23cqw/0.95 'Instrument Sans',Geist,sans-serif;letter-spacing:-.05em;color:#B79F82;white-space:nowrap}
+.l-stat .ad-head{position:absolute;left:7cqw;right:10cqw;top:50cqw;font-size:6.4cqw}
+.l-stat .ad-sub{position:absolute;left:7cqw;right:20cqw;bottom:8cqw}
+.l-stat .coin{position:absolute;right:-12cqw;bottom:-12cqw;width:40cqw;height:40cqw;opacity:.9}
+/* Still rendering: app chrome, not brand. Space reserved (square), so nothing shifts when the PNG lands. */
+.ad-wait{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#16181B;border:1px dashed #33373D;color:#9A9DA3;font:500 13px Geist,sans-serif;box-shadow:none;background-image:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.04) 50%,transparent 70%);background-size:200% 100%;animation:shim 1.4s linear infinite}
+@keyframes shim{from{background-position:150% 0}to{background-position:-50% 0}}
+.spin{width:22px;height:22px;border-radius:50%;border:2px solid #33373D;border-top-color:#6CA6F0;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.ad-wait,.spin{animation:none}}
+/* Failed render: MK-5's HTML fallback is the MK-9 post-preview text card (.post-card), with a Retry strip. */
+.ad-fail{position:relative}
+.post-card{container-type:inline-size;position:relative;aspect-ratio:1/1;width:100%;overflow:hidden;border-radius:5px;background:#FAFAFA;color:#222;font-family:'Instrument Sans',sans-serif;opacity:.92}
+.post-card__label{position:absolute;left:7cqw;right:40cqw;top:6.6cqw;overflow:hidden;font-size:3cqw;font-weight:500;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;text-overflow:ellipsis;opacity:.6}
+.post-card__brand{position:absolute;right:7cqw;top:5.8cqw;display:flex;align-items:center;gap:1.4cqw;font-size:2.9cqw;font-weight:500}
+.post-card__brand svg{width:3.6cqw;height:3.6cqw;fill:#B79F82}
+.post-card__head{position:absolute;left:7cqw;right:7cqw;top:20cqw;font-weight:600;line-height:1.04;letter-spacing:-.03em}
+.post-card__sub{position:absolute;left:7cqw;right:16cqw;bottom:20cqw;font-size:3.6cqw;line-height:1.35;opacity:.8}
+.post-card__rule{position:absolute;left:7cqw;right:7cqw;bottom:14cqw;height:1.2cqw;border-radius:1cqw;background:rgba(34,34,34,.12);overflow:hidden}
+.post-card__rule i{display:block;width:38%;height:100%;background:#B79F82}
+.ad-fail .post-card__sub{bottom:30cqw}
+.ad-fail .post-card__rule{bottom:24cqw}
+.failbar{position:absolute;left:8px;right:8px;bottom:8px;display:flex;align-items:center;gap:8px;padding:6px 6px 6px 12px;border-radius:8px;background:#1F1514;border:1px solid #6B2F2B;color:#F59088;font:500 13px Geist,sans-serif}
+.failbar span{flex:1;min-width:0}
+.failbar button{min-height:32px;padding:0 12px;border-radius:6px;border:1px solid #F59088;background:transparent;color:#F59088;font:500 13px Geist,sans-serif;cursor:pointer}
+.failbar button:hover{background:#F59088;color:#1F1514}
+.newtag{position:absolute;left:8px;top:8px;font:600 10px Geist,sans-serif;letter-spacing:.06em;text-transform:uppercase;background:#6CA6F0;color:#0E0F11;border-radius:4px;padding:2px 6px;z-index:2}
+
+/* Drafting date (after Reject all 3): three reserved squares. */
+.drafting{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;aspect-ratio:1/1;border:1px dashed #2B4A6E;border-radius:6px;background:#12161C;color:#8EBBF2;font:500 13px Geist,sans-serif;text-align:center;padding:12px}
+.draftnote{font-size:13px;color:#8EBBF2;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.draftnote .spin{width:14px;height:14px}
+
+/* Empty state */
+.empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding:56px 20px;border:1px dashed #33373D;border-radius:14px;background:#121417}
+.empty h3{margin:0;font-size:18px;font-weight:600}
+.empty svg{width:44px;height:44px;stroke:#5C4219;fill:none;stroke-width:1.5}
+
+/* Modal (board/confirm-modal) + toast */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:30}
+.modal{position:fixed;z-index:31;left:50%;top:50%;transform:translate(-50%,-50%);width:min(480px,calc(100% - 24px));background:#16181B;border:1px solid #26292E;border-radius:14px;display:flex;flex-direction:column;gap:14px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.modal h3{margin:0;font-size:17px;font-weight:600}
+.modal .foot{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:40;background:#24282D;border:1px solid #33373D;color:#F2F1EE;border-radius:10px;padding:12px 16px;font-size:14px;display:none;align-items:center;gap:12px;width:max-content;max-width:calc(100% - 24px);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.toast.on{display:flex}
+.toast a{white-space:nowrap}
+
+/* ---------- option-specific ---------- */
+/* Option A — grid: each date is a row of its three ads. */
+.rows{display:flex;flex-direction:column;gap:16px}
+.drow{border:1px solid #26292E;border-radius:14px;background:#16181B;padding:16px;display:flex;flex-direction:column;gap:14px;scroll-margin-top:16px;outline:none}
+.drow[data-focus=true]{border-color:#F2A33A;box-shadow:0 0 0 1px #F2A33A}
+.dhead{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap}
+.dhead .when{font-size:17px;font-weight:600}
+.dhead .tm{font-family:'Geist Mono',monospace;font-size:13px;color:#9A9DA3}
+.dhead .sp{flex:1}
+.dhead .fk{font-size:11px;color:#F2A33A;letter-spacing:.05em;text-transform:uppercase;font-weight:600}
+.trio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.cell{display:flex;flex-direction:column;gap:10px;min-width:0}
+.swipehint{display:none}
+@media (max-width:640px){
+  .drow{padding:12px;border-radius:12px}
+  /* A phone keeps the row but swipes it: each ad 84% wide, snapping; the row scrolls, never the page. */
+  .trio{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;margin:0 -12px;padding:0 12px 4px;scrollbar-width:none}
+  .cell{flex:0 0 84%;scroll-snap-align:center}
+  .swipehint{display:block;font-size:12px;color:#8A8D93}
+  .dhead .rj{width:100%}
+}
+
+</style>
+</head>
+<body>
+<!-- MK-20 option A — "Grid". The whole queue on one page: a row per date, three ads per row.
+     Static mockup: no app code. Data is StackerMint (project coins) as of Tue 13 Oct 2026; ads are drawn in CSS/SVG
+     standing in for MK-5's 1080×1080 PNGs. The right-hand phone is this same file at 375px (#phone). -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <radialGradient id="c-silver" cx=".36" cy=".3" r=".85"><stop offset="0" stop-color="#ffffff"/><stop offset=".28" stop-color="#e3e6ea"/><stop offset=".62" stop-color="#b3b8bf"/><stop offset="1" stop-color="#737a83"/></radialGradient>
+  <radialGradient id="c-gold" cx=".36" cy=".3" r=".85"><stop offset="0" stop-color="#fff6d6"/><stop offset=".3" stop-color="#f0cf74"/><stop offset=".7" stop-color="#c9982f"/><stop offset="1" stop-color="#8a6416"/></radialGradient>
+  <radialGradient id="c-copper" cx=".36" cy=".3" r=".85"><stop offset="0" stop-color="#ffd9bf"/><stop offset=".35" stop-color="#d98a5a"/><stop offset=".72" stop-color="#a2552c"/><stop offset="1" stop-color="#6a3216"/></radialGradient>
+  <radialGradient id="c-toned" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#eceff2"/><stop offset=".38" stop-color="#e2d6b2"/><stop offset=".55" stop-color="#d9a54a"/><stop offset=".68" stop-color="#b2457f"/><stop offset=".8" stop-color="#4b63c9"/><stop offset=".92" stop-color="#2f9e7c"/><stop offset="1" stop-color="#5d6b4c"/></radialGradient>
+  <path id="c-arc" d="M17 52A33 33 0 0 1 83 52"/>
+</defs></svg>
+<div class="split">
+<div class="app">
+<div class="shell">
+  <div class="topbar">
+    <button class="btn" aria-label="Open menu" style="width:44px;padding:0;border:0;background:transparent">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9CBCF" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <span style="font-weight:600">coins</span><span class="muted" style="font-size:13px">· Marketing</span>
+  </div>
+  <nav class="side" aria-label="Board">
+    <div style="display:flex;align-items:center;gap:10px;padding:0 6px">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="1" width="24" height="24" rx="7" fill="none" stroke="#F2A33A" stroke-width="2"/><path d="M8 9h10M8 13h6M8 17h8" stroke="#F2A33A" stroke-width="2" stroke-linecap="round"/></svg>
+      <span style="font-weight:600;font-size:16px">Story Board</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <a class="navi" href="#">Home</a>
+      <a class="navi" href="#">Mockups</a>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <span class="lbl" style="padding:0 12px 6px">Projects</span>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>asset-track</a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>client-dashboard</a>
+      <a class="navi" href="#" aria-current="page" style="background:#1D2024;color:#F2F1EE;font-weight:500"><span class="dot" style="background:#5FBF8F"></span>coins</a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>rent-track</a>
+      <a class="navi" href="#"><span class="dot" style="background:#5FBF8F"></span>story-board</a>
+    </div>
+  </nav>
+  <main>
+    <div class="legend mock-only" role="note" aria-label="Mockup legend">
+      <strong style="color:#F2F1EE">MK-20 · option A · Grid</strong>
+      <span class="soft">Every date is a row of its three ads. Click a row or use ←/→ to move the amber ring; 1/2/3 keep, R rejects all 3.</span>
+      <span class="faint">today is Tue 13 Oct 2026 · StackerMint campaigns</span>
+      <span class="seg" role="group" aria-label="Preview state"><button type="button" data-act="mode" data-m="queue" aria-pressed="true">Queue</button><button type="button" data-act="mode" data-m="empty" aria-pressed="false">Empty</button><button type="button" data-act="reset" aria-pressed="false">Reset</button></span>
+    </div>
+    <header class="hide-sm" style="display:flex;flex-direction:column;gap:4px">
+      <p class="crumb"><a href="#">All projects</a> / <a href="#">coins</a> / <a href="#">Marketing</a> / Review</p>
+      <h1 style="margin:0;display:flex;align-items:center;gap:10px;font-size:24px;font-weight:600;letter-spacing:-.01em">coins <span class="dot" style="background:#5FBF8F"></span><span style="font-size:13px;font-weight:400;color:#9A9DA3">ok</span></h1>
+    </header>
+    <nav class="tabs hide-sm" aria-label="Project pages">
+      <a href="#">Overview</a><a href="#">Stories</a><a href="#">Preflight</a><a href="#">Handbook</a><a href="#">Map</a><a href="#" aria-current="page">Marketing</a>
+    </nav>
+    <nav class="sub" aria-label="Marketing pages">
+      <a href="#campaigns">Campaigns</a><a href="#review" aria-current="page">Review <span class="n" id="revn" aria-label="dates waiting">8</span></a><a href="#calendar">Calendar</a><a href="#library">Library</a><a href="#inspiration">Inspiration</a><a href="#settings">Settings</a>
+    </nav>
+    <div id="view" style="display:flex;flex-direction:column;gap:16px;min-width:0"></div>
+  </main>
+</div>
+</div>
+<aside class="phonecol mock-only" aria-label="Phone preview">
+  <span class="lbl">The same page at 375px</span>
+  <div class="phone"><iframe src="option-a.html#phone" title="option-a.html at 375px wide" loading="lazy"></iframe></div>
+  <span class="faint" style="font-size:12px;text-align:center;max-width:360px">Each date stays a row; its three ads swipe sideways inside the row (scroll-snap), so the page itself never scrolls sideways.</span>
+</aside>
+</div>
+<div id="mroot"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+const SWIRL = '<svg viewBox="0 0 23 23" aria-hidden="true"><path d="M8.24443 16.0935C8.575 16.0855 8.89899 16.0595 9.20728 16.016L9.22499 16.0132C9.90412 15.912 10.5598 15.7306 11.1741 15.4746C12.1264 15.0801 13.0198 14.4815 13.7569 13.7461C14.6252 12.9407 15.6289 13.1835 16.1943 13.7495C16.7595 14.3161 17.0023 15.3189 16.2012 16.18C15.6295 16.7586 14.6869 16.8475 14.0081 16.384C13.4738 16.0198 12.7407 16.2232 12.3681 16.6209C12.1507 16.8532 12.029 17.152 12.0344 17.4409C12.0404 17.7529 12.1832 18.04 12.4264 18.2289C13.1472 18.7894 14.0569 19.098 14.9878 19.098C16.0995 19.098 17.1663 18.658 17.9137 17.8926C19.0712 16.7523 19.4314 15.0775 18.8543 13.5226C18.2777 11.9698 16.916 10.9381 15.3015 10.8298C14.0889 10.7384 12.9047 11.1738 12.051 12.0278C11.2687 12.8118 10.279 13.3426 9.18899 13.5618C6.69531 14.0464 4.31076 12.9201 3.11364 10.6913C1.91965 8.46842 2.2985 5.86188 4.07934 4.05019C5.22561 2.86306 6.86845 2.27793 8.585 2.44421C10.3304 2.61278 11.8515 3.51106 12.7578 4.90875C13.0164 5.3076 13.4692 5.52303 13.9392 5.47017C14.3584 5.42446 14.7175 5.16903 14.8995 4.78733C15.0792 4.41019 15.0523 3.97705 14.8278 3.6282C13.5389 1.62765 11.2907 0.286809 8.81328 0.0410981C6.36388 -0.20147 4.01334 0.637948 2.36307 2.34136C-0.00175392 4.71618 -0.647174 8.11357 0.678809 11.2075C1.97622 14.2346 4.7999 16.0952 8.07557 16.0952C8.13157 16.0952 8.18814 16.0946 8.24443 16.0935Z"/><path d="M20.3738 8.9676C19.1347 7.85504 17.5338 7.13962 15.8661 6.95306C13.4496 6.67563 10.9873 7.53733 9.28221 9.26103C8.96021 9.58559 8.52765 9.76445 8.06423 9.76445C7.59909 9.76445 7.16738 9.58731 6.8511 9.26817C6.05539 8.39561 6.29653 7.47162 6.74453 6.94563C7.22452 6.3822 8.12708 6.02821 8.9745 6.58249C9.38507 6.85134 9.8782 6.87106 10.2936 6.6362C10.6613 6.42878 10.8905 6.05192 10.9068 5.62821C10.9225 5.21508 10.7288 4.83222 10.3888 4.60451C8.74593 3.50481 6.48567 3.72138 5.13283 5.10679C4.24942 5.96992 3.81714 7.19219 3.94628 8.46018C4.07542 9.72645 4.74341 10.8339 5.77883 11.4979C7.41652 12.5761 9.60992 12.3553 10.9948 10.973C12.2596 9.71416 14.0024 9.1356 15.7756 9.38617C16.9818 9.55874 18.1161 10.1222 18.9698 10.9727C20.0332 12.0361 20.6186 13.4521 20.6184 14.9601C20.6184 16.4684 20.0318 17.8849 18.9669 18.95C17.823 20.1346 16.1796 20.72 14.461 20.5563C12.7156 20.3875 11.1945 19.4889 10.2882 18.0912C10.0262 17.6869 9.58335 17.4746 9.10707 17.5301C8.68765 17.5755 8.32879 17.8309 8.1468 18.2129C7.96708 18.5898 7.99394 19.0232 8.21851 19.372C9.50735 21.3732 11.7576 22.7143 14.2373 22.9597C14.5119 22.9869 14.7899 23.0006 15.0633 23.0006C17.2258 23.0006 19.2215 22.1689 20.6821 20.6609C22.2349 19.1175 23.092 16.9629 23.0338 14.7495C22.9755 12.5356 22.0061 10.4282 20.3738 8.96846V8.9676Z"/></svg>';
+/* MK-20 mockup engine, shared by all three options: the queue data, the ad drawings, state, actions, keyboard,
+   the Reject-all confirm and the toast. Each option supplies OPT.render() (and optionally OPT.act / OPT.after). */
+if (location.hash === '#phone') document.documentElement.classList.add('inphone');
+
+const THUMB = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11v9H4v-9h3zm0 0 4-8c1.7 0 2.6 1.2 2.3 2.8L12.8 9H19a2 2 0 0 1 2 2.3l-1.2 7A2 2 0 0 1 17.8 20H7"/></svg>';
+const OPEN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>';
+const REASONS = ['too wordy', 'wrong tone', 'boring', 'off-brand']; // RecordFeedback::REASONS
+const CAMPS = {
+  cotw: { name: 'Coin of the week', col: '#F2A33A' },
+  tvt: { name: 'TrueView Tuesday', col: '#C3A8F0' },
+  set: { name: 'Set spotlight', col: '#6CA6F0' },
+  ask: { name: 'Ask the community', col: '#5FBF8F' },
+  oneoff: { name: 'One-offs', col: '#9A9DA3' },
+};
+
+/* The queue as of Tue 13 Oct 2026: every date with drafts and no approved post, soonest first. */
+const DATA = [
+  { id: 'd1', day: 'Fri 16 Oct', time: '18:00', cid: 'set', ads: [
+    { id: 'p101', layout: 'spot', coin: 'silver', year: '1881', badge: 'MORGAN SET · 61 / 97', head: '61 of 97 Morgans.', sub: 'The Carson City dates are next.',
+      caption: 'Set spotlight: our Morgan dollar set.\n61 of 97 dates in the album. The Carson City coins are next. Which CC would you chase first?' },
+    { id: 'p102', layout: 'text', state: 'failed', head: 'One album. 61 Morgans.', sub: '36 empty holes, and every one has a story.',
+      caption: 'One album. 61 Morgans.\n36 empty holes, and every one has a story. Tell us yours.' },
+    { id: 'p103', layout: 'stat', coin: 'silver', year: '1881', big: '61/97', head: 'Morgan dates in the set.', sub: 'Carson City is next.',
+      caption: '61 down, 36 to go. Our Morgan set, one date at a time. Which empty hole would you fill first?' },
+  ] },
+  { id: 'd2', day: 'Sun 18 Oct', time: '12:00', cid: 'ask', ads: [
+    { id: 'p104', layout: 'q', head: 'Album or slab?', cta: 'One word in the comments', caption: 'Album or slab? One word in the comments.' },
+    { id: 'p105', layout: 'text', head: 'What was the first coin you kept?', sub: 'Not bought. Kept.', caption: 'What was the first coin you kept?\nNot bought — kept. Tell us below.' },
+    { id: 'p106', layout: 'photo', coin: 'copper', year: '1909', head: 'Wheat cent or Indian head?', sub: 'Which one started it for you?', caption: 'Wheat cent or Indian head — which one started it for you?' },
+  ] },
+  { id: 'd3', day: 'Tue 20 Oct', time: '10:00', cid: 'cotw', ads: [
+    { id: 'p107', layout: 'photo', coin: 'silver', year: '1943', head: 'Full bands, both sides.', sub: '1943 Mercury dime · PCGS MS66 FB',
+      caption: 'Coin of the week: a 1943 Mercury dime, PCGS MS66 FB.\nFB means full bands. The lines on the fasces are fully split. What do you notice first?' },
+    { id: 'p108', layout: 'spot', coin: 'silver', year: '1943', badge: 'PCGS MS66 FB', head: '1943 Mercury dime', sub: 'Winged Liberty, full bands.',
+      caption: 'Coin of the week: a 1943 Mercury dime.\nWinged Liberty, full split bands, MS66.' },
+    { id: 'p109', layout: 'stat', state: 'rendering', coin: 'silver', year: '1943', big: 'MS66', head: 'Full bands. Fully split.', sub: '1943 Mercury dime',
+      caption: 'MS66 with full bands. The fasces lines split all the way across. Would you have spotted it?' },
+  ] },
+  { id: 'd4', day: 'Tue 20 Oct', time: '19:00', cid: 'tvt', state: 'drafting', reason: 'boring', ads: [] },
+  { id: 'd5', day: 'Fri 23 Oct', time: '18:00', cid: 'set', ads: [
+    { id: 'p110', layout: 'spot', coin: 'silver', year: '1922', badge: 'PEACE SET · 19 / 24', head: 'Peace dollars: 19 of 24.', sub: 'Five to go, and 1928 is one of them.',
+      caption: 'Set spotlight: the Peace dollar set.\n19 of 24. Five to go, and the 1928 is one of them.' },
+    { id: 'p111', layout: 'text', head: 'Five Peace dollars to go.', sub: '19 in the album. The 1928 is the hard one.', caption: 'Five Peace dollars to go.\n19 in the album. The 1928 is the hard one. Seen one at a show lately?' },
+    { id: 'p112', layout: 'stat', coin: 'silver', year: '1922', big: '19/24', head: 'Peace dollars in the set.', sub: '1928 is still missing.',
+      caption: '19 of 24 Peace dollars. The 1928 is still missing. Where would you look?' },
+  ] },
+  { id: 'd6', day: 'Sun 25 Oct', time: '12:00', cid: 'ask', ads: [
+    { id: 'p113', layout: 'q', head: 'Toned or blast white?', cta: 'Pick one below', caption: 'Toned or blast white? Pick one below.' },
+    { id: 'p114', layout: 'photo', coin: 'toned', year: '1885', head: 'Would you ever dip this?', sub: 'A Morgan with a century of album toning.', caption: 'Would you ever dip this?\nA Morgan with a century of album toning. Be honest.' },
+    { id: 'p115', layout: 'text', head: 'Which grade would you buy blind?', sub: 'MS63, MS64 or MS65. One answer.', caption: 'Which grade would you buy blind?\nMS63, MS64 or MS65. One answer.' },
+  ] },
+  { id: 'd7', day: 'Tue 27 Oct', time: '10:00', cid: 'cotw', ads: [
+    { id: 'p116', layout: 'photo', coin: 'silver', year: '1794', head: 'The first silver dollar.', sub: '1794 Flowing Hair', caption: 'Coin of the week: a 1794 Flowing Hair dollar.\nThe first silver dollar the Mint struck. 1,758 were delivered.' },
+    { id: 'p117', layout: 'stat', coin: 'silver', year: '1794', big: '1,758', head: 'delivered in 1794.', sub: 'The first U.S. silver dollar.', caption: '1,758. That is how many Flowing Hair dollars were delivered in 1794.' },
+    { id: 'p118', layout: 'spot', coin: 'silver', year: '1794', badge: 'RAW', head: '1794 Flowing Hair', sub: 'First U.S. silver dollar.', caption: 'Coin of the week: 1794 Flowing Hair. Raw, and staying that way.' },
+  ] },
+  { id: 'd8', day: 'Sat 31 Oct', time: '11:00', cid: 'oneoff', ads: [
+    { id: 'p119', layout: 'photo', coin: 'toned', year: '1921', head: 'Spooky toning.', sub: 'Happy Halloween from the vault.', caption: 'Spooky toning. 🎃\nHappy Halloween from the vault.' },
+    { id: 'p120', layout: 'q', head: 'Trick or toned?', cta: 'Show us yours', caption: 'Trick or toned? Show us your spookiest coin.' },
+    { id: 'p121', layout: 'text', head: 'Happy Halloween from the vault.', sub: 'No tricks. Just toning.', caption: 'Happy Halloween from the vault.\nNo tricks. Just toning.' },
+  ] },
+];
+
+/* What Claude drafts after Reject all 3 (faked: three fresh ads per campaign). */
+const REDRAFT = {
+  set: [{ layout: 'photo', coin: 'silver', year: '1881', head: 'The album, page by page.', sub: 'Morgan set · 61 of 97' }, { layout: 'q', head: 'Which CC would you chase first?', cta: 'Answer below' }, { layout: 'spot', coin: 'gold', year: '1800', badge: 'NEXT UP', head: 'Carson City next.', sub: 'Six CC dates left.' }],
+  ask: [{ layout: 'q', head: 'Show us your pocket piece.', cta: 'Photos welcome' }, { layout: 'photo', coin: 'gold', year: '1800', head: 'Gold or silver?', sub: 'Pick a side.' }, { layout: 'text', head: 'Best coin show you ever went to?', sub: 'Name it.' }],
+  cotw: [{ layout: 'spot', coin: 'gold', year: '1800', badge: 'PCGS AU58', head: 'Eight years in.', sub: 'An 1800 $5 Capped Bust half eagle.' }, { layout: 'photo', coin: 'gold', year: '1800', head: 'Most early gold was melted.', sub: 'This one was not.' }, { layout: 'stat', coin: 'gold', year: '1800', big: '1800', head: 'The Mint was eight years old.', sub: '$5 Capped Bust' }],
+  tvt: [{ layout: 'photo', coin: 'toned', year: '1885', head: 'TrueView Tuesday.', sub: 'A century of album toning.' }, { layout: 'q', head: 'Best toner you own?', cta: 'Post it below' }, { layout: 'spot', coin: 'toned', year: '1885', badge: 'TRUEVIEW', head: 'Rainbow, both sides.', sub: '1885 Morgan dollar' }],
+  oneoff: [{ layout: 'photo', coin: 'copper', year: '1909', head: 'Boo. It is copper.', sub: 'Happy Halloween.' }, { layout: 'q', head: 'Spookiest coin you own?', cta: 'Show us' }, { layout: 'text', head: 'Toned for the season.', sub: 'Happy Halloween from StackerMint.' }],
+};
+
+let S = { dates: JSON.parse(JSON.stringify(DATA)), filter: 'all', focus: 0, votes: {}, open: null, empty: false, modal: null };
+let seq = 200;
+
+/* ---------- drawing ---------- */
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function hsize(t, big) { const n = t.length; const s = n <= 18 ? 10.4 : n <= 30 ? 8.6 : n <= 44 ? 7.2 : 6; return big ? s : s; }
+function coin(kind, year) {
+  return '<svg class="coin" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="49" fill="url(#c-' + kind + ')"/>'
+    + '<circle cx="50" cy="50" r="46" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="1.6" stroke-dasharray=".7 1.1"/>'
+    + '<circle cx="50" cy="50" r="40.5" fill="none" stroke="rgba(255,255,255,.4)" stroke-width=".8"/>'
+    + '<text font-size="6.4" letter-spacing="2" fill="rgba(0,0,0,.34)" font-family="Georgia,serif"><textPath href="#c-arc" startOffset="50%" text-anchor="middle">LIBERTY</textPath></text>'
+    + '<path d="M37 74C35 63 38 53 45 46C47 37 55 31 62 35C67 38 67 45 63 48C67 52 64 57 60 58C62 63 60 70 58 75Z" fill="rgba(0,0,0,.15)"/>'
+    + '<g fill="rgba(0,0,0,.28)"><circle cx="22" cy="58" r="1.3"/><circle cx="25" cy="66" r="1.3"/><circle cx="78" cy="58" r="1.3"/><circle cx="75" cy="66" r="1.3"/></g>'
+    + '<text x="50" y="86" font-size="6.6" text-anchor="middle" fill="rgba(0,0,0,.36)" font-family="Georgia,serif">' + (year || '') + '</text></svg>';
+}
+function brand() { return '<div class="ad-brand">' + SWIRL + '<span>StackerMint</span></div>'; }
+/* One ad. `cid` gives the small campaign label. */
+function adHTML(a, cid) {
+  const label = esc(CAMPS[cid].name);
+  const alt = esc(a.head);
+  if (a.state === 'rendering') return '<div class="ad ad-wait" role="img" aria-label="Ad still rendering"><span class="spin"></span><span>Rendering…</span></div>';
+  if (a.state === 'failed') {
+    return '<div class="ad-fail"><div class="post-card" role="img" aria-label="Text preview: ' + alt + '"><div class="post-card__label">' + label + '</div>'
+      + '<div class="post-card__brand">' + SWIRL + '<span>StackerMint</span></div><div class="post-card__head" style="font-size:' + hsize(a.head) + 'cqw">' + esc(a.head) + '</div>'
+      + (a.sub ? '<div class="post-card__sub">' + esc(a.sub) + '</div>' : '') + '<div class="post-card__rule"><i></i></div></div>'
+      + '<div class="failbar" role="alert"><span>Couldn\'t render</span><button type="button" data-act="retry" data-ad="' + a.id + '">Retry</button></div></div>';
+  }
+  const nt = a.fresh ? '<span class="newtag">New draft</span>' : '';
+  let inner = '';
+  if (a.layout === 'photo') inner = coin(a.coin, a.year) + brand() + '<div class="shade"><div class="ad-head">' + esc(a.head) + '</div>' + (a.sub ? '<div class="ad-sub">' + esc(a.sub) + '</div>' : '') + '</div>';
+  if (a.layout === 'text') inner = '<div class="ad-label">' + label + '</div>' + brand() + '<div class="ad-head" style="font-size:' + hsize(a.head) + 'cqw">' + esc(a.head) + '</div>' + (a.sub ? '<div class="ad-sub">' + esc(a.sub) + '</div>' : '') + '<div class="rule"><i></i></div><div class="foot">stackermint.com</div>';
+  if (a.layout === 'q') inner = '<div class="mark" aria-hidden="true">?</div><div class="ad-label">' + label + '</div>' + brand() + '<div class="body"><div class="ad-head" style="font-size:' + (hsize(a.head) + 1.4) + 'cqw">' + esc(a.head) + '</div><span class="ad-cta">' + esc(a.cta || 'Comment below') + ' →</span></div>';
+  if (a.layout === 'spot') inner = '<div class="ad-label">' + label + '</div>' + brand() + coin(a.coin, a.year) + '<div class="badge">' + esc(a.badge) + '</div><div class="ad-head">' + esc(a.head) + '</div>' + (a.sub ? '<div class="ad-sub">' + esc(a.sub) + '</div>' : '');
+  if (a.layout === 'stat') inner = '<div class="ad-label">' + label + '</div>' + brand() + '<div class="big">' + esc(a.big) + '</div><div class="ad-head">' + esc(a.head) + '</div>' + (a.sub ? '<div class="ad-sub">' + esc(a.sub) + '</div>' : '') + coin(a.coin, a.year);
+  return '<div class="ad l-' + a.layout + '" role="img" aria-label="Ad: ' + alt + '">' + nt + inner + '</div>';
+}
+
+/* Per-ad actions. `n` = 1-based slot (the 1/2/3 key). */
+function actsHTML(d, a, n, opts) {
+  opts = opts || {};
+  const v = S.votes[a.id] || {};
+  const wait = a.state === 'rendering';
+  let h = '<div class="acts">'
+    + (opts.noKeep ? '' : '<button type="button" class="btn sm pri" data-act="keep" data-d="' + d.id + '" data-i="' + (n - 1) + '" data-k="keep-' + a.id + '"' + (wait ? ' disabled title="Wait for the render"' : '') + '><kbd>' + n + '</kbd> Keep' + (opts.long ? ' this one' : '') + '</button>')
+    + '<button type="button" class="ib up" aria-label="Like ad ' + n + '" aria-pressed="' + (v.v === 1) + '" data-act="up" data-ad="' + a.id + '" data-k="up-' + a.id + '">' + THUMB + '</button>'
+    + '<button type="button" class="ib down" aria-label="Dislike ad ' + n + '" aria-pressed="' + (v.v === -1) + '" data-act="down" data-ad="' + a.id + '" data-k="down-' + a.id + '">' + THUMB + '</button>'
+    + '<a class="ib" href="#studio-' + a.id + '" aria-label="Open ad ' + n + ' in the studio" title="Open in studio">' + OPEN + '</a></div>';
+  if (S.open === a.id) {
+    h += '<div class="reasons" role="group" aria-label="Why not? (optional)"><span style="font-size:12px;color:#F2D4D1">Disliked. Why not? <span class="muted">(optional)</span></span><div class="row">'
+      + REASONS.map(r => '<button type="button" class="rchip" aria-pressed="' + ((v.r || []).includes(r)) + '" data-act="reason" data-ad="' + a.id + '" data-r="' + r + '" data-k="r-' + a.id + r + '">' + r + '</button>').join('')
+      + '</div><div style="display:flex;justify-content:flex-end"><button type="button" class="btn sm ghost" data-act="closer" data-k="done-' + a.id + '">Done</button></div></div>';
+  } else if (v.v === -1) {
+    h += '<div class="voted">Disliked' + ((v.r || []).length ? ': ' + v.r.join(', ') : '') + ' <button type="button" data-act="down-edit" data-ad="' + a.id + '">edit reasons</button></div>';
+  }
+  return h;
+}
+
+function chipsHTML() {
+  const all = S.empty ? [] : S.dates;
+  const counts = {}; all.forEach(d => counts[d.cid] = (counts[d.cid] || 0) + 1);
+  let h = '<div class="chips" role="group" aria-label="Filter by campaign"><button type="button" class="fchip" data-act="filter" data-f="all" aria-pressed="' + (S.filter === 'all') + '">All <span class="c">' + all.length + '</span></button>';
+  Object.keys(CAMPS).forEach(k => {
+    h += '<button type="button" class="fchip" data-act="filter" data-f="' + k + '" aria-pressed="' + (S.filter === k) + '"><i style="background:' + CAMPS[k].col + '"></i>' + CAMPS[k].name + ' <span class="c">' + (counts[k] || 0) + '</span></button>';
+  });
+  return h + '</div>';
+}
+function campHTML(cid) { return '<span class="camp"><i style="background:' + CAMPS[cid].col + '"></i>' + CAMPS[cid].name + '</span>'; }
+function keysHTML() { return '<div class="keys hide-sm" aria-label="Keyboard shortcuts"><span><kbd>←</kbd><kbd>→</kbd> dates</span><span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> keep</span><span><kbd>R</kbd> reject all 3</span>' + (OPT.extraKeys || '') + '</div>'; }
+function emptyHTML() {
+  return '<div class="empty"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="10" width="36" height="30" rx="4"/><path d="M6 20h36M16 6v8M32 6v8"/><path d="M18 30l4 4 8-8"/></svg>'
+    + '<h3>Nothing to pick.</h3><p class="muted" style="font-size:14px">Fill some dates on a campaign page.</p><a class="btn pri" href="#campaigns">Go to campaigns</a></div>';
+}
+function draftingNote(d) {
+  return '<div class="draftnote" role="status"><span class="spin"></span>Drafting… Claude is writing three new ads for this date.' + (d.reason ? ' <span class="muted">You rejected the last three: ' + d.reason + '.</span>' : '') + '</div>';
+}
+function rejectBtn(d, cls) {
+  return '<button type="button" class="btn sm danger ' + (cls || '') + '" data-act="rejectopen" data-d="' + d.id + '" data-k="rej-' + d.id + '"' + (d.state === 'drafting' ? ' disabled' : '') + '>Reject all 3 <kbd class="hide-sm">R</kbd></button>';
+}
+
+/* ---------- state helpers ---------- */
+function visible() { return S.empty ? [] : S.dates.filter(d => S.filter === 'all' || d.cid === S.filter); }
+function clampFocus() { const n = visible().length; if (S.focus > n - 1) S.focus = Math.max(0, n - 1); if (S.focus < 0) S.focus = 0; }
+function focused() { clampFocus(); return visible()[S.focus]; }
+function findAd(id) { for (const d of S.dates) for (const a of d.ads) if (a.id === id) return [d, a]; return [null, null]; }
+
+/* ---------- actions ---------- */
+function keep(did, i) {
+  const d = S.dates.find(x => x.id === did); if (!d || d.state === 'drafting') return;
+  const a = d.ads[i]; if (!a || a.state === 'rendering') return;
+  const idx = visible().indexOf(d);
+  S.dates = S.dates.filter(x => x !== d); S.open = null;
+  S.focus = idx; // the next date slides into the same place, so focus stays where the eye is
+  toast('Kept ad ' + (i + 1) + '. ' + d.day + ' · ' + CAMPS[d.cid].name + ' is approved; the other two are discarded.', '<a href="#calendar">View on calendar</a>');
+  if (OPT.onKeep) OPT.onKeep(d); render(true);
+}
+function vote(id, v) {
+  const cur = S.votes[id] || {};
+  if (cur.v === v) { delete S.votes[id]; if (S.open === id) S.open = null; render(); return; }
+  S.votes[id] = { v: v, r: [] }; S.open = v === -1 ? id : null;
+  toast(v === 1 ? 'Liked. Claude will lean this way.' : 'Disliked. Add a reason if you like.');
+  render();
+}
+function reason(id, r) { const v = S.votes[id]; if (!v) return; v.r = v.r.includes(r) ? v.r.filter(x => x !== r) : v.r.concat(r); render(); }
+function retry(id) {
+  const [, a] = findAd(id); if (!a) return; a.state = 'rendering'; render();
+  setTimeout(() => { a.state = null; a.fresh = false; render(); toast('Ad rendered.'); }, 1600);
+}
+function rejectAll(did, why) {
+  const d = S.dates.find(x => x.id === did); if (!d) return;
+  d.ads.forEach(a => { S.votes[a.id] = { v: -1, r: why ? [why] : [] }; });
+  d.state = 'drafting'; d.reason = why; d.ads = []; S.modal = null;
+  toast('Rejected all 3' + (why ? ' (' + why + ')' : '') + '. Drafting three new ads for ' + d.day + '.');
+  render(true);
+  setTimeout(() => {
+    d.state = null;
+    d.ads = REDRAFT[d.cid].map(x => Object.assign({ id: 'p' + (seq++), state: 'rendering', fresh: true, caption: x.head + (x.sub ? '\n' + x.sub : '') }, x));
+    render();
+    d.ads.forEach((a, k) => setTimeout(() => { a.state = null; render(); }, 900 + k * 700));
+  }, 3800);
+}
+
+/* ---------- modal + toast ---------- */
+function modalHTML() {
+  if (!S.modal) return '';
+  const d = S.dates.find(x => x.id === S.modal.did);
+  return '<div class="scrim" data-act="closemodal"></div><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mh">'
+    + '<h3 id="mh">Reject all 3 ads for ' + d.day + '?</h3>'
+    + '<p class="soft" style="font-size:14px;line-height:1.55">Each gets a dislike, and Claude drafts three new ads for this date only. ' + CAMPS[d.cid].name + ' · ' + d.time + '.</p>'
+    + '<div style="display:flex;flex-direction:column;gap:8px"><span class="lbl">Reason for all three <span style="text-transform:none;letter-spacing:0">(optional)</span></span><div class="row" style="display:flex;flex-wrap:wrap;gap:6px">'
+    + REASONS.map(r => '<button type="button" class="rchip" aria-pressed="' + (S.modal.why === r) + '" data-act="mreason" data-r="' + r + '" data-k="mr-' + r + '">' + r + '</button>').join('') + '</div></div>'
+    + '<div class="foot"><button type="button" class="btn sm ghost" data-act="closemodal" data-k="mcancel">Cancel <kbd>Esc</kbd></button>'
+    + '<button type="button" class="btn sm danger" style="background:#F59088;color:#1F1514;border-color:#F59088" data-act="mconfirm" data-k="mconfirm">Reject all 3 and redraft <kbd style="background:transparent;color:#1F1514;border-color:rgba(31,21,20,.4)">↵</kbd></button></div></div>';
+}
+let toastT = null;
+function toast(msg, extra) {
+  const t = document.getElementById('toast');
+  t.innerHTML = '<span>' + msg + '</span>' + (extra || '');
+  t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 4200);
+}
+
+/* ---------- render ---------- */
+function render(focusDate) {
+  const ae = document.activeElement; const key = ae && ae.getAttribute && ae.getAttribute('data-k');
+  clampFocus();
+  const total = S.empty ? 0 : S.dates.length;
+  const badge = document.getElementById('revn'); badge.textContent = total; badge.hidden = total === 0;
+  document.getElementById('view').innerHTML = OPT.render();
+  document.getElementById('mroot').innerHTML = modalHTML();
+  if (S.modal) { const b = document.querySelector('[data-k="mconfirm"]'); b && b.focus(); }
+  else if (key) { const el = document.querySelector('[data-k="' + key + '"]'); if (el) el.focus({ preventScroll: true }); else if (focusDate && OPT.focusDate) OPT.focusDate(); }
+  else if (focusDate && OPT.focusDate) OPT.focusDate();
+  if (OPT.after) OPT.after();
+}
+
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const act = el.dataset.act;
+  if (OPT.act && OPT.act(act, el, e)) return;
+  if (act === 'keep') keep(el.dataset.d, +el.dataset.i);
+  else if (act === 'up') vote(el.dataset.ad, 1);
+  else if (act === 'down') vote(el.dataset.ad, -1);
+  else if (act === 'down-edit') { S.open = el.dataset.ad; render(); }
+  else if (act === 'reason') reason(el.dataset.ad, el.dataset.r);
+  else if (act === 'closer') { S.open = null; render(); }
+  else if (act === 'retry') retry(el.dataset.ad);
+  else if (act === 'filter') { S.filter = el.dataset.f; S.focus = 0; render(); }
+  else if (act === 'focus') { S.focus = +el.dataset.n; render(true); }
+  else if (act === 'rejectopen') { S.modal = { did: el.dataset.d, why: null }; render(); }
+  else if (act === 'mreason') { S.modal.why = S.modal.why === el.dataset.r ? null : el.dataset.r; render(); }
+  else if (act === 'mconfirm') rejectAll(S.modal.did, S.modal.why);
+  else if (act === 'closemodal') { const did = S.modal.did; S.modal = null; render(); const b = document.querySelector('[data-k="rej-' + did + '"]'); b && b.focus(); }
+  else if (act === 'mode') { S.empty = el.dataset.m === 'empty'; document.querySelectorAll('[data-act=mode]').forEach(b => b.setAttribute('aria-pressed', b === el)); render(); }
+  else if (act === 'reset') { S = { dates: JSON.parse(JSON.stringify(DATA)), filter: 'all', focus: 0, votes: {}, open: null, empty: false, modal: null }; if (OPT.reset) OPT.reset(); render(); }
+});
+
+/* Keyboard: ←/→ dates, 1/2/3 keep, R reject all; Esc closes. Never while typing. */
+document.addEventListener('keydown', e => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.target.closest && e.target.closest('input,textarea,select')) return;
+  if (S.modal) {
+    if (e.key === 'Escape') { e.preventDefault(); document.querySelector('[data-act=closemodal][data-k]').click(); }
+    if (e.key === 'Enter' && !(document.activeElement && document.activeElement.dataset.k === 'mcancel')) { e.preventDefault(); rejectAll(S.modal.did, S.modal.why); }
+    return;
+  }
+  if (OPT.key && OPT.key(e)) return;
+  const n = visible().length; if (!n) return;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+    e.preventDefault(); S.focus = Math.max(0, Math.min(n - 1, S.focus + (e.key === 'ArrowRight' ? 1 : -1))); S.open = null;
+    document.activeElement && document.activeElement.blur && document.activeElement.blur(); render(true);
+  } else if (['1', '2', '3'].includes(e.key)) { const d = focused(); if (d) keep(d.id, +e.key - 1); }
+  else if (e.key === 'r' || e.key === 'R') { const d = focused(); if (d && d.state !== 'drafting') { S.modal = { did: d.id, why: null }; render(); } }
+  else if (e.key === 'Escape' && S.open) { S.open = null; render(); }
+});
+
+/* ---------- option-specific ---------- */
+/* Option A: the whole queue on one scrolling page, a date per row. ←/→ move the amber focus ring between rows. */
+const OPT = {
+  render() {
+    const v = visible();
+    let h = '<div class="phead"><h2>Pick this week\'s posts</h2><span class="cnt">' + v.length + ' date' + (v.length === 1 ? '' : 's') + ' waiting · soonest first</span>' + keysHTML() + '</div>' + chipsHTML();
+    if (!v.length) return h + emptyHTML();
+    h += '<div class="rows">';
+    v.forEach((d, n) => {
+      const f = n === S.focus;
+      h += '<section class="drow" id="row-' + d.id + '" data-focus="' + f + '" aria-label="' + d.day + ', ' + CAMPS[d.cid].name + '" data-act="focus" data-n="' + n + '">'
+        + '<div class="dhead"><span class="when">' + d.day + '</span><span class="tm">' + d.time + '</span>' + campHTML(d.cid)
+        + (f ? '<span class="fk hide-sm">focused</span>' : '') + '<span class="sp"></span>' + rejectBtn(d, 'rj') + '</div>';
+      if (d.state === 'drafting') {
+        h += draftingNote(d) + '<div class="trio">' + [1, 2, 3].map(() => '<div class="cell"><div class="drafting"><span class="spin"></span>Drafting…</div></div>').join('') + '</div>';
+      } else {
+        h += '<div class="trio">' + d.ads.map((a, i) => '<div class="cell">' + adHTML(a, d.cid) + '<p class="capt clamp">' + esc(a.caption) + '</p>' + actsHTML(d, a, i + 1) + '</div>').join('') + '</div>'
+          + '<span class="swipehint">Swipe for ads 2 and 3 →</span>';
+      }
+      h += '</section>';
+    });
+    return h + '</div>';
+  },
+  act(act, el, e) {
+    // A click inside a row focuses that row, but buttons inside it do their own job.
+    if (act === 'focus' && e.target.closest('button,a') && e.target.closest('button,a') !== el) return true;
+    if (act === 'focus') { const n = +el.dataset.n; if (n !== S.focus) { S.focus = n; render(); } return true; }
+    return false;
+  },
+  focusDate() { const d = focused(); const el = d && document.getElementById('row-' + d.id); if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); },
+};
+
+render();
+</script>
+</body>
+</html>

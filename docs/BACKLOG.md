@@ -97,6 +97,14 @@ Scope: PROJECT
 
 The old home's "Not on main" section had no successor in the redesign; RD-9 deleted it. Off-main work now shows only as counts on the project tiles and as versions on a story page. Owner, 2026-10-11 retro: log it.
 
+### F-19 — 2026-10-13 — Brand colours as hex fields, with an eyedropper
+Area: marketing settings (brand) · MK-5 ad renderer
+Scope: PROJECT
+
+all of these are nice, but i do think we shoul dhave branding fields and colors clearly defined in the marketing section. selected with hex codes so those colors are actually used.  ideally a dropper thing i can click and click an imgate somehwere else to pull ine xact color
+
+(Owner, 2026-10-13, answering /build MK-5's question on the missing brand `soft` colour. MK-5 derives `soft` from the accent until this lands.)
+
 ## Cut
 
 ### F-7 — 2026-10-11 — Production item in the shell sidebar

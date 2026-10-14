@@ -67,8 +67,14 @@ AI image generator, owner 2026-10-13).
 ## Design mockup gate (visual stories only — else "n/a — non-visual")
 - Mockups: docs/mockups/MK-5/option-{a,b,c}.html — three layout families (each showing its 4–6 layouts at 1:1 and 4:5
   with real coins data and the StackerMint brand)
-- Chosen option: <filled after the owner picks — no build before this>
-- Why I chose it: <owner's reason>
+- Chosen option: **all three** — A Gallery card, B Vault, C Poster blocks, as three ad *styles* of the same 5 layouts
+  (photo + headline, bold text card, question, coin spotlight, stat) = 15 templates. Style chosen per campaign:
+  nullable `ad_style` on `marketing_campaigns` (`gallery|vault|poster`, null = gallery); one-off posts use gallery;
+  a "Ad style" picker on the campaign form. Spec gains optional `badge` (≤ 24 chars, coin spotlight). `soft` is
+  derived from the accent (F-19 will make it a real brand field).
+- Why I chose it: owner 2026-10-13: "all of these are fine, we can use every design here they're all great and fit
+  the brand. we could use different ones for difference campaigns"; style per campaign setting (owner pick); badge in
+  the spec (owner pick); soft colour → F-19.
 
 ## Do NOT touch
 - `config/` (renderer timeout and binary path are constants in `AdRenderer`; ask before adding config); MK-8's prompt
