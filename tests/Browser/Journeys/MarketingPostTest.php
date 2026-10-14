@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Marketing\SetPostPhoto;
 use App\Actions\Marketing\StoreInspiration;
 use App\Actions\Marketing\StoreMarketingAsset;
 use App\Jobs\RefreshProjectJob;
@@ -15,7 +16,7 @@ use Illuminate\Support\Facades\Storage;
  * Journey marketing-post (docs/journeys/marketing-post.md): from a recurring campaign to approved posts, ready to
  * publish. Created by MK-1 with step 1; each later MK story adds its step (MK-2: step 2, the brand in Settings; MK-7:
  * step 3, the campaign page; MK-8: step 4, Fill; MK-9: step 5, the post studio; MK-10: step 6, the calendar; MK-18:
- * step 7, inspiration; MK-5: step 8, rendered ads; MK-19: step 9, drafts as different whole ads). Claude is faked with Http::fake (fakeClaude()) by one reply carrying `drafts` (what Fill
+ * step 7, inspiration; MK-5: step 8, rendered ads; MK-19: step 9, drafts as different whole ads; MK-20: step 10, the review inbox). Claude is faked with Http::fake (fakeClaude()) by one reply carrying `drafts` (what Fill
  * reads, each with its art-directed `ad`), `caption` (what Revise reads) and `headline`/`style`/`topic` (what an inspiration read reads), since the
  * first matching fake wins. Only RefreshProjectJob is faked on the queue, so Fill's DraftOccurrenceJob and the
  * inspiration read run inline on the sync queue, and so does each draft's RenderPostAd with the fake renderer
@@ -203,5 +204,26 @@ it('walks the marketing-post journey', function () {
         ->click('[data-draft="'.$one->id.'"] [aria-label="Next draft"]');
     journeyStep('marketing-post', 'art director', '/p/coins/marketing/campaigns/trueview-tuesday', $page)
         ->assertSeeIn('[data-ad-spec="'.$two->id.'"]', 'Layout: Bold text card')
+        ->assertNoJavaScriptErrors();
+
+    // Step 10 (MK-20): the review inbox lists every date waiting for a pick across the campaigns. The first Nov 10
+    // TrueView Tuesday draft gets its photo (photo per post; set directly, as in step 5's note on uploads), so it
+    // renders and can be kept. Keep approves it, the date leaves the queue, and the calendar shows it approved.
+    app(SetPostPhoto::class)->handle($one, $photo);
+    $page = visit('/p/coins/marketing/review')
+        ->assertAttribute('[data-marketing-page="review"]', 'aria-current', 'page')
+        ->assertVisible('[data-review-row="trueview-tuesday/2026-11-10"] [data-review-ad="'.$one->id.'"]')
+        ->assertVisible('[data-review-row="ask-the-community/2026-10-18"]');
+    journeyStep('marketing-post', 'review inbox', '/p/coins/marketing/review', $page)
+        ->click('[data-keep="'.$one->id.'"]')
+        ->assertMissing('[data-review-row="trueview-tuesday/2026-11-10"]')
+        ->assertNoJavaScriptErrors();
+    expect($one->fresh()->status)->toBe(MarketingPost::STATUS_APPROVED)
+        ->and($two->fresh()->status)->toBe(MarketingPost::STATUS_DISCARDED);
+    $page->click('[data-marketing-page="calendar"]')
+        ->assertPathIs('/p/coins/marketing/calendar')
+        ->click('[data-calendar-next]')
+        ->assertSeeIn('[data-calendar-range]', 'November 2026')
+        ->assertAttribute('[data-calendar-grid] [data-calendar-day="2026-11-10"] [data-chip="trueview-tuesday"]', 'data-chip-state', 'approved')
         ->assertNoJavaScriptErrors();
 });

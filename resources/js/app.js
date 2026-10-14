@@ -4,3 +4,5 @@ import './preflight-history.js';
 import './mockup-gallery.js';
 // SB-24: the App map tab (pick a flow, step Back/Next, full screen, shared-screen hover).
 import './app-map.js';
+// MK-20: the marketing review inbox (focused row, 1/2/3 and R keys, the Reject all confirm).
+import './review-inbox.js';

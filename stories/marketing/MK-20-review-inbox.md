@@ -1,5 +1,5 @@
 # MK-20 — Review inbox: sift rendered ads across every campaign
-Status: approved       Journey: marketing-post (step 10 of 10)
+Status: built          Journey: marketing-post (step 10 of 10)
 Source: owner 2026-10-13 phase 3 batch 1 ("for me to sift through and pick and choose"); Reject all → redraft the
 date (owner pick)
 

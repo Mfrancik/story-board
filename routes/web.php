@@ -22,6 +22,7 @@ use App\Livewire\Marketing\CampaignList;
 use App\Livewire\Marketing\CampaignPage;
 use App\Livewire\Marketing\Inspiration as MarketingInspiration;
 use App\Livewire\Marketing\Library as MarketingLibrary;
+use App\Livewire\Marketing\Review as MarketingReview;
 use App\Livewire\Marketing\Settings as MarketingSettings;
 use App\Models\Story;
 use Illuminate\Support\Facades\Route;
@@ -82,6 +83,12 @@ Route::middleware(RefreshStaleProjects::class)->group(function () {
     Route::livewire('/p/{project:name}/marketing/campaigns/{campaign}', CampaignPage::class)
         ->middleware(EnsureProjectIsShown::class)
         ->name('projects.marketing.campaign');
+
+    // The review inbox (MK-20): every date waiting for a pick across the project's campaigns and one-offs, each with
+    // its rendered ads. Its name puts Review in the marketing sub-nav.
+    Route::livewire('/p/{project:name}/marketing/review', MarketingReview::class)
+        ->middleware(EnsureProjectIsShown::class)
+        ->name('projects.marketing.review');
 
     // Marketing calendar and library (MK-10): every campaign's posts on a month or week grid, and the approved and
     // posted posts as an archive. Both open the post studio; their names put them in the marketing sub-nav.

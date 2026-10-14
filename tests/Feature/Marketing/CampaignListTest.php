@@ -206,7 +206,8 @@ it('logs marketing.runway.failed and shows the row\'s error state for a campaign
     expect(campaignRow($html, 'broken-clock'))->toContain('data-runway-error')
         ->and(pageText(campaignRow($html, 'broken-clock')))->toContain('Mars/Olympus')
         ->and(campaignRow($html, 'trueview-tuesday'))->toContain('data-runway-state');
-    Log::shouldHaveReceived('warning')->withArgs(fn ($event, $context = []) => $event === 'marketing.runway.failed'
+    // The list's own line has no `source`; the sub-nav's Review count (MK-20) logs its own with `source: review`.
+    Log::shouldHaveReceived('warning')->withArgs(fn ($event, $context = []) => $event === 'marketing.runway.failed' && ! isset($context['source'])
         && $context['campaign_id'] === $bad->id && $context['project'] === 'coins' && str_contains($context['reason'], 'Mars/Olympus'))->once();
 });
 
@@ -231,12 +232,12 @@ it('shows the Marketing tab\'s count on every project page when something needs 
     expect($this->get('/p/coins/stories')->getContent())->toMatch('/data-project-tab="marketing".*?data-marketing-count[^>]*>\s*2\s*</s');
 });
 
-it('lists only built Marketing pages in the sub-nav: Campaigns, Calendar and Library (MK-10), Inspiration (MK-18) and Settings (MK-2), no dead links', function () {
+it('lists only built Marketing pages in the sub-nav: Campaigns, Review (MK-20), Calendar and Library (MK-10), Inspiration (MK-18) and Settings (MK-2), no dead links', function () {
     $html = $this->get('/p/coins/marketing')->getContent();
 
     preg_match('/<nav\b[^>]*data-marketing-subnav[^>]*>.*?<\/nav>/s', $html, $nav);
     preg_match_all('/data-marketing-page="([^"]+)"/', $nav[0] ?? '', $m);
-    expect($m[1])->toBe(['campaigns', 'calendar', 'library', 'inspiration', 'settings'])
+    expect($m[1])->toBe(['campaigns', 'review', 'calendar', 'library', 'inspiration', 'settings'])
         ->and($nav[0])->toMatch('/data-marketing-page="campaigns"[^>]*aria-current="page"/');
 });
 
