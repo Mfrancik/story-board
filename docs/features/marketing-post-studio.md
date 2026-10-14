@@ -1,5 +1,5 @@
 # Marketing: post studio
-Status: active   ·   Last updated: 2026-10-13   ·   Stories: MK-9, MK-18
+Status: active   ·   Last updated: 2026-10-13   ·   Stories: MK-9, MK-18, MK-5
 
 ## Overview
 The post studio is one large modal where the owner handles a campaign date from start to finish. They see its three
@@ -218,8 +218,8 @@ Post events carry `post_id`, `campaign_id` and `version`, per the story.
 - Fill on an open date inside the studio is an owner-kept extra, not in the story.
 
 ## Known limitations & gotchas
-- **Download is hidden when the post has no photo** (text-only, or a manual post with none). Rendering the text card
-  to an image is phase 3.
+- **Download of a post with no photo** (text-only, or a manual post with none) arrives with its rendered ad (MK-5,
+  [ad renderer](marketing-ad-renderer.md)). Until the render exists, Download stays hidden for it.
 - **One-offs are reachable only from the calendar and library** (MK-10), which dispatch `open-studio` with a `post`.
   They have no campaign, so they never enter the "to approve" queue or the campaigns list's counts.
 - Taste examples (MK-8's `BuildTasteExamples`) quote a post's *current* caption. A draft liked and then rebuilt is
@@ -244,3 +244,5 @@ approved-post actions, mark posted with link, one-off posts; `marketing_post_net
 undone and explained under the box (`ExplainUnchangedRevision`, ADR-080) (MK-9, `d415a49`)
 2026-10-12 — Mounted on the calendar and library, whose cards give one-off posts a way back in (MK-10, `80be063`)
 2026-10-13 — "Inspired by" row and Save to Inspiration with inline Undo; shared upload validation (MK-18, `b874421`)
+2026-10-13 — Rendered ad replaces the HTML preview once it exists: 1:1 / 4:5 switch, Download 1:1 / 4:5, Rendering… and
+Retry; see [ad renderer](marketing-ad-renderer.md) (MK-5, `6a9beb3`)

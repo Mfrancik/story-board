@@ -1,5 +1,5 @@
 # Marketing: calendar and library
-Status: active   ·   Last updated: 2026-10-13   ·   Stories: MK-10, MK-18
+Status: active   ·   Last updated: 2026-10-13   ·   Stories: MK-10, MK-18, MK-5
 
 ## Overview
 The campaign pages answer "how is this campaign doing". These two pages answer "what about everything". The
@@ -160,3 +160,4 @@ week and month labels. Campaign posts are placed by their campaign's own timezon
 2026-10-12 — Calendar (month/week grid, ghosts, gap banner, tray, quick-peek, 375 px agenda) and library (Coming up
 by week, Posted by month, campaign filter, search, grid/list, cards open the studio) (MK-10, `80be063`)
 2026-10-13 — Library cards get Save to Inspiration with Undo; the intro links to Inspiration (MK-18, `b874421`)
+2026-10-13 — Library cards and the calendar quick-peek show the post's 1:1 rendered ad when it has one (MK-5, `6a9beb3`)

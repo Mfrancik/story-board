@@ -1,5 +1,5 @@
 # Marketing: campaign page
-Status: active   ·   Last updated: 2026-10-12   ·   Stories: MK-7, MK-8
+Status: active   ·   Last updated: 2026-10-13   ·   Stories: MK-7, MK-8, MK-5
 
 ## Overview
 `/p/{project}/marketing/campaigns/{slug}` is one campaign's page. It shows what the campaign will post and how far
@@ -168,3 +168,4 @@ unique index on `name`; `(project_id, slug)` is unique.
 2026-10-12 — Campaign page: criteria edited in place, future and past posts, create mode, on/off (MK-7, `b5deb57`)
 2026-10-12 — Fill per open date and "Fill N open dates" with Drafting / Retry states (MK-8, `e694a73`)
 2026-10-12 — Every timeline row opens its date in the post studio (MK-9, `9d71022`)
+2026-10-13 — "Ad style" select (gallery, vault, poster) in the criteria form; see [ad renderer](marketing-ad-renderer.md) (MK-5, `6a9beb3`)

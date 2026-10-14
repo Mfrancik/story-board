@@ -1,5 +1,5 @@
 # Project brief — story-board
-Last refreshed: 2026-10-13 (MK-18)
+Last refreshed: 2026-10-13 (MK-5)
 
 ## What it is, and for whom
 A localhost Laravel app for one owner, with no auth (removed in RD-1). It reads the `stories/` folder of
@@ -23,7 +23,8 @@ It also shows:
   has Claude draft 3 captions per open date on the queue; MK-9's post studio is the one modal where a date's drafts
   are flipped, revised, voted on, given a photo and approved, and approved posts are copied and marked posted;
   MK-10's calendar shows every campaign's posts and open dates by day, and its library keeps approved and posted
-  posts as an archive; MK-18's Inspiration wall holds ads the owner likes, read once by Claude and quoted by Fill.
+  posts as an archive; MK-18's Inspiration wall holds ads the owner likes, read once by Claude and quoted by Fill; MK-5 renders every
+  draft and approved post as on-brand 1:1 and 4:5 PNGs (headless Chromium, in the campaign's ad style).
 
 ## Domain model
 - **Project**: a registered checkout (`name`, `path`, `ref`, `is_enabled`). Off hides it everywhere and stops its
@@ -49,17 +50,20 @@ It also shows:
 - **MarketingBrand / MarketingAsset** (MK-2): one brand per project (colours, font, radius, shadow, sanitised SVG
   logo, voice, copy rules, the kit's idea menu as an ordered list) and its files (`photo | inspiration`) on the
   local disk under `marketing/{project}/`, served only under their own project. MK-18 reads each image once and
-  keeps the result in `ai_notes`.
+  keeps the result in `ai_notes`. MK-5 adds `render` assets: a post's two rendered PNGs.
 - **MarketingPostVersion / MarketingFeedback** (MK-8): a post's earlier versions (the post row is always current)
   and the owner's taste (likes, dislikes, revise notes), read back into prompts as examples. AI posts carry
   `generation_meta` (model, tokens, micro-USD cost) and `lint` warnings. Drafting state is cache only.
 - **MarketingPostNetwork** (MK-9): where a post went out (`facebook`, with the link from Mark as posted) for phase 2's
   engagement. Posts also carry `is_text_only`; a skipped open date is an empty-caption `skipped` post.
+- **Ad** (MK-5): `marketing_posts.ad` holds a post's ad spec (layout, headline, subline, cta, photo, crop, badge) and
+  its render state with the two render asset ids; `marketing_campaigns.ad_style` (`gallery | vault | poster`, null =
+  gallery) picks the look.
 - **Shared rules** (pure, RD-1): `StoryStatusOrder` holds the status order, the open statuses and the
   initiative rollup. `MockupGateParser` reads a story's mockup gate.
 
 ## Features
-29 entries: 24 active, 5 retired by RD-9 (old dashboard, old sidebar, story modal, old `/p/{project}`, `/prod`; their docs
+30 entries: 25 active, 5 retired by RD-9 (old dashboard, old sidebar, story modal, old `/p/{project}`, `/prod`; their docs
 stay as history, and [retired-pages.md](features/retired-pages.md) maps what replaced each). Every page is in the dark
 shell. `/` is the home overview (RD-5) with a project filter (RD-6), project tiles and Shipped this week (RD-7); the
 Preflight page and tiles say where each run ran (RD-8). `/p/{project}` is the project overview (RD-11): a tile grid,
@@ -69,18 +73,18 @@ is the Marketing tab's campaigns list (MK-1), last in the tabs with a count of p
 Settings page (MK-2: brand, favourites, copy rules) and a page per campaign at `/marketing/campaigns/{slug}` (MK-7)
 with AI Fill per date (MK-8); every campaign date and list badge opens the post studio (MK-9). `/marketing/calendar`
 and `/marketing/library` (MK-10) show posts across campaigns and open the same studio; `/marketing/inspiration`
-(MK-18) feeds Fill examples. Each one's route, summary and doc: [INDEX.md](INDEX.md); the
+(MK-18) feeds Fill examples. MK-5's ad renderer draws every post as a finished ad image, shown and downloaded in the studio. Each one's route, summary and doc: [INDEX.md](INDEX.md); the
 stories behind it: its doc's header line.
 
 ## Journeys
-- [marketing-post](journeys/marketing-post.md): campaign to approved posts. Steps 1–7 (MK-1, MK-2, MK-7, MK-8, MK-9, MK-10, MK-18)
-  are all built. Every SB and RD story is `Journey: none`.
+- [marketing-post](journeys/marketing-post.md): campaign to approved posts. Steps 1–8 (MK-1, MK-2, MK-7, MK-8, MK-9, MK-10, MK-18, MK-5)
+  are built; steps 9–10 (MK-19 art director, MK-20 review inbox) are approved. Every SB and RD story is `Journey: none`.
 
 ## Stories
 - **built**: SB-2–5, SB-7–12, SB-14–19, SB-21–25 · RD-1 clean foundation · RD-2 dark shell and sidebar ·
   RD-3 short story page · RD-4 re-skin kept pages · RD-5 home overview · RD-6 home project filter · RD-7 project tiles and Shipped · RD-8 preflight "Ran on" · RD-9 retire old pages · RD-11 project overview · RD-12 project git activity
-- **built (marketing)**: MK-1 campaigns list and marketing schema · MK-2 brand kit, favourite photos, copy rules · MK-7 campaign page · MK-8 AI fill and revise · MK-9 post studio · MK-10 calendar and library · MK-18 inspiration
-- **approved**: none
+- **built (marketing)**: MK-1 campaigns list and marketing schema · MK-2 brand kit, favourite photos, copy rules · MK-7 campaign page · MK-8 AI fill and revise · MK-9 post studio · MK-10 calendar and library · MK-18 inspiration · MK-5 ad renderer
+- **approved**: MK-19 art director · MK-20 review inbox
 - **draft**: SB-20 preflight run errors · RD-10 preflight run record (parked)
 - **draft (parked)**: SB-6 the board on an always-live domain
 - **cut**: SB-13 pick a mockup (SB-21's pick covers it)
@@ -105,7 +109,8 @@ SB-1 (the `bin/story-index` parser) lives in the dev-standards kit, not in this 
   skip writes a placeholder, Restore undoes it; Text only is stored; one vote per post, only Revise makes a version; an unchanged rebuild is undone and explained → ADR-075–080. MK-10: the calendar composes the runway's rules in fixed queries;
   gap = first 4+ unapproved days within 28; the library leaves out drafts and missed posts; peek, grid/list and the narrow agenda need no round trip → ADR-084–087. MK-18: one vision read per image in `ai_notes`;
   examples = favourites then word overlap, beside taste; one AI client takes content blocks; Save to Inspiration
-  copies and undoes inline → ADR-088–091
+  copies and undoes inline → ADR-088–091. MK-5: three ad styles chosen per campaign; ads rendered by headless Chromium
+  over `file://`, not AI images; spec and render state on the post → ADR-092–094
 - Preflight audit scope, audit cost record, build-artifact disposal (kit) → ADR-001 to ADR-003
 
 ## Current phase and what's next
@@ -122,6 +127,10 @@ and do the real-key checks: MK-8's (Fill one coins date, read the captions,
 note the cost) and MK-9's (open the studio, flip, revise, approve two dates, Copy caption, one real photo upload). A campaign
 can still be saved with no topics; Fill then drafts from the brief alone. The owner runs `php artisan migrate` and `marketing:seed-kit`
 for coins (see the settings doc). Facebook publishing is phase 2.
+
+Marketing phase 3 batch 1 is under way: MK-5 (ad renderer) is built; MK-19 (art director) and MK-20 (review inbox)
+are approved. Owed by the owner after MK-5 merges: `php artisan migrate`, then `php artisan marketing:render coins`
+once with a worker; the worker host needs `node`, the Playwright Chromium and a Vite build (else ads use Helvetica).
 
 Still open from phase 2: the owner confirms SB-19's checkbox look; `journeyStep()` is adopted in coins, followed
 by the real-data check of the app map and Current pane; the `--text-thumb` token decision.
@@ -158,7 +167,9 @@ Backlog: [BACKLOG.md](BACKLOG.md).
   awaits owner confirmation. "New page" can be wrong for routes not in `routes/*.php`.
 - The app map's page weight is its cost driver (coins: about 3.1 MB). Shots are read from the working tree,
   not the ref. Journey shots must not run under `--parallel`.
-- Marketing: past posts are not paginated; Download is hidden until phase 3 renders text cards. Inspiration
+- Marketing: past posts are not paginated. Changing a campaign's ad style does not re-render existing posts, and
+  drafts discarded by Approve or Regenerate keep their render PNGs (disk growth); `soft` is derived from the accent
+  until F-19. Inspiration
   shapes copy and tone only, not layout. Fill needs `ANTHROPIC_API_KEY`, a queue worker and a shared cache; AI cost uses a price table in code. The tab's count
   is computed on every project page render, so a campaign with a bad timezone logs a warning on each render.
   Browser tests cannot upload files (Pest's server drops them), and a real photo upload is not yet browser-checked.

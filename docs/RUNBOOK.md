@@ -10,6 +10,18 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-10-13 — Rendered ads overflowed everywhere although the mockups fit
+Symptom: the first real MK-5 renders had text and photos spilling past their boxes in every style and layout. The same CSS looked right in `docs/mockups/MK-5/option-*.html`.
+Root cause: the mockups set `box-sizing: border-box` on every element in their page chrome, which was not ported with the ad CSS. Under the default `content-box`, every padded box grew by its padding.
+Fix: `resources/views/marketing/ads/css/base.css` sets `*,*::before,*::after{box-sizing:border-box}` globally (MK-5, `6a9beb3`). When porting CSS out of a mockup, port its resets too.
+Log trail: none; visual. Today `marketing.render.succeeded` carries `overflow: true` when a headline box is clipped.
+
+## 2026-10-13 — A Blade directive after another, or a CSS @-rule, breaks the ad template
+Symptom: while building MK-5's ad templates, an `@include` written straight after `@endif` (`@endif@include(...)`) rendered as literal text. CSS inside a Blade view had its `@media` / `@font-face` / `@supports` rules mangled or mistaken for directives.
+Root cause: Blade only recognises a directive at a word boundary, so `@endif@include` is not parsed. Blade also scans `<style>` contents, so CSS `@`-rules collide with directive parsing.
+Fix: put a space or newline between adjacent directives. Keep the ad stylesheets as plain files in `resources/views/marketing/ads/css/*.css`, read and inlined by `BuildAdHtml::css()` with `{!! $css !!}` (MK-5, `6a9beb3`).
+Log trail: none; visible in the rendered HTML (`BuildAdHtml::handle()` output).
+
 ## 2026-10-13 — The Inspiration wall rendered empty although images were stored
 Symptom: while building MK-18, `/marketing/inspiration` showed the empty state (or nothing) even though `marketing_assets` had inspiration rows for the project and `render()` queried them.
 Root cause: the view variable was named `$images`, the same as the component's public upload property (`public array $images` for `wire:model="images"`). Livewire's public properties override view data of the same name, so the view got the (empty) upload array instead of the query result.
