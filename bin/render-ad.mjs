@@ -5,8 +5,10 @@
 //
 // One browser start renders every page given (a post's two sizes). Pages are opened over file:// and every request
 // that is not a file: or data: URL is aborted, so an ad renders offline and can never fetch anything. On success it
-// prints one JSON line, {"overflow":[bool, ...]}: per page, whether any headline (.fit) is cut off by its box, which
-// the CSS shrink-to-fit should never allow. On failure it prints one line to stderr and exits 1.
+// prints one JSON line, {"overflow":[bool, ...]}: per page, whether any of the ad's words (the headline .fit, the
+// subline .sub, the cta .cta / .pill) are cut off: overflowing their own box, or drawn past the edge of any ancestor
+// that clips (the ad itself included). The CSS shrink-to-fit should never allow either. On failure it prints one line
+// to stderr and exits 1.
 import { chromium } from 'playwright';
 import { pathToFileURL } from 'node:url';
 
@@ -41,10 +43,26 @@ try {
         });
         await page.goto(pathToFileURL(job.input).href, { waitUntil: 'load' });
         await page.evaluate(() => document.fonts.ready);
-        overflow.push(await page.evaluate(() => [...document.querySelectorAll('.fit')].some(
-            // 1px of slack for sub-pixel rounding.
-            (el) => el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1,
-        )));
+        overflow.push(await page.evaluate(() => [...document.querySelectorAll('.fit, .sub, .cta, .pill')].some((el) => {
+            // 1px of slack throughout, for sub-pixel rounding.
+            if (el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1) {
+                return true;
+            }
+            // A box that fits its own text can still be cut by a clipping ancestor: a line pushed below the ad's edge,
+            // or out of the poster's number block.
+            const box = el.getBoundingClientRect();
+            for (let up = el.parentElement; up !== null; up = up.parentElement) {
+                const style = getComputedStyle(up);
+                if (style.overflowX === 'visible' && style.overflowY === 'visible') {
+                    continue;
+                }
+                const clip = up.getBoundingClientRect();
+                if (box.top < clip.top - 1 || box.left < clip.left - 1 || box.bottom > clip.bottom + 1 || box.right > clip.right + 1) {
+                    return true;
+                }
+            }
+            return false;
+        })));
         await page.screenshot({ path: job.output, clip: { x: 0, y: 0, width: job.w, height: job.h }, type: 'png' });
         await page.close();
     }

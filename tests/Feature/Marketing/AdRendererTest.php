@@ -180,13 +180,13 @@ it('Given each layout and brand values, when its HTML is built, then it contains
     }
 })->with('ad templates');
 
-it('prints the headline\'s length and longest word for the CSS shrink-to-fit, so a long headline gets a smaller size', function () {
+it('prints the headline\'s length, width in em and widest word for the CSS shrink-to-fit, capitals measuring wider', function () {
     $post = MarketingPost::factory()->forCampaign($this->tvt, '2026-10-13 19:00')->create();
-    $long = 'That rainbow came from sitting in an old paper album for decades. The sulfur did the work.';
 
-    $html = app(BuildAdHtml::class)->handle($post, ['layout' => 'text_card', 'headline' => $long], 'square');
+    $html = app(BuildAdHtml::class)->handle($post, ['layout' => 'text_card', 'headline' => 'Mint MINT'], 'square');
 
-    expect($html)->toContain('--chars:'.mb_strlen($long).';--word:8')
+    // Mint 2.2 + space .2 + MINT 2.56 em; the widest word is MINT, plus the space a wrapped line can waste.
+    expect($html)->toContain('--chars:9;--ems:4.96;--word-ems:2.76')
         ->toContain('font-size:clamp(');
 });
 

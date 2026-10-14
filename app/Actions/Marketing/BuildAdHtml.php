@@ -37,10 +37,31 @@ class BuildAdHtml
 
     /**
      * The longest headline each layout draws, in characters: what its box holds at the CSS shrink-to-fit's minimum
-     * size (measured with Instrument Sans, all three styles, both sizes). A longer one is cut at a word with "…" so it
-     * can never be clipped mid-line; MK-19's art director should write within these.
+     * size (measured with Instrument Sans, all three styles, both sizes, worst cases in
+     * tests/Browser/Marketing/AdRendererTest.php). A longer one is cut at a word with "…" so it can never be clipped
+     * mid-line; MK-19's art director should write within these.
      */
     public const MAX_HEADLINE = ['photo_headline' => 100, 'text_card' => 100, 'question' => 100, 'spotlight' => 50, 'stat' => 14];
+
+    /**
+     * Each character's advance in em at the headline's weight (600, no letter-spacing), rounded up: Instrument Sans,
+     * measured in Chromium, digits the wider of proportional and tabular. The CSS shrink-to-fit sizes the headline from
+     * the sum (see .fit in css/base.css); a character not listed reads as its ASCII form's width, else 1em.
+     */
+    private const GLYPH_EMS = [
+        '0' => .69, '1' => .6, '2' => .6, '3' => .6, '4' => .62, '5' => .6, '6' => .63, '7' => .6, '8' => .61,
+        '9' => .63, ' ' => .2, '!' => .27, '"' => .43, '#' => .73, '$' => .64, '%' => .79, '&' => .77, '\'' => .23,
+        '(' => .34, ')' => .35, '*' => .42, '+' => .6, ',' => .25, '-' => .46, '.' => .25, '/' => .32, ':' => .28,
+        ';' => .28, '<' => .6, '=' => .6, '>' => .6, '?' => .58, '@' => .87, 'A' => .74, 'B' => .65, 'C' => .75,
+        'D' => .76, 'E' => .63, 'F' => .6, 'G' => .77, 'H' => .73, 'I' => .26, 'J' => .42, 'K' => .72, 'L' => .59,
+        'M' => .9, 'N' => .73, 'O' => .8, 'P' => .67, 'Q' => .81, 'R' => .67, 'S' => .64, 'T' => .67, 'U' => .71,
+        'V' => .74, 'W' => 1.08, 'X' => .71, 'Y' => .7, 'Z' => .63, '[' => .44, '\\' => .45, ']' => .44, '^' => .55,
+        '_' => .51, '`' => .36, 'a' => .55, 'b' => .63, 'c' => .55, 'd' => .63, 'e' => .58, 'f' => .38, 'g' => .63,
+        'h' => .62, 'i' => .26, 'j' => .26, 'k' => .56, 'l' => .26, 'm' => .95, 'n' => .62, 'o' => .6, 'p' => .63,
+        'q' => .63, 'r' => .39, 's' => .51, 't' => .42, 'u' => .6, 'v' => .55, 'w' => .72, 'x' => .59, 'y' => .55,
+        'z' => .51, '{' => .44, '|' => .24, '}' => .39, '~' => .55, '…' => .73, '’' => .28, '‘' => .25, '“' => .45,
+        '”' => .48, '—' => .86, '–' => .56, '€' => .72, '£' => .6,
+    ];
 
     /** A font name safe to print inside a CSS string: what Settings accepts (letters, digits, spaces, hyphens). */
     private const FONT_PATTERN = '/^[A-Za-z0-9][A-Za-z0-9 \-]{0,63}$/D';
@@ -86,7 +107,10 @@ class BuildAdHtml
             'size' => $size === 'square' ? 'sq' : 'tall',
             'headline' => $headline,
             'chars' => max(1, mb_strlen($headline)),
-            'word' => max(1, ...array_map('mb_strlen', preg_split('/\s+/u', $headline) ?: [''])),
+            // The headline's width and its widest word's (plus the space before it: what a wrapped line can waste) in
+            // em, for the CSS shrink-to-fit.
+            'ems' => $this->ems($headline),
+            'word_ems' => round(max(0, ...array_map(fn (string $word) => $this->ems($word), preg_split('/\s+/u', $headline) ?: [''])) + self::GLYPH_EMS[' '], 2),
             'subline' => $this->text($spec['subline'] ?? null),
             'cta' => $this->text($spec['cta'] ?? null),
             'badge' => $this->text($spec['badge'] ?? null),
@@ -115,6 +139,21 @@ class BuildAdHtml
     public function layoutFor(MarketingPost $post, array $spec): string
     {
         return $this->effectiveLayout($spec, $this->photo($post, $spec) !== null);
+    }
+
+    /**
+     * `$text`'s width in em at the headline's weight, from GLYPH_EMS; never under 1, so an empty headline divides
+     * safely.
+     */
+    private function ems(string $text): float
+    {
+        $ems = 0.0;
+        foreach (mb_str_split($text) as $char) {
+            $ems += self::GLYPH_EMS[$char] ?? self::GLYPH_EMS[Str::ascii($char)] ?? 1.0;
+        }
+
+        // Rounded up to 0.01 em; the inner round drops float noise (4.96 summing to 4.9600001) before the ceil.
+        return ceil(round(max(1.0, $ems) * 100, 6)) / 100;
     }
 
     /**

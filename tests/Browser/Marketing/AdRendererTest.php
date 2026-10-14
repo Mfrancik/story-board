@@ -58,33 +58,43 @@ it('Given the real renderer (one browser test), when a photo+headline ad renders
 
 it('Given a headline too long for a layout, then the text shrinks to fit within the layout\'s bounds (no overflow)', function () {
     $post = MarketingPost::factory()->forCampaign($this->campaign, '2026-10-13 19:00')->create(['asset_id' => $this->photo->id]);
-    // About three times each layout's mockup headline: what the type must shrink for (MAX_HEADLINE cuts anything longer).
-    $long = [
-        'photo_headline' => 'That rainbow came from sitting in an old paper album for decades. The sulfur in the paper did it.',
-        'text_card' => 'A type set is one of each design, not every date. It is the best way to own every chapter.',
-        'question' => 'Albums, slabs, or a safe full of tubes? How do you store yours, and what would you change?',
-        'spotlight' => '1889-CC Morgan dollar, the hard one in every set',
-        'stat' => '$48,210,550.75',
+    // The worst cases per layout, each at or past its MAX_HEADLINE cap: long text, long words, all capitals (the widest
+    // glyphs), and short multi-word headlines that wrap at a large size — "61 down, 36 to go." is the stat that broke.
+    $worst = [
+        'photo_headline' => ['That rainbow came from sitting in an old paper album for decades. The sulfur in the paper did it.',
+            'Professionally authenticated, extraordinarily scarce, uncirculated Carson City Morgans, photographed.',
+            'WHAT MAKES A MORGAN DOLLAR WORTH MORE THAN ITS MELT VALUE?', 'Nine down, four to go.', 'Toning'],
+        'text_card' => ['A type set is one of each design, not every date. It is the best way to own every chapter of it.',
+            'Professionally authenticated, extraordinarily scarce, uncirculated Carson City Morgans, photographed.',
+            'WHAT MAKES A MORGAN DOLLAR WORTH MORE THAN ITS MELT VALUE?', 'Nine down, four to go.', 'Toning'],
+        'question' => ['Albums, slabs, or a safe full of tubes? How do you store yours, and what would you change about it?',
+            'Professionally authenticated, extraordinarily scarce, uncirculated Carson City Morgans, photographed?',
+            'WHAT MAKES A MORGAN DOLLAR WORTH MORE THAN ITS MELT VALUE?', 'Slab or raw?', 'Why?'],
+        'spotlight' => ['1889-CC Morgan dollar, the hard one in every set', 'Extraordinarily scarce, professionally graded dime',
+            'THE 1893-S MORGAN DOLLAR, KEY OF THE WHOLE SET', 'Uncirculated authentication', '1893-S'],
+        'stat' => ['61 down, 36 to go.', '$48,210,550.75', '12345678901234', '3 of 13 coins', 'Only 4 left now!', '100% COMPLETE!', 'Mmmm, wow 99%'],
     ];
     $pages = [];
     foreach (MarketingCampaign::AD_STYLES as $style) {
         $this->campaign->update(['ad_style' => $style]);
         $post->load('campaign');
-        foreach ($long as $layout => $headline) {
-            $spec = ['layout' => $layout, 'headline' => $headline, 'subline' => 'Carson City Morgans. Thirteen coins, 1878 to 1893.',
-                'cta' => 'See the set', 'asset_id' => $this->photo->id, 'crop' => 'center', 'badge' => 'Key date'];
-            foreach (MarketingPost::RENDER_SIZES as $size => [$width, $height]) {
-                $html = app(BuildAdHtml::class)->handle($post, $spec, $size);
-                expect($html)->toContain('--chars:'.mb_strlen($headline).';');
-                $pages["{$style}-{$layout}-{$size}"] = ['html' => $html, 'width' => $width, 'height' => $height];
+        foreach ($worst as $layout => $headlines) {
+            foreach ($headlines as $i => $headline) {
+                $spec = ['layout' => $layout, 'headline' => $headline, 'subline' => 'Carson City Morgans. Thirteen coins, 1878 to 1893.',
+                    'cta' => 'See the set', 'asset_id' => $this->photo->id, 'crop' => 'center', 'badge' => 'Key date'];
+                foreach (MarketingPost::RENDER_SIZES as $size => [$width, $height]) {
+                    $pages["{$style}-{$layout}-{$i}-{$size}"] = ['html' => app(BuildAdHtml::class)->handle($post, $spec, $size), 'width' => $width, 'height' => $height];
+                }
             }
         }
     }
 
     $rendered = (new AdRenderer)->render($pages);
 
+    // bin/render-ad.mjs flags a page when a headline, subline or cta overflows its own box or is cut by a clipping
+    // ancestor (the ad's edge included).
     $overflowing = array_keys(array_filter($rendered, fn (array $page) => $page['overflow']));
-    expect($rendered)->toHaveCount(30)
+    expect($rendered)->toHaveCount(count($pages))
         ->and($overflowing)->toBe([]);
 });
 

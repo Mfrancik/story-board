@@ -28,8 +28,7 @@
 .C-q{background:var(--soft)}
 .C-q .body{flex:1;padding:72px 88px 64px;display:flex;flex-direction:column;justify-content:center;gap:34px;position:relative}
 .C-q .quo{font-family:Georgia,'Times New Roman',serif;font-size:420px;line-height:.62;height:200px;color:var(--accent);font-weight:700;margin-left:-14px}
-/* MK-5 tuning: k .9, so a short question that wraps to three lines still fits. */
-.C-q .fit{--bw:904;--bh:340;--max:128;--k:.9}
+.C-q .fit{--bw:904;--bh:340;--max:128}
 .tall.C-q .fit{--bh:520;--max:140}
 .C-q .sub{color:var(--ink);display:flex;gap:22px;align-items:baseline}
 .C-q .sub::before{content:"";width:60px;height:6px;background:var(--accent);flex:none;transform:translateY(-10px)}
@@ -39,7 +38,7 @@
 .C-spot .stamp{position:absolute;width:230px;height:230px;border-radius:50%;background:var(--ink);color:var(--accent);display:grid;place-items:center;text-align:center;font-size:28px;font-weight:700;letter-spacing:.1em;line-height:1.2;text-transform:uppercase;transform:rotate(10deg);top:70px;right:110px;z-index:2;border:5px dashed var(--accent);outline:10px solid var(--ink)}
 .C-spot .txt{flex:none;padding:44px 72px 48px;display:flex;flex-direction:column;gap:12px}
 /* MK-5 tuning: room for a second line at the min size. */
-.C-spot .fit{--bw:936;--bh:110;--max:80;--min:44;--k:1}
+.C-spot .fit{--bw:936;--bh:110;--max:80;--min:44}
 .tall.C-spot .fit{--bh:120;--max:88}
 .tall.C-spot .txt{padding:56px 72px 60px}
 
@@ -47,8 +46,7 @@
 .sq.C-stat .main{grid-template-columns:480px 1fr}
 .tall.C-stat .main{grid-template-rows:640px 1fr}
 .C-stat .num{background:var(--accent);display:flex;align-items:center;justify-content:center;padding:40px;overflow:hidden}
-/* MK-5 tuning: kw .52, Instrument Sans' tabular digits measure .49em here. */
-.C-stat .fit{--bw:400;--bh:560;--max:440;--k:.5;--kw:.52;letter-spacing:-.06em;font-variant-numeric:tabular-nums;line-height:1;text-align:center}
+.C-stat .fit{--bw:400;--bh:560;--max:440;--ls:-.06;--lh:1;font-variant-numeric:tabular-nums;text-align:center}
 .tall.C-stat .fit{--bw:940;--bh:520;--max:460}
 .C-stat .txt{padding:64px;display:flex;flex-direction:column;justify-content:center;gap:30px}
 .C-stat .sub{font-size:46px;color:var(--ink);font-weight:500;line-height:1.25;letter-spacing:-.01em}

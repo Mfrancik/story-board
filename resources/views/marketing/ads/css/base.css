@@ -22,13 +22,28 @@ html,body{margin:0;padding:0;background:transparent}
 .brand .swirl{width:40px;height:40px;color:var(--accent);flex:none;display:block}
 .swirl svg,.wm svg{display:block;width:100%;height:100%;fill:currentColor}
 
-/* Shrink-to-fit, pure CSS. Each layout gives its headline box in px (--bw x --bh); the size that fills that area
-   for --chars characters is sqrt(area / (k * chars)), and no wider than the box allows for the longest word
-   (--word), clamped to the layout's min/max. k covers glyph width x line-height x wrap slack. overflow:hidden is
-   the last guard, never the plan. */
+/* Shrink-to-fit, pure CSS. Each layout gives its headline box in px (--bw x --bh); BuildAdHtml gives the headline's
+   width in em (--ems, from Instrument Sans' measured glyphs) and its widest word's plus a space (--word-ems). For
+   N lines the largest size that surely fits is the smaller of: the width N lines hold, less what wrapping can waste
+   (each break leaves at most one word's width unused), and the height N lines take. The size is the best of N = 1-8,
+   clamped to the layout's min/max, so a short headline stays one huge line and one that must wrap takes two smaller
+   ones instead of spilling. The 1.04 covers kerning and rounding; letter-spacing (--ls) narrows every character but
+   is left out of the word term, to stay on the safe side. overflow:hidden is the last guard, never the plan. */
 .fit{
-  font-size:clamp(calc(var(--min,44) * 1px), calc(min(sqrt(var(--bw) * var(--bh) / (var(--k,.74) * var(--chars))), var(--bw) / (var(--kw,.62) * var(--word))) * 1px), calc(var(--max,150) * 1px));
-  line-height:1.08; letter-spacing:-.028em; font-weight:600; text-wrap:balance;
+  --e:calc((var(--ems) + var(--ls,-.028) * var(--chars)) * 1.04);
+  --w:calc(var(--word-ems) * 1.04);
+  --lh:1.08;
+  font-size:clamp(calc(var(--min,44) * 1px), calc(max(
+    min(var(--bw) / var(--e), var(--bh) / (1 * var(--lh) + .12)),
+    min(2 * var(--bw) / (var(--e) + 1 * var(--w)), var(--bh) / (2 * var(--lh) + .12)),
+    min(3 * var(--bw) / (var(--e) + 2 * var(--w)), var(--bh) / (3 * var(--lh) + .12)),
+    min(4 * var(--bw) / (var(--e) + 3 * var(--w)), var(--bh) / (4 * var(--lh) + .12)),
+    min(5 * var(--bw) / (var(--e) + 4 * var(--w)), var(--bh) / (5 * var(--lh) + .12)),
+    min(6 * var(--bw) / (var(--e) + 5 * var(--w)), var(--bh) / (6 * var(--lh) + .12)),
+    min(7 * var(--bw) / (var(--e) + 6 * var(--w)), var(--bh) / (7 * var(--lh) + .12)),
+    min(8 * var(--bw) / (var(--e) + 7 * var(--w)), var(--bh) / (8 * var(--lh) + .12))
+  ) * 1px), calc(var(--max,150) * 1px));
+  line-height:var(--lh); letter-spacing:calc(var(--ls,-.028) * 1em); font-weight:600; text-wrap:balance;
   max-width:calc(var(--bw) * 1px); max-height:calc(var(--bh) * 1px); overflow:hidden;
   padding-bottom:.12em;  /* room for descenders and the font's tall ascent inside the box */
 }
