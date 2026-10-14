@@ -10,6 +10,18 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-10-13 — Reject all discarded the drafts but queued no redraft
+Symptom: while building MK-20, Reject all recorded the dislikes and discarded the three drafts, but no `DraftOccurrenceJob` was queued. Fill refused the date as `not_open`.
+Root cause: `ListReviewQueue` gives each campaign its runway posts as a loaded `posts` relation. `FillCampaign` reads a date's state from `posts` when that relation is loaded, so it still saw the drafts that had just been discarded and decided the date was not open.
+Fix: pass `$campaign->withoutRelations()` to `FillCampaign` in `RejectDateDrafts::handle()` and `Review::retryDraft()` (MK-20, `667592d`). Pinned by `ReviewTest` "Given I Reject all 3 with reason "boring", … a draft job is queued for that date only". Rule: a campaign whose `posts` were set by hand is a snapshot, so never pass it to an Action that decides from `posts`.
+Log trail: `marketing.review.rejected_all` with no `marketing.ai.fill.queued` after it, and Fill's refusal with `not_open`.
+
+## 2026-10-13 — A second Http::fake did not make Claude succeed on Retry
+Symptom: a test of "Claude fails on the redraft, then Retry" called `Http::fake` once to fail and again to succeed. Retry still failed.
+Root cause: `Http::fake` stubs are added to a list, and the first matching stub wins, so the second fake never answered.
+Fix: one `Http::fake(['api.anthropic.com/*' => Http::sequence()->push(failure)->push(success)])` (MK-20, `tests/Feature/Marketing/ReviewTest.php`). Use `Http::sequence` for any fail-then-succeed in a test.
+Log trail: `marketing.ai.draft.failed` twice in the test log where one `draft.succeeded` was expected.
+
 ## 2026-10-13 — A trimmed ad headline lost a whole word it had room for
 Symptom: while building MK-19, a 90-character headline cut to 60 with `Str::limit($text, 60, '', preserveWords: true)` came back one word shorter than needed: "…toner you| think" lost "you" although "you" fitted.
 Root cause: with `preserveWords`, `Str::limit` drops the last whole word whenever the cut lands immediately after it (on the following space), treating it as a partial word.
