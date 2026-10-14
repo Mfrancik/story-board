@@ -60,6 +60,15 @@ class MarketingPost extends Model
     /** The ad layouts (MK-5), each drawn in every ad style (MarketingCampaign::AD_STYLES). */
     public const AD_LAYOUTS = ['photo_headline', 'text_card', 'question', 'spotlight', 'stat'];
 
+    /** Each layout's name as the owner reads it (MK-19): the studio's "Layout:" line and the art director's menu. */
+    public const AD_LAYOUT_LABELS = [
+        'photo_headline' => 'Photo + headline',
+        'text_card' => 'Bold text card',
+        'question' => 'Question',
+        'spotlight' => 'Coin spotlight',
+        'stat' => 'Stat / number',
+    ];
+
     /** The layouts built around the post's photo; without one they are drawn as the text card. */
     public const PHOTO_LAYOUTS = ['photo_headline', 'spotlight'];
 

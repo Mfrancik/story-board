@@ -17,6 +17,9 @@ use Illuminate\Support\Facades\Log;
  * owner's feedback text and chips. The post becomes the next version; the version it replaces is kept in
  * marketing_post_versions with the feedback given on it, and the feedback is stored as taste (marketing_feedback).
  * Nothing is written unless the rewrite succeeds.
+ *
+ * The rewrite carries a new ad too (MK-19): the note can change the words on the image or the layout. The kept version
+ * holds the old one in its generation_meta (`ad`, what Claude chose), so Undo puts it back.
  */
 class ReviseDraft
 {
@@ -28,14 +31,22 @@ class ReviseDraft
      * @param  MarketingPrompts  $prompts  what the model is asked
      * @param  LintCaption  $lint  the copy-rules lint run on the new caption
      * @param  QueuePostRender  $render  queues the new version's ad render (MK-5)
+     * @param  NormaliseAdSpec  $normalise  turns Claude's new ad into a drawable spec (MK-19)
      */
-    public function __construct(private MarketingAiClient $ai, private MarketingPrompts $prompts, private LintCaption $lint, private QueuePostRender $render) {}
+    public function __construct(
+        private MarketingAiClient $ai,
+        private MarketingPrompts $prompts,
+        private LintCaption $lint,
+        private QueuePostRender $render,
+        private NormaliseAdSpec $normalise,
+    ) {}
 
     /**
      * Rewrite draft `$post` from `$feedback` and `$chips` (any of CHIPS) and return it as its next version.
      *
-     * Side effects: one Claude call; writes a version row, a feedback row and the post; queues the post's ad render
-     * (MK-5); logs `marketing.ai.revise.succeeded|failed|refused`, `marketing.ai.invalid_asset`, `marketing.lint.warned`.
+     * Side effects: one Claude call; writes a version row, a feedback row and the post (its new ad spec included, MK-19);
+     * queues the post's ad render (MK-5); logs `marketing.ai.revise.succeeded|failed|refused`, `marketing.ai.invalid_asset`,
+     * `marketing.ai.ad_spec_fixed`, `marketing.lint.warned`.
      *
      * @param  list<string>  $chips
      *
@@ -76,8 +87,10 @@ class ReviseDraft
         $meta = $reply['meta'];
         $asset = $this->asset($post, $reply['data']['asset_id'] ?? null, $prompt['assets']);
         $rules = $post->project()->firstOrFail()->marketingBrand()->first()->copy_rules ?? [];
+        // A reply with no ad (the schema asks for one) keeps the ad Claude chose before, rather than losing it.
+        $choice = MarketingPrompts::adChoice($reply['data']['ad'] ?? null) ?? MarketingPrompts::adChoice($post->generation_meta['ad'] ?? null);
 
-        DB::transaction(function () use ($post, $feedback, $chips, $caption, $asset, $meta, $rules) {
+        DB::transaction(function () use ($post, $feedback, $chips, $caption, $asset, $meta, $rules, $choice) {
             MarketingPostVersion::create([
                 'post_id' => $post->id, 'version' => $post->version, 'caption' => $post->caption, 'asset_id' => $post->asset_id,
                 'feedback' => $feedback !== '' ? $feedback : null, 'chips' => $chips !== [] ? $chips : null, 'generation_meta' => $post->generation_meta,
@@ -86,22 +99,27 @@ class ReviseDraft
                 'project_id' => $post->project_id, 'campaign_id' => $post->campaign_id, 'post_id' => $post->id,
                 'vote' => null, 'reasons' => $chips !== [] ? $chips : null, 'note' => $feedback !== '' ? $feedback : null,
             ]);
-            $post->update([
+            $post->fill([
                 'caption' => $caption, 'asset_id' => $asset, 'version' => $post->version + 1,
                 'generation_meta' => [...$meta, 'call' => 'revise', 'topic_key' => $post->generation_meta['topic_key'] ?? null, 'topic' => $post->generation_meta['topic'] ?? null,
                     // A rebuild keeps the draft's examples (MK-18), so its "Inspired by" row survives the rewrite.
-                    'inspiration_ids' => $post->generation_meta['inspiration_ids'] ?? []],
+                    'inspiration_ids' => $post->generation_meta['inspiration_ids'] ?? [], 'ad' => $choice],
                 'lint' => $this->lint->handle($caption, $rules),
             ]);
+            // Normalised against the new photo; merged over the old `ad` so its render ids stay until the new images
+            // replace them (QueuePostRender keeps them, StorePostRenders deletes them).
+            $post->ad = [...(array) $post->ad, ...$this->normalise->handle($post, $choice)];
+            $post->save();
         });
 
         if ($post->lint !== []) {
             Log::debug('marketing.lint.warned', ['campaign_id' => $post->campaign_id, 'post_id' => $post->id, 'codes' => array_column((array) $post->lint, 'code')]);
         }
         Log::info('marketing.ai.revise.succeeded', ['campaign_id' => $post->campaign_id, 'post_id' => $post->id, 'version' => $post->version,
-            'chips' => $chips, 'model' => $meta['model'], 'input_tokens' => $meta['input_tokens'], 'output_tokens' => $meta['output_tokens'],
+            'chips' => $chips, 'layout' => $post->ad['layout'] ?? null, 'model' => $meta['model'], 'input_tokens' => $meta['input_tokens'], 'output_tokens' => $meta['output_tokens'],
             'cost_cents' => $meta['cost_micro_usd'] === null ? null : round($meta['cost_micro_usd'] / 10000, 4), 'duration_ms' => $meta['duration_ms']]);
-        $this->render->handle($post);
+        // The spec was just stored from Claude's (MK-19), so it is kept rather than rebuilt.
+        $this->render->handle($post, respec: false);
 
         return $post;
     }

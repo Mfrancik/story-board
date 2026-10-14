@@ -23,6 +23,10 @@ use Illuminate\Support\Facades\Log;
  * Photos follow the campaign's photo mode: `favourites` and `ai_decides` keep an id the model picked only when it is
  * one of the project's favourites offered in the prompt (any other id is dropped and logged); `per_post` and
  * `text_only` posts never get one from the model.
+ *
+ * Each draft also carries the ad Claude art-directed for it (MK-19): what Claude chose is recorded in
+ * `generation_meta.ad`, and the spec NormaliseAdSpec makes of it is stored as the post's `ad` and rendered (MK-5).
+ * Three drafts in one layout are not three options, so such a reply is rejected like a short one.
  */
 class DraftOccurrence
 {
@@ -33,6 +37,7 @@ class DraftOccurrence
      * @param  CampaignSchedule  $schedule  the campaign's timezone, for which day a post is on
      * @param  BuildCampaignRunway  $runway  whose day() places a post on a date
      * @param  QueuePostRender  $render  queues each new draft's ad render (MK-5)
+     * @param  NormaliseAdSpec  $normalise  turns Claude's ad into a drawable spec (MK-19)
      */
     public function __construct(
         private MarketingAiClient $ai,
@@ -41,14 +46,16 @@ class DraftOccurrence
         private CampaignSchedule $schedule,
         private BuildCampaignRunway $runway,
         private QueuePostRender $render,
+        private NormaliseAdSpec $normalise,
     ) {}
 
     /**
      * Draft `$campaign`'s date `$at` (the occurrence's time) and return the new posts, in candidate order.
      *
      * Side effects: one Claude call; writes the posts (and with `$replace` discards the old drafts); queues each new
-     * draft's ad render (MK-5, QueuePostRender); logs `marketing.ai.draft.started|succeeded|failed|refused`,
-     * `marketing.ai.invalid_asset`, `marketing.lint.warned`.
+     * draft's ad render (MK-5, QueuePostRender) from the spec Claude wrote (MK-19); logs
+     * `marketing.ai.draft.started|succeeded|failed|refused`, `marketing.ai.invalid_asset`, `marketing.ai.ad_spec_fixed`,
+     * `marketing.lint.warned`.
      *
      * @return Collection<int, MarketingPost>
      *
@@ -97,7 +104,7 @@ class DraftOccurrence
 
             $brandRules = $campaign->project()->firstOrFail()->marketingBrand()->first()->copy_rules ?? [];
 
-            return collect($drafts)->map(fn (array $draft, int $i) => MarketingPost::create([
+            return collect($drafts)->map(fn (array $draft, int $i) => $this->artDirect(MarketingPost::create([
                 'project_id' => $campaign->project_id,
                 'campaign_id' => $campaign->id,
                 'scheduled_for' => $at->utc(),
@@ -111,7 +118,7 @@ class DraftOccurrence
                     // MK-18: which inspiration the prompt quoted, for the studio's "Inspired by" row.
                     'inspiration_ids' => $prompt['inspiration_ids']],
                 'lint' => $this->lint->handle($draft['caption'], $brandRules),
-            ]));
+            ]), $draft['ad']));
         });
 
         foreach ($posts as $post) {
@@ -120,22 +127,37 @@ class DraftOccurrence
             }
         }
         Log::info('marketing.ai.draft.succeeded', [...$context, 'post_ids' => $posts->pluck('id')->all(), 'replaced' => $replace ? $existing->count() : 0,
+            'layouts' => $posts->map(fn (MarketingPost $p) => $p->ad['layout'] ?? null)->all(),
             'model' => $meta['model'], 'input_tokens' => $meta['input_tokens'], 'output_tokens' => $meta['output_tokens'],
             'cost_cents' => $meta['cost_micro_usd'] === null ? null : round($meta['cost_micro_usd'] / 10000, 4), 'duration_ms' => $meta['duration_ms']]);
 
-        // MK-5: every draft becomes an ad image (a draft still waiting for its photo is skipped until it gets one).
-        $posts->each(fn (MarketingPost $post) => $this->render->handle($post));
+        // MK-5: every draft becomes an ad image (a draft still waiting for its photo is skipped until it gets one). The
+        // spec is the one just stored from Claude's (MK-19), so it is kept rather than rebuilt.
+        $posts->each(fn (MarketingPost $post) => $this->render->handle($post, respec: false));
 
         return $posts;
     }
 
     /**
-     * The reply's candidates, trimmed: exactly DRAFTS non-empty captions, or the reply is unusable.
+     * Store the ad Claude wrote for `$post` (MK-19): its choice, as sent, in `generation_meta.ad` (null when it sent
+     * none), and the drawable spec NormaliseAdSpec makes of it as the post's `ad`.
+     */
+    private function artDirect(MarketingPost $post, mixed $ad): MarketingPost
+    {
+        $spec = $this->normalise->handle($post, $ad);
+        $post->update(['ad' => $spec, 'generation_meta' => [...(array) $post->generation_meta, 'ad' => MarketingPrompts::adChoice($ad)]]);
+
+        return $post;
+    }
+
+    /**
+     * The reply's candidates, trimmed: exactly DRAFTS non-empty captions, or the reply is unusable. Three that all
+     * name the same known layout are unusable too (MK-19): the owner is meant to choose between different ads.
      *
      * @param  array<string, mixed>  $data
-     * @return list<array{caption: string, asset_id: mixed}>
+     * @return list<array{caption: string, asset_id: mixed, ad: mixed}>
      *
-     * @throws MarketingAiException when fewer than DRAFTS usable captions came back
+     * @throws MarketingAiException when fewer than DRAFTS usable captions came back, or all in one layout
      */
     private function drafts(array $data): array
     {
@@ -143,14 +165,23 @@ class DraftOccurrence
         foreach (is_array($data['drafts'] ?? null) ? $data['drafts'] : [] as $draft) {
             $caption = is_array($draft) && is_string($draft['caption'] ?? null) ? trim($draft['caption']) : '';
             if ($caption !== '') {
-                $drafts[] = ['caption' => $caption, 'asset_id' => $draft['asset_id'] ?? null];
+                $drafts[] = ['caption' => $caption, 'asset_id' => $draft['asset_id'] ?? null, 'ad' => $draft['ad'] ?? null];
             }
         }
         if (count($drafts) < MarketingPrompts::DRAFTS) {
             throw new MarketingAiException('Claude sent back '.count($drafts).' usable captions, not '.MarketingPrompts::DRAFTS.'.', 'invalid_reply');
         }
+        $drafts = array_slice($drafts, 0, MarketingPrompts::DRAFTS);
 
-        return array_slice($drafts, 0, MarketingPrompts::DRAFTS);
+        // Only a reply that names a known layout for every draft can break the rule; missing or unknown layouts get
+        // MK-5's default and are logged by NormaliseAdSpec instead.
+        $layouts = array_map(fn (array $d) => is_array($d['ad']) ? ($d['ad']['layout'] ?? null) : null, $drafts);
+        $known = array_filter($layouts, fn (mixed $l) => in_array($l, MarketingPost::AD_LAYOUTS, true));
+        if (count($known) === MarketingPrompts::DRAFTS && count(array_unique($known)) === 1) {
+            throw new MarketingAiException('Claude sent back '.MarketingPrompts::DRAFTS.' drafts in one layout, not at least two.', 'invalid_reply');
+        }
+
+        return $drafts;
     }
 
     /**

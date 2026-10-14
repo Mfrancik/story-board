@@ -2,7 +2,9 @@
 
 namespace App\Services\Marketing;
 
+use App\Actions\Marketing\BuildAdHtml;
 use App\Actions\Marketing\BuildTasteExamples;
+use App\Actions\Marketing\NormaliseAdSpec;
 use App\Actions\Marketing\PickInspirationExamples;
 use App\Models\MarketingAsset;
 use App\Models\MarketingBrand;
@@ -16,10 +18,12 @@ use Illuminate\Support\Str;
 /**
  * The prompts Claude drafts and revises marketing captions from (MK-8), and the JSON schemas of the replies.
  *
- * Two parts. The system part is fixed per project — the brand's voice and copy rules — so it is the cached prefix
- * of every call. The user part is the call: the campaign's brief, its topics (rotated so recent ones are not
- * repeated), the owner's taste examples and what to do about photos. Nothing about how a post looks is ever in
- * either part: the brand's look is fixed and the AI never chooses it (owner, 2026-10-12).
+ * Two parts. The system part is fixed per project — the brand's voice, the copy rules and the menu of ad layouts —
+ * so it is the cached prefix of every call. The user part is the call: the campaign's brief, its topics (rotated so
+ * recent ones are not repeated), the owner's taste examples, what to do about photos and how to pick the ads'
+ * layouts. Claude art-directs each post's ad (MK-19): it picks one of MK-5's layouts and writes the words on the
+ * image. The brand's look itself — its colours, fonts and the campaign's ad style — is fixed and never the model's to
+ * choose (owner, 2026-10-12); only the style's name is given, as context.
  */
 class MarketingPrompts
 {
@@ -43,16 +47,57 @@ class MarketingPrompts
         'additionalProperties' => false,
     ];
 
-    /** One caption and its photo id, or null for none. */
+    /** One caption, its photo id (or null for none) and its ad (MK-19). */
     public const CAPTION_SCHEMA = [
         'type' => 'object',
         'properties' => [
             'caption' => ['type' => 'string'],
             'asset_id' => ['anyOf' => [['type' => 'integer'], ['type' => 'null']]],
+            'ad' => self::AD_SCHEMA,
         ],
-        'required' => ['caption', 'asset_id'],
+        'required' => ['caption', 'asset_id', 'ad'],
         'additionalProperties' => false,
     ];
+
+    /**
+     * The ad Claude art-directs for a caption (MK-19): one of MK-5's layouts, the words on the image and the crop.
+     * Lengths are in the descriptions and the prompt, not as maxLength: structured outputs do not enforce string
+     * lengths, so NormaliseAdSpec cuts whatever comes back.
+     */
+    public const AD_SCHEMA = [
+        'type' => 'object',
+        'properties' => [
+            'layout' => ['type' => 'string', 'enum' => MarketingPost::AD_LAYOUTS],
+            'headline' => ['type' => 'string', 'description' => 'The big line on the image, at most 60 characters.'],
+            'subline' => ['anyOf' => [['type' => 'string'], ['type' => 'null']], 'description' => 'At most 120 characters.'],
+            'cta' => ['anyOf' => [['type' => 'string'], ['type' => 'null']], 'description' => 'A call to action, at most 24 characters.'],
+            'crop' => ['type' => 'string', 'enum' => BuildAdHtml::CROPS],
+            'badge' => ['anyOf' => [['type' => 'string'], ['type' => 'null']], 'description' => 'The coin spotlight\'s tag, at most 24 characters.'],
+        ],
+        'required' => ['layout', 'headline', 'subline', 'cta', 'crop', 'badge'],
+        'additionalProperties' => false,
+    ];
+
+    /** When each of MK-5's layouts suits a post: the art director's menu, beside MarketingPost::AD_LAYOUT_LABELS. */
+    public const LAYOUT_USE_WHEN = [
+        'photo_headline' => 'use when the photo is the point; one short headline goes with it.',
+        'text_card' => 'use when the words carry the post on their own.',
+        'question' => 'use when the post asks people something; the headline is the question.',
+        'spotlight' => 'use when showing off one coin from its photo; the badge can tag it (a grade, "Key date").',
+        'stat' => 'use when one number is the point; the headline is the number and the subline says what it means.',
+    ];
+
+    /**
+     * The `ad` of a reply (MK-19) as it is kept in `generation_meta.ad`: the record of what Claude chose, re-read when
+     * the post is re-specced (QueuePostRender). Only AD_SCHEMA's keys, so a stray field is never stored; null when the
+     * reply had no ad.
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function adChoice(mixed $ad): ?array
+    {
+        return is_array($ad) ? array_intersect_key($ad, self::AD_SCHEMA['properties']) : null;
+    }
 
     /**
      * @param  BuildTasteExamples  $taste  the owner's likes, dislikes and notes as examples
@@ -89,11 +134,43 @@ class MarketingPrompts
         $lines[] = '- Never promise to look anything up from a certificate number.';
         $lines[] = '- A comparison of value says where the price came from.';
         // The brand's look is not the model's to vary; saying so without naming any part of it keeps the prompt clean.
-        $lines[] = '- Write only the words. How a post looks is fixed by the brand and is not part of your job.';
-        $lines[] = '';
-        $lines[] = 'Reply with JSON only, in the schema given.';
+        // Since MK-19 the layout and the words on the image are its job; the look they are drawn in still is not.
+        $lines[] = '- How a post looks is fixed by the brand and is not part of your job. You choose only each ad\'s layout and its words.';
 
-        return implode("\n", $lines);
+        return implode("\n", [...$lines, '', ...$this->adMenu(), '', 'Reply with JSON only, in the schema given.']);
+    }
+
+    /**
+     * The art director's brief (MK-19), fixed for every project: what an ad is, MK-5's layouts with when to use each,
+     * and the rules for the words on the image. Part of the cached system prefix.
+     *
+     * @return list<string>
+     */
+    private function adMenu(): array
+    {
+        $lines = [
+            'Each caption also gets an ad: an image of the post with a few words on it, drawn in the brand\'s fixed look.',
+            'You choose its layout and write its words (the ad object). Layouts:',
+        ];
+        foreach (MarketingPost::AD_LAYOUTS as $layout) {
+            $cap = min(NormaliseAdSpec::HEADLINE_MAX, BuildAdHtml::MAX_HEADLINE[$layout]);
+            // Only a layout with less room than the usual headline says so; the usual limit is given once below.
+            $lines[] = "- {$layout} (".MarketingPost::AD_LAYOUT_LABELS[$layout].'): '.self::LAYOUT_USE_WHEN[$layout]
+                .($cap < NormaliseAdSpec::HEADLINE_MAX ? " Its headline is at most {$cap} characters." : '');
+        }
+
+        return [
+            ...$lines,
+            implode(' and ', MarketingPost::PHOTO_LAYOUTS).' are built around the post\'s photo; without one they are drawn as the text card.',
+            '',
+            'Words on the ad (the copy rules above apply to them too):',
+            '- headline: at most '.NormaliseAdSpec::HEADLINE_MAX.' characters, and the shorter the better. The one big line; not a copy of the caption.',
+            '- subline: at most '.NormaliseAdSpec::SUBLINE_MAX.' characters, or null.',
+            '- cta: a call to action of at most '.NormaliseAdSpec::CTA_MAX.' characters, such as "Share yours below", or null.',
+            '- badge: at most '.NormaliseAdSpec::BADGE_MAX.' characters, shown on the coin spotlight only, or null.',
+            '- No hashtags. No emoji unless the voice above asks for them.',
+            '- crop: which part of the photo to keep when it is cropped: '.implode(', ', BuildAdHtml::CROPS).'.',
+        ];
     }
 
     /**
@@ -124,7 +201,7 @@ class MarketingPrompts
         return [
             'system' => $this->system($project),
             // Inspiration sits beside the taste examples, never inside them: taste is the owner's verdicts on drafts.
-            'user' => implode("\n", [...$lines, ...$this->tasteLines($campaign), ...$this->inspirationLines($examples), '', $photo]),
+            'user' => implode("\n", [...$lines, ...$this->tasteLines($campaign), ...$this->inspirationLines($examples), '', $photo, '', ...$this->adLines($campaign)]),
             'topics' => $topics,
             'assets' => $assets,
             'skipped_ideas' => $skipped,
@@ -157,6 +234,7 @@ class MarketingPrompts
             $lines[] = 'Also: '.implode('; ', $chips).'.';
         }
         $lines[] = 'Keep what the owner did not ask to change.';
+        $lines = [...$lines, '', ...$this->currentAd($post)];
 
         $assets = null;
         $photo = 'Photos: set asset_id to null. The photo stays as it is.';
@@ -172,6 +250,52 @@ class MarketingPrompts
             'user' => implode("\n", [...$lines, ...($campaign !== null ? $this->tasteLines($campaign) : []), '', $photo]),
             'assets' => $assets,
         ];
+    }
+
+    /**
+     * How to pick a draft call's layouts (MK-19), after the taste and inspiration blocks so both inform the choice
+     * without being changed: the campaign's ad style for context, the two-layout rule and what the photo mode allows.
+     *
+     * @return list<string>
+     */
+    private function adLines(MarketingCampaign $campaign): array
+    {
+        $photo = implode(' or ', MarketingPost::PHOTO_LAYOUTS);
+        $lines = [
+            'Ads: this campaign\'s ad style is '.ucfirst($campaign->adStyle()).'. The style is fixed; you choose the layouts.',
+            'Use at least two different layouts across the '.self::DRAFTS.' drafts, each chosen for what its caption says. Let the owner\'s taste and the ads they like (above) guide the words and the choice.',
+        ];
+        $lines[] = match ($campaign->photo_mode) {
+            MarketingCampaign::PHOTO_PER_POST => "Every post here gets the owner's own photo later, so {$photo} suit any draft.",
+            MarketingCampaign::PHOTO_FAVOURITES, MarketingCampaign::PHOTO_AI_DECIDES => "Use {$photo} only for a draft you gave a photo.",
+            default => "These posts have no photo: do not use {$photo}.",
+        };
+
+        return $lines;
+    }
+
+    /**
+     * The post's current ad, for a revise call (MK-19), so the owner's note can change its words or its layout.
+     *
+     * @return list<string>
+     */
+    private function currentAd(MarketingPost $post): array
+    {
+        $spec = $post->adSpec();
+        $ask = 'Send the ad back too: change its words or its layout where the owner\'s note asks, or where the new caption needs it.';
+        if ($spec === null) {
+            return ['It has no ad yet: write one for the new caption.', $ask];
+        }
+
+        $words = ['headline "'.$spec['headline'].'"'];
+        foreach (['subline', 'cta', 'badge'] as $field) {
+            if (is_string($spec[$field]) && $spec[$field] !== '') {
+                $words[] = $field.' "'.$spec[$field].'"';
+            }
+        }
+        $label = MarketingPost::AD_LAYOUT_LABELS[$spec['layout']] ?? $spec['layout'];
+
+        return ["Its ad now: {$label} (layout {$spec['layout']}), ".implode(', ', $words).', crop '.($spec['crop'] ?? 'center').'.', $ask];
     }
 
     /**

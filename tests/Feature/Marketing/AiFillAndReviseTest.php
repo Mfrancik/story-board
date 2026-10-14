@@ -129,8 +129,9 @@ it('Given the prompt is built, then it contains the brand voice, copy rules, bri
         ->toContain('Album toning')
         ->toContain('the rainbow came from the paper')
         ->toContain('Show us your best toner.')
-        // The brand's look is fixed: nothing about it reaches the model, not even the values.
-        ->not->toMatch('/colou?r|font|typeface|layout|design|#[0-9A-F]{6}/i')
+        // The brand's look is fixed: nothing about it reaches the model, not even the values. (Layout left this list
+        // with MK-19: picking one of MK-5's layouts is now the model's job; tests/Feature/Marketing/ArtDirectorTest.php.)
+        ->not->toMatch('/colou?r|font|typeface|design|#[0-9A-F]{6}/i')
         ->not->toContain('Instrument Sans')
         // An idea with unfilled placeholders waits for its data source (phase 3).
         ->not->toContain('[coin]');

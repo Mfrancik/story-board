@@ -221,7 +221,7 @@ class PostStudio extends Component
 
     /**
      * "Rebuild" in "What should change?": ReviseDraft (MK-8) rewrites draft `$id` from `$feedback` and `$chips`; the
-     * draft updates in place as its next version. A rewrite that comes back the same (caption and photo) is put back
+     * draft updates in place as its next version. A rewrite that comes back the same (caption, photo and ad) is put back
      * with UndoRevision, so no version that changes nothing is kept, and the studio says why under the box
      * (ExplainUnchangedRevision); the note stays as the campaign's taste.
      *
@@ -236,6 +236,9 @@ class PostStudio extends Component
         $post = $this->shownPost($id);
         $this->unchanged = null;
         $before = [trim((string) $post->caption), $post->asset_id];
+        // The ad Claude chose counts as a change too (MK-19): "make it a question" may change only the layout or its
+        // words. Its choice, not the stored spec: a post drafted before MK-19 gets a spec on its first rebuild anyway.
+        $adBefore = $post->generation_meta['ad'] ?? null;
         try {
             $revise->handle($post, $feedback, $chips);
         } catch (MarketingDraftRefusedException $e) {
@@ -248,7 +251,8 @@ class PostStudio extends Component
             return false;
         }
 
-        if ([trim((string) $post->caption), $post->asset_id] === $before) {
+        // Loose on the ad: it comes back from MySQL's JSON with its keys reordered, and == ignores key order.
+        if ([trim((string) $post->caption), $post->asset_id] === $before && ($post->generation_meta['ad'] ?? null) == $adBefore) {
             // ReviseDraft (MK-8, not this story's to change) always keeps a version; one identical to the draft is
             // noise in Compare and Undo, so it is put back here. False keeps the owner's note in the box to edit.
             $undo->handle($post);

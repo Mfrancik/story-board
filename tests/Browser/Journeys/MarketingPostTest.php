@@ -15,8 +15,8 @@ use Illuminate\Support\Facades\Storage;
  * Journey marketing-post (docs/journeys/marketing-post.md): from a recurring campaign to approved posts, ready to
  * publish. Created by MK-1 with step 1; each later MK story adds its step (MK-2: step 2, the brand in Settings; MK-7:
  * step 3, the campaign page; MK-8: step 4, Fill; MK-9: step 5, the post studio; MK-10: step 6, the calendar; MK-18:
- * step 7, inspiration; MK-5: step 8, rendered ads). Claude is faked with Http::fake (fakeClaude()) by one reply carrying `drafts` (what Fill
- * reads), `caption` (what Revise reads) and `headline`/`style`/`topic` (what an inspiration read reads), since the
+ * step 7, inspiration; MK-5: step 8, rendered ads; MK-19: step 9, drafts as different whole ads). Claude is faked with Http::fake (fakeClaude()) by one reply carrying `drafts` (what Fill
+ * reads, each with its art-directed `ad`), `caption` (what Revise reads) and `headline`/`style`/`topic` (what an inspiration read reads), since the
  * first matching fake wins. Only RefreshProjectJob is faked on the queue, so Fill's DraftOccurrenceJob and the
  * inspiration read run inline on the sync queue, and so does each draft's RenderPostAd with the fake renderer
  * (Tests\Support\FakeAdRenderer, bound in Tests\TestCase; the real render is tests/Browser/Marketing/AdRendererTest.php). The local disk is faked from the start, because step 2's seed now
@@ -26,10 +26,14 @@ beforeEach(function () {
     Carbon::setTestNow('2026-10-12 11:00');
     Queue::fake([RefreshProjectJob::class]);
     Storage::fake('local');
+    $ad = ['subline' => null, 'cta' => null, 'crop' => 'center', 'badge' => null];
     fakeClaude(['drafts' => [
-        ['caption' => "Rainbow toning on a Morgan.\nShow us your best toner.", 'asset_id' => null],
-        ['caption' => 'Album toning, straight from the paper.', 'asset_id' => null],
-        ['caption' => 'Rate this rainbow from one to ten.', 'asset_id' => null],
+        ['caption' => "Rainbow toning on a Morgan.\nShow us your best toner.", 'asset_id' => null,
+            'ad' => [...$ad, 'layout' => 'photo_headline', 'headline' => 'Rainbow on a Morgan', 'cta' => 'Show us yours']],
+        ['caption' => 'Album toning, straight from the paper.', 'asset_id' => null,
+            'ad' => [...$ad, 'layout' => 'text_card', 'headline' => 'Straight from the paper', 'subline' => 'Album toning']],
+        ['caption' => 'Rate this rainbow from one to ten.', 'asset_id' => null,
+            'ad' => [...$ad, 'layout' => 'question', 'headline' => 'One to ten: how good is this rainbow?']],
     ], 'caption' => 'Album toning, straight from the paper. Show us yours.',
         'headline' => 'Rainbow album toning', 'style' => ['dark full-bleed coin'], 'topic' => 'album toning']);
     $coins = Project::factory()->create(['name' => 'coins', 'indexed_at' => now(), 'refresh_attempted_at' => now(), 'state' => Project::STATE_OK]);
@@ -184,4 +188,20 @@ it('walks the marketing-post journey', function () {
         $png = $this->get(route('marketing.render', ['coins', $first->id, $size]))->assertOk()->assertHeader('Content-Type', 'image/png')->streamedContent();
         expect(array_slice(getimagesizefromstring($png) ?: [], 0, 2))->toBe($dims);
     }
+
+    // Step 9 (MK-19): Claude art-directs each draft, so the three TrueView Tuesday drafts Filled in step 7 are three
+    // different ads, not one layout three times. They wait for the owner's photo (photo per post), so the studio shows
+    // each one's layout line before any render; the first keeps its photo layout for the photo to come.
+    $tuesday = MarketingPost::whereDate('scheduled_for', '2026-11-10')->where('status', MarketingPost::STATUS_DRAFT)->orderBy('id')->get();
+    expect($tuesday)->toHaveCount(3)
+        ->and($tuesday->map(fn (MarketingPost $p) => $p->adSpec()['layout'] ?? null)->unique()->count())->toBeGreaterThanOrEqual(2);
+    [$one, $two] = $tuesday->all();
+    $page = visit('/p/coins/marketing/campaigns/trueview-tuesday')
+        ->click('[data-open-studio="2026-11-10"]')
+        ->assertVisible('[data-studio] [role="dialog"]')
+        ->assertSeeIn('[data-ad-spec="'.$one->id.'"]', 'Layout: Photo + headline · CTA: Show us yours')
+        ->click('[data-draft="'.$one->id.'"] [aria-label="Next draft"]');
+    journeyStep('marketing-post', 'art director', '/p/coins/marketing/campaigns/trueview-tuesday', $page)
+        ->assertSeeIn('[data-ad-spec="'.$two->id.'"]', 'Layout: Bold text card')
+        ->assertNoJavaScriptErrors();
 });

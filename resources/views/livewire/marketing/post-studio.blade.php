@@ -134,6 +134,10 @@
                         $previous = $post->versions->last();
                         $vote = $post->feedback->first();
                         $editable = in_array($state, ['review', 'approved', 'missed'], true);
+                        $spec = $post->adSpec();
+                        // One string, not inline @if: Livewire wraps every @if in morph markers, which would split the line.
+                        $specLine = $spec === null ? null : 'Layout: '.(\App\Models\MarketingPost::AD_LAYOUT_LABELS[$spec['layout']] ?? $spec['layout'])
+                            .(is_string($spec['cta']) && $spec['cta'] !== '' ? ' · CTA: '.$spec['cta'] : '');
                     @endphp
                     <div data-draft="{{ $post->id }}" x-show="cur === {{ $i }}" @if ($i > 0) x-cloak @endif wire:key="draft-{{ $post->id }}"
                         class="grid min-w-0 grid-cols-1 lg:min-h-full lg:grid-cols-12">
@@ -193,6 +197,10 @@
                                     @endif
                                 </div>
                             @endunless
+                            {{-- MK-19: the art director's choice, one quiet line; shown before the render too (a draft waiting for its photo). --}}
+                            @if ($specLine !== null)
+                                <p data-ad-spec="{{ $post->id }}" class="text-center text-xs text-ink-muted">{{ $specLine }}</p>
+                            @endif
 
                             @if ($shown->count() > 1)
                                 <div class="flex justify-center gap-1" role="group" aria-label="Drafts">

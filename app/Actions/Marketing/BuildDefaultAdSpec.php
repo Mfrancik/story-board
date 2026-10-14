@@ -5,7 +5,8 @@ namespace App\Actions\Marketing;
 use App\Models\MarketingPost;
 
 /**
- * The ad spec a post gets until MK-19's art director writes one (MK-5): a post with a photo is the photo + headline
+ * The ad spec a post gets when Claude wrote none it could use (MK-5; MK-19's art director writes the rest, through
+ * NormaliseAdSpec): a one-off, a post drafted before MK-19, or an unknown layout. A post with a photo is the photo + headline
  * layout, a post without one the bold text card; the headline is the caption's first line and the subline the rest,
  * joined and trimmed. Pure: reads only the post it is given.
  */
