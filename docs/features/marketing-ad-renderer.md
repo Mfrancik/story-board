@@ -49,9 +49,16 @@ from `resources/views/marketing/ads/ad.blade.php`:
 - **Fonts** are embedded as base64 `@font-face` rules from `public/build/fonts-manifest.json` (`fontFaces()`, cached
   per process). The photo is embedded as a data URL, and the logo is the sanitised SVG with its `xmlns` attributes
   stripped. The page then contains no URL of any kind.
-- **Headline fit.** The headline is cut at a word with "…" to `MAX_HEADLINE[$layout]` characters. Then the `.fit`
-  rule in `base.css` sizes it in pure CSS from the box (`--bw`/`--bh`), the character count (`--chars`) and the
-  longest word (`--word`), between each layout's min and max.
+- **Headline fit.** The headline is cut at a word with "…" to `MAX_HEADLINE[$layout]` characters. `BuildAdHtml`
+  then measures it with `GLYPH_EMS`, a table of Instrument Sans advances at weight 600 measured in Chromium
+  (`ems()`; an unlisted character uses its ASCII form's width, else 1em). The headline partial prints `--chars`,
+  `--ems` (the headline's width in em) and `--word-ems` (the widest word plus a space, which is the most a line
+  break can waste). The `.fit` rule in `base.css` tries 1 to 8 lines. For each line count it takes the smaller of
+  the size the width allows (`N·bw / (ems + (N−1)·word-ems)`) and the size the height allows
+  (`bh / (N·lh + .12)`). It keeps the largest of those sizes and clamps it to the layout's `--min`/`--max`. So a
+  short headline stays one huge line, and one that has to wrap gets two smaller lines instead of spilling. Layouts
+  set only their box (`--bw`/`--bh`), `--min`/`--max`, and their own letter-spacing (`--ls`) and line-height
+  (`--lh`). There are no tuning constants any more.
 
 Templates: `resources/views/marketing/ads/{gallery,vault,poster}/<layout>.blade.php`, sharing
 `partials/{brand,headline,photo}.blade.php`. The styles are ported from `docs/mockups/MK-5/option-{a,b,c}.html`
@@ -61,8 +68,9 @@ Templates: `resources/views/marketing/ads/{gallery,vault,poster}/<layout>.blade.
 writes each page to `storage/app/private/ad-render/<uuid>/` and runs
 `node bin/render-ad.mjs <in.html> <out.png> <w> <h> …` with fixed arguments (no shell string), within
 `TIMEOUT_SECONDS` (60). The script launches Chromium once and aborts every request that is not `file:` or `data:`.
-It waits for `document.fonts.ready`, screenshots each page at its exact size and prints `{"overflow":[…]}`: whether
-any `.fit` box overflowed. `collect()` checks that each PNG is exactly the size asked for. The temp directory is
+It waits for `document.fonts.ready`, screenshots each page at its exact size and prints `{"overflow":[…]}`. A page
+counts as overflowing when any of its words (`.fit`, `.sub`, `.cta`, `.pill`) overflow their own box, or are drawn
+past any clipping ancestor, the ad's own edge included. `collect()` checks that each PNG is exactly the size asked for. The temp directory is
 always removed.
 
 **6. Storing.** `app/Actions/Marketing/StorePostRenders.php:handle($post, $pngs)` stores each PNG through
@@ -135,7 +143,8 @@ No new config: the timeout and the binary are constants in `AdRenderer` (`config
 - `marketing.render.skipped` (info: `not_renderable`, `needs_photo`, or `gone` for a post deleted before the job
   ran).
 - `marketing.render.succeeded` (info: post_id, campaign_id, layout, `ms`, `bytes`, `overflow`). `overflow: true`
-  means a headline was clipped despite the CSS fit. Tune `MAX_HEADLINE` or the layout's fit constants.
+  means a headline, subline or CTA was clipped despite the CSS fit. Look first at the brand font (the glyph table
+  is measured for Instrument Sans only), then at the layout's box (`--bw`/`--bh`) or `MAX_HEADLINE`.
 - `marketing.render.failed` (warning: post_id, layout, `reason`, `message`). `timeout`, `process_failed` (message =
   the script's or Node's stderr line, e.g. Chromium not installed, `node` not found) and `invalid_output` come from
   the renderer. `exception` is anything else, and that one is also rethrown to the queue.
@@ -153,8 +162,10 @@ No new config: the timeout and the binary are constants in `AdRenderer` (`config
   approve-once, Download refusals, library and peek images, and the campaign form. The renderer is
   `Tests\Support\FakeAdRenderer`, bound for every test in `tests/TestCase.php`, because renders run inline on the
   sync queue after Fill, Revise and photo changes.
-- `tests/Browser/Marketing/AdRendererTest.php`: the real renderer, which writes an exactly 1080×1080 PNG; long
-  headlines report no overflow; the studio at 375 px has no sideways scroll; a failing script becomes
+- `tests/Browser/Marketing/AdRendererTest.php`: the real renderer, which writes an exactly 1080×1080 PNG. Every
+  style × layout × size renders a set of worst-case headlines at or past the cap with no overflow. The set covers
+  long prose, long words, all capitals and short multi-word headlines that wrap at a large size, among them
+  "61 down, 36 to go.", the stat that broke. the studio at 375 px has no sideways scroll; a failing script becomes
   `process_failed`.
 - `tests/Browser/Journeys/MarketingPostTest.php` step 8: Fill "Ask the community" (AI-decides photos, so the drafts
   render at once), and the studio shows the render. Both Download links serve PNGs of the right size.
@@ -168,7 +179,9 @@ No new config: the timeout and the binary are constants in `AdRenderer` (`config
 - Spec and render state on the post in `ad`, not in the cache →
   [ADR-094](../decisions/ADR-094-marketing-render-state-lives-on-the-post.md).
 - Headline fit is pure CSS (no JS in the ad) plus a per-layout character cap with "…". The cap is what guarantees
-  no mid-line clip, and the script's overflow report is the alarm if the CSS ever loses.
+  no mid-line clip, and the script's overflow report is the alarm if the CSS ever loses. Since `b0d4b00` the CSS
+  sizes from measured glyph widths and real line breaks, not from an even spread of characters. That spread model
+  clipped wrapped stat headlines (RUNBOOK 2026-10-13).
 - Vault's bleed photo and the spotlight photo are round: square crops showed coin photos' white backgrounds.
 - Re-renders also follow caption edits, Undo and new one-off posts, beyond the story's list; otherwise the image
   goes stale against the caption.
@@ -178,6 +191,13 @@ No new config: the timeout and the binary are constants in `AdRenderer` (`config
 - **Drafts discarded by Approve or Regenerate keep their PNG files and render rows**, so the disk grows. Fixing it
   needs a change to approve behaviour, which this story could not touch. That is the owner's call.
 - Drafts waiting for a photo are not rendered until they get one; the studio shows "Needs a photo" instead.
+- **The glyph table (`BuildAdHtml::GLYPH_EMS`) is measured for Instrument Sans only.** A brand font that is much
+  wider can still overflow, and `overflow: true` on `marketing.render.succeeded` would show it. If brands start
+  using other fonts, re-measure the table or measure per font.
+- **The 14-character stat cap cuts prose headlines with "…"**, and that can lose the meaning ("61 down, 36 to…").
+  Claude is told the cap in its prompt, but a stat written as a sentence still gets cut. The cap itself did not
+  change in `b0d4b00`, and `NormaliseAdSpec`'s `min(60, cap)` still holds.
+- `--chars` is still printed, but now only for the letter-spacing term (`--ls × chars`) in `.fit`.
 - `soft` is derived from the accent (22% into white) until F-19 adds real brand colour fields.
 - `ad.render` holds only the latest render. A re-render keeps showing the old image until the new one is stored.
 - Blade gotchas when editing the templates (RUNBOOK 2026-10-13): a directive written straight after another
@@ -193,3 +213,5 @@ Chromium on the queue; studio preview, ratio switch, Download, Retry; library an
 `marketing:render` backfill (MK-5, `6a9beb3`)
 2026-10-13 — Specs now come from Claude's art direction; re-specs read `generation_meta.ad` through `NormaliseAdSpec`
 (MK-19, `c21a4d7`)
+2026-10-13 — Fix: the headline fit now uses measured glyph widths and real line breaks, so a wrapped stat headline is
+no longer clipped. The overflow check now also covers the subline and CTA and any clipping ancestor (MK-5, `b0d4b00`)

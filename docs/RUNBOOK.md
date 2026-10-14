@@ -10,6 +10,12 @@ Fix: <what resolved it> (commit/story ID)
 Log trail: <event names / request_id pattern that revealed it>
 -->
 
+## 2026-10-13 — A multi-word stat headline wrapped and was clipped
+Symptom: in MK-20's real-render screenshot, a stat headline at the 14-character cap ("61 down, 36 to…") wrapped to two lines, and the second line was cut off in the gallery and vault styles.
+Root cause: the `.fit` size in `css/base.css` treated the headline as characters spread evenly over the box (`sqrt(area / (k · chars))`, from `--chars` and `--word`). It ignored where lines really break and how wide each glyph is. A short multi-word headline got a one-line-sized font, wrapped, and spilled past the box. The browser test missed it because it used only single-word stat headlines and checked only the `.fit` box itself, not clipping by its parents.
+Fix: `BuildAdHtml::GLYPH_EMS` (measured Instrument Sans advances) prints `--ems` and `--word-ems`. `.fit` takes the largest size that surely fits on 1 to 8 lines. `--word`, `--k` and `--kw` are gone. Layouts set `--ls`/`--lh`. `bin/render-ad.mjs` now flags the subline and CTA too, and text cut by any clipping ancestor (MK-5, `b0d4b00`). Pinned by the browser `AdRendererTest` "Given a headline too long for a layout, … (no overflow)". It now covers worst-case headlines × every style, layout and size, and it was red on 52 pages before the fix. Rule: a fit test needs short wrapping headlines and capitals as well as long ones.
+Log trail: none in production yet. The old overflow check could not see a line cut by a parent. Now `marketing.render.succeeded` carries `overflow: true`.
+
 ## 2026-10-13 — Reject all discarded the drafts but queued no redraft
 Symptom: while building MK-20, Reject all recorded the dislikes and discarded the three drafts, but no `DraftOccurrenceJob` was queued. Fill refused the date as `not_open`.
 Root cause: `ListReviewQueue` gives each campaign its runway posts as a loaded `posts` relation. `FillCampaign` reads a date's state from `posts` when that relation is loaded, so it still saw the drafts that had just been discarded and decided the date was not open.
