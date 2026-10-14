@@ -123,7 +123,7 @@ vs Meta-native, re-decided then) · MK-15 engagement **+ campaign analytics** (3
 per-campaign vs average; owner 2026-10-12 asked for it on the campaigns page; it needs Facebook data, and phase 1's
 Mark as posted + link lets it backfill).
 
-**Phase 3, batch 1** (written, `draft`; owner 2026-10-13 moved it ahead of phase 2; build in this order):
+**Phase 3, batch 1** (written, `approved`; owner 2026-10-13 moved it ahead of phase 2; build in this order):
 
 | ID | Story | File |
 |---|---|---|

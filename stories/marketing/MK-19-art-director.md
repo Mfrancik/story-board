@@ -1,5 +1,5 @@
 # MK-19 — Claude as art director: drafts come back as whole ads
-Status: draft          Journey: marketing-post (step 9 of 10)
+Status: approved       Journey: marketing-post (step 9 of 10)
 Source: owner 2026-10-13 phase 3 batch 1 ("generate and render ads for me to sift through"), approved list
 
 ## Story
