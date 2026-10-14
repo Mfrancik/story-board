@@ -123,8 +123,16 @@ vs Meta-native, re-decided then) · MK-15 engagement **+ campaign analytics** (3
 per-campaign vs average; owner 2026-10-12 asked for it on the campaigns page; it needs Facebook data, and phase 1's
 Mark as posted + link lets it backfill).
 
-**Phase 3** (not written yet): coins read-only API (`/api/v1/marketing/items`), MK-17 content items, MK-4 designer +
-MK-5 PNG render (then inspiration can match layouts), MK-11 starter packs, calendar drag.
+**Phase 3, batch 1** (written, `draft`; owner 2026-10-13 moved it ahead of phase 2; build in this order):
+
+| ID | Story | File |
+|---|---|---|
+| MK-5 | Ad renderer: brand templates rendered to PNG by Playwright, 1:1 and 4:5, Download for every post | MK-5-ad-renderer.md |
+| MK-19 | Claude as art director: each of the 3 drafts comes back as a whole ad spec (layout, headline, CTA, crop) | MK-19-art-director.md |
+| MK-20 | Review inbox: every undecided date's 3 rendered ads across campaigns; Keep / Reject all → redraft | MK-20-review-inbox.md |
+
+**Phase 3, later** (not written yet): MK-4 designer (hand-edit an ad; mockups exist), inspiration layout matching,
+coins read-only API (`/api/v1/marketing/items`) + MK-17 content items, MK-11 starter packs, calendar drag.
 
 **Merged / retired IDs:** MK-3 → MK-2 · MK-6 → MK-8 · MK-16 → MK-8 + MK-9 · MK-11 gap warning → MK-10 (starter packs →
 phase 3).
